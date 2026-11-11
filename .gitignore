@@ -1,0 +1,9 @@
+node_modules/
+.env
+data/*.db
+data/*.db-journal
+data/*.db-wal
+dist/
+coverage/
+.DS_Store
+.lody/

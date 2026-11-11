@@ -1,0 +1,163 @@
+import assert from "node:assert/strict";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { test } from "node:test";
+import type { TestContext } from "node:test";
+import { SEARCH_EVENTS_TOOL, createSearchEventsTool } from "../src/agent/tools.ts";
+import { buildSystemPrompt, localToday } from "../src/agent/prompt.ts";
+import {
+  extractEventIds,
+  lastAssistantText,
+  parsePlannerResponse,
+  PlannerResponseError,
+} from "../src/agent/response.ts";
+import { seedDatabase } from "../src/data/seed.ts";
+import { createSqliteEventRepository } from "../src/data/sqlite.ts";
+import type { AgentMessage } from "@earendil-works/pi-agent-core";
+
+const BASE = "2026-11-11";
+
+function seededRepo(t: TestContext) {
+  const dir = mkdtempSync(join(tmpdir(), "explorer-agent-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const dbPath = join(dir, "events.db");
+  seedDatabase(dbPath, BASE);
+  const repo = createSqliteEventRepository(dbPath);
+  t.after(() => repo.close());
+  return repo;
+}
+
+test("search_events tool queries the repository and returns event JSON", async (t) => {
+  const repo = seededRepo(t);
+  const tool = createSearchEventsTool(repo);
+  assert.equal(tool.name, SEARCH_EVENTS_TOOL);
+  const result = await tool.execute("call_1", { date: BASE, category: "展览" });
+  assert.ok(result.details && result.details.count > 0);
+  const events = JSON.parse((result.content[0] as { text: string }).text);
+  assert.equal(events.length, result.details?.count);
+  assert.ok(events.every((e: { category: string }) => e.category === "展览"));
+  assert.ok(events[0].id && events[0].startAt && events[0].suggestedDurationMinutes);
+});
+
+test("search_events tool returns new budget/media fields from SQLite", async (t) => {
+  const repo = seededRepo(t);
+  const tool = createSearchEventsTool(repo);
+  const result = await tool.execute("call_fields", { keyword: "织物" });
+  const events = JSON.parse((result.content[0] as { text: string }).text);
+  assert.ok(events.length > 0);
+  const ev = events[0];
+  for (const key of [
+    "budgetMin", "budgetMax", "currency", "budgetNote", "guideUrl", "thumbnailUrl", "imageUrls",
+  ]) {
+    assert.ok(key in ev, `missing ${key} in tool output`);
+  }
+  // 与 repository 直读一致：付费区间、攻略与多图地址原样回传。
+  const direct = (await repo.getByIds([ev.id])).get(ev.id);
+  assert.equal(ev.budgetMin, direct?.budgetMin);
+  assert.equal(ev.budgetMax, direct?.budgetMax);
+  assert.ok(ev.budgetMin > 0, "expected a paid sample");
+  assert.equal(ev.currency, "CNY");
+  assert.equal(ev.guideUrl, direct?.guideUrl);
+  assert.ok(ev.guideUrl.startsWith("https://"));
+  assert.equal(ev.thumbnailUrl, direct?.thumbnailUrl);
+  assert.deepEqual(ev.imageUrls, direct?.imageUrls);
+  assert.ok(ev.imageUrls.length > 1, "expected multi-image sample");
+});
+
+test("search_events tool tolerates empty params and no matches", async (t) => {
+  const repo = seededRepo(t);
+  const tool = createSearchEventsTool(repo);
+  const all = await tool.execute("c", {});
+  assert.ok((all.details?.count ?? 0) > 0); // 无条件时返回库内活动（上限内）
+  const none = await tool.execute("c", { keyword: "不存在的关键词" });
+  assert.equal(none.details?.count, 0);
+  assert.equal((none.content[0] as { text: string }).text, "[]");
+});
+
+test("system prompt injects current date and the output contract", () => {
+  const prompt = buildSystemPrompt("2026-11-11");
+  assert.ok(prompt.includes("2026-11-11"));
+  assert.ok(prompt.includes('"clarify"') && prompt.includes('"itinerary"'));
+  assert.ok(prompt.includes("constraints"));
+  assert.equal(localToday(new Date(2026, 10, 11)), "2026-11-11");
+});
+
+test("parsePlannerResponse parses clarify and itinerary envelopes", () => {
+  const clarify = parsePlannerResponse('{"type":"clarify","question":"哪天去？"}');
+  assert.deepEqual(clarify, { type: "clarify", question: "哪天去？" });
+
+  const fenced = '```json\n{"type":"itinerary","constraints":{"date":"2026-11-14","availableStart":"13:00"},"itinerary":{"date":"2026-11-14","summary":"s","stops":[]}}\n```';
+  const it = parsePlannerResponse(fenced);
+  assert.equal(it.type, "itinerary");
+  if (it.type === "itinerary") {
+    assert.equal(it.constraints.date, "2026-11-14");
+    assert.equal(it.constraints.availableStart, "13:00");
+    assert.deepEqual(it.candidate, { date: "2026-11-14", summary: "s", stops: [] });
+  }
+});
+
+test("parseConstraints keeps null as explicit clear but rejects unreal values", () => {
+  const ok = parsePlannerResponse(
+    '{"type":"itinerary","constraints":{"date":"2026-11-14","availableStart":null},"itinerary":{"date":"2026-11-14","summary":"s","stops":[]}}',
+  );
+  assert.equal(ok.type, "itinerary");
+  if (ok.type === "itinerary") assert.equal(ok.constraints.availableStart, null);
+
+  for (const bad of [
+    '{"type":"itinerary","constraints":{"date":"2026-02-30"},"itinerary":{}}',
+    '{"type":"itinerary","constraints":{"date":"周六"},"itinerary":{}}',
+    '{"type":"itinerary","constraints":{"date":"2026-11-14","availableStart":"99:00"},"itinerary":{}}',
+    '{"type":"itinerary","constraints":{"date":"2026-11-14","availableEnd":"12:60"},"itinerary":{}}',
+    '{"type":"itinerary","constraints":{"date":"2026-11-14","availableStart":13},"itinerary":{}}',
+    '{"type":"itinerary","constraints":{"date":"2026-11-14","availableStart":"18:00","availableEnd":"13:00"},"itinerary":{}}',
+  ]) {
+    assert.throws(() => parsePlannerResponse(bad), PlannerResponseError, bad);
+  }
+});
+
+test("parsePlannerResponse rejects non-envelope replies with a usable message", () => {
+  for (const bad of [
+    "not json at all",
+    '{"date":"2026-11-14","summary":"x","stops":[]}', // 裸行程，无 envelope
+    '{"type":"other"}',
+    '{"type":"clarify"}',
+    '{"type":"itinerary","itinerary":{}}', // 无 constraints
+    '{"type":"itinerary","constraints":{"date":"周六"},"itinerary":{}}',
+  ]) {
+    assert.throws(() => parsePlannerResponse(bad), PlannerResponseError, bad);
+  }
+});
+
+test("extractEventIds pulls unique event_id strings out of a candidate", () => {
+  const candidate = {
+    stops: [
+      { event_id: "a" },
+      { event_id: "b" },
+      { event_id: "a" },
+      { event_id: 3 },
+      "nope",
+    ],
+  };
+  assert.deepEqual(extractEventIds(candidate), ["a", "b"]);
+  assert.deepEqual(extractEventIds({}), []);
+  assert.deepEqual(extractEventIds(null), []);
+});
+
+test("lastAssistantText reads the trailing assistant message only", () => {
+  const messages: AgentMessage[] = [
+    { role: "user", content: "hi", timestamp: 1 },
+    {
+      role: "assistant",
+      content: [{ type: "text", text: "第一部分" }, { type: "text", text: "第二部分" }],
+      api: "openai-completions",
+      provider: "openai",
+      model: "m",
+      usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } },
+      stopReason: "stop",
+      timestamp: 2,
+    },
+  ];
+  assert.equal(lastAssistantText(messages), "第一部分第二部分");
+  assert.equal(lastAssistantText(messages.slice(0, 1)), undefined);
+});
