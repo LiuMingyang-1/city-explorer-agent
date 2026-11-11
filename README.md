@@ -1,7 +1,7 @@
 # AI 城市探索地图
 
 `city-explorer-agent`：以地图为入口、用自然语言规划城市一日出行的 Personal Agent。
-当前已交付命令行 v0；地图前端与真实数据源仍是规划目标，见
+当前已交付命令行 v0 和独立地图前端原型；前端对话为模拟交互，尚未接入真实 Agent。后续规划见
 [docs/product-plan.md](docs/product-plan.md)。计划参加
 [传智杯 AI WEB 赛道](https://www.boxuegu.com/matchTrack/detail/?id=10037)。
 
@@ -16,7 +16,18 @@
 - 边界：活动为内置模拟数据（119 条，覆盖运行日起 7 天）；还没有交通路线与
   通勤时间计算；对话与行程只保存在进程内，退出即清空。
 
-## 快速开始
+## 地图前端（独立原型）
+
+使用 Node.js `>=22.19`，无需安装 npm 依赖、配置模型密钥或初始化活动库：
+
+```sh
+npm run dev:frontend
+```
+
+打开 http://127.0.0.1:5173 。包含西安地图、地点搜索、定位、天气与模拟对话。
+前端说明、地图数据来源和后续接口接入点见 [frontend/README.md](frontend/README.md)。
+
+## CLI 快速开始
 
 要求 Node.js `>=22.19`（开发实测 v24）。
 
