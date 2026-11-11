@@ -1,4 +1,6 @@
 import { resolve } from "node:path";
+import { loadCompactionOptions } from "./compaction/options.ts";
+import type { CompactionOptions } from "./compaction/compact.ts";
 
 export interface ExplorerConfig {
   provider: string;
@@ -8,8 +10,24 @@ export interface ExplorerConfig {
   /** 自定义端点目录元数据的本地默认；标准 provider 用其自带目录。 */
   contextWindow: number;
   maxTokens: number;
+  /**
+   * 压缩参数；loadConfig 总是填入完整值。手工构造的 config 可省略或只给部分
+   * 字段——使用方经 resolveCompactionOptions(config) 归一化，缺的
+   * maxTokens 回退普通回复预算 config.maxTokens。
+   */
+  compaction?: Partial<CompactionOptions>;
   /** SQLite 活动库文件路径。 */
   dbPath: string;
+  /**
+   * SQLite 会话库文件路径，与活动库相互独立（loadConfig 总是填入；
+   * 手工构造的 config 可省略，调用方给默认 data/sessions.db）。
+   */
+  sessionDbPath?: string;
+  /**
+   * 本地演示用户标识（EXPLORER_USER_ID；缺省/空白 → "local"）。
+   * 仅本地 CLI 演示用途，不是 Web 认证；后端接入时由调用方传认证后的 userId。
+   */
+  userId?: string;
 }
 
 /** 读取 EXPLORER_* 环境配置并做基本检查；不发起模型请求。 */
@@ -44,14 +62,19 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ExplorerConfig
   if (!apiKey) {
     throw new Error(`Set EXPLORER_API_KEY or ${fallbackKey}; see .env.example.`);
   }
+  const maxTokens = positiveInteger(env, "EXPLORER_MAX_TOKENS", 4096);
   return {
     provider,
     model: model || (provider === "anthropic" ? "claude-sonnet-4-6" : "gpt-5.4"),
     baseUrl,
     apiKey,
     contextWindow: positiveInteger(env, "EXPLORER_CONTEXT_WINDOW", 128000),
-    maxTokens: positiveInteger(env, "EXPLORER_MAX_TOKENS", 4096),
+    maxTokens,
+    // compaction.maxTokens 就是普通回复预算，不是摘要预算（compactionMaxTokens）。
+    compaction: { ...loadCompactionOptions(env), maxTokens },
     dbPath: resolve(env.EXPLORER_DB_PATH?.trim() || "data/events.db"),
+    sessionDbPath: resolve(env.EXPLORER_SESSION_DB_PATH?.trim() || "data/sessions.db"),
+    userId: env.EXPLORER_USER_ID?.trim() || "local",
   };
 }
 

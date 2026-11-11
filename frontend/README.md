@@ -1,6 +1,6 @@
 # 西安漫游前端
 
-独立静态前端原型，AI 对话和路线建议为纯前端模拟，不调用仓库中的 CLI Agent，不读取模型 API Key。
+独立静态前端，AI 对话通过同源 `/api/chat` 接口调用仓库 Agent 后端，不在浏览器保存模型密钥。
 
 ## 运行
 
@@ -20,8 +20,9 @@ npm run dev:frontend
 - 深色半透明玻璃卡片、按本机时间变化的中文问候、地点搜索、浏览器定位、实时天气。
 - 定位拒绝、超时或不支持时，静默保留西安市中心。浏览器定位要求 localhost 或 HTTPS。
 - 19 个主要 4A/5A 景点标注点（含联合景区内的独立参观点），标签自动避让；搜索结果常驻显示名称。
-- 回车或发送按钮触发模拟对话；消息自动滚到底部。地图虚线表示推荐游玩顺序，不是实际道路导航。
-- 对话仅保存在当前页面内存中，刷新后清空。
+- 回车或发送按钮与后端 Agent 对话；消息自动滚到底部。地图虚线按后端返回的活动坐标表示推荐游玩顺序，不是实际道路导航。
+- 对话历史由后端保存，页面加载时通过 `GET /api/chat/history` 恢复。
+- `npm run dev:frontend` 只托管静态文件，不代理 `/api/*`；单独运行时对话不可用，需由后端同源托管本目录。
 
 ## 地图和外部服务
 
@@ -41,10 +42,11 @@ npm run dev:frontend
 景区等级依据西安市文旅局《西安市A级旅游景区信息表》（截至 2026-02-25）：
 https://wlj.xa.gov.cn/wlml/lyjq/1.html 。坐标来自 OpenStreetMap/Nominatim，静态内置；这是精选点位，不是完整实时名录。
 
-## 后续接入 Agent
+## Agent 接口
 
-发送入口统一在 `app.js` 的 `sendMessage(text)`。后续可在这里请求服务器接口，将返回文本交给
-`appendMessage('assistant', text)`。当前 PR 不新增 HTTP Agent 接口，不在浏览器中保存模型密钥。
+对话逻辑在 `chat.js`：发送走 `POST /api/chat`（body 为 `{message}`），成功返回
+`{kind:'clarification',question}` 或 `{kind:'itinerary',itinerary,events}`，非 2xx 返回 `{error}`；
+历史走 `GET /api/chat/history`。接口为同源相对路径，依赖同源 cookie 会话。
 
 ## 检查
 

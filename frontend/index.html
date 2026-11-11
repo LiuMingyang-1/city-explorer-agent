@@ -8,7 +8,7 @@
   <title>漫游 · 西安城市向导</title>
   <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
   <link rel="stylesheet" href="assets/leaflet.css"><link rel="stylesheet" href="assets/maplibre-gl.css"><link rel="stylesheet" href="style.css?v=search-rounded-1">
-  <script src="assets/leaflet.js" defer></script><script src="assets/maplibre-gl.js" defer></script><script src="assets/leaflet-maplibre-gl.js" defer></script><script src="app.js?v=places-1" defer></script>
+  <script src="assets/leaflet.js" defer></script><script src="assets/maplibre-gl.js" defer></script><script src="assets/leaflet-maplibre-gl.js" defer></script><script src="places.js?v=places-1" defer></script><script src="app.js?v=backend-chat-1" defer></script><script src="chat.js?v=backend-chat-1" defer></script>
 </head>
 <body>
   <main class="canvas">
@@ -18,7 +18,7 @@
       <section class="weather" aria-label="当前地点天气"><div id="weather-icon" class="weather-icon" aria-hidden="true"></div><div class="weather-main"><div class="temperature"><span id="temperature">—</span><span class="degrees">℃</span><span id="weather-description">获取天气中</span></div><form id="search-form" class="location-form" role="search"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><input id="location-input" aria-label="搜索地点，回车定位" placeholder="西安市" autocomplete="off" maxlength="100"><button type="submit" class="search-button" aria-label="搜索地点"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></svg></button></form></div><button id="locate" class="locate-button" aria-label="定位到我的位置" title="定位到我的位置"><svg viewBox="0 0 24 24"><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/></svg></button></section>
       <p id="location-status" class="location-status" role="status" aria-live="polite"></p>
       <section id="messages" class="messages" role="log" aria-label="旅行对话" aria-live="polite"></section>
-      <footer class="composer-area"><form id="chat-form" class="composer"><input id="message-input" placeholder="输入想去的地方，我帮你规划游玩路线" aria-label="输入想去的地方，我帮你规划游玩路线" autocomplete="off" maxlength="1000"><button id="send-button" type="submit" aria-label="发送消息" disabled><svg viewBox="0 0 24 24"><path d="M12 19V5m-6 6 6-6 6 6"/></svg></button></form><p class="composer-note">AI 模拟<span>Enter 发送</span></p></footer>
+      <footer class="composer-area"><form id="chat-form" class="composer"><input id="message-input" placeholder="输入想去的地方，我帮你规划游玩路线" aria-label="输入想去的地方，我帮你规划游玩路线" autocomplete="off" maxlength="1000"><button id="send-button" type="submit" aria-label="发送消息" disabled><svg viewBox="0 0 24 24"><path d="M12 19V5m-6 6 6-6 6 6"/></svg></button></form><p class="composer-note">AI 向导<span>Enter 发送</span></p></footer>
     </aside>
     <div id="map-status" class="map-status" role="status" hidden></div>
   </main>
