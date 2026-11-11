@@ -134,3 +134,56 @@ test("empty search returns all events within the limit", async (t) => {
   const all = await repo.search({});
   assert.equal(all.length, Math.min(inserted, 100));
 });
+
+test("search with near sorts by distance and annotates distanceKm", async (t) => {
+  const { repo } = seededRepo(t);
+  // 参考点取西岸美术馆（模拟）坐标：同场地活动距离为 0，其余场馆按球面距离递增。
+  const near = { lat: 31.1895, lng: 121.4702 };
+  // 独立复算 haversine 期望值，验证 repository 的距离值与取整。
+  const expectedKm = (lat: number, lng: number) => {
+    const rad = Math.PI / 180;
+    const a =
+      Math.sin(((lat - near.lat) * rad) / 2) ** 2 +
+      Math.cos(near.lat * rad) * Math.cos(lat * rad) * Math.sin(((lng - near.lng) * rad) / 2) ** 2;
+    return Math.round(2 * 6371 * Math.asin(Math.sqrt(a)) * 100) / 100;
+  };
+  const events = await repo.search({ date: BASE, near });
+  assert.ok(events.length > 0);
+  for (let i = 0; i < events.length; i++) {
+    const e = events[i];
+    assert.equal(typeof e.distanceKm, "number");
+    // 距离保留两位小数。
+    assert.match(String(e.distanceKm), /^\d+(\.\d{1,2})?$/);
+    assert.equal(e.distanceKm, expectedKm(e.latitude, e.longitude));
+    if (i > 0) {
+      assert.ok(events[i - 1].distanceKm! <= e.distanceKm!, "results ordered by distance");
+    }
+  }
+  assert.equal(events[0].distanceKm, 0);
+});
+
+test("search with near and radiusKm filters by distance", async (t) => {
+  const { repo } = seededRepo(t);
+  const near = { lat: 31.1895, lng: 121.4702 };
+  const within = await repo.search({ near, radiusKm: 1 });
+  assert.ok(within.length > 0);
+  assert.ok(within.every((e) => e.distanceKm! <= 1));
+  // 参考点 1km 内只有西岸美术馆、余德耀美术馆、钟书阁徐汇店三处场地的活动。
+  assert.deepEqual(
+    new Set(within.map((e) => e.venueName)),
+    new Set(["西岸美术馆（模拟）", "余德耀美术馆（模拟）", "钟书阁徐汇店（模拟）"]),
+  );
+});
+
+test("search without near returns no distanceKm; radiusKm alone is ignored", async (t) => {
+  const { repo, inserted } = seededRepo(t);
+  const plain = await repo.search({ date: BASE });
+  assert.ok(plain.length > 0);
+  for (const e of plain) assert.equal(e.distanceKm, undefined);
+
+  // 只传 radiusKm 没有 near：按原逻辑处理，结果与空查询一致且无距离字段。
+  const radiusOnly = await repo.search({ radiusKm: 0.5 });
+  assert.deepEqual(radiusOnly, await repo.search({}));
+  assert.equal(radiusOnly.length, Math.min(inserted, 100));
+  assert.ok(radiusOnly.every((e) => e.distanceKm === undefined));
+});

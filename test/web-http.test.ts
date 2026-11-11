@@ -11,7 +11,13 @@ import { test } from "node:test";
 import type { Itinerary } from "../src/itinerary/types.ts";
 import { createChatHandler } from "../src/web/http.ts";
 import type { WebChatOptions } from "../src/web/http.ts";
-import type { ChatHistory, ChatResult, ChatService, EventView } from "../src/web/types.ts";
+import type {
+  ChatHistory,
+  ChatLocation,
+  ChatResult,
+  ChatService,
+  EventView,
+} from "../src/web/types.ts";
 
 const ITINERARY: Itinerary = {
   date: "2026-11-14",
@@ -34,13 +40,14 @@ const EVENT: EventView = {
   image_urls: [],
 };
 
-type SendCall = { userId: string; message: string };
+type SendOptions = { signal?: AbortSignal; location?: ChatLocation };
+type SendCall = { userId: string; message: string; options?: SendOptions };
 
 /** 可注入 service：记录调用，可按测试覆写行为或抛错。 */
 function fakeService(
   impl: {
     history?: (userId: string) => Promise<ChatHistory>;
-    send?: (userId: string, message: string, signal?: AbortSignal) => Promise<ChatResult>;
+    send?: (userId: string, message: string, options?: SendOptions) => Promise<ChatResult>;
   } = {},
 ): ChatService & { historyCalls: string[]; sendCalls: SendCall[] } {
   const svc = {
@@ -57,9 +64,11 @@ function fakeService(
         }
       );
     },
-    async send(userId: string, message: string, signal?: AbortSignal): Promise<ChatResult> {
-      svc.sendCalls.push({ userId, message });
-      return impl.send?.(userId, message, signal) ?? { kind: "clarification", question: "哪天去？" };
+    async send(userId: string, message: string, options?: SendOptions): Promise<ChatResult> {
+      svc.sendCalls.push({ userId, message, options });
+      return (
+        impl.send?.(userId, message, options) ?? { kind: "clarification", question: "哪天去？" }
+      );
     },
   };
   return svc;
@@ -207,6 +216,26 @@ test("POST /api/chat：clarification 透传，message 被 trim 后交给 service
   }
 });
 
+test("POST /api/chat：合法 location 随 options 透传给 service；不带则 location 为 undefined", async () => {
+  const svc = fakeService();
+  const { base, close } = await start(svc);
+  try {
+    const reply = await post(base, {
+      message: "附近逛逛",
+      location: { lat: 34.27, lng: 108.95 },
+    });
+    assert.equal(reply.status, 200);
+    assert.equal(svc.sendCalls.length, 1);
+    assert.deepEqual(svc.sendCalls[0].options?.location, { lat: 34.27, lng: 108.95 });
+    assert.ok(svc.sendCalls[0].options?.signal instanceof AbortSignal); // 断连取消信号照常带
+    const plain = await post(base, { message: "hi" });
+    assert.equal(plain.status, 200);
+    assert.equal(svc.sendCalls[1].options?.location, undefined);
+  } finally {
+    await close();
+  }
+});
+
 test("POST /api/chat：itinerary 结果与 history 的 itinerary/events 原样透传", async () => {
   const svc = fakeService({
     async send() {
@@ -338,18 +367,18 @@ test("events 元素必须是 EventView：adapter 透传整条 Event（id/venueNa
   }
 });
 
-test("客户端中断 POST：service.send 收到 signal 并随断连触发 abort", async () => {
+test("客户端中断 POST：service.send 收到 options.signal 并随断连触发 abort", async () => {
   let observed: AbortSignal | undefined;
   let entered!: () => void;
   let abortSeen!: () => void;
   const enteredPromise = new Promise<void>((r) => (entered = r));
   const abortSeenPromise = new Promise<void>((r) => (abortSeen = r));
   const svc = fakeService({
-    async send(_userId, _message, signal) {
-      observed = signal;
+    async send(_userId, _message, options) {
+      observed = options?.signal;
       entered();
       return new Promise<ChatResult>((resolve) => {
-        signal?.addEventListener("abort", () => {
+        options?.signal?.addEventListener("abort", () => {
           abortSeen();
           resolve({ kind: "clarification", question: "cancelled" });
         });
@@ -373,8 +402,8 @@ test("客户端中断 POST：service.send 收到 signal 并随断连触发 abort
 test("正常完成的 POST 不触发 abort", async () => {
   let observed: AbortSignal | undefined;
   const svc = fakeService({
-    async send(_userId, _message, signal) {
-      observed = signal;
+    async send(_userId, _message, options) {
+      observed = options?.signal;
       return { kind: "clarification", question: "q" };
     },
   });

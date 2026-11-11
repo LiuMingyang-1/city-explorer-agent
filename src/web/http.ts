@@ -6,7 +6,7 @@
  *
  * 路由契约（响应均为 JSON + Cache-Control: no-store）：
  * - GET  /api/chat/history → ChatHistory
- * - POST /api/chat         → ChatResult（严格 {message} 入参）
+ * - POST /api/chat         → ChatResult（严格 {message, location?} 入参）
  * - 其他路径 404，方法不符 405 + Allow，非 2xx 一律 {error:string}
  *
  * 安全边界见 identity.ts 顶部注释：匿名 cookie 是 bearer 凭证而非登录；
@@ -20,7 +20,7 @@ import {
   isChatResult,
   isSameOriginRequest,
   mediaType,
-  parseChatMessage,
+  parseChatSend,
   readRequestBody,
 } from "./request.ts";
 import type { ChatService } from "./types.ts";
@@ -113,12 +113,15 @@ export function createChatHandler(
     try {
       const body = await readRequestBody(req, maxBodyBytes);
       if (body === BODY_TOO_LARGE) return fail(req, res, 413, "request body too large");
-      const message = parseChatMessage(body, MAX_MESSAGE_CHARS);
-      if (typeof message !== "string") return fail(req, res, 400, message.error);
+      const parsed = parseChatSend(body, MAX_MESSAGE_CHARS);
+      if ("error" in parsed) return fail(req, res, 400, parsed.error);
       // body 读完前客户端已走（读中断/断连）：不再给 service 派活。
       if (res.destroyed || controller.signal.aborted) return;
       const userId = ensureUser(req, res);
-      const result = await service.send(userId, message, controller.signal);
+      const result = await service.send(userId, parsed.message, {
+        signal: controller.signal,
+        location: parsed.location,
+      });
       if (!isChatResult(result)) throw new Error("service.send returned invalid shape");
       sendJson(req, res, 200, result);
     } catch (error) {

@@ -137,6 +137,8 @@ export interface PersistentFixtureOptions {
   validate?: PlannerSessionOptions["validate"];
   maxCorrections?: number;
   compaction?: PersistentPlannerOptions["compaction"];
+  /** 位置锚点解析 stub；缺省走 createPersistentPlanner 的真实 repository 实现。 */
+  locationAnchor?: PersistentPlannerOptions["locationAnchor"];
   /** 缺省固定摘要；要自己排摘要响应时用 makeStreamFn 另行构造 streamFn。 */
   streamFn?: StreamFn;
 }
@@ -169,6 +171,7 @@ export async function makePersistent(
     validate: options.validate,
     maxCorrections: options.maxCorrections,
     compaction: options.compaction,
+    locationAnchor: options.locationAnchor,
     streamFn,
     currentDate: BASE,
   });

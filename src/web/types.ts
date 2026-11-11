@@ -53,13 +53,21 @@ export interface ChatHistory {
   events?: EventView[];
 }
 
+/** 用户当前位置坐标（GPS/选点），只含坐标不含地名。 */
+export interface ChatLocation {
+  lat: number;
+  lng: number;
+}
+
 /**
- * POST /api/chat 接受的唯一请求体形：`{ "message": "…" }`。
- * message 按 trim 后长度计须为 1..1000 字；不接受 userId、messages 等
+ * POST /api/chat 接受的请求体形：`{ "message": "…" }`，可附带 location。
+ * message 必填，按 trim 后长度计须为 1..1000 字；location 可选，是前端
+ * 当前选点/GPS 的经纬度（只传坐标不传地名）。不接受 userId、messages 等
  * 任何其他字段——身份只来自服务端签发的 cookie，历史只存服务端。
  */
 export interface ChatSendRequest {
   message: string;
+  location?: ChatLocation;
 }
 
 /** POST /api/chat 成功（200）的响应体：要么追问，要么新行程。 */
@@ -82,10 +90,15 @@ export interface ChatService {
   history(userId: string): Promise<ChatHistory>;
   /**
    * 处理一条用户消息，返回追问或新行程。
-   * signal 在 HTTP 客户端断连（响应未正常完成就关闭）时触发 abort；
+   * options.signal 在 HTTP 客户端断连（响应未正常完成就关闭）时触发 abort；
    * 实现方可把它传给下游取消规划等耗时工作，也可直接忽略。正常完成的
-   * 响应保证不触发 abort。实现方只接收两个参数的旧签名依然兼容。
+   * 响应保证不触发 abort。options.location 是本轮前端附带的位置（可选）。
+   * 实现方只接收两个参数的旧签名依然兼容（options 可整体忽略）。
    * 抛错（含模型/数据/内部错误）由 HTTP 层统一映射为 500，异常细节不外泄。
    */
-  send(userId: string, message: string, signal?: AbortSignal): Promise<ChatResult>;
+  send(
+    userId: string,
+    message: string,
+    options?: { signal?: AbortSignal; location?: ChatLocation },
+  ): Promise<ChatResult>;
 }

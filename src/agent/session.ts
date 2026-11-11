@@ -49,6 +49,12 @@ export interface PlannerPromptOptions {
    * 直接返回既有 run 记录的结果。CLI 不重试，不传。
    */
   requestId?: string;
+  /**
+   * 本轮用户位置（web 端经 service 透传）：持久运行时注入
+   * location_context system section（不进用户消息、不落库），
+   * 本轮没带时沿用上轮值；内存路径（performTurn）不处理。
+   */
+  location?: { lat: number; lng: number };
 }
 
 /** 手动压缩的结果：applied=写入了新检查点并切换上下文。 */
@@ -361,6 +367,33 @@ export interface PersistentPlannerOptions extends ExplorerAgentOptions {
   /** 同 PlannerSessionOptions。 */
   validate?: PlannerSessionOptions["validate"];
   maxCorrections?: number;
+  /**
+   * 位置锚点解析（测试可注入）：把本轮透传的经纬度翻成锚点文案。
+   * 缺省实现查活动库最近场馆，30km 内才提供锚点。
+   */
+  locationAnchor?: (lat: number, lng: number) => Promise<string | undefined>;
+}
+
+/**
+ * 缺省位置锚点：查活动库中距该坐标最近的场馆，30km 内返回
+ * "距「场馆」约 N 公里"；更远/无结果/查询失败 → undefined
+ * （section 只留坐标，锚点失败不影响本轮）。
+ */
+async function defaultLocationAnchor(
+  repository: EventRepository,
+  lat: number,
+  lng: number,
+): Promise<string | undefined> {
+  try {
+    const nearest = (await repository.search({ near: { lat, lng } })).find(
+      (e) => typeof e.distanceKm === "number",
+    );
+    return nearest && (nearest.distanceKm as number) <= 30
+      ? `距「${nearest.venueName}」约 ${nearest.distanceKm} 公里`
+      : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 /**
@@ -392,6 +425,9 @@ export async function createPersistentPlanner(
     leaseTtlMs: options.leaseTtlMs,
     leaseRenewMs: options.leaseRenewMs,
     compaction,
+    resolveLocationAnchor:
+      options.locationAnchor ??
+      ((lat, lng) => defaultLocationAnchor(options.repository, lat, lng)),
   });
   session.runtime = runtime;
   await runtime.open();

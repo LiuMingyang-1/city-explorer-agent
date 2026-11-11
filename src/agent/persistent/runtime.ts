@@ -28,7 +28,7 @@ import type {
   PlannerTurn,
   ValidatedPlanCommit,
 } from "../session.ts";
-import { runtimeSystemMessage } from "./context.ts";
+import { runtimeSystemMessage, type LocationContext } from "./context.ts";
 import { RawHistory } from "./history.ts";
 import { LeaseGuard } from "./lease.ts";
 import {
@@ -54,6 +54,11 @@ export interface PersistentRuntimeOptions {
   /** 心跳间隔；缺省 leaseTtlMs/3。 */
   leaseRenewMs?: number;
   compaction: CompactionOptions;
+  /**
+   * 位置锚点解析：本轮带 location 时把坐标翻成语义锚点文案（就近场馆）；
+   * 缺省或抛错都降级为无锚点，绝不影响本轮。
+   */
+  resolveLocationAnchor?: (lat: number, lng: number) => Promise<string | undefined>;
 }
 
 /**
@@ -80,6 +85,7 @@ export class PersistentRuntime implements PlannerRuntime {
   private readonly requestedSessionId?: string;
   private readonly owner: string;
   private readonly compaction: CompactionOptions;
+  private readonly resolveLocationAnchor?: PersistentRuntimeOptions["resolveLocationAnchor"];
   private readonly guard: LeaseGuard;
 
   private sessionIdValue = "";
@@ -94,6 +100,11 @@ export class PersistentRuntime implements PlannerRuntime {
    * 不落 raw、不冒充 main 的正式状态。
    */
   private candidatePlan: ValidatedPlan | undefined;
+  /**
+   * 最近一轮透传的用户位置（含锚点）：渲染进 system section，不落 raw、
+   * 不进消息表；本轮没带 location 时沿用上轮值，随 applyContext 重建。
+   */
+  private locationContext?: LocationContext;
   private readonly history = new RawHistory();
   private checkpoint: Checkpoint | undefined;
   private readonly baseline: UsageBaseline = createUsageBaseline();
@@ -130,6 +141,7 @@ export class PersistentRuntime implements PlannerRuntime {
     this.requestedSessionId = options.sessionId;
     this.owner = options.leaseOwner ?? `planner-${process.pid}-${randomUUID().slice(0, 8)}`;
     this.compaction = options.compaction;
+    this.resolveLocationAnchor = options.resolveLocationAnchor;
     const ttlMs = options.leaseTtlMs ?? 30_000;
     this.guard = new LeaseGuard({
       repo: options.sessions,
@@ -258,6 +270,7 @@ export class PersistentRuntime implements PlannerRuntime {
         this.baseSystem,
         this.sessionKind === "child" ? this.candidatePlan : this.persistedPlan,
         this.sessionKind === "child" ? "candidate" : "confirmed",
+        this.locationContext,
       ),
     );
     this.agent.state.messages = messages;
@@ -371,6 +384,13 @@ export class PersistentRuntime implements PlannerRuntime {
   ): Promise<PlannerTurn> {
     try {
       return await this.guard.run(async () => {
+        // 本轮透传位置则先更新注入坐标（锚点解析失败降级为无，不毁掉本轮）；
+        // 没带 location 时沿用上轮值。必须在 reload 前：reload 末尾的
+        // applyContext 会把它渲染进本轮起的 system section。
+        if (options.location) {
+          const { lat, lng } = options.location;
+          this.locationContext = { lat, lng, anchor: await this.anchorFor(lat, lng) };
+        }
         // 每轮先同步 DB 最新上下文与规划指针，再处理本轮。
         await this.reload();
         // 同步恢复期间被取消/关闭：不查重放、不建 run、不发模型请求。
@@ -441,6 +461,16 @@ export class PersistentRuntime implements PlannerRuntime {
       });
     } catch (error) {
       return { kind: "error", message: errorText(error) };
+    }
+  }
+
+  /** 锚点解析的降级封装：未配置 resolver 或解析抛错一律返回 undefined。 */
+  private async anchorFor(lat: number, lng: number): Promise<string | undefined> {
+    if (!this.resolveLocationAnchor) return undefined;
+    try {
+      return await this.resolveLocationAnchor(lat, lng);
+    } catch {
+      return undefined;
     }
   }
 
