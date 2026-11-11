@@ -102,6 +102,51 @@ test("exit word ends the loop before remaining input", async () => {
   assert.deepEqual(planner.calls, ["hi"]);
 });
 
+test("/compact is parsed by the CLI and never reaches the model", async () => {
+  let compacts = 0;
+  const planner = {
+    ...fakePlanner([{ kind: "clarification", question: "q" }]),
+    async compact() {
+      compacts += 1;
+      return { applied: true };
+    },
+  };
+  const io = capture();
+  await runTurns(planner, lineSource(["/compact", "正常提问"]), io);
+  assert.equal(compacts, 1);
+  assert.deepEqual(planner.calls, ["正常提问"]); // 只有自然语言进模型
+  assert.equal(io.stdout.length, 1); // /compact 不产生 stdout 行
+  assert.ok(io.stderr.some((l) => l.includes("已压缩")));
+});
+
+test("/compact reports when nothing needs compacting or unsupported", async () => {
+  const applied = {
+    ...fakePlanner([]),
+    async compact() {
+      return { applied: false };
+    },
+  };
+  const io1 = capture();
+  await runTurns(applied, lineSource(["/compact"]), io1);
+  assert.ok(io1.stderr.some((l) => l.includes("不需要压缩")));
+
+  const unsupported = fakePlanner([]);
+  const io2 = capture();
+  await runTurns(unsupported, lineSource(["/compact"]), io2);
+  assert.ok(io2.stderr.some((l) => l.includes("不支持")));
+});
+
+test("unknown slash command gets a hint; bare 'compact' goes to the model", async () => {
+  const planner = fakePlanner([
+    { kind: "clarification", question: "q" },
+    { kind: "clarification", question: "q" },
+  ]);
+  const io = capture();
+  await runTurns(planner, lineSource(["/foo", "compact"]), io);
+  assert.ok(io.stderr.some((l) => l.includes("未知命令 /foo")));
+  assert.deepEqual(planner.calls, ["compact"]); // 自然语言单词照常进模型
+});
+
 test("node src/cli/main.ts --help prints usage without an API key", async () => {
   const root = fileURLToPath(new URL("..", import.meta.url));
   const { stdout } = await execFileAsync(process.execPath, ["src/cli/main.ts", "--help"], {

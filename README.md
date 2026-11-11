@@ -1,66 +1,167 @@
 # AI 城市探索地图
 
-`city-explorer-agent`：以地图为入口、用自然语言规划城市一日出行的 Personal Agent。
-当前已交付命令行 v0 和独立地图前端原型；前端对话为模拟交互，尚未接入真实 Agent。后续规划见
-[docs/product-plan.md](docs/product-plan.md)。计划参加
-[传智杯 AI WEB 赛道](https://www.boxuegu.com/matchTrack/detail/?id=10037)。
+暂名：**AI 城市探索地图**（仓库：`city-explorer-agent`）
 
-## v0 命令行能力
+这是一份项目方案说明。命令行 v0 与同源 Web 演示入口已实现（见下两节）；真实数据源等仍为规划目标。
 
-自然语言输入出行需求 → Agent 调用 `search_events` 查 SQLite 活动库 →
-输出可解析的行程 JSON → 同一会话内继续用自然语言修改（换一站、晚出发、少一站等）。
+本项目计划参加[传智杯 AI WEB 赛道](https://www.boxuegu.com/matchTrack/detail/?id=10037)，同时也作为 AI 应用开发实习项目。
 
-- stdout 每轮一个单行 JSON：行程对象或 `{"question": "..."}` 追问，可按 NDJSON
-  解析；输入提示、`search_events` 工具轨迹和错误走 stderr。
-- 缺日期等关键条件时先追问；信息足够才生成行程，输出经代码校验通过后才提交。
-- 边界：活动为内置模拟数据（119 条，覆盖运行日起 7 天）；还没有交通路线与
-  通勤时间计算；对话与行程只保存在进程内，退出即清空。
+## 定位
 
-## 地图前端（独立原型）
+以地图作为理解兴趣、规划出行的 Personal Agent 入口，而不是在普通地图上加一个通用聊天框。
 
-使用 Node.js `>=22.19`，无需安装 npm 依赖、配置模型密钥或初始化活动库：
+## v0 命令行（已实现）
+
+第一版是命令行 Agent：自然语言输入需求 → 调用 `search_events` 查 SQLite →
+输出可解析的行程 JSON → 继续用自然语言多轮修改。
 
 ```sh
-npm run dev:frontend
+npm install --ignore-scripts
+cp .env.example .env        # 填 EXPLORER_API_KEY（缺省回退 OPENAI_API_KEY/ANTHROPIC_API_KEY）
+npm run seed                # 写入 119 条模拟活动，覆盖今天起 7 天（先清空再写入，替换已有活动）
+                            # 复现固定基准日：npm run seed -- --date=YYYY-MM-DD
+npm run dev                 # 交互式 REPL（多轮自然语言修改）
+npm run dev -- 周六下午想看展  # 单轮模式
+printf '周六下午看展\n第二个换一个\n' | npm run --silent dev   # 批处理：stdin 每行一轮
+npm run check               # typecheck + 全部测试
 ```
 
-打开 http://127.0.0.1:5173 。包含西安地图、地点搜索、定位、天气与模拟对话。
-前端说明、地图数据来源和后续接口接入点见 [frontend/README.md](frontend/README.md)。
+- stdout 每轮输出一个单行 JSON：行程对象，或 `{"question": "..."}` 追问，可按 NDJSON 解析；
+  输入提示、`search_events` 工具轨迹和错误走 stderr。
+- 脚本/管道消费 stdout 时用 `npm run --silent dev`——npm 默认把脚本横幅打到 stdout，
+  `--silent` 可去除；不走 npm 脚本可用 `node --env-file-if-exists=.env src/cli/main.ts`
+  （裸 `node` 不会读 `.env`）。
+- 会话以本地 SQLite 持久化（默认 `data/sessions.db`，`EXPLORER_SESSION_DB_PATH` 覆盖）：
+  重启 CLI 后延续同一主会话，恢复原始消息、压缩检查点和已确认行程。
+  `EXPLORER_USER_ID` 是本地演示标识（缺省/空白 → `local`），不是 Web 认证；
+  会话库与活动库一样是单主机共享文件设计，不是多副本共享存储。
+- 会话内命令 `/compact` 手动压缩上下文（由 CLI 解析，不会发给模型）；
+  输入 `exit`/`quit`/`退出` 或 Ctrl+D 结束会话；Ctrl+C 在请求进行中取消本轮、空闲时退出。
+- 每轮请求在会话写租约内执行并记成一条 run（完成/失败/取消可追溯）；
+  上下文超长时自动压缩为可回放检查点，原始消息永不删除。
+- 当前所有活动均为模拟数据（约 119 条，未来一周）；还没有交通路线与时间计算；
+  仍没有真实登录/多用户认证（Web 入口用匿名 cookie 区分访客，见下节）、
+  子会话调度与结果回投——会话数据结构已支持（见 docs/users-and-sessions.md）。
+- 活动记录含每人预计费用区间（免费/付费/未知）、攻略链接、缩略图与
+  多张图片地址字段；只存 URL 或路径，不存图片本体；
+  当前模拟数据含免费、付费与费用未知样例，以及单图与多图示例。
+- 新增字段经非破坏幂等迁移在打开旧库时自动补入，已有数据保留、无需
+  重新 seed；显式 `npm run seed` 仍会先清空再写入，替换全部模拟活动。
+- 环境变量与开发细节见 `.env.example` 和 `docs/development.md`；
+  活动字段扩展验收报告见 [docs/event-metadata-acceptance.md](docs/event-metadata-acceptance.md)。
 
-## CLI 快速开始
+## Web 演示入口（已实现）
 
-要求 Node.js `>=22.19`（开发实测 v24）。
+同源 Web 服务器托管 `frontend/` 静态前端，并把 `/api/chat*` 交给真实 Agent
+后端（每条消息开一个持久化 Planner），是前端 AI 聊天的正式演示入口：
 
 ```sh
-npm ci --ignore-scripts       # 新克隆安装；无原生依赖，可安全跳过安装脚本
-cp .env.example .env          # 填 EXPLORER_API_KEY（缺省回退 OPENAI_API_KEY/ANTHROPIC_API_KEY）
-npm run seed                  # 首次写入模拟活动；先清空再写入，已有库请勿重复执行
-npm run dev                   # 交互式 REPL
-npm run check                 # typecheck + 全部测试
+npm install --ignore-scripts
+cp .env.example .env        # 同 CLI：需要 EXPLORER_API_KEY
+npm run seed                # 活动库必须存在且非空，否则启动报错并提示 seed
+npm run dev:web             # http://127.0.0.1:8080/ —— 地图 + AI 聊天同源
+npm run check:frontend      # 前端脚本语法检查（无构建步骤）
 ```
 
-已有 `data/events.db` 时无需重新 seed——打开旧库会自动补齐新增列，原有数据保留；
-`npm run seed` 是破坏性重置，只用于首次建库或重造数据。
+- 监听地址：`EXPLORER_WEB_HOST` / `EXPLORER_WEB_PORT`（默认 `127.0.0.1:8080`）；
+  静态根 `EXPLORER_WEB_ROOT`（默认仓库 `frontend/`）。
+- 静态文件走扩展名白名单 + 路径越界/符号链接复核；`/api/chat` 前缀之外的
+  `/api/*` 不进入聊天协议层。
+- 匿名身份：首个请求时服务端铸 128 bit 随机 `chat_uid`，以
+  `HttpOnly; SameSite=Lax` cookie 交给浏览器，之后凭它还原该访客的历史与
+  当前行程。**cookie 值本身就是凭证（bearer token）**：它不是登录、不做
+  访问控制——谁拿到值谁就能读写对应历史，仅用于 demo 区分访客。
+- 默认只放行同源 POST（Origin 与 Host 完全一致，或无 Origin 的非浏览器
+  客户端）；https 反代或独立端口调试时，把精确 Origin 加进
+  `EXPLORER_WEB_ALLOWED_ORIGINS`（逗号分隔，形如 `http://127.0.0.1:5173`）。
+- `npm run dev:frontend` 仍是只托管静态文件的旧脚本（端口 5173），
+  单独运行时聊天不可用——真实演示一律走 `dev:web`。
+- Ctrl+C / SIGTERM 优雅退出：先停接新连接，取消并等在途回复与其
+  Planner 收尾结清，最后才关闭两个 SQLite 连接。
+- 分层：`src/web/` 内 `identity`/`request`/`http` 负责 cookie、请求校验与
+  路由；`service` 把 ChatService 契约接到持久化 Planner；`server`/`main`
+  做静态组合与进程装配。
 
-三种输入：交互 REPL、`npm run dev -- <需求>` 单轮、stdin 逐行批处理。
-脚本消费 stdout 用 `npm run --silent dev`（npm 默认把脚本横幅打到 stdout）；
-不走 npm 可用 `node --env-file-if-exists=.env src/cli/main.ts`（裸 `node` 不读 `.env`）。
+## 用户体验
 
-## 交互示例
+- 第一次打开时，用户授权定位，或手动选择位置。
+- 首页地图展示附近的景点和展馆，以及当前能够获取到的近期展览、活动。
+- 点开卡片，可以看到介绍、推荐理由和信息来源，也可以收藏或加入行程。
+- 用户可以直接提出需求，例如：「这周六下午有半天时间，想看展、逛书店，不要太赶。」
+- Agent 会结合位置、日期、兴趣和交通时间，生成地图路线和可编辑的行程时间线，并附上地点介绍、选择理由和注意事项。
+- 用户可以说「这个不喜欢」「少走点路」，Agent 会据此调整方案，而不是重新丢一篇长攻略。系统还可以另外生成更详细的行程说明。
 
-```text
-> 这周六 13:00 到 18:00 想看展，也想逛书店，别太赶
-{"date":"2026-11-14","summary":"下午安排一场展览","stops":[{"event_id":"evt_004","arrive_at":"13:00","leave_at":"14:30","reason":"展览主题吻合"}]}
+## 我们想做出的亮点
 
-> 这个不喜欢，换一个
-（返回一行同结构的完整新行程 JSON，对应站已替换）
-```
+- **界面精美，但不只有视觉。** 地图、活动卡片、行程时间线联动，让推荐变成可探索、可修改的内容。
+- **Agent 真实调用工具。** 查询地点、检索活动、计算路线和时间，再形成方案，不靠模型凭空编造地点和活动。
+- **有可编辑的个人偏好。** 经用户确认后，保存长期兴趣和出行节奏，并可查看、修改、删除。一次性的心情默认不写入长期记忆。
+- 工具执行结果和用户反馈会真正改变方案，而不是靠多 Agent 或复杂后台体现深度。
 
-输入 `exit`/`quit`/`退出`，或 Ctrl+D / Ctrl+C 结束会话。
+## 数据方案
 
-## 文档
+- 高德拟用于地图、周边地点（POI）和路线。认证、有效 Key 以及接口连通仍待验证。前端 SDK 不等于 MCP；工具既可以通过 MCP 调用，也可以通过 HTTP 调用。
+- 场馆位置不等于该场馆的近期活动。活动信息计划从少数公开的文旅、展馆页面尝试采集。合规、低频爬虫加人工核对是候选方案，需保留来源和更新时间。
+- 不绕过登录或反爬限制，不采集私有接口。
+- **当前最大风险是能否稳定获取真实的近期活动。** 尚未验证爬虫一定能补齐数据，也不承诺全国、全量、实时覆盖。
+- 地址和日期必须核对，过期信息需要过滤。字段缺失时明确提示。AI 不得补造活动、日期、价格或余票。预约和开放情况以原站为准。
 
-- [docs/architecture.md](docs/architecture.md) — 分层职责、会话与校验、模型输出契约
-- [docs/development.md](docs/development.md) — 环境、配置、命令、测试与手动验收
-- [docs/product-plan.md](docs/product-plan.md) — 产品愿景、数据方案与不做事项
-- [docs/database-design.md](docs/database-design.md) — 活动库表结构、字段语义、查询与迁移策略
+## 五天开发范围
+
+按 5 个实际开发日估算，先限定一座城市（尚未选定），使用一个主 Agent 和少量工具，跑通完整流程：
+
+选位置 → 发现地点与活动 → 表达需求 → 生成路线 → 修改行程。
+
+初步安排（只是估算，不是完成承诺；队友分工和技术栈尚未确定，实际须预留余量）：
+
+1. **第 1 天：** 优先验证地图、POI、路线接口，以及一批真实活动的地址落图和日期筛选。如果这条链路不通，就缩小范围或重新评估方向。
+2. **第 2–3 天：** 核心交互界面，以及 Agent 与偏好能力。
+3. **第 4 天：** 联调与打磨。
+4. **第 5 天：** 比赛视频、PDF、部署和环境说明。
+
+## 明确不做
+
+- 购票、支付
+- 全国实时活动聚合
+- 跨 App 自治执行
+- 后台持续监控
+- 复杂的多 Agent 或知识图谱基础设施
+
+## 验收标准
+
+- 活动可以追溯到来源、日期和地点。
+- 地图上的路线与行程安排一致。
+- 按用户指定的目标日期过滤活动。
+- 修改偏好或约束后，结果可解释，并且确实发生变化。
+- 数据缺失或工具调用失败时，明确提示，不让 AI 补造。
+- 密钥不进入仓库，也不暴露在前端。
+
+## 创新点说明
+
+本项目想展示的创新，是空间探索交互、偏好参与决策，以及真实工具执行和可纠正的结果。我们不宣称这是首创。
+
+## 比赛材料准备
+
+以下为计划事项，并非已经完成：
+
+- 仓库需保持公开，或至少保证评审可以访问，并保留真实 Git 历史。当前仓库已公开。
+- 准备 5–8 分钟、1080p 演示视频。
+- 准备不超过 30 页的 PDF 说明。
+- 提供在线演示可加分。
+
+官方赛题：https://www.boxuegu.com/matchTrack/detail/?id=10037
+
+## 待确认
+
+- 演示城市
+- 可用数据源
+- 队友分工
+- 技术栈
+
+## 设计文档
+
+- [用户与会话数据设计](docs/users-and-sessions.md)：用户归属、长期主会话、
+  递归子会话、统一追加日志（消息/压缩检查点）、运行记录与规划状态指针；
+  CLI 持久化路径已实现，多用户调度/认证仍为设计目标。
+- [会话实施计划](docs/session-implementation-plan.md)：持久仓库、独立压缩核心、
+  Planner/CLI 接入的任务拆分与接口契约。

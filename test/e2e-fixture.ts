@@ -6,12 +6,15 @@ import type { StreamFn } from "@earendil-works/pi-agent-core";
 import { createFauxCore, fauxAssistantMessage } from "@earendil-works/pi-ai/providers/faux";
 import type { FauxResponseStep } from "@earendil-works/pi-ai/providers/faux";
 import { createExplorerAgent } from "../src/agent/explorer-agent.ts";
-import { PlannerSession } from "../src/agent/session.ts";
+import { createPersistentPlanner, PlannerSession } from "../src/agent/session.ts";
+import type { PersistentPlannerOptions, PlannerSessionOptions } from "../src/agent/session.ts";
 import type { ExplorerConfig } from "../src/config.ts";
 import type { EventRepository } from "../src/data/repository.ts";
 import { seedDatabase } from "../src/data/seed.ts";
 import { createSqliteEventRepository } from "../src/data/sqlite.ts";
 import type { Event } from "../src/data/types.ts";
+import type { SessionRepository } from "../src/session/repository.ts";
+import { createSqliteSessionRepository } from "../src/session/sqlite.ts";
 
 /**
  * agent-e2e*.test.ts 共用的端到端 fixture；不是测试文件（无 .test 后缀）。
@@ -78,4 +81,99 @@ export function afternoonPlan(ev: Event): FauxResponseStep {
       { date: DAY1, availableStart: "13:00", availableEnd: "18:00" },
     ),
   );
+}
+
+// ---- 持久会话 fixture（session-integration*.test.ts 用） ----
+
+/**
+ * 摘要请求与正常请求走同一个 streamFn；按 TranscriptContext 中的
+ * `<conversation>` 标记分流到独立队列，互不消耗响应。
+ */
+export function isSummaryRequest(context: { messages: unknown[] }): boolean {
+  return (context.messages as Array<{ role?: string; content?: unknown }>).some(
+    (message) =>
+      message.role === "user" &&
+      (typeof message.content === "string"
+        ? message.content.includes("<conversation>")
+        : JSON.stringify(message.content).includes("<conversation>")),
+  );
+}
+
+export interface SummaryControl {
+  /** 摘要请求计数（含重试）。 */
+  calls: () => number;
+}
+
+/**
+ * 双队列 streamFn：摘要请求 → 独立小队列（每次请求重建，
+ * 同一批响应可反复消费），其余 → 主 faux（测试脚本队列）。
+ */
+export function makeStreamFn(
+  faux: ReturnType<typeof createFauxCore>,
+  summaryResponses: FauxResponseStep[] = [
+    fauxAssistantMessage("## 摘要\n- 已确认约束与行程要点已保留"),
+  ],
+): { streamFn: StreamFn; summary: SummaryControl } {
+  let calls = 0;
+  const streamFn: StreamFn = (model, context, options) => {
+    if (!isSummaryRequest(context)) return faux.streamSimple(model, context, options);
+    calls += 1;
+    const summaryCore = createFauxCore({});
+    summaryCore.setResponses(summaryResponses);
+    return summaryCore.streamSimple(model, context, options);
+  };
+  return { streamFn, summary: { calls: () => calls } };
+}
+
+export interface PersistentFixtureOptions {
+  config?: ExplorerConfig;
+  userId?: string;
+  sessionId?: string;
+  /** 复用同一 SessionRepository（多实例/重开场景必传）。 */
+  sessions?: SessionRepository;
+  repository?: EventRepository;
+  leaseTtlMs?: number;
+  leaseRenewMs?: number;
+  validate?: PlannerSessionOptions["validate"];
+  maxCorrections?: number;
+  compaction?: PersistentPlannerOptions["compaction"];
+  /** 缺省固定摘要；要自己排摘要响应时用 makeStreamFn 另行构造 streamFn。 */
+  streamFn?: StreamFn;
+}
+
+/**
+ * 持久化端到端：faux 模型 → 真实 search_events → 真实活动 SQLite →
+ * 真实会话 SQLite（:memory:）→ 真实校验 → 租约/检查点/指针全链路。
+ */
+export async function makePersistent(
+  t: TestContext,
+  responses: FauxResponseStep[],
+  options: PersistentFixtureOptions = {},
+) {
+  const repo = options.repository ?? (await makeRepo(t));
+  const sessions = options.sessions ?? createSqliteSessionRepository(":memory:");
+  if (!options.sessions) t.after(() => sessions.close());
+  const faux = createFauxCore({});
+  faux.setResponses(responses);
+  const { streamFn, summary } = options.streamFn
+    ? { streamFn: options.streamFn, summary: undefined }
+    : makeStreamFn(faux);
+  const session = await createPersistentPlanner({
+    config: options.config ?? CONFIG,
+    repository: repo,
+    sessions,
+    userId: options.userId ?? "u-test",
+    sessionId: options.sessionId,
+    leaseTtlMs: options.leaseTtlMs,
+    leaseRenewMs: options.leaseRenewMs,
+    validate: options.validate,
+    maxCorrections: options.maxCorrections,
+    compaction: options.compaction,
+    streamFn,
+    currentDate: BASE,
+  });
+  t.after(async () => {
+    await session.close();
+  });
+  return { session, repo, sessions, faux, summary };
 }

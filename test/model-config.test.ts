@@ -24,6 +24,31 @@ test("loadConfig reads EXPLORER_* env with defaults", () => {
   assert.equal(loaded.maxTokens, 4096);
   assert.equal(loaded.apiKey, "k");
   assert.equal(loaded.baseUrl, undefined);
+  assert.equal(loaded.userId, "local"); // 缺省本地演示用户
+  assert.ok(loaded.sessionDbPath?.endsWith("data/sessions.db"));
+});
+
+test("EXPLORER_USER_ID blank or whitespace falls back to 'local'", () => {
+  for (const value of [undefined, "", "   ", " \t "]) {
+    assert.equal(
+      loadConfig({ EXPLORER_API_KEY: "k", EXPLORER_USER_ID: value }).userId,
+      "local",
+    );
+  }
+  assert.equal(
+    loadConfig({ EXPLORER_API_KEY: "k", EXPLORER_USER_ID: "web-42" }).userId,
+    "web-42",
+  );
+});
+
+test("EXPLORER_SESSION_DB_PATH overrides the session db location", () => {
+  const loaded = loadConfig({
+    EXPLORER_API_KEY: "k",
+    EXPLORER_SESSION_DB_PATH: "tmp/my-sessions.db",
+  });
+  assert.ok(loaded.sessionDbPath?.endsWith("tmp/my-sessions.db"));
+  // 会话库与活动库相互独立。
+  assert.notEqual(loaded.sessionDbPath, loaded.dbPath);
 });
 
 test("loadConfig requires an API key", () => {

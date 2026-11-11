@@ -4,6 +4,7 @@ import { openAICompletionsApi } from "@earendil-works/pi-ai/api/openai-completio
 import { anthropicProvider } from "@earendil-works/pi-ai/providers/anthropic";
 import { openaiProvider } from "@earendil-works/pi-ai/providers/openai";
 import type { Api, Model, MutableModels, Provider } from "@earendil-works/pi-ai";
+import { resolveCompactionOptions } from "../compaction/options.ts";
 import type { ExplorerConfig } from "../config.ts";
 
 /** createExplorerModels 的返回值：供 Agent 组装使用。 */
@@ -56,7 +57,16 @@ function createExplorerProvider(config: ExplorerConfig): Provider {
         // Custom endpoints have no catalog metadata; these are local defaults, not price estimates.
         cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
         contextWindow: config.contextWindow,
-        maxTokens: Math.min(config.contextWindow, config.maxTokens),
+        // 声明的能力上限须同时覆盖普通回复与摘要预算，否则 generateSummary 的
+        // 余量计算会把摘要预算钳死；不突破 contextWindow。普通回复的每请求
+        // maxTokens 仍由 explorer-agent.ts 的 streamFn 按 config.maxTokens 给。
+        maxTokens: Math.min(
+          config.contextWindow,
+          Math.max(
+            config.maxTokens,
+            resolveCompactionOptions(config).compactionMaxTokens,
+          ),
+        ),
       },
     ],
     api: api === "anthropic-messages" ? anthropicMessagesApi() : openAICompletionsApi(),
