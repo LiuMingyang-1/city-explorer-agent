@@ -84,7 +84,7 @@ export function prepareCollection(items: readonly LocatedActivity[], options: { 
     const event = { id, title: facts.title, description: facts.description, category: facts.category, venue_name: facts.venue_name,
       address: location.address, latitude: location.latitude, longitude: location.longitude, start_at: facts.start_at, end_at: facts.end_at,
       suggested_duration_minutes: facts.suggested_duration_minutes, budget_min: facts.budget_min, budget_max: facts.budget_max,
-      currency: "CNY" as const, budget_note: facts.budget_note, guide_url: null, thumbnail_url: document.image_urls[0] ?? null, image_urls: [...document.image_urls] };
+      currency: "CNY" as const, budget_note: facts.budget_note, guide_url: document.url, thumbnail_url: document.image_urls[0] ?? null, image_urls: [...document.image_urls] };
     const documents = new Map(prepared.documents);
     documents.set(digest, { url: document.url, text: document.text });
     documents.set(mapDigest, { url: location.source_url, text: mapText });

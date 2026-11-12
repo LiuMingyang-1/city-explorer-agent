@@ -60,7 +60,8 @@ export function validateDataset(value:unknown,options:ValidationOptions):Validat
   if(e.latitude<33||e.latitude>35.5||e.longitude<107||e.longitude>110.5)issue("COORDINATE_OUTSIDE_COARSE_REGION",e.id);
   if(!p.city_evidence.quote.includes("西安")||!e.address.includes("西安"))issue("CITY_NOT_CONFIRMED",e.id);
   if(p.coordinates.input_system!=="WGS-84"&&!p.coordinates.conversion?.trim())issue("COORDINATE_CONVERSION_MISSING",e.id);
-  const urls=[p.source_url,p.city_evidence.source_url,p.coordinates.source_url,...p.evidence.map(x=>x.source_url),...e.image_urls,...(e.thumbnail_url?[e.thumbnail_url]:[])];
+  if(e.guide_url!==null&&e.guide_url!==p.source_url)issue("SOURCE_URL_MISMATCH",e.id,"guide_url");
+  const urls=[p.source_url,p.city_evidence.source_url,p.coordinates.source_url,...p.evidence.map(x=>x.source_url),...e.image_urls,...(e.thumbnail_url?[e.thumbnail_url]:[]),...(e.guide_url!==null?[e.guide_url]:[])];
   if(urls.some(u=>!publicUrl(u)))issue("INVALID_PUBLIC_URL",e.id);
   for(const ev of p.evidence){const doc=options.documents.get(ev.document_sha256);
    if(!doc||doc.url!==ev.source_url||sha(doc.text)!==ev.document_sha256)issue("EVIDENCE_NOT_FOUND",e.id,ev.field);

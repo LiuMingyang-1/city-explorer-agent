@@ -108,7 +108,7 @@
             ]
           },
           "guide_url": {
-            "type": "null"
+            "type": ["string", "null"]
           },
           "thumbnail_url": {
             "type": [

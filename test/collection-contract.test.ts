@@ -36,7 +36,7 @@ const invalid:[string,(d:RealDataset)=>void,string][]=[
  ["fixed show with guessed duration",d=>{d.provenance[0].schedule_type="fixed";},"FIXED_DURATION_UNCONFIRMED"],
  ["duplicate slot",d=>{d.events.push(structuredClone(d.events[0]));},"DUPLICATE_SLOT"],
  ["ID based on list position",d=>{d.events[0].id="xa_"+"0".repeat(32);d.provenance[0].event_id=d.events[0].id;},"UNSTABLE_ID"],
- ["legacy guide field misuse",d=>{(d.events[0] as any).guide_url="https://www.sxhm.com/guide";},"SCHEMA_INVALID"],
+ ["source URL mismatch",d=>{d.events[0].guide_url="https://www.sxhm.com/guide";},"SOURCE_URL_MISMATCH"],
  ["embedded fake credential",d=>{d.events[0].description="sk-"+"x".repeat(32);},"POSSIBLE_SECRET"],
 ];
 for(const [name,mutate,code] of invalid)test(`publication rejects ${name}`,()=>{

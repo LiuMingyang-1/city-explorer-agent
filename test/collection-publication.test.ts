@@ -48,6 +48,7 @@ test("publish and repeat update keep one row, all 18 columns, stable ID and hist
     try {
       assert.equal(db.prepare("SELECT count(*) n FROM events").get()!.n, 1);
       assert.equal(db.prepare("PRAGMA table_info(events)").all().length, 18);
+      assert.equal(db.prepare("SELECT guide_url FROM events").get()!.guide_url, item.document.url);
       assert.equal(release.sidecar.events[next.dataset.events[0].id].freshness.firstSeenAt, item.first_seen_at);
     } finally { db.close(); }
   } finally { rmSync(folder, { recursive: true, force: true }); }

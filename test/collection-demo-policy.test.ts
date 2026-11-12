@@ -39,6 +39,17 @@ test("final publication does not reintroduce a verbatim quote requirement", asyn
   assert.deepEqual(prepareCollection([item], { asOf, baseDate: "2026-11-12" }).rejected, []);
 });
 
+test("guide_url retains the original social or web source without adding an events column", async () => {
+  for (const source of ["https://www.xiaohongshu.com/explore/offline-source", "https://www.sxhm.com/offline-test-notice"]) {
+    const { item, asOf } = await locatedFixture(); item.document.url = source;
+    const result = prepareCollection([item], { asOf, baseDate: "2026-11-12" });
+    assert.deepEqual(result.rejected, []);
+    assert.equal(result.prepared.dataset.events[0].guide_url, source);
+    assert.equal(result.prepared.dataset.provenance[0].source_url, source);
+    assert.equal(Object.keys(result.prepared.dataset.events[0]).length, 18);
+  }
+});
+
 test("recent unknown-end candidates are retained provisionally, old ones are rejected", async () => {
   const { item, asOf } = await locatedFixture();
   item.facts.start_at = item.facts.end_at = item.facts.confirmed_end_date = item.facts.confirmed_start_date = null;

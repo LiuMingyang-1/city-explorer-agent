@@ -6,7 +6,7 @@ export interface RealEvent {
   venue_name: string; address: string; latitude: number; longitude: number;
   start_at: string | null; end_at: string | null; suggested_duration_minutes: number | null;
   budget_min: number | null; budget_max: number | null; currency: "CNY";
-  budget_note: string | null; guide_url: null;
+  budget_note: string | null; guide_url: string | null;
   thumbnail_url: string | null; image_urls: string[];
 }
 /** Not publishable until both coordinates are verified. */
