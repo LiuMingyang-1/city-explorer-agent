@@ -72,12 +72,12 @@ test("candidate normalization materializes unknowns without approving publicatio
   assert.equal(normalizeCandidate({ ...input, title: "\t" }).valid, false);
 });
 
-test("published v3 rejects v2 and estimates masquerading as confirmed durations", () => {
+test("published v3 accepts labeled estimates but rejects unknown basis with a filled duration", () => {
   const { dataset, options } = collectionFixture();
   assert.equal(validateDataset({ ...dataset, schema_version: "xian-events/2" }, options).valid, false);
   const invalid = structuredClone(dataset);
   (invalid.provenance[0] as any).duration_basis = "estimated";
-  assert.equal(validateDataset(invalid, options).valid, false);
+  assert.equal(validateDataset(invalid, options).valid, true);
   invalid.provenance[0].duration_basis = "unknown";
   assert(validateDataset(invalid, options).issues.some(i => i.code === "DURATION_BASIS_MISMATCH"));
 });

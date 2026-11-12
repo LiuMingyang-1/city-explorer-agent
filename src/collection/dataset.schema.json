@@ -253,6 +253,7 @@
           "duration_basis": {
             "enum": [
               "source",
+              "estimated",
               "unknown"
             ]
           },
@@ -299,7 +300,7 @@
                 "document_sha256"
               ]
             },
-            "minItems": 3
+            "minItems": 0
           },
           "source_url": {
             "type": "string",

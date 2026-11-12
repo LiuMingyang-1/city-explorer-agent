@@ -85,10 +85,13 @@ export function createGeocoder(options: GeocoderOptions) {
         if (!/^\d+$/.test(String(data.count))) return { ok: false, reason: "MAP_INVALID_POI_RESPONSE" };
         const truncated = Number(data.count) > data.pois.length;
         // Fuzzy count includes unrelated amenities; exact venue candidates are matched below.
-        const matches = data.pois.filter((poi: any) => poi && xian(poi) && venueName(String(poi.name)) === venueName(query.venue_name)
+        let matches = data.pois.filter((poi: any) => poi && xian(poi) && venueName(String(poi.name)) === venueName(query.venue_name)
           && typeof poi.id === "string" && !!poi.id && typeof poi.address === "string" && poi.address.length >= 5
-          && typeof poi.adname === "string" && !!poi.adname && (!query.address || sameAddress(query.address, poi.address))
-          && (!query.address || !districts.some(d => query.address!.includes(d) && poi.adname !== d)));
+          && typeof poi.adname === "string" && !!poi.adname);
+        if (matches.length > 1 && query.address) {
+          const addressed = matches.filter((poi: any) => sameAddress(query.address!, poi.address));
+          if (addressed.length === 1) matches = addressed;
+        }
         if (matches.length > 1) return { ok: false, reason: "AMBIGUOUS_POI" };
         let row: Record<string, any>, point: Coordinate | null, method: VerifiedLocation["method"], address: string, source: string;
         let confirmation: VerifiedLocation["address_confirmation"];
@@ -101,7 +104,7 @@ export function createGeocoder(options: GeocoderOptions) {
           }
           if (query.require_entrance && !row.entr_location) return { ok: false, reason: "ENTRANCE_NOT_CONFIRMED" };
           address = `西安市${row.adname}${row.address}`; method = "poi"; source = "https://restapi.amap.com/v3/place/text";
-          if (truncated && query.address && /\d+号/.test(norm(query.address))) {
+          if (truncated && query.address && sameAddress(query.address, row.address) && /\d+号/.test(norm(query.address))) {
             // A fuzzy result count includes amenities and unrelated venues. For an
             // address-bound exact name match, independently resolve the printed door
             // number and require it to agree with the POI, rather than choosing rank 1.

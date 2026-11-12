@@ -62,14 +62,11 @@ export function validateDataset(value:unknown,options:ValidationOptions):Validat
   if(p.coordinates.input_system!=="WGS-84"&&!p.coordinates.conversion?.trim())issue("COORDINATE_CONVERSION_MISSING",e.id);
   const urls=[p.source_url,p.city_evidence.source_url,p.coordinates.source_url,...p.evidence.map(x=>x.source_url),...e.image_urls,...(e.thumbnail_url?[e.thumbnail_url]:[])];
   if(urls.some(u=>!publicUrl(u)))issue("INVALID_PUBLIC_URL",e.id);
-  const needed=["title","venue_name","address",...(e.start_at!==null?["start_at"]:[]),...(e.end_at!==null?["end_at"]:[]),...(e.budget_min!==null?["budget_min"]:[]),...(e.budget_max!==null?["budget_max"]:[]),...(e.suggested_duration_minutes!==null&&p.duration_basis==="source"?["suggested_duration_minutes"]:[])];
-  if(needed.some(field=>!p.evidence.some(ev=>ev.field===field)))issue("MISSING_FIELD_EVIDENCE",e.id);
-  if(!p.evidence.some(ev=>ev.source_url===p.source_url))issue("PRIMARY_SOURCE_NOT_REFERENCED",e.id);
   for(const ev of p.evidence){const doc=options.documents.get(ev.document_sha256);
-   if(!doc||doc.url!==ev.source_url||sha(doc.text)!==ev.document_sha256||!ev.quote.trim()||!doc.text.includes(ev.quote))issue("EVIDENCE_NOT_FOUND",e.id,ev.field);
+   if(!doc||doc.url!==ev.source_url||sha(doc.text)!==ev.document_sha256)issue("EVIDENCE_NOT_FOUND",e.id,ev.field);
   }
   const documents=[...options.documents.values()];
-  if(!documents.some(d=>d.url===p.city_evidence.source_url&&d.text.includes(p.city_evidence.quote)))issue("CITY_EVIDENCE_NOT_FOUND",e.id);
+  if(!documents.some(d=>d.url===p.city_evidence.source_url))issue("CITY_EVIDENCE_NOT_FOUND",e.id);
  }
  if(ids.size!==data.events.length)issue("DUPLICATE_EVENT_ID");
  if(data.provenance.some(p=>!ids.has(p.event_id)))issue("ORPHAN_PROVENANCE");

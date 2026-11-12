@@ -25,7 +25,7 @@ export interface EventProvenance {
   slot_key: string;
   verified_at: string; city: "西安市"; city_evidence: {source_url: string; quote: string};
   coordinates: {system: "WGS-84"; source_url: string; method: "source" | "existing_verified" | "geocoding"; input_system: "WGS-84" | "GCJ-02" | "BD-09"; conversion: string | null};
-  duration_basis: "source" | "unknown"; duration_note: string; evidence: FieldEvidence[];
+  duration_basis: "source" | "estimated" | "unknown"; duration_note: string; evidence: FieldEvidence[];
 }
 export interface RealDataset {
   schema_version: "xian-events/3"; base_date: string; days: 14;

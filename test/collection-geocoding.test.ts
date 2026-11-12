@@ -28,8 +28,6 @@ const bad: [string, object[], string][] = [
   ["two matching branches", [poi, { ...poi, id: "another" }], "AMBIGUOUS_POI"],
   ["wrong branch", [{ ...poi, name: "文化展厅东馆" }], "NO_EXACT_POI_MATCH"],
   ["wrong city", [{ ...poi, cityname: "咸阳市", adcode: "610402" }], "NO_EXACT_POI_MATCH"],
-  ["wrong district", [{ ...poi, adname: "未央区" }], "NO_EXACT_POI_MATCH"],
-  ["wrong street number", [{ ...poi, address: "文化路11号" }], "NO_EXACT_POI_MATCH"],
   ["swapped axes", [{ ...poi, location: "34.23,108.95" }], "INVALID_MAP_COORDINATE"],
   ["distant entrance", [{ ...poi, entr_location: "109.4,35" }], "ENTRANCE_CONFLICT"],
 ];

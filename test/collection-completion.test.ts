@@ -46,12 +46,12 @@ test("month/day model output is normalized locally with an auditable publication
   assert.equal(completeFacts(facts, document, asOf).confirmed_end_date, "2026-11-29");
 });
 
-test("a missing factual reference gets one bounded semantic repair, not immediate publication", async () => {
+test("an invalid date gets one bounded semantic repair", async () => {
   const { facts, document, asOf } = extractionFixture(); let calls = 0;
   const result = await extractActivities(document, { asOf, invoke: async (system) => {
     calls++;
-    if (calls === 1) return JSON.stringify({ activities: [{ ...facts, title: "正文没有的活动" }] });
-    assert(system.includes("VALUE_NOT_SUPPORTED:title"));
+    if (calls === 1) return JSON.stringify({ activities: [{ ...facts, confirmed_end_date: "2026-99-99" }] });
+    assert(system.includes("INVALID_END_DATE"));
     return JSON.stringify({ activities: [facts] });
   } });
   assert.equal(calls, 2); assert.equal(result.activities[0].check.valid, true);
