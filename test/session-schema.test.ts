@@ -1,3 +1,4 @@
+import { afterResource } from "./resource-cleanup-fixture.ts";
 import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
 import { test } from "node:test";
@@ -27,7 +28,7 @@ test("schema is idempotent and persists across reopen on a file database", async
 
   // 同一库文件重开：schema 重复执行无副作用，数据完整。
   const repo2 = createSqliteSessionRepository(dbPath);
-  t.after(() => repo2.close());
+  afterResource(t, () => repo2.close());
   const session = await repo2.getSession("u-persist", main.sessionId);
   assert.equal(session?.kind, "main");
   // 租约状态同样持久化（写入连接持有的租约在库里有记录）。
@@ -47,7 +48,7 @@ test("schema is idempotent and persists across reopen on a file database", async
 
 test("ensureSessionSchema creates all five tables and can run twice", (t) => {
   const db = new DatabaseSync(":memory:");
-  t.after(() => db.close());
+  afterResource(t, () => db.close());
   ensureSessionSchema(db);
   ensureSessionSchema(db);
   const tables = db
@@ -66,7 +67,7 @@ test("foreign keys and CHECK constraints are enforced at the database layer", as
   repo.close();
 
   const db = new DatabaseSync(dbPath);
-  t.after(() => db.close());
+  afterResource(t, () => db.close());
   db.exec("PRAGMA foreign_keys = ON");
   // session_records.session_id 必须存在。
   assert.throws(
@@ -110,6 +111,6 @@ test("session database file is independent from the events database path", async
   assert.equal(main.userId, "u-mem");
   const dbPath = tempDbPath(t);
   const fileRepo = createSqliteSessionRepository(dbPath);
-  t.after(() => fileRepo.close());
+  afterResource(t, () => fileRepo.close());
   assert.equal(await fileRepo.getSession("u-mem", main.sessionId), undefined);
 });

@@ -1,3 +1,4 @@
+import { afterResource } from "./resource-cleanup-fixture.ts";
 /**
  * web-e2e-*.test.ts 共用的全链路 fixture；不是测试文件（无 .test 后缀）。
  * 真实 HTTP server → createChatHandler → createChatService → 默认工厂真实
@@ -107,7 +108,7 @@ export interface WebStack {
 /** 单个测试的临时目录：活动库/会话库都放这里，绝不写仓库 data/。 */
 export function tempDir(t: TestContext): string {
   const dir = mkdtempSync(join(tmpdir(), "explorer-web-e2e-"));
-  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  afterResource(t, () => rmSync(dir, { recursive: true, force: true }));
   return dir;
 }
 
@@ -152,7 +153,7 @@ export async function openWeb(
     faux,
     closed: false,
   };
-  t.after(async () => closeWeb(stack));
+  afterResource(t, async () => closeWeb(stack));
   return stack;
 }
 

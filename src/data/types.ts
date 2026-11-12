@@ -12,10 +12,10 @@ export interface Event {
   latitude: number;
   longitude: number;
   /** 可参加开始时间，本地时间 "YYYY-MM-DDTHH:MM"（不带时区）。 */
-  startAt: string;
+  startAt: string | null;
   /** 可参加结束时间，格式同 startAt。 */
-  endAt: string;
-  suggestedDurationMinutes: number;
+  endAt: string | null;
+  suggestedDurationMinutes: number | null;
   /** 每人预计费用下限，单位分；null 表示未知，免费活动为 0。 */
   budgetMin: number | null;
   /** 每人预计费用上限，单位分；null 表示未知。 */

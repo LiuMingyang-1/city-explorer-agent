@@ -27,9 +27,9 @@ type EventRow = {
   address: string;
   latitude: number;
   longitude: number;
-  start_at: string;
-  end_at: string;
-  suggested_duration_minutes: number;
+  start_at: string | null;
+  end_at: string | null;
+  suggested_duration_minutes: number | null;
   budget_min: number | null;
   budget_max: number | null;
   currency: string;
@@ -100,7 +100,8 @@ export function createSqliteEventRepository(dbPath: string): EventRepository {
 
   return {
     search(input: SearchEventsInput): Promise<Event[]> {
-      const clauses: string[] = [];
+      // Collection candidates may have NULL coordinates; they are not published events.
+      const clauses: string[] = ["latitude IS NOT NULL", "longitude IS NOT NULL"];
       const params: string[] = [];
       if (input.date) {
         // 活动时间窗与当日有交集即可参加（窗口可跨多日）。
@@ -153,7 +154,7 @@ export function createSqliteEventRepository(dbPath: string): EventRepository {
       if (ids.length === 0) return Promise.resolve(result);
       const marks = ids.map(() => "?").join(", ");
       const rows = db
-        .prepare(`SELECT * FROM events WHERE id IN (${marks})`)
+        .prepare(`SELECT * FROM events WHERE id IN (${marks}) AND latitude IS NOT NULL AND longitude IS NOT NULL`)
         .all(...ids) as EventRow[];
       for (const row of rows) result.set(row.id, toEvent(row));
       return Promise.resolve(result);

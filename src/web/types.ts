@@ -31,9 +31,9 @@ export interface EventView {
   category?: string;
   address?: string;
   /** 本地时间 "YYYY-MM-DDTHH:MM"（不带时区），语义同 Event.startAt/endAt。 */
-  start_at?: string;
-  end_at?: string;
-  suggested_duration_minutes?: number;
+  start_at?: string | null;
+  end_at?: string | null;
+  suggested_duration_minutes?: number | null;
   /** 每人费用区间（分；0=免费、null=未知），语义同 Event 对应字段。 */
   budget_min?: number | null;
   budget_max?: number | null;

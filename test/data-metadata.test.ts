@@ -1,3 +1,4 @@
+import { afterResource } from "./resource-cleanup-fixture.ts";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -55,7 +56,7 @@ test("seeded new fields round-trip via repo: image order, 0 vs null", async (t) 
 
 test("seedEvents migrates a v0 database before writing", async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "explorer-data-"));
-  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  afterResource(t, () => rmSync(dir, { recursive: true, force: true }));
   const dbPath = join(dir, "events.db");
   const db = new DatabaseSync(dbPath);
   db.exec(`CREATE TABLE events (
@@ -74,7 +75,7 @@ test("seedEvents migrates a v0 database before writing", async (t) => {
   db.close();
   assert.equal(inserted, 119); // 重 seed 仍是替换语义
   const repo = createSqliteEventRepository(dbPath);
-  t.after(() => repo.close());
+  afterResource(t, () => repo.close());
   assert.equal((await repo.getByIds(["evt_legacy"])).size, 0);
   const sample = (await repo.search({ date: BASE, category: "展览" }))[0];
   assert.ok("budgetMin" in sample && "imageUrls" in sample);

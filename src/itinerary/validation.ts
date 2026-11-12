@@ -5,6 +5,7 @@ import type { Itinerary, ItineraryStop, PlanningConstraints } from "./types.ts";
 export type ValidationCode =
   | "invalid_shape" // 不是约定的行程 JSON 结构
   | "invalid_constraints" // 约束本身非法（假日期/假时钟/时段逆序）
+  | "unknown_event_window" // 活动缺少已确认的时间边界，不能自动排入行程
   | "unknown_event" // event_id 不在数据库中
   | "date_mismatch" // 行程或活动日期与要求日期不符
   | "outside_event_window" // 到访时间超出活动可参加时段
@@ -132,6 +133,10 @@ export function validateItinerary(
     const event = events.get(stop.event_id);
     if (!event) {
       fail("unknown_event", `${where} 的活动不存在`, stop.event_id);
+      return;
+    }
+    if (event.startAt === null || event.endAt === null) {
+      fail("unknown_event_window", `${where} 缺少已确认的可参加起止时间，不能自动排程`, stop.event_id);
       return;
     }
     // 活动窗口与行程当日有交集才可在该日参加（与 repository.search 一致）。

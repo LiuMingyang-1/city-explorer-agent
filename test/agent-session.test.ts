@@ -1,3 +1,4 @@
+import { afterResource } from "./resource-cleanup-fixture.ts";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -52,11 +53,11 @@ function envelope(itinerary: unknown, constraints: Partial<PlanningConstraints> 
 
 async function makeSession(t: TestContext, responses: FauxResponseStep[]) {
   const dir = mkdtempSync(join(tmpdir(), "explorer-session-"));
-  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  afterResource(t, () => rmSync(dir, { recursive: true, force: true }));
   const dbPath = join(dir, "events.db");
   seedDatabase(dbPath, BASE);
   const repo = createSqliteEventRepository(dbPath);
-  t.after(() => repo.close());
+  afterResource(t, () => repo.close());
 
   const faux = createFauxCore({});
   faux.setResponses(responses);

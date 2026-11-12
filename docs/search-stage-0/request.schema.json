@@ -1,0 +1,69 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "date": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "category": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "keyword": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000
+    },
+    "mode": {
+      "enum": [
+        "local",
+        "external",
+        "hybrid"
+      ]
+    },
+    "platforms": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "web",
+          "xiaohongshu",
+          "douyin",
+          "weibo",
+          "wechat",
+          "bilibili",
+          "douban",
+          "huodongxing",
+          "showstart",
+          "damai",
+          "maoyan",
+          "bendibao",
+          "ctrip",
+          "mafengwo",
+          "publisher"
+        ]
+      }
+    },
+    "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 50
+    },
+    "freshness": {
+      "enum": [
+        "cached",
+        "refresh"
+      ]
+    },
+    "cursor": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": [],
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://city-explorer.invalid/contracts/v1/request.schema.json"
+}

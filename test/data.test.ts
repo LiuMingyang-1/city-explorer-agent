@@ -1,3 +1,4 @@
+import { afterResource } from "./resource-cleanup-fixture.ts";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -16,7 +17,7 @@ import { BASE, dayOf, LAST_DAY, seededRepo } from "./data-fixture.ts";
  */
 function distanceRepo(t: TestContext, points: Array<readonly [id: string, km: number]>) {
   const dir = mkdtempSync(join(tmpdir(), "explorer-data-"));
-  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  afterResource(t, () => rmSync(dir, { recursive: true, force: true }));
   const dbPath = join(dir, "events.db");
   const db = new DatabaseSync(dbPath);
   ensureEventsSchema(db);
@@ -31,7 +32,7 @@ function distanceRepo(t: TestContext, points: Array<readonly [id: string, km: nu
   }
   db.close();
   const repo: EventRepository = createSqliteEventRepository(dbPath);
-  t.after(() => repo.close());
+  afterResource(t, () => repo.close());
   return repo;
 }
 
@@ -87,14 +88,14 @@ test("every day has an exhibition and >=2 bookshop options within 13:00-18:00", 
 
 test("re-seeding replaces instead of appending", async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "explorer-data-"));
-  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  afterResource(t, () => rmSync(dir, { recursive: true, force: true }));
   const dbPath = join(dir, "events.db");
   const first = seedDatabase(dbPath, BASE);
   const second = seedDatabase(dbPath, BASE);
   assert.equal(second, first);
 
   const repo = createSqliteEventRepository(dbPath);
-  t.after(() => repo.close());
+  afterResource(t, () => repo.close());
   let total = 0;
   for (let i = 0; i < SEED_DAYS; i++) {
     const day = `2026-11-${String(11 + i).padStart(2, "0")}`;
@@ -108,10 +109,13 @@ test("search by date returns only events attendable that day", async (t) => {
   const events = await repo.search({ date: "2026-11-12" });
   assert.ok(events.length > 0);
   for (const e of events) {
+    assert.ok(e.startAt !== null && e.endAt !== null);
     assert.ok(e.startAt.slice(0, 10) <= "2026-11-12" && e.endAt.slice(0, 10) >= "2026-11-12");
   }
   for (let i = 1; i < events.length; i++) {
-    assert.ok(events[i - 1].startAt <= events[i].startAt, "results ordered by start_at");
+    const previous=events[i-1].startAt,current=events[i].startAt;
+    assert.ok(previous !== null && current !== null);
+    assert.ok(previous <= current, "results ordered by start_at");
   }
   assert.equal((await repo.search({ date: "2026-11-25" })).length, 0);
 });

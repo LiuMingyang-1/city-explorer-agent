@@ -1,3 +1,4 @@
+import { afterResource } from "./resource-cleanup-fixture.ts";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -43,11 +44,11 @@ export function envelope(
 
 export async function makeRepo(t: TestContext): Promise<EventRepository> {
   const dir = mkdtempSync(join(tmpdir(), "explorer-e2e-"));
-  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  afterResource(t, () => rmSync(dir, { recursive: true, force: true }));
   const dbPath = join(dir, "events.db");
   seedDatabase(dbPath, BASE);
   const repo = createSqliteEventRepository(dbPath);
-  t.after(() => repo.close());
+  afterResource(t, () => repo.close());
   return repo;
 }
 
@@ -65,8 +66,10 @@ export async function makeSession(t: TestContext, responses: FauxResponseStep[])
   return { session: new PlannerSession({ agent, repository: repo }), repo, faux };
 }
 
-export async function exhibition(repo: EventRepository, date: string = DAY1): Promise<Event> {
-  return (await repo.search({ date, category: "展览" }))[0];
+export async function exhibition(repo: EventRepository, date: string = DAY1): Promise<Event & {startAt:string;endAt:string}> {
+  const event = (await repo.search({ date, category: "展览" }))[0];
+  if (!event || event.startAt === null || event.endAt === null) throw new Error("Seed exhibition requires a known schedule");
+  return {...event,startAt:event.startAt,endAt:event.endAt};
 }
 
 export function stopsAt(event_id: string) {
@@ -181,7 +184,7 @@ export async function makePersistent(
 ) {
   const repo = options.repository ?? (await makeRepo(t));
   const sessions = options.sessions ?? createSqliteSessionRepository(":memory:");
-  if (!options.sessions) t.after(() => sessions.close());
+  if (!options.sessions) afterResource(t, () => sessions.close());
   const faux = createFauxCore({});
   faux.setResponses(responses);
   const { streamFn, summary, distill } = options.streamFn
@@ -202,7 +205,7 @@ export async function makePersistent(
     streamFn,
     currentDate: BASE,
   });
-  t.after(async () => {
+  afterResource(t, async () => {
     await session.close();
   });
   return { session, repo, sessions, faux, summary, distill };

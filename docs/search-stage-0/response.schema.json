@@ -1,0 +1,384 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "search_id": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "success",
+        "partial",
+        "failed",
+        "cancelled"
+      ]
+    },
+    "city": {
+      "const": "西安市"
+    },
+    "timezone": {
+      "const": "Asia/Shanghai"
+    },
+    "effective_request": {
+      "$ref": "request.schema.json"
+    },
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "enum": [
+              "document",
+              "event"
+            ]
+          },
+          "result_id": {
+            "type": "string"
+          },
+          "document_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "platform": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "snippet": {
+            "type": "string"
+          },
+          "author": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "published_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "retrieved_at": {
+            "type": "string"
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          },
+          "city_status": {
+            "enum": [
+              "confirmed",
+              "unknown",
+              "outside"
+            ]
+          },
+          "date_status": {
+            "enum": [
+              "confirmed",
+              "unknown",
+              "outside"
+            ]
+          },
+          "plannable": {
+            "type": "boolean"
+          },
+          "limitations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "event": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "event_id": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "venue_name": {
+                    "type": "string"
+                  },
+                  "address": {
+                    "type": "string"
+                  },
+                  "latitude": {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
+                  },
+                  "longitude": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                  },
+                  "start_at": {
+                    "type": "string"
+                  },
+                  "end_at": {
+                    "type": "string"
+                  },
+                  "schedule_type": {
+                    "enum": [
+                      "window",
+                      "fixed"
+                    ]
+                  },
+                  "suggested_duration_minutes": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "budget_min": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "budget_max": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "currency": {
+                    "type": "string"
+                  },
+                  "budget_note": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "source_url": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "thumbnail_url": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "image_urls": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "verified_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "fresh_until": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "event_id",
+                  "title",
+                  "description",
+                  "category",
+                  "venue_name",
+                  "address",
+                  "latitude",
+                  "longitude",
+                  "start_at",
+                  "end_at",
+                  "schedule_type",
+                  "suggested_duration_minutes",
+                  "budget_min",
+                  "budget_max",
+                  "currency",
+                  "budget_note",
+                  "source_url",
+                  "thumbnail_url",
+                  "image_urls",
+                  "verified_at",
+                  "fresh_until"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "result_id",
+          "document_id",
+          "platform",
+          "title",
+          "url",
+          "snippet",
+          "author",
+          "published_at",
+          "retrieved_at",
+          "channels",
+          "city_status",
+          "date_status",
+          "plannable",
+          "limitations",
+          "event"
+        ]
+      },
+      "maxItems": 50
+    },
+    "coverage": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "platform": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "local",
+              "cache",
+              "web_search",
+              "platform_search"
+            ]
+          },
+          "status": {
+            "enum": [
+              "success",
+              "timeout",
+              "error",
+              "unsupported",
+              "cancelled"
+            ]
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "cache_age_seconds": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "applied_filters": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "limitations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "platform",
+          "channel",
+          "mode",
+          "status",
+          "count",
+          "cache_age_seconds",
+          "applied_filters",
+          "limitations"
+        ]
+      }
+    },
+    "partial": {
+      "type": "boolean"
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "channel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "code": {
+            "type": "string"
+          },
+          "retryable": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "channel",
+          "code",
+          "retryable"
+        ]
+      }
+    },
+    "truncated": {
+      "type": "boolean"
+    },
+    "next_cursor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "search_id",
+    "status",
+    "city",
+    "timezone",
+    "effective_request",
+    "results",
+    "coverage",
+    "partial",
+    "errors",
+    "truncated",
+    "next_cursor"
+  ],
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://city-explorer.invalid/contracts/v1/response.schema.json"
+}

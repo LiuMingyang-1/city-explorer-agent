@@ -1,3 +1,4 @@
+import { afterResource } from "./resource-cleanup-fixture.ts";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -35,13 +36,13 @@ export function fakeClock(startIso = "2026-11-11T08:00:00.000Z") {
 
 export function openMemoryRepo(t: TestContext, now?: () => Date): SessionRepository {
   const repo = createSqliteSessionRepository(":memory:", now ? { now } : {});
-  t.after(() => repo.close());
+  afterResource(t, () => repo.close());
   return repo;
 }
 
 export function tempDbPath(t: TestContext): string {
   const dir = mkdtempSync(join(tmpdir(), "explorer-session-"));
-  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  afterResource(t, () => rmSync(dir, { recursive: true, force: true }));
   return join(dir, "sessions.db");
 }
 
@@ -51,7 +52,7 @@ export function openFileRepo(
   now?: () => Date,
 ): SessionRepository {
   const repo = createSqliteSessionRepository(dbPath, now ? { now } : {});
-  t.after(() => repo.close());
+  afterResource(t, () => repo.close());
   return repo;
 }
 

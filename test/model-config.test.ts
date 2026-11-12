@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { createExplorerModels } from "../src/agent/model.ts";
@@ -25,7 +26,7 @@ test("loadConfig reads EXPLORER_* env with defaults", () => {
   assert.equal(loaded.apiKey, "k");
   assert.equal(loaded.baseUrl, undefined);
   assert.equal(loaded.userId, "local"); // 缺省本地演示用户
-  assert.ok(loaded.sessionDbPath?.endsWith("data/sessions.db"));
+  assert.ok(loaded.sessionDbPath?.endsWith(join("data", "sessions.db")));
 });
 
 test("EXPLORER_USER_ID blank or whitespace falls back to 'local'", () => {
@@ -46,7 +47,7 @@ test("EXPLORER_SESSION_DB_PATH overrides the session db location", () => {
     EXPLORER_API_KEY: "k",
     EXPLORER_SESSION_DB_PATH: "tmp/my-sessions.db",
   });
-  assert.ok(loaded.sessionDbPath?.endsWith("tmp/my-sessions.db"));
+  assert.ok(loaded.sessionDbPath?.endsWith(join("tmp", "my-sessions.db")));
   // 会话库与活动库相互独立。
   assert.notEqual(loaded.sessionDbPath, loaded.dbPath);
 });

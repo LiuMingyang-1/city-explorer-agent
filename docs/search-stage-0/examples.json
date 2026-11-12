@@ -1,0 +1,556 @@
+[
+  {
+    "name": "empty_success",
+    "request": {
+      "date": "2026-11-14",
+      "keyword": "展览"
+    },
+    "response": {
+      "schema_version": "1.0",
+      "search_id": "sr_fixture",
+      "status": "success",
+      "city": "西安市",
+      "timezone": "Asia/Shanghai",
+      "effective_request": {
+        "date": "2026-11-14",
+        "keyword": "展览",
+        "mode": "hybrid",
+        "limit": 20,
+        "freshness": "cached"
+      },
+      "results": [],
+      "coverage": [
+        {
+          "platform": "web",
+          "channel": "fake-web",
+          "mode": "web_search",
+          "status": "success",
+          "count": 0,
+          "cache_age_seconds": null,
+          "applied_filters": [
+            "keyword"
+          ],
+          "limitations": [
+            "date_not_supported"
+          ]
+        }
+      ],
+      "partial": false,
+      "errors": [],
+      "truncated": false,
+      "next_cursor": null
+    }
+  },
+  {
+    "name": "documents_only",
+    "request": {
+      "date": "2026-11-14",
+      "keyword": "展览"
+    },
+    "response": {
+      "schema_version": "1.0",
+      "search_id": "sr_fixture",
+      "status": "success",
+      "city": "西安市",
+      "timezone": "Asia/Shanghai",
+      "effective_request": {
+        "date": "2026-11-14",
+        "keyword": "展览",
+        "mode": "hybrid",
+        "limit": 20,
+        "freshness": "cached"
+      },
+      "results": [
+        {
+          "kind": "document",
+          "result_id": "doc_fixture",
+          "document_id": "doc_fixture",
+          "platform": "web",
+          "title": "虚构测试活动资料",
+          "url": "https://example.com/fixture",
+          "snippet": "仅用于离线契约验证，不是真实活动。",
+          "author": null,
+          "published_at": null,
+          "retrieved_at": "2026-11-12T02:00:00Z",
+          "channels": [
+            "fake-web"
+          ],
+          "city_status": "unknown",
+          "date_status": "unknown",
+          "plannable": false,
+          "limitations": [
+            "schedule_missing"
+          ],
+          "event": null
+        }
+      ],
+      "coverage": [
+        {
+          "platform": "web",
+          "channel": "fake-web",
+          "mode": "web_search",
+          "status": "success",
+          "count": 1,
+          "cache_age_seconds": null,
+          "applied_filters": [
+            "keyword"
+          ],
+          "limitations": [
+            "date_not_supported"
+          ]
+        }
+      ],
+      "partial": false,
+      "errors": [],
+      "truncated": false,
+      "next_cursor": null
+    }
+  },
+  {
+    "name": "plannable_event",
+    "request": {
+      "date": "2026-11-14",
+      "keyword": "展览"
+    },
+    "response": {
+      "schema_version": "1.0",
+      "search_id": "sr_fixture",
+      "status": "success",
+      "city": "西安市",
+      "timezone": "Asia/Shanghai",
+      "effective_request": {
+        "date": "2026-11-14",
+        "keyword": "展览",
+        "mode": "hybrid",
+        "limit": 20,
+        "freshness": "cached"
+      },
+      "results": [
+        {
+          "kind": "event",
+          "result_id": "evt_fixture",
+          "document_id": "doc_fixture",
+          "platform": "web",
+          "title": "虚构测试活动资料",
+          "url": "https://example.com/fixture",
+          "snippet": "仅用于离线契约验证，不是真实活动。",
+          "author": null,
+          "published_at": null,
+          "retrieved_at": "2026-11-12T02:00:00Z",
+          "channels": [
+            "fake-web"
+          ],
+          "city_status": "confirmed",
+          "date_status": "confirmed",
+          "plannable": true,
+          "limitations": [],
+          "event": {
+            "event_id": "evt_fixture",
+            "title": "虚构展览",
+            "description": "离线测试",
+            "category": "展览",
+            "venue_name": "虚构场馆",
+            "address": "测试地址",
+            "latitude": 34.27,
+            "longitude": 108.95,
+            "start_at": "2026-11-14T10:00",
+            "end_at": "2026-11-14T17:00",
+            "schedule_type": "window",
+            "suggested_duration_minutes": 90,
+            "budget_min": null,
+            "budget_max": null,
+            "currency": "CNY",
+            "budget_note": null,
+            "source_url": "https://example.com/fixture",
+            "thumbnail_url": null,
+            "image_urls": [],
+            "verified_at": "2026-11-12T02:00:00Z",
+            "fresh_until": "2026-11-12T08:00:00Z"
+          }
+        }
+      ],
+      "coverage": [
+        {
+          "platform": "web",
+          "channel": "fake-web",
+          "mode": "web_search",
+          "status": "success",
+          "count": 1,
+          "cache_age_seconds": null,
+          "applied_filters": [
+            "keyword"
+          ],
+          "limitations": [
+            "date_not_supported"
+          ]
+        }
+      ],
+      "partial": false,
+      "errors": [],
+      "truncated": false,
+      "next_cursor": null
+    }
+  },
+  {
+    "name": "partial_failure",
+    "request": {
+      "date": "2026-11-14",
+      "keyword": "展览"
+    },
+    "response": {
+      "schema_version": "1.0",
+      "search_id": "sr_fixture",
+      "status": "partial",
+      "city": "西安市",
+      "timezone": "Asia/Shanghai",
+      "effective_request": {
+        "date": "2026-11-14",
+        "keyword": "展览",
+        "mode": "hybrid",
+        "limit": 20,
+        "freshness": "cached"
+      },
+      "results": [
+        {
+          "kind": "document",
+          "result_id": "doc_fixture",
+          "document_id": "doc_fixture",
+          "platform": "web",
+          "title": "虚构测试活动资料",
+          "url": "https://example.com/fixture",
+          "snippet": "仅用于离线契约验证，不是真实活动。",
+          "author": null,
+          "published_at": null,
+          "retrieved_at": "2026-11-12T02:00:00Z",
+          "channels": [
+            "fake-web"
+          ],
+          "city_status": "unknown",
+          "date_status": "unknown",
+          "plannable": false,
+          "limitations": [
+            "schedule_missing"
+          ],
+          "event": null
+        }
+      ],
+      "coverage": [
+        {
+          "platform": "web",
+          "channel": "fake-web",
+          "mode": "web_search",
+          "status": "success",
+          "count": 1,
+          "cache_age_seconds": null,
+          "applied_filters": [
+            "keyword"
+          ],
+          "limitations": [
+            "date_not_supported"
+          ]
+        },
+        {
+          "platform": "xiaohongshu",
+          "channel": "fake-xhs",
+          "mode": "platform_search",
+          "status": "timeout",
+          "count": 0,
+          "cache_age_seconds": null,
+          "applied_filters": [
+            "keyword"
+          ],
+          "limitations": [
+            "date_not_supported"
+          ]
+        }
+      ],
+      "partial": true,
+      "errors": [
+        {
+          "channel": "fake-xhs",
+          "code": "TIMEOUT",
+          "retryable": true
+        }
+      ],
+      "truncated": false,
+      "next_cursor": null
+    }
+  },
+  {
+    "name": "writeback_failure_document_preserved",
+    "request": {
+      "date": "2026-11-14",
+      "keyword": "展览"
+    },
+    "response": {
+      "schema_version": "1.0",
+      "search_id": "sr_fixture",
+      "status": "partial",
+      "city": "西安市",
+      "timezone": "Asia/Shanghai",
+      "effective_request": {
+        "date": "2026-11-14",
+        "keyword": "展览",
+        "mode": "hybrid",
+        "limit": 20,
+        "freshness": "cached"
+      },
+      "results": [
+        {
+          "kind": "document",
+          "result_id": "doc_fixture",
+          "document_id": "doc_fixture",
+          "platform": "web",
+          "title": "虚构测试活动资料",
+          "url": "https://example.com/fixture",
+          "snippet": "仅用于离线契约验证，不是真实活动。",
+          "author": null,
+          "published_at": null,
+          "retrieved_at": "2026-11-12T02:00:00Z",
+          "channels": [
+            "fake-web"
+          ],
+          "city_status": "unknown",
+          "date_status": "unknown",
+          "plannable": false,
+          "limitations": [
+            "schedule_missing",
+            "writeback_failed"
+          ],
+          "event": null
+        }
+      ],
+      "coverage": [
+        {
+          "platform": "web",
+          "channel": "fake-web",
+          "mode": "web_search",
+          "status": "success",
+          "count": 1,
+          "cache_age_seconds": null,
+          "applied_filters": [
+            "keyword"
+          ],
+          "limitations": [
+            "date_not_supported"
+          ]
+        }
+      ],
+      "partial": true,
+      "errors": [
+        {
+          "channel": null,
+          "code": "WRITEBACK_FAILED",
+          "retryable": true
+        }
+      ],
+      "truncated": false,
+      "next_cursor": null
+    }
+  },
+  {
+    "name": "first_page",
+    "request": {
+      "date": "2026-11-14",
+      "keyword": "展览"
+    },
+    "response": {
+      "schema_version": "1.0",
+      "search_id": "sr_fixture",
+      "status": "success",
+      "city": "西安市",
+      "timezone": "Asia/Shanghai",
+      "effective_request": {
+        "date": "2026-11-14",
+        "keyword": "展览",
+        "mode": "hybrid",
+        "limit": 20,
+        "freshness": "cached"
+      },
+      "results": [
+        {
+          "kind": "document",
+          "result_id": "doc_fixture",
+          "document_id": "doc_fixture",
+          "platform": "web",
+          "title": "虚构测试活动资料",
+          "url": "https://example.com/fixture",
+          "snippet": "仅用于离线契约验证，不是真实活动。",
+          "author": null,
+          "published_at": null,
+          "retrieved_at": "2026-11-12T02:00:00Z",
+          "channels": [
+            "fake-web"
+          ],
+          "city_status": "unknown",
+          "date_status": "unknown",
+          "plannable": false,
+          "limitations": [
+            "schedule_missing"
+          ],
+          "event": null
+        }
+      ],
+      "coverage": [
+        {
+          "platform": "web",
+          "channel": "fake-web",
+          "mode": "web_search",
+          "status": "success",
+          "count": 1,
+          "cache_age_seconds": null,
+          "applied_filters": [
+            "keyword"
+          ],
+          "limitations": [
+            "date_not_supported"
+          ]
+        }
+      ],
+      "partial": false,
+      "errors": [],
+      "truncated": true,
+      "next_cursor": "opaque-fixture-cursor"
+    }
+  },
+  {
+    "name": "last_page",
+    "request": {
+      "date": "2026-11-14",
+      "keyword": "展览",
+      "cursor": "opaque-fixture-cursor"
+    },
+    "response": {
+      "schema_version": "1.0",
+      "search_id": "sr_fixture",
+      "status": "success",
+      "city": "西安市",
+      "timezone": "Asia/Shanghai",
+      "effective_request": {
+        "date": "2026-11-14",
+        "keyword": "展览",
+        "mode": "hybrid",
+        "limit": 20,
+        "freshness": "cached",
+        "cursor": "opaque-fixture-cursor"
+      },
+      "results": [],
+      "coverage": [
+        {
+          "platform": "web",
+          "channel": "fake-web",
+          "mode": "web_search",
+          "status": "success",
+          "count": 0,
+          "cache_age_seconds": null,
+          "applied_filters": [
+            "keyword"
+          ],
+          "limitations": [
+            "date_not_supported"
+          ]
+        }
+      ],
+      "partial": false,
+      "errors": [],
+      "truncated": false,
+      "next_cursor": null
+    }
+  },
+  {
+    "name": "all_failed",
+    "request": {
+      "date": "2026-11-14",
+      "keyword": "展览"
+    },
+    "response": {
+      "schema_version": "1.0",
+      "search_id": "sr_fixture",
+      "status": "failed",
+      "city": "西安市",
+      "timezone": "Asia/Shanghai",
+      "effective_request": {
+        "date": "2026-11-14",
+        "keyword": "展览",
+        "mode": "hybrid",
+        "limit": 20,
+        "freshness": "cached"
+      },
+      "results": [],
+      "coverage": [
+        {
+          "platform": "web",
+          "channel": "fake-web",
+          "mode": "web_search",
+          "status": "error",
+          "count": 0,
+          "cache_age_seconds": null,
+          "applied_filters": [
+            "keyword"
+          ],
+          "limitations": [
+            "date_not_supported"
+          ]
+        }
+      ],
+      "partial": false,
+      "errors": [
+        {
+          "channel": "fake-web",
+          "code": "UPSTREAM_ERROR",
+          "retryable": true
+        }
+      ],
+      "truncated": false,
+      "next_cursor": null
+    }
+  },
+  {
+    "name": "cancelled",
+    "request": {
+      "date": "2026-11-14",
+      "keyword": "展览"
+    },
+    "response": {
+      "schema_version": "1.0",
+      "search_id": "sr_fixture",
+      "status": "cancelled",
+      "city": "西安市",
+      "timezone": "Asia/Shanghai",
+      "effective_request": {
+        "date": "2026-11-14",
+        "keyword": "展览",
+        "mode": "hybrid",
+        "limit": 20,
+        "freshness": "cached"
+      },
+      "results": [],
+      "coverage": [
+        {
+          "platform": "web",
+          "channel": "fake-web",
+          "mode": "web_search",
+          "status": "cancelled",
+          "count": 0,
+          "cache_age_seconds": null,
+          "applied_filters": [
+            "keyword"
+          ],
+          "limitations": [
+            "date_not_supported"
+          ]
+        }
+      ],
+      "partial": false,
+      "errors": [
+        {
+          "channel": null,
+          "code": "CANCELLED",
+          "retryable": false
+        }
+      ],
+      "truncated": false,
+      "next_cursor": null
+    }
+  }
+]

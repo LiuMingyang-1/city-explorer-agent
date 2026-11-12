@@ -1,3 +1,4 @@
+import { afterResource } from "./resource-cleanup-fixture.ts";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -12,12 +13,15 @@ export const LAST_DAY = "2026-11-17"; // BASE + SEED_DAYS - 1
 
 export function seededRepo(t: TestContext, baseDate = BASE) {
   const dir = mkdtempSync(join(tmpdir(), "explorer-data-"));
-  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  afterResource(t, () => rmSync(dir, { recursive: true, force: true }));
   const dbPath = join(dir, "events.db");
   const inserted = seedDatabase(dbPath, baseDate);
   const repo = createSqliteEventRepository(dbPath);
-  t.after(() => repo.close());
+  afterResource(t, () => repo.close());
   return { repo, inserted };
 }
 
-export const dayOf = (e: { startAt: string }) => e.startAt.slice(0, 10);
+export const dayOf = (e: { startAt: string | null }) => {
+  if (e.startAt === null) throw new Error("Seed fixture must have a known start time");
+  return e.startAt.slice(0, 10);
+};

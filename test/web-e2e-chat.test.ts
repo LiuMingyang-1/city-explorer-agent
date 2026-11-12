@@ -30,6 +30,7 @@ test("首访签发匿名 cookie；同 cookie 澄清→行程→修改行程，hi
   const ev1 = await exhibition(stack.repository, DAY1);
   const talk = (await stack.repository.search({ date: DAY1, category: "讲座" }))[0];
   assert.ok(talk, "种子库应有讲座活动");
+  assert.ok(talk.startAt !== null && talk.endAt !== null);
   const planA: Itinerary = {
     date: DAY1,
     summary: "初版：单站看展",

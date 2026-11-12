@@ -8,3 +8,19 @@ dist/
 coverage/
 .DS_Store
 .lody/
+
+# Local collection credentials and unreviewed source material
+.env.*
+!.env.example
+.local-data/
+.upstream-review/
+# Never ship live SQLite sidecars with a dataset snapshot
+datasets/**/*.db-wal
+datasets/**/*.db-shm
+datasets/**/*.db-journal
+
+.upstream-review*/
+# Local crawler login profiles and cookies
+browser_data/
+cookies/
+*.cookies.json
