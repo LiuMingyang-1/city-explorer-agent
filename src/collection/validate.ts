@@ -17,7 +17,7 @@ const secret=/\bsk-(?:qovia-)?[A-Za-z0-9_-]{16,}|(?:api[_-]?key|authorization)\s
 export function publicUrl(value: string): boolean {
  try {const u=new URL(value);const host=u.hostname.replace(/^\[|\]$/g,"");
   if(!["http:","https:"].includes(u.protocol)||u.username||u.password||!host.includes(".")||isIP(host)||/^example\.(?:com|org|net)$/.test(host)||/(?:^|\.)(?:localhost|local|internal|test|invalid|example|onion)$/.test(host))return false;
-  return ![...u.searchParams.keys()].some(k=>/^(?:api[_-]?key|authorization|access_token|secret)$/i.test(k));
+  return ![...u.searchParams.keys()].some(k=>/^(?:api[_-]?key|key|authorization|access_token|xsec_token|cookie|secret)$/i.test(k));
  } catch{return false;}
 }
 function localTime(value:string):number {
@@ -32,7 +32,7 @@ export function validateDataset(value:unknown,options:ValidationOptions):Validat
  if(secret.test(JSON.stringify(data)))issue("POSSIBLE_SECRET");
  if(!isCalendarDate(data.base_date))issue("INVALID_BASE_DATE");
  const asOf=Date.parse(options.asOf);
- if(!/^\d{4}-\d{2}-\d{2}T.*Z$/.test(options.asOf)||!Number.isFinite(asOf))issue("INVALID_AS_OF");
+ if(!/^\d{4}-\d{2}-\d{2}T.*Z$/.test(options.asOf)||!isCalendarDate(options.asOf.slice(0,10))||!Number.isFinite(asOf))issue("INVALID_AS_OF");
  const from=localTime(data.base_date+"T00:00"),until=from+data.days*86400000;
  const provenance=new Map(data.provenance.map(p=>[p.event_id,p]));
  if(provenance.size!==data.provenance.length)issue("DUPLICATE_PROVENANCE");

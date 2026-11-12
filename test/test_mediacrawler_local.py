@@ -30,10 +30,8 @@ class CollectorBoundaryTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "PATH_MUST_BE_PRIVATE"):
                 runner.private_path(str(path))
 
-    def test_six_enabled_platforms_have_distinct_login_destinations(self):
-        self.assertEqual(len(runner.PLATFORMS), 6)
-        self.assertNotIn("zhihu", runner.PLATFORMS)
-        self.assertEqual(len({value[2] for value in runner.PLATFORMS.values()}), 6)
+    def test_only_xiaohongshu_is_enabled(self):
+        self.assertEqual(set(runner.PLATFORMS), {"xhs"})
 
     def test_platform_response_caps_and_unrecognized_errors(self):
         for platform, key in [("dy", "data"), ("ks", "feeds"), ("bili", "result")]:

@@ -21,11 +21,6 @@ ROOT = Path(__file__).resolve().parents[1]
 PIN = "306ab4ca26c0e44fb87ede0e40e98748752815a6"
 PLATFORMS = {
     "xhs": ("xhs", "XiaoHongShuLogin", "https://www.xiaohongshu.com"),
-    "dy": ("douyin", "DouYinLogin", "https://www.douyin.com"),
-    "ks": ("kuaishou", "KuaishouLogin", "https://www.kuaishou.com"),
-    "bili": ("bilibili", "BilibiliLogin", "https://www.bilibili.com"),
-    "wb": ("weibo", "WeiboLogin", "https://weibo.com"),
-    "tieba": ("tieba", "BaiduTieBaLogin", "https://tieba.baidu.com"),
 }
 CLIENT_CLASSES = {
     "xhs": "XiaoHongShuClient", "dy": "DouYinClient", "ks": "KuaiShouClient",

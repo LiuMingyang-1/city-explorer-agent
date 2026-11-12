@@ -9,3 +9,25 @@ export function eventId(sourceEventKey: string, venueKey: string, slotKey: strin
  if(parts.some(s=>!s))throw new Error("EMPTY_EVENT_IDENTITY");
  return "xa_"+createHash("sha256").update(JSON.stringify(parts)).digest("hex").slice(0,32);
 }
+
+export interface SlotIdentity {
+  source_event_key: string; venue_key: string; slot_key: string; event_id: string; aliases: string[];
+}
+/** Pure registry update. A single unknown occurrence may be completed, never silently
+ * merged into one of several known occurrences. Registry is published with the batch.
+ */
+export function registerSlot(state: readonly SlotIdentity[], sourceKey: string, venueKey: string, startAt: string | null): { entry: SlotIdentity; state: SlotIdentity[] } {
+  const next = structuredClone([...state]);
+  const token = startAt ?? "unscheduled";
+  const group = next.filter(e => e.source_event_key === sourceKey && e.venue_key === venueKey);
+  const unresolved = (entry: SlotIdentity) => entry.aliases.every(a => a === "unscheduled");
+  if (group.length > 1 && token === "unscheduled") throw new Error("AMBIGUOUS_OCCURRENCE_IDENTITY");
+  let entry = group.find(e => e.aliases.includes(token));
+  if (!entry && group.length === 1 && (token === "unscheduled" || unresolved(group[0]))) entry = group[0];
+  if (!entry && group.length > 1 && group.some(unresolved)) throw new Error("AMBIGUOUS_OCCURRENCE_IDENTITY");
+  if (!entry) {
+    entry = { source_event_key: sourceKey, venue_key: venueKey, slot_key: token, event_id: eventId(sourceKey, venueKey, token), aliases: [token] };
+    next.push(entry);
+  } else if (!entry.aliases.includes(token)) entry.aliases.push(token);
+  return { entry, state: next };
+}

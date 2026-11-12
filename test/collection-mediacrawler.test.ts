@@ -64,5 +64,5 @@ test("Zhihu excerpts, missing content and unsafe numeric IDs never become valid 
   assert.throws(() => normalizeMediaCrawlerRow("wb", { note_id: Number.MAX_SAFE_INTEGER + 1, content: "活动" }, fetched), /UNSAFE_SOURCE_ID/);
   assert.throws(() => normalizeMediaCrawlerRow("xhs", { note_id: "../bad", desc: "活动" }, fetched), /INVALID_SOURCE_ID/);
   assert.equal(SOCIAL_PLATFORMS.length, 7);
-  assert.deepEqual([...ENABLED_SOCIAL_PLATFORMS], ["xhs", "dy", "ks", "bili", "wb", "tieba"]);
+  assert.deepEqual([...ENABLED_SOCIAL_PLATFORMS], ["xhs"]);
 });

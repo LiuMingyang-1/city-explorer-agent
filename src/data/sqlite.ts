@@ -91,17 +91,21 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
 }
 
 /** 打开（必要时创建）SQLite 活动库，返回 EventRepository 实现。 */
-export function createSqliteEventRepository(dbPath: string): EventRepository {
-  if (dbPath !== ":memory:") {
+export function createSqliteEventRepository(dbPath: string, options: { readOnly?: boolean; isAvailable?: (id: string) => boolean } = {}): EventRepository {
+  if (dbPath !== ":memory:" && !options.readOnly) {
     mkdirSync(dirname(dbPath), { recursive: true });
   }
-  const db = new DatabaseSync(dbPath);
-  ensureEventsSchema(db);
+  const db = new DatabaseSync(dbPath, { readOnly: options.readOnly ?? false });
+  try {
+    if (!options.readOnly) ensureEventsSchema(db);
+    if (options.isAvailable) db.function("collection_available", id => options.isAvailable!(String(id)) ? 1 : 0);
+  } catch (error) { db.close(); throw error; }
 
   return {
     search(input: SearchEventsInput): Promise<Event[]> {
       // Collection candidates may have NULL coordinates; they are not published events.
       const clauses: string[] = ["latitude IS NOT NULL", "longitude IS NOT NULL"];
+      if (options.isAvailable) clauses.push("collection_available(id) = 1");
       const params: string[] = [];
       if (input.date) {
         // 活动时间窗与当日有交集即可参加（窗口可跨多日）。

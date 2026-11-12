@@ -5,8 +5,8 @@ import { isCalendarDate } from "../itinerary/constraints.ts";
 /** Export mappings verified against this upstream revision, not floating main. */
 export const MEDIACRAWLER_COMMIT = "306ab4ca26c0e44fb87ede0e40e98748752815a6";
 export const SOCIAL_PLATFORMS = ["xhs", "dy", "ks", "bili", "wb", "tieba", "zhihu"] as const;
-/** User scope: Zhihu is excluded; historical export parsing remains supported. */
-export const ENABLED_SOCIAL_PLATFORMS = ["xhs", "dy", "ks", "bili", "wb", "tieba"] as const;
+/** Current user scope: XHS only. Historical platform export parsing stays dormant. */
+export const ENABLED_SOCIAL_PLATFORMS = ["xhs"] as const;
 export type SocialPlatform = typeof SOCIAL_PLATFORMS[number];
 
 export interface CollectedDocument {
@@ -63,7 +63,8 @@ export function normalizeMediaCrawlerRow(platform: SocialPlatform, value: unknow
     case "xhs":
       sourceId = id(row, "note_id"); url = `https://www.xiaohongshu.com/explore/${sourceId}`;
       body = text(row, "desc"); published = timestamp(row.time, "milliseconds");
-      updated = timestamp(row.last_update_time, "milliseconds"); break;
+      updated = timestamp(row.last_update_time, "milliseconds");
+      scope = row.type === "video" ? "caption_only" : "exported_text"; break;
     case "dy":
       sourceId = id(row, "aweme_id"); url = `https://www.douyin.com/video/${sourceId}`;
       body = text(row, "desc"); published = timestamp(row.create_time, "seconds"); scope = "caption_only"; break;
