@@ -54,7 +54,7 @@
   const choices=document.createElement('div');choices.className='activity-choices';choices.setAttribute('aria-label','此地活动');
   const body=document.createElement('div');body.className='activity-detail-body';
   const buttons=available.map((event,index)=>{
-   const button=text('button','activity-choice',event.category+' · '+(index+1));button.type='button';button.title=event.title;button.addEventListener('click',()=>show(index));choices.append(button);return button;
+   const button=text('button','activity-choice',(event.category||'活动')+' · '+(index+1));button.type='button';button.title=event.title;button.addEventListener('click',()=>show(index));choices.append(button);return button;
   });if(available.length>1)panel.append(choices);panel.append(body);
   function show(index){
    const e=available[index];body.replaceChildren();buttons.forEach((b,i)=>{b.classList.toggle('active',i===index);b.setAttribute('aria-pressed',String(i===index));});

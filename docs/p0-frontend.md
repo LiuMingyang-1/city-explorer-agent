@@ -62,7 +62,7 @@ npm run dev:frontend
 
 ## 验证边界
 
-自动检查覆盖真实样例结构、绘图调用和网络数据解析，不替代浏览器视觉验收。高德 Key 尚未配置，没有调用实际路径规划服务，也没有承诺样例是可执行出行计划。
+自动检查覆盖真实样例结构、绘图调用和网络数据解析，不替代浏览器视觉验收。已配置预览站点高德 JS Key 并验证地址/坐标转换/天气服务；没有调用实际路径规划服务，样例仍不是可执行出行计划。
 
 ## 高德提供方补充
 
@@ -77,3 +77,5 @@ npm run dev:frontend
 - 种子中的 `example.com` 图片/链接是占位资源；演示使用本地示意配图，链接指向 GitHub 中的种子数据来源，明确标注模拟场地/排期。配图来源见 `frontend/assets/demo/SOURCES.md`。
 - 后端近期活动列表接口准备好后，配置 `window.WANDER_CONFIG.eventsEndpoint`，返回 `{coordinate_system, events: EventView[]}` 即可接入；真实数据应省略/置 false `is_demo`，提供真实图片和原站链接。生产数据不会自动加上模拟活动。
 - 高德代理为带合法 `callback` 的响应输出 JavaScript MIME，兼容浏览器 `nosniff` 策略；普通 JSON 仍输出 JSON。
+
+地图坐标缓存对 SDK 输入使用独立副本：高德 `convertFrom` 会把传入数组成员原地转换为 `LngLat` 对象，不能再按原始数值数组读取。回归检查模拟了这一行为，覆盖景点初始化和路线转换。缩放控件采用 JS API 2 的 CSS 定位配置，控件错误不再导致整个地图回退。

@@ -7,7 +7,7 @@ function setup(){
  const calls:number[]=[],scripts:string[]=[],maps:Record<string,unknown>[]=[],lines:Record<string,unknown>[]=[],selections:Record<string,unknown>[]=[];
  class Marker {options:Record<string,unknown>;constructor(options:Record<string,unknown>){this.options=options}on(){}setMap(){}}
  class MapMock {constructor(options:Record<string,unknown>){maps.push(options)}addControl(){}add(){}remove(){}on(){}destroy(){}setZoomAndCenter(){}setFitView(){}getSize(){return {width:1440,height:900}}lngLatToContainer(){return {x:800,y:400}}}
- const sdk={convertFrom(batch:number[][],_type:string,callback:(s:string,r:object)=>void){calls.push(batch.length);callback('complete',{locations:batch.map(p=>({lng:p[0]!+.006,lat:p[1]!+.004}))})},plugin(_p:unknown,done:()=>void){done()},Pixel:class{constructor(_x:number,_y:number){}},Map:class extends MapMock{constructor(_id:string,options:Record<string,unknown>){super(options)}},ToolBar:class{},Marker,Polyline:class extends Marker{constructor(o:Record<string,unknown>){super(o);lines.push(o)}},Geocoder:class{getAddress(_point:unknown,cb:(s:string,r:object)=>void){cb('complete',{regeocode:{addressComponent:{adcode:'610100',district:'雁塔区'}}})}},Weather:class{getLive(_city:string,cb:(s:string,r:object)=>void){cb('complete',{temperature:'22',weather:'晴'})}}};
+ const sdk={convertFrom(batch:number[][],_type:string,callback:(s:string,r:object)=>void){calls.push(batch.length);const locations=batch.map(p=>({lng:p[0]!+.006,lat:p[1]!+.004}));locations.forEach((p,i)=>{(batch as unknown[])[i]=p;});callback('complete',{locations})},plugin(_p:unknown,done:()=>void){done()},Pixel:class{constructor(_x:number,_y:number){}},Map:class extends MapMock{constructor(_id:string,options:Record<string,unknown>){super(options)}},ToolBar:class{constructor(o:{position:object}){assert.equal(typeof o.position,'object')}},Marker,Polyline:class extends Marker{constructor(o:Record<string,unknown>){super(o);lines.push(o)}},Geocoder:class{getAddress(_point:unknown,cb:(s:string,r:object)=>void){cb('complete',{regeocode:{addressComponent:{adcode:'610100',district:'雁塔区'}}})}},Weather:class{getLive(_city:string,cb:(s:string,r:object)=>void){cb('complete',{temperature:'22',weather:'晴'})}}};
  const document={createElement:()=>new Element(),head:{append(script:Element&{onload:()=>void}){scripts.push(script.src);queueMicrotask(script.onload)}},querySelector:()=>({getBoundingClientRect:()=>({left:28,right:450,top:28,bottom:872,height:844})})};
  const context=vm.createContext({window:{AMap:sdk,location:{href:'https://city.example/'}},document,URL,console,innerWidth:1440,setTimeout:()=>0,clearTimeout(){},fetch:async()=>({ok:true,json:async()=>({enabled:true,jsKey:'test-js-key',serviceHost:'/_AMapService',style:'amap://styles/light',backendCoordinateSystem:'WGS84'})}),showMapStatus(){},state:{},});
  vm.runInContext(readFileSync(new URL('../frontend/amap.js',import.meta.url),'utf8'),context);
@@ -16,13 +16,13 @@ function setup(){
 
 test('native map uses official conversion in batches, caches WGS coordinates and never reconverts GCJ',async()=>{
  const h=setup(),points=Array.from({length:85},(_,i)=>[108.9+i*.0001,34.2]);
- const result=await h.provider.convert(points,'WGS84');assert.deepEqual(h.calls,[40,40,5]);assert.equal(result[0][0],points[0]![0]!+.006);
+ const result=await h.provider.convert(points,'WGS84');assert.deepEqual(h.calls,[40,40,5]);assert(points.every(Array.isArray),'SDK mutation must not reach caller coordinates');assert.equal(result[0][0],points[0]![0]!+.006);
  await h.provider.convert(points,'WGS84');assert.equal(h.calls.length,3);
  const gcj=await h.provider.convert([[109,34]],'GCJ02');assert.deepEqual(Array.from(gcj[0]),[109,34]);assert.equal(h.calls.length,3);
 });
 
 test('native initialization keeps the simple theme and exposes no security code to the SDK',async()=>{
- const h=setup();assert.equal(await h.provider.init({places:[],onSelect:(location:Record<string,unknown>)=>h.selections.push(location)}),true);
+ const h=setup();assert.equal(await h.provider.init({places:[{lat:34.25,lng:108.94,name:'西安城墙',rating:5}],onSelect:(location:Record<string,unknown>)=>h.selections.push(location)}),true);
  assert.equal(h.provider.ready,true);assert.equal(h.maps[0]!.mapStyle,'amap://styles/light');assert.equal(h.maps[0]!.showLabel,false);
  assert.deepEqual(JSON.parse(JSON.stringify(h.context.window._AMapSecurityConfig)),{serviceHost:'https://city.example/_AMapService'});
  assert.equal(h.selections[0]!.coordinateSystem,'GCJ02');assert(h.scripts[0]!.startsWith('https://webapi.amap.com/maps?'));

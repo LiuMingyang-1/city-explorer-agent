@@ -22,7 +22,10 @@
   if(!['WGS84','WGS-84'].includes(String(system).toUpperCase()))throw new Error('坐标系尚不支持');
   const missing=[...new Map(points.filter(p=>!converted.has(key(p))).map(p=>[key(p),p])).values()];
   for(let at=0;at<missing.length;at+=40){
-   const batch=missing.slice(at,at+40),result=await call(callback=>window.AMap.convertFrom(batch,'gps',callback));
+   // The SDK normalizes its input array in place into LngLat objects.
+   // Keep numeric originals intact for cache keys and callers (including route data).
+   const batch=missing.slice(at,at+40),sdkInput=batch.map(p=>[p[0],p[1]]);
+   const result=await call(callback=>window.AMap.convertFrom(sdkInput,'gps',callback));
    if(!Array.isArray(result.locations)||result.locations.length!==batch.length)throw new Error('坐标转换未完成');
    batch.forEach((p,i)=>converted.set(key(p),point(result.locations[i])));
   }
@@ -69,7 +72,8 @@
   await loadSDK(config.jsKey,config.serviceHost);
   const inputs=[[108.95,34.27],...places.map(p=>[p.lng,p.lat])],positions=await convert(inputs);
   native=new window.AMap.Map('map',{center:positions[0],zoom:11,viewMode:'2D',mapStyle:config.style,features:['bg','road'],showLabel:false,resizeEnable:true});
-  native.addControl(new window.AMap.ToolBar({position:'RB',offset:new window.AMap.Pixel(28,65)}));
+  // JS API 2 uses CSS positions. A control failure must not discard the map.
+  try{native.addControl(new window.AMap.ToolBar({position:{right:'28px',bottom:'65px'}}));}catch{}
   places.forEach((place,index)=>{
    const content=document.createElement('div');content.className='place-wrap direction-right';
    const dot=document.createElement('span');dot.className='place-dot';dot.textContent='·';

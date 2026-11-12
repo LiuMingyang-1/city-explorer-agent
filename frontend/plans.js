@@ -152,7 +152,7 @@
    if(drawMap)draw(model,{fit,onSelect:next=>choose(next)});
    if(capture)window.WanderHistory?.capture();
   }
-  preview.addEventListener('click',()=>{overlay.hidden=false;preview.setAttribute('aria-expanded','true');document.querySelector('.glass-card').classList.add('viewing-plan');scroll.scrollTo({top:0});back.focus({preventScroll:true});});
+  preview.addEventListener('click',()=>{overlay.hidden=false;preview.setAttribute('aria-expanded','true');document.querySelector('.glass-card').classList.add('viewing-plan');choose(model.active_plan,{fit:true,capture:false});scroll.scrollTo({top:0});back.focus({preventScroll:true});});
   currentView={buttons,preview};choose(model.active_plan,{fit:true,capture:false});
   window.WanderActivities?.addPlanEvents(model);
   scrollMessages();return message;
