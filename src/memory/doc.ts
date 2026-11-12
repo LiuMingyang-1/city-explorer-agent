@@ -71,44 +71,12 @@ function assembleDoc(
 }
 
 /**
- * 结构保全压缩：逐轮缩减正文最长的小节——多行先丢尾行、单行按码点截断——
- * 直到整篇 ≤ maxChars。三个固定小节的标题始终保留，重要的小节内容
- * （过敏约束、足迹等短正文）不被静默截掉。
- */
-function fitWithinBudget(
-  fixed: Map<string, string>,
-  maxChars: number,
-): string | undefined {
-  const bodies = MEMORY_SECTIONS.map((name) => {
-    const body = (fixed.get(name) ?? "").trimEnd();
-    return { name, lines: body === "" ? [] : body.split("\n") };
-  });
-  let doc = assembleDoc(bodies, []);
-  let guard = 0;
-  while (doc.length > maxChars && bodies.some((section) => section.lines.length > 0)) {
-    if (++guard > 100_000) return undefined;
-    const longest = bodies.reduce((a, b) =>
-      b.lines.join("\n").length > a.lines.join("\n").length ? b : a,
-    );
-    if (longest.lines.length > 1) {
-      longest.lines.pop();
-    } else {
-      const points = [...(longest.lines[0] ?? "")];
-      const keep = points.length - (doc.length - maxChars);
-      longest.lines = keep <= 0 ? [] : [points.slice(0, keep).join("")];
-    }
-    doc = assembleDoc(bodies, []);
-  }
-  return doc.length <= maxChars ? doc : undefined;
-}
-
-/**
  * 修剪模型输出为合法文档：剥掉首个 `## ` 之前的杂言、按固定顺序重排
  * 三个小节（缺的从 currentDoc 继承内容——空补会抹除旧节记忆，故不补空）、
  * 多余小节附在最后。
  * 校验契约：至少含一个固定小节，否则视为垃圾输出 → undefined。
- * 超过 maxChars 时先丢弃多余小节，仍超则结构保全压缩（fitWithinBudget），
- * 不再静默截尾整篇文档。
+ * 超过 maxChars 也整体拒绝 → undefined——持久层不做内容剪裁：不按长度
+ * 猜测重要性、不丢多余小节、不截断正文，由上层保留原文与游标。
  */
 export function normalizeMemoryDoc(
   raw: string,
@@ -133,10 +101,7 @@ export function normalizeMemoryDoc(
     return { name, lines: body === "" ? [] : body.split("\n") };
   });
   const doc = assembleDoc(bodies, extras);
-  if (doc.length <= maxChars) return doc;
-  const fixedOnly = assembleDoc(bodies, []);
-  if (fixedOnly.length <= maxChars) return fixedOnly;
-  return fitWithinBudget(fixed, maxChars);
+  return doc.length <= maxChars ? doc : undefined;
 }
 
 /**

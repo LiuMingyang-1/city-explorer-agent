@@ -52,26 +52,13 @@ test("normalizeMemoryDoc 缺失固定小节从 currentDoc 继承，不补空抹�
   assert.match(partial, /## 足迹\n$/);
 });
 
-test("normalizeMemoryDoc 超长：先丢多余小节，再结构保全压缩（不静默截尾丢节）", () => {
-  // 多余小节先整体丢弃。
+test("normalizeMemoryDoc 超预算整体拒绝：不丢节、不截正文、不丢多余小节", () => {
+  // 回归：重要约束位于最长小节尾部——任何按长度剪裁都会丢过敏行，故整体拒绝。
+  const raw = `## 用户\n常驻西安\n\n## 偏好\n${"甲".repeat(3990)}\n对花生过敏\n\n## 足迹\n2026-11-10 看展\n`;
+  assert.equal(normalizeMemoryDoc(raw, 4_000), undefined);
+  // extras 凑不下同样整体拒绝，不单独丢弃小节。
   const withExtra = `## 用户\n${"u".repeat(50)}\n\n## 其他\n${"e".repeat(50)}`;
-  const doc = normalizeMemoryDoc(withExtra, 80);
-  assert.ok(doc);
-  assert.match(doc, /## 用户\nu{50}/);
-  assert.doesNotMatch(doc, /## 其他/);
-  assert.ok(doc.length <= 80);
-
-  // 多行正文：逐轮丢最长小节的尾行，三节标题全部保留。
-  const doc2 = normalizeMemoryDoc("## 用户\nAAAAA\nBBBBB\nCCCCC\n", 33);
-  assert.equal(doc2, "## 用户\nAAAAA\nBBBBB\n\n## 偏好\n\n## 足迹\n");
-
-  // 单行超长正文：按码点截断该最长行，其他小节内容完整保留。
-  const huge = `## 用户\n${"长".repeat(100)}\n\n## 偏好\n对花生过敏\n\n## 足迹\n看展\n`;
-  const doc3 = normalizeMemoryDoc(huge, 40);
-  assert.ok(doc3);
-  assert.ok(doc3.length <= 40);
-  assert.match(doc3, /## 偏好\n对花生过敏/);
-  assert.match(doc3, /## 足迹\n看展/);
+  assert.equal(normalizeMemoryDoc(withExtra, 80), undefined);
 });
 
 test("normalizeMemoryDoc 剥掉含蒸馏分隔符的行，不污染后续请求", () => {

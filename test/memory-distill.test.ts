@@ -296,7 +296,7 @@ test("error/skipped 不推游标：恢复后从同一游起重蒸", async (t) =>
   assert.equal(outcome.throughMessageSeq, 4);
 });
 
-test("超长蒸馏输出：结构保全压缩，固定小节与重要内容不丢", async (t) => {
+test("超长蒸馏输出 → error，原文与游标保持不变", async (t) => {
   const { sessions, user, main, writer, agent, faux } = await makeDistill(t);
   const original = "## 用户\n常驻西安\n\n## 偏好\n对花生过敏\n\n## 足迹\n2026-11-10 看展\n";
   await sessions.putUserMemory(user.userId, {
@@ -309,9 +309,10 @@ test("超长蒸馏输出：结构保全压缩，固定小节与重要内容不�
     "喜欢展览",
     "周末有空",
   ]);
+  // 回归：重要约束（对花生过敏）位于最长小节尾部——持久层不得剪裁正文。
   faux.setResponses([
     fauxAssistantMessage(
-      `## 用户\n${"甲".repeat(3990)}\n\n## 偏好\n对花生过敏\n\n## 足迹\n2026-11-10 看展\n`,
+      `## 用户\n常驻西安\n\n## 偏好\n${"甲".repeat(3990)}\n对花生过敏\n\n## 足迹\n2026-11-10 看展\n`,
     ),
   ]);
   const outcome = await distillMemory({
@@ -320,15 +321,11 @@ test("超长蒸馏输出：结构保全压缩，固定小节与重要内容不�
     userId: user.userId,
     sessionId: main.sessionId,
   });
-  assert.equal(outcome.status, "updated");
-  assert.equal(outcome.throughMessageSeq, 3);
+  assert.equal(outcome.status, "error");
+  assert.equal(outcome.throughMessageSeq, undefined);
   const memory = await sessions.getUserMemory(user.userId);
-  assert.ok(memory);
-  // 三个固定小节标题与重要内容（过敏约束、足迹）全部保留，不静默截尾。
-  assert.match(memory.content, /## 用户\n/);
-  assert.match(memory.content, /## 偏好\n对花生过敏/);
-  assert.match(memory.content, /## 足迹\n2026-11-10 看展/);
-  assert.ok(memory.content.length <= 4_000);
+  assert.equal(memory?.content, original);
+  assert.equal(memory?.throughMessageSeq, 0);
 });
 
 test("无固定小节的垃圾输出 → error，原文与游标不被覆盖", async (t) => {
@@ -459,4 +456,43 @@ test("分片数超硬上限的超长消息：明示跳过（审计行进文档�
   assert.ok(memory);
   assert.match(memory.content, /## 蒸馏记录/);
   assert.match(memory.content, /seq=1/);
+});
+
+test("蒸馏审计跨调用持久：后续蒸馏不抹除既有审计行", async (t) => {
+  const { sessions, user, main, writer, agent, faux } = await makeDistill(t);
+  // 第一次：分片上限 1 → 首条 17k 消息明示跳过，审计行入库。
+  await seedMessages(sessions, writer, user.userId, main.sessionId, [
+    "甲".repeat(17_000),
+    "b",
+    "c",
+  ]);
+  const doc = "## 用户\nu\n\n## 偏好\np\n\n## 足迹\nf\n";
+  faux.setResponses([fauxAssistantMessage(doc)]);
+  const first = await distillMemory({
+    agent,
+    sessions,
+    userId: user.userId,
+    sessionId: main.sessionId,
+    maxRecordShards: 1,
+  });
+  assert.equal(first.status, "updated");
+  assert.equal(first.throughMessageSeq, 3);
+  const before = await sessions.getUserMemory(user.userId);
+  assert.ok(before);
+  assert.match(before.content, /## 蒸馏记录\n- 蒸馏跳过 seq=1/);
+
+  // 第二次：模型返回普通三节文档——审计行不得被抹掉。
+  await seedMessages(sessions, writer, user.userId, main.sessionId, ["d", "e", "f"]);
+  faux.setResponses([fauxAssistantMessage(doc)]);
+  const second = await distillMemory({
+    agent,
+    sessions,
+    userId: user.userId,
+    sessionId: main.sessionId,
+  });
+  assert.equal(second.status, "updated");
+  assert.equal(second.throughMessageSeq, 6);
+  const after = await sessions.getUserMemory(user.userId);
+  assert.ok(after);
+  assert.match(after.content, /## 蒸馏记录\n- 蒸馏跳过 seq=1/);
 });
