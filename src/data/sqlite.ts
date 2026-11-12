@@ -15,6 +15,9 @@ export { EVENTS_TABLE_DDL, ensureEventsSchema } from "./schema.ts";
 /** search 无条件时的返回上限；有条件时同样生效，防止把整库塞给模型。 */
 const SEARCH_LIMIT = 100;
 
+/** 地球半径（公里），haversine 球面距离用。 */
+const EARTH_RADIUS_KM = 6371;
+
 type EventRow = {
   id: string;
   title: string;
@@ -76,6 +79,17 @@ function escapeLike(keyword: string): string {
   return keyword.replace(/[\\%_]/g, (c) => `\\${c}`);
 }
 
+/** 两经纬度点间的球面距离（haversine），返回公里数。 */
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(a));
+}
+
 /** 打开（必要时创建）SQLite 活动库，返回 EventRepository 实现。 */
 export function createSqliteEventRepository(dbPath: string): EventRepository {
   if (dbPath !== ":memory:") {
@@ -103,6 +117,31 @@ export function createSqliteEventRepository(dbPath: string): EventRepository {
         params.push(pattern, pattern);
       }
       const where = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
+      const { near, radiusKm } = input;
+      if (near) {
+        // 距离是查询派生值：SQL 只做原条件过滤（不排序），取出后在 JS 侧
+        // 算球面距离。radiusKm 过滤与升序排序都用未取整的原始距离——
+        // 先取整会放宽半径边界、并列值还会丢掉真实次序；输出的
+        // distanceKm 才保留两位小数。截断到 SEARCH_LIMIT 在排序后。
+        const rows = db
+          .prepare(`SELECT * FROM events ${where}`)
+          .all(...params) as EventRow[];
+        let events = rows.map((row) => ({
+          event: toEvent(row),
+          distance: haversineKm(near.lat, near.lng, row.latitude, row.longitude),
+        }));
+        if (radiusKm != null) {
+          events = events.filter((e) => e.distance <= radiusKm);
+        }
+        events.sort((a, b) => a.distance - b.distance);
+        return Promise.resolve(
+          events.slice(0, SEARCH_LIMIT).map(({ event, distance }) => ({
+            ...event,
+            distanceKm: Math.round(distance * 100) / 100,
+          })),
+        );
+      }
+      // 无 near 时单独传的 radiusKm 被忽略，维持原排序与上限。
       const rows = db
         .prepare(`SELECT * FROM events ${where} ORDER BY start_at, id LIMIT ?`)
         .all(...params, SEARCH_LIMIT) as EventRow[];

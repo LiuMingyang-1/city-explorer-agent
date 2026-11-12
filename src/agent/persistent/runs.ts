@@ -67,6 +67,24 @@ export function requestInputText(run: Run): string | undefined {
   }
 }
 
+/**
+ * run.input 中随请求快照保存的用户位置坐标；该轮没带 location 或
+ * 形状不符 → undefined（继续往更早的 run 找，不是清除）。
+ */
+export function requestInputLocation(run: Run): { lat: number; lng: number } | undefined {
+  try {
+    const input = JSON.parse(run.input) as { location?: unknown };
+    const location = input?.location;
+    if (typeof location !== "object" || location === null) return undefined;
+    const { lat, lng } = location as { lat?: unknown; lng?: unknown };
+    if (typeof lat !== "number" || !Number.isFinite(lat)) return undefined;
+    if (typeof lng !== "number" || !Number.isFinite(lng)) return undefined;
+    return { lat, lng };
+  } catch {
+    return undefined;
+  }
+}
+
 /** 同 requestId 重放：直接返回既有 run 的结果，不再生成一套新消息。 */
 export function replayedTurn(run: Run): PlannerTurn {
   switch (run.status) {

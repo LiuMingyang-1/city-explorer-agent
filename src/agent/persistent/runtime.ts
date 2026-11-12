@@ -15,6 +15,7 @@ import { closeInterrupted } from "../interrupted.ts";
 import type { SessionRepository } from "../../session/repository.ts";
 import type {
   CompactionPayload,
+  Run,
   SessionKind,
   ValidatedPlan,
 } from "../../session/types.ts";
@@ -28,7 +29,7 @@ import type {
   PlannerTurn,
   ValidatedPlanCommit,
 } from "../session.ts";
-import { runtimeSystemMessage } from "./context.ts";
+import { runtimeSystemMessage, type LocationContext } from "./context.ts";
 import { RawHistory } from "./history.ts";
 import { LeaseGuard } from "./lease.ts";
 import {
@@ -36,6 +37,7 @@ import {
   findRunByRequestId,
   latestCandidatePlan,
   replayedTurn,
+  requestInputLocation,
   requestInputText,
   settleRun,
 } from "./runs.ts";
@@ -54,6 +56,11 @@ export interface PersistentRuntimeOptions {
   /** 心跳间隔；缺省 leaseTtlMs/3。 */
   leaseRenewMs?: number;
   compaction: CompactionOptions;
+  /**
+   * 位置锚点解析：本轮带 location 时把坐标翻成语义锚点文案（就近场馆）；
+   * 缺省或抛错都降级为无锚点，绝不影响本轮。
+   */
+  resolveLocationAnchor?: (lat: number, lng: number) => Promise<string | undefined>;
 }
 
 /**
@@ -80,6 +87,7 @@ export class PersistentRuntime implements PlannerRuntime {
   private readonly requestedSessionId?: string;
   private readonly owner: string;
   private readonly compaction: CompactionOptions;
+  private readonly resolveLocationAnchor?: PersistentRuntimeOptions["resolveLocationAnchor"];
   private readonly guard: LeaseGuard;
 
   private sessionIdValue = "";
@@ -94,6 +102,14 @@ export class PersistentRuntime implements PlannerRuntime {
    * 不落 raw、不冒充 main 的正式状态。
    */
   private candidatePlan: ValidatedPlan | undefined;
+  /**
+   * 用户最近位置（含锚点）：渲染进 system section，不落 raw、不进消息表。
+   * 跨实例/请求沿用靠"location 已落地 run 中 message_seq 最大者"持久化——
+   * reload 每次从会话库恢复（与 DB 一致，含另一实例的提交）；本轮
+   * 透传新位置时在租约内覆盖并随新 run 的 input 快照落库。锚点不入
+   * 快照，恢复时按当前活动库重解。
+   */
+  private locationContext?: LocationContext;
   private readonly history = new RawHistory();
   private checkpoint: Checkpoint | undefined;
   private readonly baseline: UsageBaseline = createUsageBaseline();
@@ -130,6 +146,7 @@ export class PersistentRuntime implements PlannerRuntime {
     this.requestedSessionId = options.sessionId;
     this.owner = options.leaseOwner ?? `planner-${process.pid}-${randomUUID().slice(0, 8)}`;
     this.compaction = options.compaction;
+    this.resolveLocationAnchor = options.resolveLocationAnchor;
     const ttlMs = options.leaseTtlMs ?? 30_000;
     this.guard = new LeaseGuard({
       repo: options.sessions,
@@ -240,7 +257,12 @@ export class PersistentRuntime implements PlannerRuntime {
       this.candidatePlan = latestCandidatePlan(runs, this.history.maxSeqByRun());
       this.planner.restorePlan(this.candidatePlan);
     }
-    // 6) 重建有效上下文：system 由当前配置重建，摘要 + 保留尾部用 raw 同对象。
+    // 6) 用户最近位置：input 带 location 且已落库消息的 run 中，
+    //    message_seq 最大者即最近上报（message_seq 由仓库事务内单调
+    //    分配，与墙上时间无关）；本轮透传的新位置在 reload 之后由
+    //    runPrompt 覆盖，并随新 run 的 input 落库。
+    this.locationContext = await this.persistedLocation(runs);
+    // 7) 重建有效上下文：system 由当前配置重建，摘要 + 保留尾部用 raw 同对象。
     this.applyContext();
     this.baseline.clear();
   }
@@ -258,6 +280,7 @@ export class PersistentRuntime implements PlannerRuntime {
         this.baseSystem,
         this.sessionKind === "child" ? this.candidatePlan : this.persistedPlan,
         this.sessionKind === "child" ? "candidate" : "confirmed",
+        this.locationContext,
       ),
     );
     this.agent.state.messages = messages;
@@ -371,7 +394,7 @@ export class PersistentRuntime implements PlannerRuntime {
   ): Promise<PlannerTurn> {
     try {
       return await this.guard.run(async () => {
-        // 每轮先同步 DB 最新上下文与规划指针，再处理本轮。
+        // 每轮先同步 DB 最新上下文、规划指针与最近位置，再处理本轮。
         await this.reload();
         // 同步恢复期间被取消/关闭：不查重放、不建 run、不发模型请求。
         const stopped = abortedTurn(signal);
@@ -394,10 +417,23 @@ export class PersistentRuntime implements PlannerRuntime {
             };
           }
         }
+        // 本轮透传位置则覆盖恢复值（锚点解析失败降级为无，不毁掉本轮）；
+        // 没带 location 时沿用 reload 恢复的最近位置。必须在建 run 前
+        // 渲染：performTurn 的首个模型请求就要带上新 section。坐标随本
+        // 条 run 的 input 快照落库，成为后续写者/实例的最近位置。
+        if (options.location) {
+          const { lat, lng } = options.location;
+          this.locationContext = { lat, lng, anchor: await this.anchorFor(lat, lng) };
+          this.applyContext();
+        }
         const run = await this.guard.guarded((w) =>
           this.repo.createRun(w, this.userId, {
             sessionId: this.sessionIdValue,
-            input: { text, requestId: options.requestId ?? null },
+            input: {
+              text,
+              requestId: options.requestId ?? null,
+              location: options.location ?? null,
+            },
             startImmediately: true,
           }),
         );
@@ -441,6 +477,40 @@ export class PersistentRuntime implements PlannerRuntime {
       });
     } catch (error) {
       return { kind: "error", message: errorText(error) };
+    }
+  }
+
+  /**
+   * 会话最近位置：input 带合法 location 且"上报已落地"（该 run 至少有
+   * 一条落库消息）的 run 中，取最大 message_seq 者——seq 由仓库在
+   * 会话内事务性单调分配，不依赖 created_at/系统时钟（同毫秒、时钟
+   * 回拨、并发重启都不会错乱），与 latestCandidatePlan 同序。
+   * 没有落库消息的 location run（建 run 后即取消/失败，上报未落地）
+   * 不算数，不覆盖更早的已上报位置。锚点不随快照持久化，这里按
+   * 当前活动库重解（失败降级为无锚点，不阻塞恢复）。
+   */
+  private async persistedLocation(runs: Run[]): Promise<LocationContext | undefined> {
+    const seqByRun = this.history.maxSeqByRun();
+    let best: { seq: number; location: { lat: number; lng: number } } | undefined;
+    for (const run of runs) {
+      const location = requestInputLocation(run);
+      if (location === undefined) continue;
+      const seq = seqByRun.get(run.runId);
+      if (seq === undefined) continue;
+      if (best === undefined || seq > best.seq) best = { seq, location };
+    }
+    if (best === undefined) return undefined;
+    const { lat, lng } = best.location;
+    return { lat, lng, anchor: await this.anchorFor(lat, lng) };
+  }
+
+  /** 锚点解析的降级封装：未配置 resolver 或解析抛错一律返回 undefined。 */
+  private async anchorFor(lat: number, lng: number): Promise<string | undefined> {
+    if (!this.resolveLocationAnchor) return undefined;
+    try {
+      return await this.resolveLocationAnchor(lat, lng);
+    } catch {
+      return undefined;
     }
   }
 

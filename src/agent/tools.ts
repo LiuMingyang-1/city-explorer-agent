@@ -3,7 +3,7 @@ import type { JsonValue } from "@earendil-works/pi-ai";
 import { Type } from "typebox";
 import type { EventRepository } from "../data/repository.ts";
 
-/** 工具名；参数 schema 对应 SearchEventsInput（date/category/keyword 均可选）。 */
+/** 工具名；参数 schema 对应 SearchEventsInput（date/category/keyword/near/radiusKm 均可选）。 */
 export const SEARCH_EVENTS_TOOL = "search_events";
 
 const searchEventsParameters = Type.Object({
@@ -17,6 +17,18 @@ const searchEventsParameters = Type.Object({
   ),
   keyword: Type.Optional(
     Type.String({ description: "关键词，匹配活动名称与介绍。" }),
+  ),
+  near: Type.Optional(
+    Type.Object(
+      {
+        lat: Type.Number({ description: "参考点纬度。" }),
+        lng: Type.Number({ description: "参考点经度。" }),
+      },
+      { description: "参考点经纬度；传入后按与该点的球面距离检索。" },
+    ),
+  ),
+  radiusKm: Type.Optional(
+    Type.Number({ description: "搜索半径（公里），需配合 near 使用；单独传入会被忽略。" }),
   ),
 });
 
@@ -34,7 +46,8 @@ export function createSearchEventsTool(
       "查询活动数据库。按 date / category / keyword 筛选，可多次调用（例如先查展览再查书店活动）。" +
       "返回活动列表，每条含 id、title、category、venueName、startAt/endAt（可参加时间窗）、suggestedDurationMinutes，" +
       "以及费用与素材字段：budgetMin/budgetMax 为每人预计费用区间（单位分，100 分 = 1 元；0 是免费，null 是未知而非免费）、currency、budgetNote、" +
-      "guideUrl/thumbnailUrl/imageUrls。",
+      "guideUrl/thumbnailUrl/imageUrls。" +
+      "支持 near/radiusKm 按距离检索：传 near 时结果按距离升序，且每条含 distanceKm（公里）。",
     parameters: searchEventsParameters,
     execute: async (_toolCallId, params) => {
       const events = await repository.search(params);

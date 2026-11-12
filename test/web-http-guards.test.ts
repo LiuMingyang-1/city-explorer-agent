@@ -10,20 +10,22 @@ import type { AddressInfo } from "node:net";
 import { test } from "node:test";
 import { createChatHandler } from "../src/web/http.ts";
 import type { WebChatOptions } from "../src/web/http.ts";
-import type { ChatResult, ChatService } from "../src/web/types.ts";
+import type { ChatLocation, ChatResult, ChatService } from "../src/web/types.ts";
+
+type SendOptions = { signal?: AbortSignal; location?: ChatLocation };
 
 /** 可注入 service：记录 send 调用；本文件只关心"有没有被调到、拿到什么"。 */
 function fakeService(
-  send?: (userId: string, message: string, signal?: AbortSignal) => Promise<ChatResult>,
+  send?: (userId: string, message: string, options?: SendOptions) => Promise<ChatResult>,
 ): ChatService & { sendCalls: { userId: string; message: string }[] } {
   const svc = {
     sendCalls: [] as { userId: string; message: string }[],
     async history() {
       return { messages: [] };
     },
-    async send(userId: string, message: string, signal?: AbortSignal): Promise<ChatResult> {
+    async send(userId: string, message: string, options?: SendOptions): Promise<ChatResult> {
       svc.sendCalls.push({ userId, message });
-      return send?.(userId, message, signal) ?? { kind: "clarification", question: "q" };
+      return send?.(userId, message, options) ?? { kind: "clarification", question: "q" };
     },
   };
   return svc;
@@ -94,7 +96,7 @@ const expect400 = async (reply: Promise<Reply>, svc: { sendCalls: unknown[] }) =
   assert.equal(svc.sendCalls.length, 0);
 };
 
-test("严格 {message}：多余字段（userId/messages 等越权字段）一律 400 且不调 service", async () => {
+test("严格 {message,location?}：多余字段（userId/messages 等越权字段）一律 400 且不调 service", async () => {
   const svc = fakeService();
   const { base, close } = await start(svc);
   try {
@@ -102,6 +104,54 @@ test("严格 {message}：多余字段（userId/messages 等越权字段）一律
     await expect400(post(base, { message: "hi", messages: [{ role: "user", text: "x" }] }), svc);
     await expect400(post(base, {}), svc);
     await expect400(post(base, { message: "a", itinerary: {} }), svc);
+    // 合法 location 旁挂的顶层越权键同样拒绝。
+    await expect400(
+      post(base, { message: "hi", location: { lat: 1, lng: 2 }, userId: "s" }),
+      svc,
+    );
+    // 只有 location 没有 message 也拒。
+    await expect400(post(base, { location: { lat: 1, lng: 2 } }), svc);
+  } finally {
+    await close();
+  }
+});
+
+test("location 校验：非对象/缺键/非数字/超范围/多键一律 400，合法与边界坐标放行", async () => {
+  const svc = fakeService();
+  const { base, close } = await start(svc);
+  try {
+    for (const location of [
+      "here",
+      12,
+      true,
+      null,
+      [],
+      {},
+      { lat: 34 },
+      { lng: 108 },
+      { lat: "34", lng: 108 },
+      { lat: 34, lng: null },
+      { lat: 91, lng: 0 },
+      { lat: -90.5, lng: 0 },
+      { lat: 0, lng: 181 },
+      { lat: 0, lng: -180.5 },
+      { lat: 34, lng: 108, name: "西安" },
+      { lat: 34, lng: 108, zoom: 14 },
+      { lat: 34, message: "x" },
+    ]) {
+      await expect400(post(base, { message: "hi", location }), svc);
+    }
+    // 合法值与边界值放行（对照组）；service 收到的坐标不含多余键。
+    for (const location of [
+      { lat: 34.27, lng: 108.95 },
+      { lat: -90, lng: 180 },
+      { lat: 90, lng: -180 },
+      { lat: 0, lng: 0 },
+    ]) {
+      const ok = await post(base, { message: "hi", location });
+      assert.equal(ok.status, 200);
+    }
+    assert.equal(svc.sendCalls.length, 4);
   } finally {
     await close();
   }

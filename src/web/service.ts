@@ -24,6 +24,7 @@ import type { SessionRepository } from "../session/repository.ts";
 import type { Run } from "../session/types.ts";
 import type {
   ChatHistory,
+  ChatLocation,
   ChatMessage,
   ChatResult,
   ChatService,
@@ -233,8 +234,9 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
     handle: SendHandle,
     userId: string,
     message: string,
-    signal: AbortSignal | undefined,
+    options?: { signal?: AbortSignal; location?: ChatLocation },
   ): Promise<ChatResult> {
+    const signal = options?.signal;
     let planner: ChatPlanner | undefined;
     try {
       planner = await openPlanner(userId);
@@ -248,7 +250,9 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
       signal?.addEventListener("abort", onAbort, { once: true });
       let turn: PlannerTurn;
       try {
-        turn = await planner.prompt(message); // abort 时 prompt 自行 settle
+        // abort 时 prompt 自行 settle；location 只进 prompt options（持久层
+        // 会沿用到本会话后续请求，见 PlannerPromptOptions.location）。
+        turn = await planner.prompt(message, { location: options?.location });
       } catch (error) {
         // 中止引起的 prompt 异常也归为 AbortError，不伪装成内部错误。
         if (handle.cancelled || signal?.aborted) throw abortError(signal);
@@ -310,13 +314,18 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
 
   return {
     // async 使 assertOpen 的拒绝也走 rejected promise（与 HTTP/测试约定一致）。
-    async send(userId: string, message: string, signal?: AbortSignal): Promise<ChatResult> {
+    async send(
+      userId: string,
+      message: string,
+      options?: { signal?: AbortSignal; location?: ChatLocation },
+    ): Promise<ChatResult> {
       // 同步段：拒新请求 + 注册在途句柄，都先于第一个 await（防 shutdown 竞争）。
       assertOpen();
+      const signal = options?.signal;
       if (signal?.aborted) throw abortError(signal);
       const handle: SendHandle = { cancelled: false };
       activeSends.add(handle);
-      return track(runSend(handle, userId, message, signal));
+      return track(runSend(handle, userId, message, options));
     },
 
     async history(userId: string): Promise<ChatHistory> {

@@ -99,7 +99,9 @@ async function deliver(text){
  pending.innerHTML='<span class="message-label">漫游正在整理灵感</span><div class="bubble typing" aria-label="正在回复">···</div>';
  $('messages').append(pending);scrollMessages();
  try{
-  const data=await apiJSON('/api/chat',{method:'POST',body:JSON.stringify({message:text}),timeout:60000});
+  const loc=state.location,body={message:text};
+  if(loc&&Number.isFinite(loc.lat)&&Number.isFinite(loc.lng))body.location={lat:loc.lat,lng:loc.lng};
+  const data=await apiJSON('/api/chat',{method:'POST',body:JSON.stringify(body),timeout:60000});
   pending.remove();
   if(data&&data.kind==='itinerary'&&data.itinerary&&typeof data.itinerary==='object')appendItinerary(data.itinerary,data.events);
   else if(data&&data.kind==='clarification'&&typeof data.question==='string'&&data.question)appendMessage('assistant',data.question);

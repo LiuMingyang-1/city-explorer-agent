@@ -30,6 +30,12 @@ export interface Event {
   thumbnailUrl: string | null;
   /** 展示用图片地址列表，按展示顺序；只存 URL。 */
   imageUrls: string[];
+  /**
+   * 与查询参考点 near 的球面距离（公里，保留两位小数）。
+   * 仅当查询带 near 时由 repository 计算的派生值，不是存储列；
+   * 无 near 的查询结果不带该字段。
+   */
+  distanceKm?: number;
 }
 
 /** search_events 工具参数与 EventRepository.search 共用的查询条件，均可选。 */
@@ -40,4 +46,8 @@ export interface SearchEventsInput {
   category?: string;
   /** 关键词，匹配活动名称与介绍。 */
   keyword?: string;
+  /** 参考点坐标；传入后结果按与该点的球面距离升序，且每条带 distanceKm。 */
+  near?: { lat: number; lng: number };
+  /** 搜索半径（公里），仅随 near 生效；单独传入会被忽略。 */
+  radiusKm?: number;
 }

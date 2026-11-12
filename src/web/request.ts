@@ -3,7 +3,7 @@
  * 与 http.ts 拆开仅为控制单文件长度；这些函数都不持有会话状态。
  */
 import type { IncomingMessage } from "node:http";
-import type { ChatErrorResponse, ChatHistory, ChatResult } from "./types.ts";
+import type { ChatErrorResponse, ChatHistory, ChatLocation, ChatResult } from "./types.ts";
 
 /** 请求体超过上限时的标记返回值（区别于解析结果）。 */
 export const BODY_TOO_LARGE = Symbol("body-too-large");
@@ -95,15 +95,19 @@ export async function readRequestBody(
 }
 
 /**
- * 严格解析 POST /api/chat 请求体：必须是恰好 { "message": string } 的 JSON
- * 对象——任何其他字段（userId、messages、itinerary 等）都直接拒绝，
- * 防止客户端越权指定身份或伪造历史。message 按 trim 后 1..maxChars 字校验。
- * 返回字符串即通过（已 trim）；返回 {error} 即 400 原因（通用、不回显输入）。
+ * 严格解析 POST /api/chat 请求体：必须是 JSON 对象，键只允许 message
+ * （必填）与 location（可选）——其他任何字段（userId、messages、
+ * itinerary 等）都直接拒绝，防止客户端越权指定身份或伪造历史。
+ * message 按 trim 后 1..maxChars 字校验；location 若给出必须是恰好
+ * {lat,lng} 的对象：均为有限 number，lat∈[-90,90]、lng∈[-180,180]，
+ * 多出的键同样拒绝（只传坐标、不带地名等其他信息）。
+ * 返回 {message,location?} 即通过（message 已 trim）；返回 {error}
+ * 即 400 原因（通用、不回显输入）。
  */
-export function parseChatMessage(
+export function parseChatSend(
   body: Buffer,
   maxChars: number,
-): string | ChatErrorResponse {
+): { message: string; location?: ChatLocation } | ChatErrorResponse {
   let data: unknown;
   try {
     data = JSON.parse(body.toString("utf8"));
@@ -114,8 +118,8 @@ export function parseChatMessage(
     return { error: "request body must be a JSON object" };
   }
   const keys = Object.keys(data);
-  if (keys.length !== 1 || keys[0] !== "message") {
-    return { error: 'request body must contain only "message" (string)' };
+  if (!keys.includes("message") || !keys.every((k) => k === "message" || k === "location")) {
+    return { error: 'request body must contain only "message" (string) and optional "location"' };
   }
   const message = (data as { message?: unknown }).message;
   if (typeof message !== "string") {
@@ -125,7 +129,29 @@ export function parseChatMessage(
   if (trimmed.length === 0 || trimmed.length > maxChars) {
     return { error: `message must be 1..${maxChars} characters after trim` };
   }
-  return trimmed;
+  const rawLocation = (data as { location?: unknown }).location;
+  if (rawLocation === undefined) return { message: trimmed };
+  if (typeof rawLocation !== "object" || rawLocation === null || Array.isArray(rawLocation)) {
+    return { error: "location must be an object {lat,lng}" };
+  }
+  const locationKeys = Object.keys(rawLocation);
+  if (locationKeys.length !== 2 || !locationKeys.includes("lat") || !locationKeys.includes("lng")) {
+    return { error: "location must contain only lat and lng" };
+  }
+  const { lat, lng } = rawLocation as { lat?: unknown; lng?: unknown };
+  if (
+    typeof lat !== "number" ||
+    !Number.isFinite(lat) ||
+    lat < -90 ||
+    lat > 90 ||
+    typeof lng !== "number" ||
+    !Number.isFinite(lng) ||
+    lng < -180 ||
+    lng > 180
+  ) {
+    return { error: "location lat must be in [-90,90] and lng in [-180,180]" };
+  }
+  return { message: trimmed, location: { lat, lng } };
 }
 
 /**

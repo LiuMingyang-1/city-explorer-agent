@@ -5,7 +5,11 @@
  */
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import type { PersistentPlannerOptions, PlannerTurn } from "../src/agent/session.ts";
+import type {
+  PersistentPlannerOptions,
+  PlannerPromptOptions,
+  PlannerTurn,
+} from "../src/agent/session.ts";
 import type { ExplorerConfig } from "../src/config.ts";
 import type { EventRepository } from "../src/data/repository.ts";
 import type { Event } from "../src/data/types.ts";
@@ -71,18 +75,27 @@ interface StubCalls {
   closes: number;
   cancels: number;
   prompts: string[];
+  promptOptions: (PlannerPromptOptions | undefined)[];
   options: PersistentPlannerOptions[];
 }
 
 /** stub planner 工厂：记录开/关/取消/调用，prompt 行为由测试脚本决定。 */
 function stubFactory(script: (text: string) => Promise<PlannerTurn> | PlannerTurn) {
-  const calls: StubCalls = { opens: 0, closes: 0, cancels: 0, prompts: [], options: [] };
+  const calls: StubCalls = {
+    opens: 0,
+    closes: 0,
+    cancels: 0,
+    prompts: [],
+    promptOptions: [],
+    options: [],
+  };
   const createPlanner = async (o: PersistentPlannerOptions): Promise<ChatPlanner> => {
     calls.opens += 1;
     calls.options.push(o);
     return {
-      async prompt(text) {
+      async prompt(text, options) {
         calls.prompts.push(text);
+        calls.promptOptions.push(options);
         return script(text);
       },
       cancel() {
@@ -135,6 +148,24 @@ test("send 澄清透传；工厂拿到 config/repository/sessions/userId，plann
   assert.equal(passed.repository, repository);
   assert.equal(passed.sessions, SESSIONS);
   assert.equal(passed.userId, "u-web");
+});
+
+test("send 带 location：planner.prompt 收到 {location}；不带则 options 无坐标", async () => {
+  const { createPlanner, calls } = stubFactory(() => ({
+    kind: "clarification",
+    question: "q",
+  }));
+  const service = createChatService({
+    config: CONFIG,
+    repository: fakeRepo([]),
+    sessions: SESSIONS,
+    createPlanner,
+  });
+  await service.send("u-web", "附近逛逛", { location: { lat: 34.27, lng: 108.95 } });
+  assert.deepEqual(calls.promptOptions[0], { location: { lat: 34.27, lng: 108.95 } });
+  await service.send("u-web", "hi"); // 不带位置：prompt options 无坐标
+  assert.equal(calls.promptOptions[1]?.location, undefined);
+  assert.equal(calls.closes, 2);
 });
 
 test("send 行程：返回完整 itinerary + 按 stops 顺序去重、缺库跳过的 EventView", async () => {
@@ -255,7 +286,7 @@ test("已 aborted 的 signal：不开 planner、不启动模型，直接拒 Abor
   });
   const controller = new AbortController();
   controller.abort();
-  await assert.rejects(service.send("u-web", "hi", controller.signal), (error) => {
+  await assert.rejects(service.send("u-web", "hi", { signal: controller.signal }), (error) => {
     assert.equal((error as Error).name, "AbortError");
     return true;
   });
@@ -273,7 +304,7 @@ test("处理中 signal abort：调 planner.cancel，prompt settle 后 close 且�
     createPlanner,
   });
   const controller = new AbortController();
-  const sent = service.send("u-web", "hi", controller.signal);
+  const sent = service.send("u-web", "hi", { signal: controller.signal });
   await tick();
   assert.equal(calls.prompts.length, 1);
 
@@ -307,7 +338,7 @@ test("send 之后 abort 不再影响已完成的请求", async () => {
     createPlanner,
   });
   const controller = new AbortController();
-  const result = await service.send("u-web", "hi", controller.signal);
+  const result = await service.send("u-web", "hi", { signal: controller.signal });
   assert.equal(result.kind, "clarification");
   controller.abort(); // 事后 abort：listener 已摘除，无影响
   await tick();
