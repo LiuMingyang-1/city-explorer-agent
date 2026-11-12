@@ -207,10 +207,18 @@ function topWarnings(turn: PlannerTurn): { warnings?: string[] } {
   return { warnings: [warning] };
 }
 
+/** turn 告警 + legs 降级说明合并进顶层 warnings；均无则省略该键。 */
+function mergedWarnings(turn: PlannerTurn, extra: string[]): { warnings?: string[] } {
+  const warnings = [...(topWarnings(turn).warnings ?? []), ...extra];
+  return warnings.length > 0 ? { warnings } : {};
+}
+
 /** send 的在途句柄：planner 就绪前即可被 shutdown/signal 标记取消。 */
 interface SendHandle {
   planner?: ChatPlanner;
   cancelled: boolean;
+  /** shutdown 取消入口：abort 本轮的合并 signal（覆盖 legs 算路）。 */
+  abortSend?: () => void;
 }
 
 /**
@@ -395,7 +403,7 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
     items: { label: "A" | "B"; title: string; itinerary: Itinerary }[],
     onProgress?: (progress: PlannerProgress) => void,
     signal?: AbortSignal,
-  ): Promise<{ plans: Plan[]; events: EventView[] }> {
+  ): Promise<{ plans: Plan[]; events: EventView[]; warnings: string[] }> {
     const eventsById = await planEvents(...items.map((i) => i.itinerary));
     const hasLegs = items.some((i) => i.itinerary.stops.length >= 2);
     if (router && hasLegs) {
@@ -429,7 +437,12 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
         if (!ids.includes(stop.event_id)) ids.push(stop.event_id);
       }
     }
-    return { plans, events: toEventViews(eventsById, ids) };
+    // 各 plan 的降级说明去重汇总进顶层 warnings（契约：双层提示）。
+    return {
+      plans,
+      events: toEventViews(eventsById, ids),
+      warnings: [...new Set(plans.flatMap((plan) => plan.warnings))],
+    };
   }
 
   /**
@@ -456,7 +469,15 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
     message: string,
     options?: SendOptions,
   ): Promise<ChatResult> {
-    const signal = options?.signal;
+    const clientSignal = options?.signal;
+    // 每次 send 持有独立 AbortController：shutdown 直接 abort，与客户端
+    // signal 合并后贯穿查询/模型/算路/装配全程（legs 不再只认客户端断连）。
+    const controller = new AbortController();
+    handle.abortSend = () => controller.abort();
+    const signal =
+      clientSignal !== undefined
+        ? AbortSignal.any([clientSignal, controller.signal])
+        : controller.signal;
     let planner: ChatPlanner | undefined;
     // abort 监听从模型轮一路挂到 legs 算路与装配结束——取消链覆盖
     // resolveReferencedEvent、prompt、computePlanLegs 全程。
@@ -526,7 +547,7 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
       }
       if (turn.kind === "comparison") {
         // 双方案：首个 plan 是已提交指针的 active 方案。
-        const { plans, events } = await assemblePlans(
+        const { plans, events, warnings } = await assemblePlans(
           turn.plans.map((p) => ({ label: p.label, title: p.title, itinerary: p.itinerary })),
           options?.onProgress,
           signal,
@@ -541,10 +562,10 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
           plans,
           events,
           coordinate_system: "GCJ-02",
-          ...topWarnings(turn),
+          ...mergedWarnings(turn, warnings),
         };
       }
-      const { plans, events } = await assemblePlans(
+      const { plans, events, warnings } = await assemblePlans(
         [{ label: "A", title: turn.itinerary.summary, itinerary: turn.itinerary }],
         options?.onProgress,
         signal,
@@ -558,7 +579,7 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
         plans,
         events,
         coordinate_system: "GCJ-02",
-        ...topWarnings(turn),
+        ...mergedWarnings(turn, warnings),
       };
     } catch (error) {
       if (handle.cancelled || signal?.aborted) throw abortError(signal);
@@ -725,7 +746,8 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
         closed = true;
         for (const handle of activeSends) {
           handle.cancelled = true;
-          handle.planner?.cancel();
+          // abort 触发 onAbort → planner.cancel()，不再重复直接调。
+          handle.abortSend?.();
         }
         shutdownPromise = Promise.allSettled([...inflight]).then(() => {});
       }

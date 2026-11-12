@@ -97,8 +97,8 @@ export async function distillMemory(options: DistillMemoryOptions): Promise<Dist
 
   const row = await sessions.getUserMemory(userId);
   const current = row?.content ?? emptyMemoryDoc();
-  // CAS 基线：蒸馏期间被手工 PUT/DELETE 修改时放弃写回，不覆盖、不复活。
-  let expectedContent = row?.content ?? "";
+  // 版本 CAS 基线：蒸馏期间被手工 PUT/DELETE 触碰（含墓碑）时放弃写回。
+  let expectedVersion = row?.version ?? 0;
   // 换了源会话从头蒸
   const cursor = row?.sourceSessionId === sessionId ? row.throughMessageSeq : 0;
 
@@ -156,9 +156,9 @@ export async function distillMemory(options: DistillMemoryOptions): Promise<Dist
       content: currentDoc,
       sourceSessionId: sessionId,
       throughMessageSeq: through,
-      expectedContent,
+      expectedVersion,
     });
-    expectedContent = currentDoc;
+    expectedVersion += 1; // 每次成功写回版本 +1，下一批以此为基线
   };
 
   // 一个输入单元（常规批或分片）→ 模型 → 校验并更新 currentDoc（unchanged

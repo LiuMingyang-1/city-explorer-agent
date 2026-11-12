@@ -30,7 +30,9 @@ export function getUserMemory(
   const row = ctx.db.prepare("SELECT * FROM user_memory WHERE user_id = ?").get(userId) as
     | UserMemoryRow
     | undefined;
-  return row ? toUserMemory(row) : undefined;
+  // content="" 是 DELETE 留下的墓碑行（合法正文非空，"" 只可能是墓碑）：
+  // 对读路径按"无记忆"处理，行保留是为了让 version 留痕供 CAS 检测删除。
+  return row && row.content !== "" ? toUserMemory(row) : undefined;
 }
 
 export function putUserMemory(
@@ -64,12 +66,13 @@ export function putUserMemory(
     if (!fetchUser(ctx, userId)) {
       throw new SessionRepositoryError("not_found", `用户 ${userId} 不存在`);
     }
-    // CAS：与手工 PUT/DELETE 竞争时放弃写入（检查与写同事务）。
-    if (input.expectedContent !== undefined) {
+    // 版本 CAS：与手工 PUT/DELETE 竞争时放弃写入（检查与写同事务）。
+    // 用 version 而非正文比对——删除墓碑、删后同文重写都能检出。
+    if (input.expectedVersion !== undefined) {
       const row = ctx.db
-        .prepare("SELECT content FROM user_memory WHERE user_id = ?")
-        .get(userId) as { content: string } | undefined;
-      if ((row?.content ?? "") !== input.expectedContent) {
+        .prepare("SELECT version FROM user_memory WHERE user_id = ?")
+        .get(userId) as { version: number } | undefined;
+      if ((row?.version ?? 0) !== input.expectedVersion) {
         throw new SessionRepositoryError(
           "conflict",
           "user_memory 已被并发修改，本次写入放弃",
@@ -78,12 +81,13 @@ export function putUserMemory(
     }
     ctx.db
       .prepare(
-        `INSERT INTO user_memory (user_id, content, source_session_id, through_message_seq, updated_at)
-         VALUES (?, ?, ?, ?, ?)
+        `INSERT INTO user_memory (user_id, content, source_session_id, through_message_seq, version, updated_at)
+         VALUES (?, ?, ?, ?, 1, ?)
          ON CONFLICT(user_id) DO UPDATE SET
            content = excluded.content,
            source_session_id = excluded.source_session_id,
            through_message_seq = excluded.through_message_seq,
+           version = user_memory.version + 1,
            updated_at = excluded.updated_at`,
       )
       .run(
@@ -97,10 +101,25 @@ export function putUserMemory(
 }
 
 /**
- * 删除该用户的记忆行（含蒸馏游标）。幂等：行不存在（从未写过或已删过、
- * 用户本身不存在）时静默 no-op——DELETE /api/memory 的"清除即成功"
- * 语义由这里保证，调用方无需先查存在性。
+ * 删除该用户的记忆（含蒸馏游标）：写墓碑行而不是物理删行——行保留使
+ * version 继续单调递增，在途蒸馏的 expectedVersion CAS 能检出"蒸馏
+ * 期间被删"而不复活旧文。墓碑 content="" 由 getUserMemory 过滤为
+ * 无记忆；幂等照旧（重复删只推版本，用户不存在仍 no-op 保外键）。
  */
 export function deleteUserMemory(ctx: SessionDbContext, userId: string): void {
-  ctx.db.prepare("DELETE FROM user_memory WHERE user_id = ?").run(userId);
+  return tx(ctx, true, () => {
+    if (!fetchUser(ctx, userId)) return;
+    ctx.db
+      .prepare(
+        `INSERT INTO user_memory (user_id, content, source_session_id, through_message_seq, version, updated_at)
+         VALUES (?, '', NULL, 0, 1, ?)
+         ON CONFLICT(user_id) DO UPDATE SET
+           content = '',
+           source_session_id = NULL,
+           through_message_seq = 0,
+           version = user_memory.version + 1,
+           updated_at = excluded.updated_at`,
+      )
+      .run(userId, ctx.nowIso());
+  });
 }

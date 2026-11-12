@@ -98,6 +98,7 @@ CREATE TABLE IF NOT EXISTS user_memory (
   content TEXT NOT NULL,
   source_session_id TEXT,
   through_message_seq INTEGER NOT NULL DEFAULT 0,
+  version INTEGER NOT NULL DEFAULT 0,
   updated_at TEXT NOT NULL
 );
 `;
@@ -114,6 +115,13 @@ export function ensureSessionSchema(db: DatabaseSync): void {
   try {
     db.exec(SESSION_SCHEMA_DDL);
     db.exec("DROP INDEX IF EXISTS idx_sessions_main");
+    // 老库补 version 列：PUT/DELETE/蒸馏的版本 CAS 依赖它。
+    const memoryCols = db.prepare("PRAGMA table_info(user_memory)").all() as {
+      name: string;
+    }[];
+    if (!memoryCols.some((col) => col.name === "version")) {
+      db.exec("ALTER TABLE user_memory ADD COLUMN version INTEGER NOT NULL DEFAULT 0");
+    }
     db.exec("COMMIT");
   } catch (error) {
     db.exec("ROLLBACK");

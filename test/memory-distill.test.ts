@@ -619,3 +619,25 @@ test("蒸馏期间手工 DELETE：CAS 冲突 → skipped，已删记忆不复活
   assert.match(outcome.reason ?? "", /并发修改/);
   assert.equal(await sessions.getUserMemory(user.userId), undefined); // 删除不被复活
 });
+
+test("首次蒸馏期间 DELETE（无基线行）：墓碑推版本 → skipped，不落地", async (t) => {
+  const { sessions, user, main, writer, agent, faux } = await makeDistill(t);
+  await seedMessages(sessions, writer, user.userId, main.sessionId, ["a", "b", "c"]);
+  faux.setResponses([fauxAssistantMessage("## 用户\nx\n\n## 偏好\ny\n\n## 足迹\n")]);
+  // 用户从未有过记忆行：DELETE 写墓碑 version=1，蒸馏基线 0 → CAS 冲突。
+  const inner = agent.streamFunction;
+  agent.streamFunction = (m, c, o) => {
+    void sessions.deleteUserMemory(user.userId);
+    return inner(m, c, o);
+  };
+  const outcome = await distillMemory({
+    agent,
+    sessions,
+    userId: user.userId,
+    sessionId: main.sessionId,
+    minNewUserMessages: 3,
+  });
+  assert.equal(outcome.status, "skipped");
+  assert.match(outcome.reason ?? "", /并发修改/);
+  assert.equal(await sessions.getUserMemory(user.userId), undefined);
+});

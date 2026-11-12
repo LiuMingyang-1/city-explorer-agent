@@ -173,6 +173,7 @@ export type UserMemoryRow = {
   content: string;
   source_session_id: string | null;
   through_message_seq: number;
+  version: number;
   updated_at: string;
 };
 
@@ -181,6 +182,7 @@ export const toUserMemory = (row: UserMemoryRow): UserMemory => ({
   content: row.content,
   sourceSessionId: row.source_session_id,
   throughMessageSeq: row.through_message_seq,
+  version: row.version,
   updatedAt: row.updated_at,
 });
 

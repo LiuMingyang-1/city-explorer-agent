@@ -86,6 +86,8 @@ export interface UserMemory {
   sourceSessionId: string | null;
   /** 已覆盖到的 message_seq；随每次成功蒸馏推进（含 UNCHANGED 结果）。 */
   throughMessageSeq: number;
+  /** 单调递增版本：每次 PUT/DELETE/蒸馏写回 +1；蒸馏用它做 CAS。 */
+  version: number;
   updatedAt: string;
 }
 
@@ -180,11 +182,11 @@ export interface PutUserMemoryInput {
   sourceSessionId: string | null;
   throughMessageSeq: number;
   /**
-   * 乐观并发条件：仅当库中现有 content 与它相等才写入（行不存在按 ""
+   * 乐观并发条件：仅当库中现有 version 与它相等才写入（行不存在按 0
    * 比较），不等抛 "conflict"。蒸馏用它避免覆盖手工 PUT/DELETE；
-   * 常规写入省略。
+   * 常规写入省略。version 覆盖内容比对抓不到的删除墓碑与同文重写。
    */
-  expectedContent?: string;
+  expectedVersion?: number;
 }
 
 /** latestCompaction 的返回：记录本体 + 已解析并通过边界校验的 payload。 */
