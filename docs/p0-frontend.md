@@ -1,0 +1,65 @@
+# P0 前端联调交付
+
+对应 [next-phase-roadmap.md](next-phase-roadmap.md) 的 P0 前端四项任务；遵守 [Day 0 约定](day0-contracts.md)：直接使用已有 Mock 做组件，不要求现在实施 v2 协议、版本、幂等或新历史接口。
+
+## 当前完成度
+
+| P0 项目 | 已完成的前端 | 仍需联调/外部条件 |
+| --- | --- | --- |
+| 活动站点卡片 | 封面、票价区间、场馆、推荐理由、原站链接；图片失效和数据缺失的占位 | 爬虫提供真实图片及详情 URL；样例的 example.com 链接是虚构数据 |
+| A/B 方案切换 | 按钮与键盘切换、双路线同屏、选中路线高亮；续聊可携带当前方案 ID | 真实后端返回 `plans` 并允许输入 `active_plan` |
+| 道路轨迹与通勤 | 渲染提供的 GeoJSON LineString，展示交通方式、秒转分钟、距离及另预留缓冲时间 | 后端调用实际算路服务；当前 Mock 轨迹是虚构折线，不是导航结果 |
+| 流式阶段反馈 | 接收 SSE 的 meta / progress / result / error；支持 UTF-8 分块、多行 data、心跳、断流和错误 | 当前后端仍返回 JSON，需启用 SSE 响应才能展示真实阶段流 |
+
+不把缺失路线伪造为“真实道路直线”，不把未知票价当免费，不把未知通勤当 0 分钟。出现坐标系不匹配时仍展示卡片，但暂停绘制路线。
+
+## 不等后端即可演示
+
+```sh
+npm run dev:frontend
+```
+
+访问下列地址，输入任意需求并发送：
+
+| 地址 | 内容 |
+| --- | --- |
+| http://127.0.0.1:5173/?mock=comparison | 双方案 + SSE 阶段；切 B 后继续发送保留 B |
+| http://127.0.0.1:5173/?mock=single | 单方案 B |
+| http://127.0.0.1:5173/?mock=partial | 轨迹查询失败、通勤待确认 |
+| http://127.0.0.1:5173/?mock=clarification | 追问 |
+| http://127.0.0.1:5173/?mock=error | 规划失败与重试 |
+
+所有样例直接来自 `docs/mocks/day0/`。开发服务器只通过 `/__mocks/day0/` 暴露预先列出的 JSON/SSE 文件，不复制一套易漂移的数据到前端。演示中的 SSE 阶段按样例短暂停顿播放；真实模式按服务器事件到达即时更新。当前演示明确标识“示例行程 · 非真实活动”。
+
+不带 `?mock=` 时仍调用同源 `/api/chat`。开发静态服务器不提供真实 Agent 接口，真实对话需要由后端同源托管。页面配置也可显式设 `window.WANDER_CONFIG = {mock:'comparison', mockBase:'/__mocks/day0/'}`，仅供静态演示部署；代码中不放密钥。
+
+## 如何与现有接口衔接
+
+- 原有 `{kind:'itinerary', itinerary, events}` 继续显示完整活动卡。没有 legs 时只画活动点，不编造道路轨迹与通勤时间。
+- 原有 `{kind:'clarification', question}` 继续显示文本追问。
+- 样例 `{kind:'plans', plans, events, active_plan, coordinate_system}` 进入新组件。每条计划使用 `plan_id`、`itinerary`、`legs`，按 `event_id` 关联活动。
+- 本次不依赖 `schema_version`、`revision`、`base_revision`、`request_id` 等扩展字段，也不发送这些字段。
+- 旧后端严格拒绝未知入参，所以仅在收到 plans 类型回复后，续聊请求才增加 `active_plan`。真实联调时必须同时确认服务端接受它；仅升级输出、不升级输入会被拒绝。
+- 相同 `/api/chat` 请求接受 `application/json` 或 `text/event-stream`。收到 JSON 使用原有行为；收到 SSE 才启用流式解析，不假设某个新增 URL 已存在。
+- `progress` 只更新等待区，不保存为正式聊天消息；只有完整的 `result` 提交方案。`error` 或没有最终结果的断流保留旧方案并显示错误，不提交半成品。
+- 新聊天/历史切换会 abort 客户端请求，并隔离迟到回复。历史保存当前激活方案，恢复时重新显示卡片和路线；演示和真实模式的本机历史分开。
+
+## 坐标与路径
+
+当前底图依然是 OpenFreeMap / OSM 的 WGS-84。样例声明 WGS84，GeoJSON 坐标顺序为 `[lng, lat]`，绘制时转换为 Leaflet 的 `[lat, lng]`。
+
+若真实响应已是 GCJ-02，当前页面会提示坐标系未匹配并避免直接画错位置；待高德切换后统一适配。不能只改坐标系字符串。
+
+`legs[].geometry` 缺失或 `status !== 'ok'` 时只显示站点，路段显示“通勤待确认”。有效轨迹按原有坐标点逐段绘制，A/B 保留各自颜色，切换只调整选中状态，不反复重新缩放。
+
+## 代码入口
+
+- `frontend/plans.js`：数据适配、活动卡、A/B、通勤与地图轨迹。
+- `frontend/transport.js`：JSON/SSE 接收、显式 Mock 入口、流式错误处理。
+- `frontend/chat.js`：发送、阶段文案、新聊天取消、既有 API 兼容。
+- `frontend/history.js`：本机历史、激活方案持久化与恢复。
+- `test/frontend-plans.test.ts`：价格、图片失败、轨迹、A/B、请求兼容、历史、SSE 与 Mock 接入。
+
+## 验证边界
+
+自动检查覆盖真实样例结构、绘图调用和网络数据解析，不替代浏览器视觉验收。高德 Key 尚未配置，没有调用实际路径规划服务，也没有承诺样例是可执行出行计划。

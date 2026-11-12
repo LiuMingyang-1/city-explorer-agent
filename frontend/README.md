@@ -44,6 +44,11 @@ npm run dev:frontend
 景区等级依据西安市文旅局《西安市A级旅游景区信息表》（截至 2026-02-25）：
 https://wlj.xa.gov.cn/wlml/lyjq/1.html 。坐标来自 OpenStreetMap/Nominatim，静态内置；这是精选点位，不是完整实时名录。
 
+## P0 组件与样例联调
+
+活动卡、A/B 对比、提供的道路轨迹与通勤时间、SSE 阶段接收已接入。
+运行 `npm run dev:frontend` 后访问 `http://127.0.0.1:5173/?mock=comparison`，发送一条需求即可使用 `docs/mocks/day0/` 的样例演示，无需模型密钥。更多样例、API 兼容与未完成联调项见 [P0 前端交付](../docs/p0-frontend.md)。
+
 ## Agent 接口
 
 对话逻辑在 `chat.js`：发送走 `POST /api/chat`（body 为 `{message}`，带 `location` 与既有
@@ -64,3 +69,5 @@ npm run check:frontend
 ## 地图替换调研
 
 高德 JS API 2.0 可替换当前地图，并通过浅色主题、自定义样式和要素控制接近现有画面；正式切换需配置 Key、安全代理并处理 GCJ-02 坐标。当前仍使用可用的 OpenFreeMap 地图。详见 [高德可行性调研](../docs/amap-feasibility.md)。
+
+高德切换所需配置和获取入口见 [高德准备清单](../docs/amap-setup.md)。

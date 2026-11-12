@@ -1,7 +1,7 @@
 'use strict';
 // Local navigation for both the static demo and the repository's API-backed chat.
 (() => {
- const STORAGE_KEY='wander.chat-history.v1',MAX_SESSIONS=20;
+ const STORAGE_KEY='wander.chat-history.v1'+(window.WanderTransport?.mock?'.demo':''),MAX_SESSIONS=20;
  let entries=[],epoch=0,expanded=false;
  const makeId=()=>window.crypto?.randomUUID?.()||Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
  let activeId=makeId(),createdAt=Date.now();
@@ -15,7 +15,7 @@
   const first=state.messages.find(m=>m.role==='user')?.text||'';
   if(/半天|半日|下午|上午/.test(first))return '西安半日游';
   if(/一日|一天|全天/.test(first))return '西安一日游';
-  return String(state.latestPlan?.itinerary?.summary||first||'西安游玩规划').replace(/\s+/g,' ').slice(0,22);
+  return String(window.WanderPlans?.active(state.latestPlan)?.itinerary?.summary||state.latestPlan?.itinerary?.summary||first||'西安游玩规划').replace(/\s+/g,' ').slice(0,22);
  }
  function capture(){
   const messages=safeMessages(state.messages);if(!messages.length)return;
@@ -32,7 +32,7 @@
  }
  function clearConversation(){
   epoch++;window.dispatchEvent(new Event('wander:reset'));
-  state.messages=[];state.busy=false;state.sessionId=null;state.latestPlan=null;state.routeNames=[];
+  state.messages=[];state.busy=false;state.sessionId=null;state.latestPlan=null;state.activePlanId=null;state.routeNames=[];
   $('messages').replaceChildren();$('message-input').value='';
   if(map&&routeLayer){map.removeLayer(routeLayer);routeLayer=null;}
   if(map)updatePlaceMarkers([]);
@@ -46,11 +46,12 @@
   const entry=entries.find(s=>s.id===id);if(!entry)return;
   capture();clearConversation();activeId=entry.id;createdAt=entry.createdAt;
   state.sessionId=typeof entry.sessionId==='string'?entry.sessionId:null;
-  entry.messages.forEach(m=>appendMessage(m.role,m.text));
+  const planText=window.WanderPlans?.summary(entry.latestPlan),planIndex=planText?entry.messages.map(m=>m.role==='assistant'&&m.text===planText).lastIndexOf(true):-1;
+  entry.messages.forEach((m,index)=>{if(index===planIndex)window.WanderPlans.append(entry.latestPlan,{drawMap:false});else appendMessage(m.role,m.text);});
   if(entry.location&&Number.isFinite(entry.location.lat)&&Number.isFinite(entry.location.lng))selectLocation(entry.location.lat,entry.location.lng,String(entry.location.name||'西安市'),13);
-  if(entry.latestPlan&&typeof routeStops==='function'){
-   state.latestPlan=entry.latestPlan;drawRoute(routeStops(entry.latestPlan.itinerary,entry.latestPlan.events));
-  }else if(Array.isArray(entry.routeNames)&&entry.routeNames.length)drawRoute(entry.routeNames);
+  if(entry.latestPlan&&window.WanderPlans){
+   state.latestPlan=window.WanderPlans.normalize(entry.latestPlan);state.activePlanId=state.latestPlan?.active_plan;window.WanderPlans.draw(state.latestPlan);
+  }else if(Array.isArray(entry.routeNames)&&entry.routeNames.length&&typeof drawRoute==='function')drawRoute(entry.routeNames);
   setExpanded(false);scrollMessages();$('message-input').focus({preventScroll:true});
  }
  function render(){
