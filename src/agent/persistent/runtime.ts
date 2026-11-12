@@ -104,7 +104,7 @@ export class PersistentRuntime implements PlannerRuntime {
   private candidatePlan: ValidatedPlan | undefined;
   /**
    * 用户最近位置（含锚点）：渲染进 system section，不落 raw、不进消息表。
-   * 跨实例/请求沿用靠"最新一条 input 带 location 的 run"持久化——
+   * 跨实例/请求沿用靠"location 已落地 run 中 message_seq 最大者"持久化——
    * reload 每次从会话库恢复（与 DB 一致，含另一实例的提交）；本轮
    * 透传新位置时在租约内覆盖并随新 run 的 input 快照落库。锚点不入
    * 快照，恢复时按当前活动库重解。
@@ -257,9 +257,10 @@ export class PersistentRuntime implements PlannerRuntime {
       this.candidatePlan = latestCandidatePlan(runs, this.history.maxSeqByRun());
       this.planner.restorePlan(this.candidatePlan);
     }
-    // 6) 用户最近位置：会话最新一条 input 带 location 的 run（runs 按
-    //    created_at 升序，取末尾匹配者）即最近位置；本轮透传的新位置在
-    //    reload 之后由 runPrompt 覆盖，并随新 run 的 input 落库。
+    // 6) 用户最近位置：input 带 location 且已落库消息的 run 中，
+    //    message_seq 最大者即最近上报（message_seq 由仓库事务内单调
+    //    分配，与墙上时间无关）；本轮透传的新位置在 reload 之后由
+    //    runPrompt 覆盖，并随新 run 的 input 落库。
     this.locationContext = await this.persistedLocation(runs);
     // 7) 重建有效上下文：system 由当前配置重建，摘要 + 保留尾部用 raw 同对象。
     this.applyContext();
@@ -480,19 +481,27 @@ export class PersistentRuntime implements PlannerRuntime {
   }
 
   /**
-   * 会话最近位置：runs（listRunsBySession 按 created_at 升序）中最后
-   * 一条 input 带合法 location 的 run——它创建的那轮就是用户最近
-   * 一次透传位置的轮次。锚点不随快照持久化，这里按当前活动库重解
-   * （失败降级为无锚点，不阻塞恢复）。
+   * 会话最近位置：input 带合法 location 且"上报已落地"（该 run 至少有
+   * 一条落库消息）的 run 中，取最大 message_seq 者——seq 由仓库在
+   * 会话内事务性单调分配，不依赖 created_at/系统时钟（同毫秒、时钟
+   * 回拨、并发重启都不会错乱），与 latestCandidatePlan 同序。
+   * 没有落库消息的 location run（建 run 后即取消/失败，上报未落地）
+   * 不算数，不覆盖更早的已上报位置。锚点不随快照持久化，这里按
+   * 当前活动库重解（失败降级为无锚点，不阻塞恢复）。
    */
   private async persistedLocation(runs: Run[]): Promise<LocationContext | undefined> {
-    for (let i = runs.length - 1; i >= 0; i--) {
-      const location = requestInputLocation(runs[i]);
-      if (location !== undefined) {
-        return { ...location, anchor: await this.anchorFor(location.lat, location.lng) };
-      }
+    const seqByRun = this.history.maxSeqByRun();
+    let best: { seq: number; location: { lat: number; lng: number } } | undefined;
+    for (const run of runs) {
+      const location = requestInputLocation(run);
+      if (location === undefined) continue;
+      const seq = seqByRun.get(run.runId);
+      if (seq === undefined) continue;
+      if (best === undefined || seq > best.seq) best = { seq, location };
     }
-    return undefined;
+    if (best === undefined) return undefined;
+    const { lat, lng } = best.location;
+    return { lat, lng, anchor: await this.anchorFor(lat, lng) };
   }
 
   /** 锚点解析的降级封装：未配置 resolver 或解析抛错一律返回 undefined。 */
