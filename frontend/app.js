@@ -39,9 +39,10 @@ if(window.L){
  initBasemap();
  L.control.zoom({position:'bottomright'}).addTo(map);
  // Curated 4A/5A attractions remain visible, with labels placed to avoid overlap.
- places.forEach(place=>{place.marker=L.marker([place.lat,place.lng],{icon:placeIcon(place),title:(place.officialName||place.name)+(place.rating?' · '+place.rating+'A':''),riseOnHover:true});place.marker.on('click',()=>{state.manual=true;selectLocation(place.lat,place.lng,place.name,14);});});
+ places.forEach(place=>{place.marker=L.marker([place.lat,place.lng],{icon:placeIcon(place),title:(place.officialName||place.name)+(place.rating?' · '+place.rating+'A':''),riseOnHover:true});place.marker.on('click',()=>{state.manual=true;selectLocation(place.lat,place.lng,place.name,14);window.WanderActivities?.openNearby(place);});});
  map.on('moveend zoomend resize',()=>updatePlaceMarkers());
  updatePlaceMarkers();
+ window.dispatchEvent(new Event('wander:map-ready'));
  setTimeout(autoLocate,3000);
 }else{showMapStatus('地图组件加载失败，请刷新重试');setTimeout(autoLocate,0);}
 
@@ -51,7 +52,7 @@ async function initializeMap(){
   const enabled=await window.WanderAMap?.init({places,onSelect:location=>{
    const revision=++state.revision;state.location=location;setLocationText(location.name);$('location-status').textContent='';updateWeather(location.lat,location.lng,revision);
   }});
-  if(enabled){if(state.latestPlan)window.WanderPlans?.draw(state.latestPlan);setTimeout(autoLocate,0);return;}
+  if(enabled){showMapStatus('');window.dispatchEvent(new Event('wander:map-ready'));if(state.latestPlan)window.WanderPlans?.draw(state.latestPlan);setTimeout(autoLocate,0);return;}
  }catch{window.WanderAMap?.dispose();showMapStatus('高德暂不可用，已保留备用地图');}
  initFallbackMap();
 }

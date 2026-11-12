@@ -75,3 +75,5 @@ npm run check:frontend
 ## 高德地图运行配置
 
 填写根目录 `.env` 中的 `AMAP_JS_KEY` 和 `AMAP_SECURITY_JSCODE` 后，`npm run dev:frontend` 会启用原生高德地图、搜索、定位转换和天气。默认 `AMAP_STYLE=amap://styles/light`。不配置则保留原有底图；安全密钥通过同源代理使用，不写入网页。P0 方案可显示 WGS84 或 GCJ-02 轨迹，前者在入口转换一次。后端位置契约的兼容边界见 [高德准备清单](../docs/amap-setup.md#已实现的运行入口)。
+
+地图活动假数据已随前端提供，执行 `npm run mock:events` 可从仓库种子模板重新生成当天起 7 天的数据，不必下载或修改数据库。`-- --date=YYYY-MM-DD` 可固定日期。活动点点击打开右上角预览；聊天方案入口点击后覆盖左卡，左上角返回对话。演示配图与活动均有标识；`WANDER_CONFIG.eventsEndpoint` 可替换成后端活动列表地址，字段见 `docs/p0-frontend.md`。

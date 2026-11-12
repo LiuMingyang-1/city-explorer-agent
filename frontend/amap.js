@@ -2,7 +2,7 @@
 // Native AMap provider. Existing GPS/OSM samples retain their source coordinates.
 (() => {
  let native,config,onSelect,selectedMarker,ready=false,selectionEpoch=0,routeEpoch=0,searchEpoch=0;
- let routes=[],scenes=[],currentNames=[],selectedPosition=null,selectedName='';
+ let routes=[],scenes=[],currentNames=[],selectedPosition=null,selectedName='',activityMarkers=[],activitiesEpoch=0;
  const converted=new Map(),addresses=new Map();
  const valid=(lat,lng)=>typeof lat==='number'&&typeof lng==='number'&&Number.isFinite(lat)&&Number.isFinite(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180;
  const key=p=>p[0].toFixed(7)+','+p[1].toFixed(7);
@@ -50,6 +50,7 @@
   if(names!==undefined)currentNames=names;if(!native)return;
   const size=native.getSize(),width=size.getWidth?.()??size.width,height=size.getHeight?.()??size.height;
   const card=document.querySelector('.glass-card').getBoundingClientRect(),occupied=[card];
+  const detail=document.getElementById?.('activity-detail');if(detail&&!detail.hidden)occupied.push(detail.getBoundingClientRect());
   if(selectedPosition){const p=native.lngLatToContainer(selectedPosition),x=p.getX?.()??p.x,y=p.getY?.()??p.y;occupied.push({left:x-135,right:x+135,top:y-65,bottom:y+12});}
   const overlap=(a,b)=>a.left<b.right+6&&a.right>b.left-6&&a.top<b.bottom+6&&a.bottom>b.top-6;
   [...scenes].sort((a,b)=>Number(currentNames.includes(b.place.name))-Number(currentNames.includes(a.place.name))||(b.place.rating||0)-(a.place.rating||0)).forEach(scene=>{
@@ -75,7 +76,7 @@
    const name=document.createElement('span');name.className='place-name';name.textContent=place.name;
    if(place.rating){const rating=document.createElement('span');rating.className='place-rating';rating.textContent=place.rating+'A';name.append(rating);}content.append(dot,name);
    const position=positions[index+1],marker=new window.AMap.Marker({position,content,anchor:'center',title:place.officialName||place.name,zIndex:150});
-   marker.on('click',()=>{state.manual=true;select(place.lat,place.lng,place.name,14).catch(()=>showMapStatus('地点暂不可用'));});scenes.push({place,position,marker,content});
+   marker.on('click',()=>{state.manual=true;select(place.lat,place.lng,place.name,14).catch(()=>showMapStatus('地点暂不可用'));window.WanderActivities?.openNearby(place);});scenes.push({place,position,marker,content});
   });
   ready=true;native.on('moveend',()=>updatePlaces());native.on('zoomend',()=>updatePlaces());updatePlaces();
   onSelect({lat:positions[0][1],lng:positions[0][0],name:'西安市',coordinateSystem:'GCJ02',wgs84:{lat:34.27,lng:108.95}});
@@ -95,6 +96,21 @@
   if(typeof adcode!=='string'||!adcode)throw new Error('天气地区暂不可用');
   return await call(callback=>new window.AMap.Weather().getLive(adcode,callback));
  }
+ async function setActivities(groups,open){
+  const epoch=++activitiesEpoch,prepared=[];if(!ready)return;
+  try{
+   for(const system of [...new Set(groups.map(g=>g.coordinateSystem))]){
+    const subset=groups.filter(g=>g.coordinateSystem===system),positions=await convert(subset.map(g=>[g.lng,g.lat]),system);
+    subset.forEach((group,index)=>prepared.push({group,position:positions[index]}));
+   }
+   if(epoch!==activitiesEpoch||!ready)return;
+   if(activityMarkers.length)native.remove(activityMarkers);
+   activityMarkers=prepared.map(({group,position})=>{
+    const content=window.WanderActivities.pin(group);content.addEventListener('click',()=>open(group));
+    return new window.AMap.Marker({position,content,anchor:'center',title:group.name,zIndex:450});
+   });native.add(activityMarkers);
+  }catch{ /* A feed failure must not tear down the basemap. */ }
+ }
  async function drawPlans(model,{fit=true,onSelect:choose}={}){
   clearRoutes();const epoch=routeEpoch,byId=new Map(model.events.map(e=>[e.event_id,e]));
   const points=[],items=[];
@@ -112,7 +128,7 @@
     const selected=item.plan.plan_id===model.active_plan,color=(item.plan.label==='B'||item.index===1)?'#64859a':'#b67a55';let layer;
     if(item.type==='line')layer=new window.AMap.Polyline({path:translated.slice(item.start,item.start+item.length),strokeColor:color,strokeWeight:selected?4:3,strokeOpacity:selected ? .9 : .25,zIndex:selected?120:100});
     else{const content=document.createElement('div');content.className='native-route-dot';content.style.background=color;content.style.opacity=selected?'1':'.5';content.title='方案 '+item.plan.label+' · '+(item.i+1)+'. '+item.event.title;content.textContent=String(item.i+1);layer=new window.AMap.Marker({position:translated[item.pointIndex],content,anchor:'center',zIndex:selected?300:200});}
-    if(choose)layer.on('click',()=>choose(item.plan.plan_id));return layer;
+    layer.on('click',()=>{choose?.(item.plan.plan_id);if(item.type==='dot')window.WanderActivities?.openEvents([item.event],{placeName:item.event.venue_name,coordinateSystem:model.coordinate_system});});return layer;
    });native.add(routes);
    if(fit&&routes.length){const card=document.querySelector('.glass-card').getBoundingClientRect();native.setFitView(routes,false,innerWidth>700?[70,70,60,card.right+45]:[60,25,card.height+35,25],15);}
   }catch{if(epoch===routeEpoch)showMapStatus('路线坐标转换暂不可用');}
@@ -130,6 +146,6 @@
   }
  }
  function cancelPending(){selectionEpoch++;searchEpoch++;}
- function dispose(){ready=false;cancelPending();clearRoutes();native?.destroy();native=null;scenes=[];selectedPosition=null;selectedName='';}
- window.WanderAMap={init,dispose,cancelPending,loadFallback,convert,select,search,weather,updatePlaces,drawPlans,clearRoutes,backendLocation,get ready(){return ready;}};
+ function dispose(){ready=false;activitiesEpoch++;activityMarkers=[];cancelPending();clearRoutes();native?.destroy();native=null;scenes=[];selectedPosition=null;selectedName='';}
+ window.WanderAMap={init,dispose,cancelPending,loadFallback,convert,select,search,weather,updatePlaces,setActivities,drawPlans,clearRoutes,backendLocation,get ready(){return ready;}};
 })();

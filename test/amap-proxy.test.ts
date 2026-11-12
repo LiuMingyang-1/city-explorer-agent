@@ -29,3 +29,13 @@ test('cross-origin, unsupported method and upstream error do not disclose map cr
  const redirect:typeof fetch=async()=>new Response(null,{status:302,headers:{Location:'https://other.example'}});
  assert.equal((await handleAMap(request('/_AMapService/v3/place/text'),env,redirect))!.status,502);
 });
+
+test('SDK JSONP responses are executable under nosniff while JSON stays JSON',async()=>{
+ const fake:typeof fetch=async()=>new Response('jsonp_123({"status":"1"})',{headers:{'Content-Type':'application/json;charset=UTF-8'}});
+ const response=await handleAMap(request('/_AMapService/v3/assistant/coordinate/convert?callback=jsonp_123'),env,fake);
+ assert.equal(response!.headers.get('Content-Type'),'application/javascript; charset=utf-8');
+ assert.equal(response!.headers.get('X-Content-Type-Options'),'nosniff');
+ assert.equal(await response!.text(),'jsonp_123({"status":"1"})');
+ const plain=await handleAMap(request('/_AMapService/v3/assistant/coordinate/convert'),env,fake);
+ assert(plain!.headers.get('Content-Type')!.startsWith('application/json'));
+});

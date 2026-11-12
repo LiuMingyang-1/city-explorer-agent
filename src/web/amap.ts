@@ -53,7 +53,8 @@ export async function handleAMap(
       return json({ error: 'Map service unavailable' }, 502);
     }
     return new Response(response.body, { status: response.status, headers: {
-      'Content-Type': response.headers.get('Content-Type') || 'application/json; charset=utf-8',
+      // AMap returns JSONP with application/json. nosniff browsers require a JS MIME.
+      'Content-Type': callback ? 'application/javascript; charset=utf-8' : response.headers.get('Content-Type') || 'application/json; charset=utf-8',
       'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff',
     } });
   } catch (error) {

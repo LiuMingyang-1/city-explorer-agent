@@ -56,7 +56,8 @@
   const wrap=document.createElement('div');wrap.className='event-cover';
   const placeholder=text('span','cover-fallback',event.category||'活动');wrap.append(placeholder);
   let images=event.image_urls;if(typeof images==='string'){try{images=JSON.parse(images);}catch{images=[];}}
-  const url=[event.thumbnail_url,...(Array.isArray(images)?images:[])].map(safeURL).find(Boolean);
+  const imageURL=value=>typeof value==='string'&&/^(\/(?!\/)|\.\/)/.test(value)?value:safeURL(value);
+  const url=[event.thumbnail_url,...(Array.isArray(images)?images:[])].map(imageURL).find(Boolean);
   if(url){const image=document.createElement('img');image.src=url;image.alt=String(event.title||'活动封面');image.loading='lazy';image.decoding='async';image.referrerPolicy='no-referrer';image.addEventListener('error',()=>{image.remove();placeholder.textContent='图片暂缺';},{once:true});wrap.append(image);}
   return wrap;
  }
@@ -88,7 +89,7 @@
     if(typeof lat!=='number'||typeof lng!=='number'||!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)return;
     const point=[lat,lng];bounds.push(point);
     const dot=L.circleMarker(point,{radius:selected?7:5,color,weight:2,opacity:selected?1:.45,fillColor:selected?color:'#f2f4ef',fillOpacity:selected ? .95 : .5}).bindTooltip(locationLabel('方案 '+(plan.label||index+1)+' · '+(i+1)+'. '+event.title));
-    if(onSelect)dot.on('click',()=>onSelect(plan.plan_id));layers.push(dot);
+    dot.on('click',()=>{onSelect?.(plan.plan_id);window.WanderActivities?.openEvents([event],{placeName:event.venue_name,coordinateSystem:model.coordinate_system});});layers.push(dot);
     if(i===stops.length-1)return;
     const leg=legFor(plan,stop.event_id,stops[i+1].event_id),points=geometry(leg);
     if(points){bounds.push(...points);const line=L.polyline(points,{color,weight:selected?4:3,opacity:selected ? .9 : .25}).bindTooltip(locationLabel((leg.provider==='mock'?'示例轨迹 · ':'')+'方案 '+(plan.label||index+1)+' · '+commute(leg)));
@@ -98,16 +99,30 @@
   if(!layers.length)return;routeLayer=L.layerGroup(layers).addTo(map);
   if(fit&&bounds.length){const card=document.querySelector('.glass-card').getBoundingClientRect();map.fitBounds(L.latLngBounds(bounds),{paddingTopLeft:innerWidth>700?[card.right+45,90]:[25,60],paddingBottomRight:innerWidth>700?[70,60]:[25,card.height+35],maxZoom:15,animate:true});}
  }
+ function closeDetail(){
+  const overlay=$('plan-detail');if(overlay)overlay.hidden=true;
+  document.querySelector('.glass-card').classList.remove('viewing-plan');
+  currentView?.preview?.setAttribute('aria-expanded','false');
+  currentView?.preview?.focus({preventScroll:true});
+ }
  function append(data,{drawMap=true}={}){
   const model=normalize(data);if(!model)throw new Error('方案内容不完整');
-  if(currentView)currentView.buttons.forEach(b=>{b.disabled=true;});
+  closeDetail();if(currentView){currentView.preview.disabled=true;currentView.buttons.forEach(b=>{b.disabled=true;});}
   const {message,bubble}=makeMessage('assistant');bubble.classList.add('plan-bubble');
-  const head=document.createElement('div');head.className='plan-header';
-  const badges=document.createElement('div');badges.className='plan-badges';
-  if(isExample(model))badges.append(text('span','example-badge','示例行程 · 非真实活动'));
-  head.append(badges);const tabs=document.createElement('div');tabs.className='plan-switch';tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','游玩方案');
+  bubble.append(text('p','plan-reply',model.plans.length>1?'为你整理了两种出发方式，看看哪一种更合心意。':'行程已经整理好了，点开看看这一路的安排。'));
+  const preview=text('button','plan-preview','');preview.type='button';preview.setAttribute('aria-expanded','false');preview.setAttribute('aria-controls','plan-detail');
+  const previewMeta=text('span','plan-preview-meta',model.plans.length>1?'两种提案 · A / B':'你的专属规划');
+  const previewTitle=text('strong','plan-preview-title',model.plans.length>1?'这一次，想怎样漫游？':active(model).itinerary.summary||'查看游玩规划');
+  const previewFooter=text('span','plan-preview-footer','查看完整行程  ↗');preview.append(previewMeta,previewTitle,previewFooter);bubble.append(preview);
+  if(isExample(model))bubble.append(text('span','example-badge','示例行程 · 非真实活动'));
+  const overlay=$('plan-detail');overlay.replaceChildren();overlay.hidden=true;
+  const top=document.createElement('header');top.className='plan-detail-top';
+  const back=text('button','plan-back','← 返回对话');back.type='button';back.addEventListener('click',closeDetail);top.append(back,text('span','plan-detail-eyebrow','你的漫游提案'));
+  const heading=text('h2','plan-detail-title',model.plans.length>1?'选择你的出发方式':'把今天交给喜欢的事');
+  const tabs=document.createElement('div');tabs.className='plan-switch';tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','游玩方案');
   if(model.plans.length===1)tabs.classList.add('single');
   const panel=document.createElement('div');panel.className='plan-content';panel.id='plan-content-'+(++viewCount);panel.setAttribute('role','tabpanel');
+  const scroll=document.createElement('div');scroll.className='plan-detail-scroll';scroll.append(panel);
   const messageIndex=state.messages.length;state.messages.push({role:'assistant',text:summary(model)});
   const buttons=model.plans.map((plan,index)=>{
    const button=text('button','plan-tab','方案 '+(plan.label||String.fromCharCode(65+index)));button.type='button';button.setAttribute('role','tab');button.id=panel.id+'-tab-'+index;button.setAttribute('aria-controls',panel.id);
@@ -115,13 +130,14 @@
    button.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight'].includes(event.key))return;event.preventDefault();const next=(index+(event.key==='ArrowRight'?1:-1)+model.plans.length)%model.plans.length;choose(model.plans[next].plan_id);buttons[next].focus();});
    tabs.append(button);return button;
   });
-  head.append(tabs);bubble.append(head,panel);
+  overlay.append(top,heading,tabs,scroll);
   function choose(id,{fit=false,capture=true}={}){
    if(!model.plans.some(p=>p.plan_id===id))return;model.active_plan=id;
    const plan=active(model),byId=new Map(model.events.map(e=>[e.event_id,e]));panel.replaceChildren();
    buttons.forEach((button,i)=>{const selected=model.plans[i].plan_id===id;button.setAttribute('aria-selected',String(selected));button.tabIndex=selected?0:-1;button.classList.toggle('active',selected);});
    panel.setAttribute('aria-labelledby',buttons[model.plans.findIndex(p=>p.plan_id===id)].id);
    tabs.style.setProperty('--selected-index',String(model.plans.findIndex(p=>p.plan_id===id)));
+   if(isExample(model))panel.append(text('span','example-badge','示例行程 · 非真实活动'));
    if(plan.itinerary.date)panel.append(text('p','itinerary-date',plan.itinerary.date));
    panel.append(text('p','itinerary-summary',plan.itinerary.summary||plan.title||'游玩规划'));
    const list=document.createElement('ol');list.className='event-list';
@@ -131,13 +147,17 @@
    if(!plan.legs?.length&&plan.itinerary.stops.length>1)warnings.push('尚无站间道路轨迹与通勤数据，仅展示活动位置。');
    [...new Set(warnings.filter(w=>typeof w==='string'))].forEach(w=>panel.append(text('p','plan-warning',w)));
    state.latestPlan=model;state.activePlanId=id;state.messages[messageIndex].text=summary(model);
+   previewTitle.textContent=plan.title||plan.itinerary.summary||'查看游玩规划';
+   previewFooter.textContent='方案 '+(plan.label||'A')+' · '+plan.itinerary.stops.length+' 个停留点  ↗';
    if(drawMap)draw(model,{fit,onSelect:next=>choose(next)});
    if(capture)window.WanderHistory?.capture();
   }
-  currentView={buttons};choose(model.active_plan,{fit:true,capture:false});
-  $('messages').scrollTo({top:message.offsetTop||0,behavior:'smooth'});
-  return message;
+  preview.addEventListener('click',()=>{overlay.hidden=false;preview.setAttribute('aria-expanded','true');document.querySelector('.glass-card').classList.add('viewing-plan');scroll.scrollTo({top:0});back.focus({preventScroll:true});});
+  currentView={buttons,preview};choose(model.active_plan,{fit:true,capture:false});
+  window.WanderActivities?.addPlanEvents(model);
+  scrollMessages();return message;
  }
- window.addEventListener('wander:reset',()=>{currentView=null;state.activePlanId=null;});
- window.WanderPlans={normalize,active,summary,price,geometry,commute,safeURL,draw,append};
+ window.addEventListener('wander:reset',()=>{closeDetail();currentView=null;state.activePlanId=null;});
+ window.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('plan-detail').hidden)closeDetail();});
+ window.WanderPlans={normalize,active,summary,price,geometry,commute,safeURL,eventCover,draw,append,closeDetail};
 })();
