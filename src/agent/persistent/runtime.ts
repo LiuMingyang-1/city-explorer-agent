@@ -586,7 +586,10 @@ export class PersistentRuntime implements PlannerRuntime {
         this.pendingDedupeKey =
           options.requestId !== undefined ? `request:${options.requestId}` : undefined;
         try {
-          const turn = await this.planner.performTurn(text, { signal });
+          const turn = await this.planner.performTurn(text, {
+            signal,
+            onProgress: options.onProgress,
+          });
           // 终态线性化点：plan 已提交（main）或本轮产出非 error turn
           // （child 候选/追问）⇒ completed；此后到达的 cancel/close 只是
           // "迟到"，不再把已持久的结果抹成 cancelled。
