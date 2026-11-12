@@ -1,5 +1,5 @@
 /**
- * 同源 Web server 组合层：静态托管 frontend/ + 把 /api/chat* 前缀转给注入的
+ * 同源 Web server 组合层：静态托管 frontend/ + 把 /api/* 请求转给注入的
  * API RequestListener（真实装配在 ./main.ts：createChatHandler(service)）。
  * 本层不 import service/Agent——全部依赖注入 → 可整层离线测试。
  *
@@ -116,7 +116,7 @@ export function createStaticFileHandler(root: string): RequestListener {
 export interface WebServerParts {
   mapEnv?: AMapEnvironment;
   mapFetch?: typeof fetch;
-  /** /api/chat* 的处理者；真实装配为 createChatHandler(service)。 */
+  /** /api/* 的处理者；真实装配为 createChatHandler(service)。 */
   apiHandler: RequestListener;
   /** 静态根；默认仓库 frontend/。 */
   staticRoot?: string;
@@ -125,8 +125,9 @@ export interface WebServerParts {
 }
 
 /**
- * 同源组合：/api/chat 前缀 → apiHandler（http.ts 自带路由/方法/CORS 判断）；
- * 其余路径 → 静态文件。URL 解析失败的畸形请求回 400。
+ * 同源组合：/api/chat 前缀与 /api/events、/api/memory → apiHandler
+ * （http.ts 自带路由/方法/CORS 判断）；其余路径 → 静态文件。
+ * URL 解析失败的畸形请求回 400。
  */
 export function createWebRequestListener(parts: WebServerParts): RequestListener {
   const staticHandler = createStaticFileHandler(parts.staticRoot ?? FRONTEND_ROOT);
@@ -142,7 +143,11 @@ export function createWebRequestListener(parts: WebServerParts): RequestListener
     if (pathname === '/api/map-config' || pathname.startsWith('/_AMapService/')) {
       if (await handleAMapNode(req, res, parts.mapEnv, parts.mapFetch)) return;
     }
-    if (pathname.startsWith("/api/chat")) {
+    if (
+      pathname.startsWith("/api/chat") ||
+      pathname === "/api/events" ||
+      pathname === "/api/memory"
+    ) {
       try {
         await parts.apiHandler(req, res);
       } catch (error) {

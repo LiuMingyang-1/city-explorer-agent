@@ -19,11 +19,12 @@ function showSendError(text,error){
  scrollMessages();
 }
 function buildChatBody(text){
- const body={message:text},loc=window.WanderAMap?.ready?window.WanderAMap.backendLocation(state.location):state.location;
+ const body={message:text},loc=window.WanderAMap?window.WanderAMap.backendLocation(state.location):state.location;
  if(loc&&Number.isFinite(loc.lat)&&Number.isFinite(loc.lng))body.location={lat:loc.lat,lng:loc.lng};
  if(typeof state.sessionId==='string'&&state.sessionId)body.session_id=state.sessionId;
  // Legacy /api/chat rejects extra keys: only plans-capable replies enable this field.
  if(state.latestPlan?.kind==='plans'&&typeof state.activePlanId==='string')body.active_plan=state.activePlanId;
+ if(typeof state.referencedEventId==='string'&&state.referencedDraft===text)body.referenced_event_id=state.referencedEventId;
  return body;
 }
 async function deliver(text){
@@ -45,7 +46,7 @@ async function deliver(text){
   else if(data&&data.kind==='clarification'&&typeof data.question==='string'&&data.question)appendMessage('assistant',data.question);
   else throw new Error('收到的方案格式暂不支持');
  }catch(error){if(!isCurrent())return;pending.remove();showSendError(text,error);}
- finally{clearTimeout(slow);pending.remove();if(isCurrent()){activeChatRequest=null;state.busy=false;updateSendButton();window.WanderHistory?.capture();$('message-input').focus({preventScroll:true});}}
+ finally{clearTimeout(slow);pending.remove();if(isCurrent()){state.referencedEventId=null;state.referencedDraft=null;activeChatRequest=null;state.busy=false;updateSendButton();window.WanderHistory?.capture();$('message-input').focus({preventScroll:true});}}
 }
 async function sendMessage(text){
  text=String(text).trim();if(!text||!ready||state.busy)return;
@@ -53,7 +54,7 @@ async function sendMessage(text){
 }
 window.sendMessage=sendMessage;
 function updateSendButton(){$('send-button').disabled=!ready||state.busy||!$('message-input').value.trim();}
-$('message-input').addEventListener('input',updateSendButton);
+$('message-input').addEventListener('input',()=>{if($('message-input').value!==state.referencedDraft){state.referencedEventId=null;state.referencedDraft=null;}updateSendButton();});
 $('chat-form').addEventListener('submit',event=>{event.preventDefault();if(!event.isComposing)sendMessage($('message-input').value);});
 $('message-input').addEventListener('keydown',event=>{if(event.key==='Enter'&&event.isComposing)event.preventDefault();});
 updateSendButton();

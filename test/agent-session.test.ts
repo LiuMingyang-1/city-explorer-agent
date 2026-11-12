@@ -50,6 +50,13 @@ function envelope(itinerary: unknown, constraints: Partial<PlanningConstraints> 
   return JSON.stringify({ type: "itinerary", constraints, itinerary });
 }
 
+function comparisonEnvelope(
+  plans: { label: "A" | "B"; title: string; itinerary: unknown }[],
+  constraints: Partial<PlanningConstraints> = { date: BASE },
+): string {
+  return JSON.stringify({ type: "comparison", constraints, plans });
+}
+
 async function makeSession(t: TestContext, responses: FauxResponseStep[]) {
   const dir = mkdtempSync(join(tmpdir(), "explorer-session-"));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
@@ -170,4 +177,164 @@ test("system prompt reached the model with the injected current date", async (t)
   const { agent } = await makeSession(t, [fauxAssistantMessage('{"type":"clarify","question":"q"}')]);
   assert.ok(agent.state.systemPrompt.includes(BASE));
   assert.ok(agent.state.systemPrompt.includes('"clarify"'));
+});
+
+test("comparison：双方案均过校验 → comparison turn，首个 plan 行程成为当前行程", async (t) => {
+  const { session, repo, faux } = await makeSession(t, []);
+  const ev = (await repo.search({ date: BASE, category: "展览" }))[0];
+  const planA = {
+    date: BASE,
+    summary: "A",
+    stops: [{ event_id: ev.id, arrive_at: "10:00", leave_at: "11:00", reason: "r" }],
+  };
+  const planB = {
+    date: BASE,
+    summary: "B",
+    stops: [{ event_id: ev.id, arrive_at: "14:00", leave_at: "15:00", reason: "r" }],
+  };
+  faux.setResponses([
+    fauxAssistantMessage(
+      comparisonEnvelope([
+        { label: "A", title: "上午场", itinerary: planA },
+        { label: "B", title: "下午场", itinerary: planB },
+      ]),
+    ),
+  ]);
+  const turn = await session.prompt("两个方向都行");
+  assert.equal(turn.kind, "comparison");
+  if (turn.kind !== "comparison") return;
+  assert.deepEqual(
+    turn.plans.map((p) => [p.label, p.title]),
+    [
+      ["A", "上午场"],
+      ["B", "下午场"],
+    ],
+  );
+  assert.equal(turn.plans[0].itinerary.stops[0].arrive_at, "10:00");
+  // 首个（active）plan 的行程提交为当前行程。
+  assert.equal(session.itinerary?.summary, "A");
+  assert.equal(turn.warning, undefined);
+});
+
+test("comparison：只过一个 → 降级 single 并附指明失败方案的 warning", async (t) => {
+  const { session, repo, faux } = await makeSession(t, []);
+  const ev = (await repo.search({ date: BASE, category: "展览" }))[0];
+  const good = {
+    date: BASE,
+    summary: "B 方案可用",
+    stops: [{ event_id: ev.id, arrive_at: "10:00", leave_at: "11:00", reason: "r" }],
+  };
+  const bad = {
+    date: BASE,
+    summary: "A 用了幽灵活动",
+    stops: [{ event_id: "evt_nope", arrive_at: "10:00", leave_at: "11:00", reason: "r" }],
+  };
+  faux.setResponses([
+    fauxAssistantMessage(
+      comparisonEnvelope([
+        { label: "A", title: "坏方案", itinerary: bad },
+        { label: "B", title: "好方案", itinerary: good },
+      ]),
+    ),
+  ]);
+  const turn = await session.prompt("两个方向都行");
+  assert.equal(turn.kind, "itinerary"); // 降级为单方案
+  if (turn.kind !== "itinerary") return;
+  assert.equal(turn.itinerary.summary, "B 方案可用");
+  assert.match(turn.warning ?? "", /方案 A/); // warning 指明失败 plan
+  assert.equal(session.itinerary?.summary, "B 方案可用"); // 指针提交存活方案
+});
+
+test("comparison：双不过 → 错误按 plan 标注回喂纠正，修正后双过提交", async (t) => {
+  const { session, repo, faux } = await makeSession(t, []);
+  const ev = (await repo.search({ date: BASE, category: "展览" }))[0];
+  const seen: string[] = [];
+  const badA = {
+    date: BASE,
+    summary: "a",
+    stops: [{ event_id: "evt_bad_a", arrive_at: "10:00", leave_at: "11:00", reason: "r" }],
+  };
+  const badB = {
+    date: BASE,
+    summary: "b",
+    stops: [{ event_id: "evt_bad_b", arrive_at: "14:00", leave_at: "15:00", reason: "r" }],
+  };
+  faux.setResponses([
+    fauxAssistantMessage(
+      comparisonEnvelope([
+        { label: "A", title: "坏A", itinerary: badA },
+        { label: "B", title: "坏B", itinerary: badB },
+      ]),
+    ),
+    (context) => {
+      const last = context.messages[context.messages.length - 1];
+      seen.push(last.role === "user" ? JSON.stringify(last.content) : "not-user");
+      return fauxAssistantMessage(
+        comparisonEnvelope([
+          {
+            label: "A",
+            title: "好A",
+            itinerary: {
+              date: BASE,
+              summary: "好A",
+              stops: [{ event_id: ev.id, arrive_at: "10:00", leave_at: "11:00", reason: "r" }],
+            },
+          },
+          {
+            label: "B",
+            title: "好B",
+            itinerary: {
+              date: BASE,
+              summary: "好B",
+              stops: [{ event_id: ev.id, arrive_at: "14:00", leave_at: "15:00", reason: "r" }],
+            },
+          },
+        ]),
+      );
+    },
+  ]);
+  const turn = await session.prompt("两个方向都行");
+  assert.equal(turn.kind, "comparison");
+  // 纠正反馈分别标注方案 A/B 的错误。
+  assert.ok(seen[0].includes("方案 A") && seen[0].includes("evt_bad_a"), seen[0]);
+  assert.ok(seen[0].includes("方案 B") && seen[0].includes("evt_bad_b"), seen[0]);
+  assert.equal(session.itinerary?.summary, "好A");
+});
+
+test("comparison 双不过且不收敛：error turn 的错误按 plan 标注", async (t) => {
+  const bad = comparisonEnvelope([
+    {
+      label: "A",
+      title: "a",
+      itinerary: {
+        date: BASE,
+        summary: "a",
+        stops: [{ event_id: "evt_bad_a", arrive_at: "10:00", leave_at: "11:00", reason: "r" }],
+      },
+    },
+    {
+      label: "B",
+      title: "b",
+      itinerary: {
+        date: BASE,
+        summary: "b",
+        stops: [{ event_id: "evt_bad_b", arrive_at: "14:00", leave_at: "15:00", reason: "r" }],
+      },
+    },
+  ]);
+  const { session, faux } = await makeSession(t, [
+    fauxAssistantMessage(bad),
+    fauxAssistantMessage(bad),
+    fauxAssistantMessage(bad),
+  ]);
+  const turn = await session.prompt("两个方向都行");
+  assert.equal(turn.kind, "error");
+  if (turn.kind === "error") {
+    assert.match(turn.message, /方案 A/);
+    assert.match(turn.message, /方案 B/);
+    assert.match(turn.message, /evt_bad_a/);
+    assert.match(turn.message, /evt_bad_b/);
+  }
+  assert.equal(faux.state.callCount, 3); // 首次 + 2 轮纠正
+  assert.equal(session.itinerary, undefined);
 });

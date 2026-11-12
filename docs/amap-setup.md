@@ -33,7 +33,7 @@
 ```dotenv
 AMAP_JS_KEY=
 AMAP_SECURITY_JSCODE=
-AMAP_WEB_SERVICE_KEY=
+EXPLORER_AMAP_KEY=
 AMAP_STYLE=amap://styles/light
 ```
 
@@ -57,6 +57,6 @@ JS Key 是浏览器 SDK 的公开应用标识；安全密钥留在服务器，�
 
 前端高德选点和地图坐标为 GCJ-02；GPS/现有 OSM 景点、WGS 示例轨迹通过官方转换，转换结果缓存。原生高德返回值不再转换。天气使用高德 JS 天气插件按所选地区获取，避免把 GCJ 传给 WGS 天气接口。
 
-当前真实后端仍按 WGS-84 接收位置，因此默认只发送已有原始 WGS 坐标（GPS/静态景点）；原生高德搜索得到的 GCJ 选点没有原始 WGS 值时，不向旧接口冒充 WGS。后端位置契约与活动数据实际统一 GCJ-02 后，再配置 `AMAP_BACKEND_COORDINATE_SYSTEM=GCJ02`。这个设置不替代数据库数据转换。
+当前主分支后端已按 `docs/agent-impl-contracts.md` 统一 GCJ-02。地图配置默认使用 GCJ02 后端模式，定位先转换后发送，高德搜索点直接发送。仅连接旧 WGS 后端时设置 `AMAP_BACKEND_COORDINATE_SYSTEM=WGS84`；此时原生高德选点缺少原始 WGS 时省略位置。备用 OSM 模式下也不会把 WGS 坐标冒充 GCJ。
 
-`AMAP_WEB_SERVICE_KEY` 仍留给后端 REST 算路，本次没有把 JS Key 当 Web 服务 Key 使用。仓库只记录环境变量名，实际凭据通过部署环境管理。
+`EXPLORER_AMAP_KEY` 仍留给后端 REST 算路，本次没有把 JS Key 当 Web 服务 Key 使用。仓库只记录环境变量名，实际凭据通过部署环境管理。

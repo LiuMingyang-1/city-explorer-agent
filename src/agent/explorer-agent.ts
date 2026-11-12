@@ -2,9 +2,12 @@ import { Agent } from "@earendil-works/pi-agent-core";
 import type { AgentTool, StreamFn } from "@earendil-works/pi-agent-core";
 import type { ExplorerConfig } from "../config.ts";
 import type { EventRepository } from "../data/repository.ts";
+import { createAmapRouter } from "../routing/amap.ts";
+import type { RouteComputer } from "../routing/types.ts";
 import { createExplorerModels } from "./model.ts";
 import { buildSystemPrompt, localToday } from "./prompt.ts";
 import { createSearchEventsTool } from "./tools.ts";
+import { createEstimateTravelTool } from "./travel-tool.ts";
 
 export interface ExplorerAgentOptions {
   config: ExplorerConfig;
@@ -29,6 +32,13 @@ export interface ExplorerAgentOptions {
    * 是否挂了 delegate_task 保持一致，避免提示词提到不存在的工具。
    */
   canDelegate?: boolean;
+  /**
+   * 站间算路器注入点：测试可注入桩实现，或显式 null 强制关闭算路；
+   * 缺省（undefined）按 config.amapKey 自动建高德客户端——有 key 挂
+   * estimate_travel 工具并附系统提示算路准则；无 key 两者都不挂
+   * （全链路降级，模型按无算路留缓冲，不阻塞规划）。
+   */
+  travelRouter?: RouteComputer | null;
 }
 
 /**
@@ -47,13 +57,33 @@ export async function createExplorerAgent(options: ExplorerAgentOptions): Promis
         ...streamOptions,
         maxTokens: streamOptions?.maxTokens ?? Math.min(config.maxTokens, m.maxTokens),
       }));
+  // 算路降级链：显式注入优先；缺省按 config.amapKey 自动建高德客户端，
+  // 无 key → 不挂工具且提示词维持「无路线计算工具」旧段落。
+  const router =
+    options.travelRouter !== undefined
+      ? options.travelRouter
+      : config.amapKey
+        ? createAmapRouter({ key: config.amapKey, city: config.amapTransitCity })
+        : null;
+  const travelTool = router
+    ? createEstimateTravelTool({
+        router,
+        repository: options.repository,
+        transitThresholdM: config.routeTransitThresholdM,
+      })
+    : undefined;
   return new Agent({
     initialState: {
       model,
       systemPrompt: buildSystemPrompt(options.currentDate ?? localToday(), {
         canDelegate: options.canDelegate,
+        canEstimateTravel: router !== null,
       }),
-      tools: [createSearchEventsTool(options.repository), ...(options.extraTools ?? [])],
+      tools: [
+        createSearchEventsTool(options.repository),
+        ...(travelTool ? [travelTool] : []),
+        ...(options.extraTools ?? []),
+      ],
     },
     streamFn,
     getApiKey: () => config.apiKey,

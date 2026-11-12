@@ -36,7 +36,7 @@ test('rich event cards handle price ranges, free/unknown prices, venue, reason, 
 });
 
 test('A/B switching draws both supplied road geometries and highlights the selected route without refitting',()=>{
- const h=setup({api:true}),map=leaflet(h);h.context.payload=fixture('response-comparison');h.run('window.WanderPlans.append(payload)');
+ const h=setup({api:true}),map=leaflet(h);h.context.payload={...fixture('response-comparison'),coordinate_system:'WGS84'};h.run('window.WanderPlans.append(payload)');
  let lines=map.created.filter(l=>l.type==='line');assert.equal(lines.length,2);assert.equal((lines[0]!.points as unknown[]).length,4);
  assert.deepEqual(Array.from((lines[0]!.points as number[][])[0]!),[34.249,108.94]);
  assert.equal(lines[1]!.options.opacity,.9);assert.equal(map.fits(),1);
@@ -46,7 +46,7 @@ test('A/B switching draws both supplied road geometries and highlights the selec
 });
 
 test('missing and mismatched geometry never invents a straight route or zero-minute commute',()=>{
- const h=setup({api:true}),map=leaflet(h);h.context.payload=fixture('response-partial');h.run('window.WanderPlans.append(payload)');
+ const h=setup({api:true}),map=leaflet(h);h.context.payload={...fixture('response-partial'),coordinate_system:'WGS84'};h.run('window.WanderPlans.append(payload)');
  assert.equal(map.created.filter(l=>l.type==='line').length,0);assert(content(h.$('plan-detail')).includes('通勤待确认'));
  const data=fixture('response-comparison');data.coordinate_system='GCJ-02';h.context.payload=data;h.run('window.WanderPlans.append(payload)');
  assert.equal(map.created.filter(l=>l.type==='line').length,0);assert(content(h.$('plan-detail')).includes('坐标系尚未匹配'));
@@ -86,11 +86,11 @@ test('SSE terminal errors and truncated streams fail without committing a result
  assert.equal(h.state.messages.length,0);
 });
 
-test('JSON and real SSE responses share /api/chat, and progress reaches the pending message',async()=>{
+test('JSON and real SSE responses share the configured SSE endpoint, and progress reaches the pending message',async()=>{
  const h=setup({api:true});let requested='';
  const sample=readFileSync(new URL('../docs/mocks/day0/stream.sse',import.meta.url),'utf8');
  h.context.fetch=async(url:string)=>{requested=url;return new Response(sample,{headers:{'Content-Type':'text/event-stream'}})};
- await h.run('window.sendMessage("给我两个方案")');assert.equal(requested,'/api/chat');assert.equal(find(h.$('plan-detail'),'plan-tab').length,2);assert.equal(h.run('state.sessionId'),'sess_mock_001');
+ await h.run('window.sendMessage("给我两个方案")');assert.equal(requested,'/api/chat/stream');assert.equal(find(h.$('plan-detail'),'plan-tab').length,2);assert.equal(h.run('state.sessionId'),'sess_mock_001');
 });
 
 test('explicit demo mode reads canonical fixture files and preserves selected A on continuation',async()=>{

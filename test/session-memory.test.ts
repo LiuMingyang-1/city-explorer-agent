@@ -135,3 +135,81 @@ test("user memories are isolated per user", async (t) => {
   assert.equal((await repo.getUserMemory("u-a"))?.content, "A 的记忆 v2");
   assert.equal((await repo.getUserMemory("u-b"))?.content, "B 的记忆");
 });
+
+test("putUserMemory 版本 CAS：expectedVersion 匹配才写入，不匹配抛 conflict 且不落库", async (t) => {
+  const repo = openMemoryRepo(t);
+  const { main } = await makeUser(repo, "u-mem");
+  await repo.putUserMemory("u-mem", {
+    content: "旧文",
+    sourceSessionId: main.sessionId,
+    throughMessageSeq: 5,
+  });
+  assert.equal((await repo.getUserMemory("u-mem"))?.version, 1);
+
+  // 版本不符（期望无行基线 0）→ conflict，原行原封不动。
+  await assert.rejects(
+    repo.putUserMemory("u-mem", {
+      content: "蒸馏结果",
+      sourceSessionId: main.sessionId,
+      throughMessageSeq: 9,
+      expectedVersion: 0,
+    }),
+    (e) => isSessionError(e, "conflict"),
+  );
+  assert.equal((await repo.getUserMemory("u-mem"))?.content, "旧文");
+
+  // 版本相符 → 写入并把版本推进到 2。
+  await repo.putUserMemory("u-mem", {
+    content: "蒸馏结果",
+    sourceSessionId: main.sessionId,
+    throughMessageSeq: 9,
+    expectedVersion: 1,
+  });
+  const written = await repo.getUserMemory("u-mem");
+  assert.equal(written?.content, "蒸馏结果");
+  assert.equal(written?.version, 2);
+
+  // DELETE 写墓碑：读路径当无记忆，version 继续递增留在行上。
+  await repo.deleteUserMemory("u-mem");
+  assert.equal(await repo.getUserMemory("u-mem"), undefined);
+  // 蒸馏拿旧版本基线写回 → conflict，墓碑不被复活。
+  await assert.rejects(
+    repo.putUserMemory("u-mem", {
+      content: "蒸馏结果",
+      sourceSessionId: main.sessionId,
+      throughMessageSeq: 10,
+      expectedVersion: 2,
+    }),
+    (e) => isSessionError(e, "conflict"),
+  );
+  assert.equal(await repo.getUserMemory("u-mem"), undefined);
+  // 期望墓碑当前版本 → 复活写入成功，版本继续推进。
+  await repo.putUserMemory("u-mem", {
+    content: "新蒸馏",
+    sourceSessionId: main.sessionId,
+    throughMessageSeq: 10,
+    expectedVersion: 3,
+  });
+  assert.equal((await repo.getUserMemory("u-mem"))?.content, "新蒸馏");
+  assert.equal((await repo.getUserMemory("u-mem"))?.version, 4);
+});
+
+test("deleteUserMemory 对从未写过记忆的用户也留墓碑（版本 1，读作无记忆）", async (t) => {
+  const repo = openMemoryRepo(t);
+  await makeUser(repo, "u-mem");
+  await repo.deleteUserMemory("u-mem");
+  // 读路径与"从未写过"不可区分；墓碑使"蒸馏期被删"能被 CAS 检出。
+  assert.equal(await repo.getUserMemory("u-mem"), undefined);
+  await assert.rejects(
+    repo.putUserMemory("u-mem", {
+      content: "蒸馏结果",
+      sourceSessionId: null,
+      throughMessageSeq: 1,
+      expectedVersion: 0, // 拿"无行"基线 → 与墓碑 version 1 不符
+    }),
+    (e) => isSessionError(e, "conflict"),
+  );
+  // 用户本身不存在仍是静默 no-op（FK 保护，不建墓碑）。
+  await repo.deleteUserMemory("ghost");
+  assert.equal(await repo.getUserMemory("ghost"), undefined);
+});

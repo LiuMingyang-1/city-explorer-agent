@@ -237,10 +237,24 @@ test("send 行程：返回完整 itinerary + 按 stops 顺序去重、缺库跳�
     createPlanner,
   });
   const result = await service.send("u-web", "安排一下");
-  assert.equal(result.kind, "itinerary");
-  if (result.kind !== "itinerary") return;
+  assert.equal(result.kind, "plans");
+  if (result.kind !== "plans") return;
   assert.equal(result.session_id, "stub-sid");
-  assert.equal(result.itinerary, itinerary); // 完整对象原样返回
+  assert.equal(result.mode, "single");
+  assert.equal(result.active_plan, "A");
+  assert.equal(result.coordinate_system, "GCJ-02");
+  assert.equal(result.plans.length, 1);
+  assert.equal(result.plans[0].label, "A");
+  assert.equal(result.plans[0].itinerary, itinerary); // 完整对象原样返回
+  // 未配置高德 key：相邻站 legs 逐条 skipped 降级（routing_disabled / missing_event）。
+  assert.equal(result.plans[0].legs.length, itinerary.stops.length - 1);
+  assert.ok(
+    result.plans[0].legs.every(
+      (leg) => leg.status === "skipped" && leg.provider === "none" && leg.geometry === null,
+    ),
+  );
+  assert.equal(result.plans[0].validation.status, "passed");
+  assert.equal(result.warnings, undefined);
   assert.deepEqual(
     result.events.map((e) => e.event_id),
     ["evt_2", "evt_1"], // stops 顺序、去重、缺库跳过
@@ -262,6 +276,103 @@ test("send 行程：返回完整 itinerary + 按 stops 顺序去重、缺库跳�
     assert.ok(!["id", "venueName", "startAt", "endAt", "imageUrls"].includes(key));
   }
   assert.deepEqual(result.events[1].image_urls, ["https://img.example/1.png"]);
+});
+
+test("send comparison turn：双方案映射 mode/plans/active_plan，events 取全部方案并集", async () => {
+  const evA = makeEvent("evt_a");
+  const evB = makeEvent("evt_b");
+  const planAItinerary: Itinerary = {
+    date: "2026-11-14",
+    summary: "上午展",
+    stops: [{ event_id: "evt_a", arrive_at: "10:00", leave_at: "11:00", reason: "r" }],
+  };
+  const planBItinerary: Itinerary = {
+    date: "2026-11-14",
+    summary: "下午演出",
+    stops: [
+      { event_id: "evt_b", arrive_at: "14:00", leave_at: "15:00", reason: "r" },
+      // evt_a 与方案 A 重复：并集去重后只出现一次。
+      { event_id: "evt_a", arrive_at: "16:00", leave_at: "17:00", reason: "r" },
+    ],
+  };
+  const { createPlanner } = stubFactory(() => ({
+    kind: "comparison",
+    constraints: { date: "2026-11-14" },
+    plans: [
+      { label: "A", title: "看展路线", itinerary: planAItinerary },
+      { label: "B", title: "演出路线", itinerary: planBItinerary },
+    ],
+  }));
+  const service = createChatService({
+    config: CONFIG,
+    repository: fakeRepo([evA, evB]),
+    sessions: SESSIONS,
+    createPlanner,
+  });
+  const result = await service.send("u-web", "给两套方案");
+  if (result.kind !== "plans") throw new Error(`unexpected kind ${result.kind}`);
+  assert.equal(result.mode, "comparison");
+  assert.equal(result.active_plan, "A"); // 首个方案即 active
+  assert.deepEqual(
+    result.plans.map((p) => [p.label, p.title]),
+    [
+      ["A", "看展路线"],
+      ["B", "演出路线"],
+    ],
+  );
+  assert.equal(result.plans[0].itinerary, planAItinerary);
+  assert.equal(result.plans[1].itinerary, planBItinerary);
+  assert.deepEqual(
+    result.events.map((e) => e.event_id),
+    ["evt_a", "evt_b"], // 全部 plan 的 stops 顺序并集去重
+  );
+});
+
+test("send comparison 降级 warning → 顶层 warnings；active_plan/referenced_event_id 注入 prompt", async () => {
+  const evX = makeEvent("evt_x", { title: "夜场脱口秀", venueName: "小剧场" });
+  const { createPlanner, calls } = stubFactory(() => ({
+    kind: "comparison",
+    constraints: { date: "2026-11-14" },
+    warning: "备选 B 方案校验未通过，已降级为单方案",
+    plans: [
+      {
+        label: "A",
+        title: "唯一可用",
+        itinerary: {
+          date: "2026-11-14",
+          summary: "s",
+          stops: [{ event_id: "evt_x", arrive_at: "10:00", leave_at: "11:00", reason: "r" }],
+        },
+      },
+    ],
+  }));
+  const service = createChatService({
+    config: CONFIG,
+    repository: fakeRepo([evX]),
+    sessions: SESSIONS,
+    createPlanner,
+  });
+
+  // 点选事件查库：注入 {eventId,title,venueName}；active_plan 原样透传。
+  const result = await service.send("u-web", "B 的时间挪后", {
+    activePlan: "B",
+    referencedEventId: "evt_x",
+  });
+  if (result.kind !== "plans") throw new Error(`unexpected kind ${result.kind}`);
+  assert.deepEqual(result.warnings, ["备选 B 方案校验未通过，已降级为单方案"]);
+  assert.deepEqual(calls.promptOptions[0], {
+    activePlan: "B",
+    referencedEvent: {
+      eventId: "evt_x",
+      title: "夜场脱口秀",
+      venueName: "小剧场",
+    },
+  });
+
+  // 查无此 id：点选是弱上下文，忽略而非报错。
+  await service.send("u-web", "挪后", { referencedEventId: "evt_gone" });
+  assert.equal(calls.promptOptions[1]?.referencedEvent, undefined);
+  assert.equal(calls.promptOptions[1]?.activePlan, undefined);
 });
 
 test("send error turn → 抛 ChatServiceError，planner 仍关闭", async () => {

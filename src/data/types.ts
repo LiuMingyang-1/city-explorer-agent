@@ -42,6 +42,21 @@ export interface Event {
 export interface SearchEventsInput {
   /** 出行日期 "YYYY-MM-DD"；匹配该日可参加的活动。 */
   date?: string;
+  /**
+   * 日期范围下界 "YYYY-MM-DD"；活动窗口不早于 from 结束才算命中
+   * （与 to 组合表示窗口与 [from,to] 有交集）。供 GET /api/events 使用，
+   * search_events 工具 schema 不暴露它。
+   */
+  from?: string;
+  /** 日期范围上界 "YYYY-MM-DD"；活动窗口不晚于 to 开始才算命中。 */
+  to?: string;
+  /** GCJ-02 经纬度包围盒过滤；供 GET /api/events 使用，工具 schema 不暴露。 */
+  bbox?: { minLng: number; minLat: number; maxLng: number; maxLat: number };
+  /**
+   * 返回条数上限；缺省由实现方决定（Agent 工具路径不传，行为不变）。
+   * 非正数/非有限值按缺省处理。
+   */
+  limit?: number;
   /** 活动类型，例如 展览 / 书店活动 / 市集 / 演出。 */
   category?: string;
   /** 关键词，匹配活动名称与介绍。 */

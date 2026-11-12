@@ -7,9 +7,9 @@
 | P0 项目 | 已完成的前端 | 仍需联调/外部条件 |
 | --- | --- | --- |
 | 活动站点卡片 | 封面、票价区间、场馆、推荐理由、原站链接；图片失效和数据缺失的占位 | 爬虫提供真实图片及详情 URL；样例的 example.com 链接是虚构数据 |
-| A/B 方案切换 | 按钮与键盘切换、双路线同屏、选中路线高亮；续聊可携带当前方案 ID | 真实后端返回 `plans` 并允许输入 `active_plan` |
+| A/B 方案切换 | 按钮与键盘切换、双路线同屏、选中路线高亮；续聊可携带当前方案 ID | 主分支已实现契约；需联调模型实际产出 |
 | 道路轨迹与通勤 | 渲染提供的 GeoJSON LineString，展示交通方式、秒转分钟、距离及另预留缓冲时间 | 后端调用实际算路服务；当前 Mock 轨迹是虚构折线，不是导航结果 |
-| 流式阶段反馈 | 接收 SSE 的 meta / progress / result / error；支持 UTF-8 分块、多行 data、心跳、断流和错误 | 当前后端仍返回 JSON，需启用 SSE 响应才能展示真实阶段流 |
+| 流式阶段反馈 | 接收 SSE 的 meta / progress / result / error；支持 UTF-8 分块、多行 data、心跳、断流和错误 | 主分支已提供 `/api/chat/stream`；需真实模型、数据和网络联调 |
 
 不把缺失路线伪造为“真实道路直线”，不把未知票价当免费，不把未知通勤当 0 分钟。出现坐标系不匹配时仍展示卡片，但暂停绘制路线。
 
@@ -31,7 +31,7 @@ npm run dev:frontend
 
 所有样例直接来自 `docs/mocks/day0/`。开发服务器只通过 `/__mocks/day0/` 暴露预先列出的 JSON/SSE 文件，不复制一套易漂移的数据到前端。演示中的 SSE 阶段按样例短暂停顿播放；真实模式按服务器事件到达即时更新。当前演示明确标识“示例行程 · 非真实活动”。
 
-不带 `?mock=` 时仍调用同源 `/api/chat`。开发静态服务器不提供真实 Agent 接口，真实对话需要由后端同源托管。页面配置也可显式设 `window.WANDER_CONFIG = {mock:'comparison', mockBase:'/__mocks/day0/'}`，仅供静态演示部署；代码中不放密钥。
+不带 `?mock=` 时默认调用同源 `/api/chat/stream`；旧 JSON 服务可通过 `WANDER_CONFIG.chatEndpoint = "/api/chat"` 配置。开发静态服务器不提供真实 Agent 接口，真实对话需要由后端同源托管。页面配置也可显式设 `window.WANDER_CONFIG = {mock:'comparison', mockBase:'/__mocks/day0/'}`，仅供静态演示部署；代码中不放密钥。
 
 ## 如何与现有接口衔接
 
@@ -39,14 +39,14 @@ npm run dev:frontend
 - 原有 `{kind:'clarification', question}` 继续显示文本追问。
 - 样例 `{kind:'plans', plans, events, active_plan, coordinate_system}` 进入新组件。每条计划使用 `plan_id`、`itinerary`、`legs`，按 `event_id` 关联活动。
 - 本次不依赖 `schema_version`、`revision`、`base_revision`、`request_id` 等扩展字段，也不发送这些字段。
-- 旧后端严格拒绝未知入参，所以仅在收到 plans 类型回复后，续聊请求才增加 `active_plan`。真实联调时必须同时确认服务端接受它；仅升级输出、不升级输入会被拒绝。
-- 相同 `/api/chat` 请求接受 `application/json` 或 `text/event-stream`。收到 JSON 使用原有行为；收到 SSE 才启用流式解析，不假设某个新增 URL 已存在。
+- 收到 plans 后续聊增加 `active_plan`。地图活动提问在用户确认发送时带 `referenced_event_id`；用户改写草稿或开启新对话时清除引用，模拟活动不发送真实事件引用。主分支已支持这两个字段。
+- 默认 `/api/chat/stream` 接收 SSE，仍兼容服务返回 JSON。可显式配置其他同源聊天端点。
 - `progress` 只更新等待区，不保存为正式聊天消息；只有完整的 `result` 提交方案。`error` 或没有最终结果的断流保留旧方案并显示错误，不提交半成品。
 - 新聊天/历史切换会 abort 客户端请求，并隔离迟到回复。历史保存当前激活方案，恢复时重新显示卡片和路线；演示和真实模式的本机历史分开。
 
 ## 坐标与路径
 
-未配置高德时，底图为 OpenFreeMap / OSM 的 WGS-84；配置后使用高德并在入口转换。样例声明 WGS84，GeoJSON 坐标顺序为 `[lng, lat]`，绘制时转换为 Leaflet 的 `[lat, lng]`。
+未配置高德时，底图为 OpenFreeMap / OSM 的 WGS-84；配置后使用高德并在入口转换。当前主分支样例与近期活动接口使用 GCJ-02，原生高德直接绘制。GeoJSON 顺序为 `[lng, lat]`；外部 WGS84 轨迹仍支持通过官方转换。
 
 若真实响应已是 GCJ-02，OSM 模式会避免直接画错位置；高德模式已支持原生 GCJ-02 及 WGS-84 转换。不能只改坐标系字符串。
 
@@ -73,9 +73,9 @@ npm run dev:frontend
 - Agent 返回方案时，对话中只显示一张紧凑的行程入口卡。点击后，详情覆盖左侧整张玻璃卡片，顶部提供「返回对话」；A/B 切换与地图高亮、`active_plan` 和历史记录保持联动。返回不会清空对话或改动选择；新聊天会退出详情。
 - 右上角活动详情独立于左侧方案页：地图活动点按场馆聚合，点击后显示封面、活动说明、场馆地址、开放时间、每人预算及原站/数据来源。同场馆的活动可切换。「问问这个活动」只填入输入框，由用户确认发送。
 - 地标点击展示 2.5 公里内已收录活动；没有数据时显示空状态。路线活动点也可打开对应详情。不会把没有活动的景区编造成有演出/展览。
-- `frontend/data/demo-events.json` 由 `npm run mock:events -- --date=2026-11-12` 从现有种子模板导出，共 119 条、16 个场馆，保留分为单位的费用与 WGS84 来源。导出不会读写开发者的 SQLite 数据库。省略日期时按北京时间今天生成。
+- `frontend/data/demo-events.json` 由 `npm run mock:events -- --date=2026-11-12` 从现有种子模板导出，共 119 条、16 个场馆，保留分为单位的费用，并遵守当前主分支 GCJ-02 契约。导出不会读写开发者的 SQLite 数据库。省略日期时按北京时间今天生成。
 - 种子中的 `example.com` 图片/链接是占位资源；演示使用本地示意配图，链接指向 GitHub 中的种子数据来源，明确标注模拟场地/排期。配图来源见 `frontend/assets/demo/SOURCES.md`。
-- 后端近期活动列表接口准备好后，配置 `window.WANDER_CONFIG.eventsEndpoint`，返回 `{coordinate_system, events: EventView[]}` 即可接入；真实数据应省略/置 false `is_demo`，提供真实图片和原站链接。生产数据不会自动加上模拟活动。
+- 默认读取已合入的 `/api/events`，默认坐标 GCJ-02；仅接口不存在（404）的独立前端开发环境回退到本地演示 feed，其他服务错误不伪装成真实活动。预览站点显式配置本地演示 feed。`window.WANDER_CONFIG.eventsEndpoint` 可替换列表地址，支持 `{coordinate_system?, events: EventView[]}`；真实数据提供图片与原站链接，省略/置 false `is_demo`。
 - 高德代理为带合法 `callback` 的响应输出 JavaScript MIME，兼容浏览器 `nosniff` 策略；普通 JSON 仍输出 JSON。
 
 地图坐标缓存对 SDK 输入使用独立副本：高德 `convertFrom` 会把传入数组成员原地转换为 `LngLat` 对象，不能再按原始数值数组读取。回归检查模拟了这一行为，覆盖景点初始化和路线转换。缩放控件采用 JS API 2 的 CSS 定位配置，控件错误不再导致整个地图回退。

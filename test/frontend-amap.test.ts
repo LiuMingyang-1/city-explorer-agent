@@ -39,3 +39,12 @@ test('native route renderer converts WGS geometry once and uses GCJ geometry unc
  assert.deepEqual(Array.from((h.lines.at(-1)!.path as number[][])[0]!),[108.906,34.204]);
  const count=h.calls.length;model.coordinate_system='GCJ02';await h.provider.drawPlans(model);assert.equal(h.calls.length,count);assert.deepEqual(Array.from((h.lines.at(-1)!.path as number[][])[0]!),[108.9,34.2]);
 });
+
+test('current backend receives GCJ and fallback WGS locations are omitted',async()=>{
+ const h=setup();h.context.fetch=async()=>({ok:true,json:async()=>({enabled:true,jsKey:'test-js-key',serviceHost:'/_AMapService',style:'amap://styles/light',backendCoordinateSystem:'GCJ02'})});
+ await h.provider.init({places:[],onSelect:(loc:Record<string,unknown>)=>h.selections.push(loc)});
+ assert.deepEqual(JSON.parse(JSON.stringify(h.provider.backendLocation(h.selections[0]))),{lat:34.274,lng:108.956});
+ await h.provider.select(34.3,109,'高德搜索',14,{system:'GCJ02'});
+ assert.deepEqual(JSON.parse(JSON.stringify(h.provider.backendLocation(h.selections.at(-1)))),{lat:34.3,lng:109});
+ assert.equal(h.provider.backendLocation({lat:34.27,lng:108.95,name:'WGS fallback'}),null);
+});

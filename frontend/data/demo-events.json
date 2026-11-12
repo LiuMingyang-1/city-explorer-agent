@@ -1,6 +1,6 @@
 {
   "is_demo": true,
-  "coordinate_system": "WGS84",
+  "coordinate_system": "GCJ-02",
   "generated_for": "2026-11-12",
   "source_url": "https://github.com/LiuMingyang-1/city-explorer-agent/blob/main/src/data/seed-templates.ts",
   "events": [

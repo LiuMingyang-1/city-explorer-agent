@@ -5,6 +5,6 @@
   "location": {
     "lat": 34.254,
     "lng": 108.964,
-    "coordinate_system": "WGS84"
+    "coordinate_system": "GCJ-02"
   }
 }

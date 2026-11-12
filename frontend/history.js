@@ -32,7 +32,7 @@
  }
  function clearConversation(){
   epoch++;window.dispatchEvent(new Event('wander:reset'));
-  state.messages=[];state.busy=false;state.sessionId=null;state.latestPlan=null;state.activePlanId=null;state.routeNames=[];
+  state.messages=[];state.busy=false;state.sessionId=null;state.latestPlan=null;state.activePlanId=null;state.routeNames=[];state.referencedEventId=null;state.referencedDraft=null;
   $('messages').replaceChildren();$('message-input').value='';
   window.WanderAMap?.cancelPending?.();
   window.WanderAMap?.clearRoutes();

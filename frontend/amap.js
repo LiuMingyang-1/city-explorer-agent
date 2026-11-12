@@ -138,7 +138,7 @@
   }catch{if(epoch===routeEpoch)showMapStatus('路线坐标转换暂不可用');}
  }
  function backendLocation(location){
-  if(config?.backendCoordinateSystem==='GCJ02'&&location?.coordinateSystem==='GCJ02')return {lat:location.lat,lng:location.lng};
+  if(config?.backendCoordinateSystem!=='WGS84')return location?.coordinateSystem==='GCJ02'?{lat:location.lat,lng:location.lng}:null;
   if(location?.coordinateSystem==='GCJ02')return location.wgs84||null;
   return location;
  }

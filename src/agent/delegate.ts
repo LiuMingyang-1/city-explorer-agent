@@ -406,9 +406,21 @@ export function createDelegateTaskTool(
                 question: turn.question,
               });
             }
+            // child 也可能产出 comparison：委派结果统一取首个（active）
+            // plan，父 Agent 汇总阶段再决定是否输出双方案。
+            const itinerary =
+              turn.kind === "comparison" ? turn.plans[0]?.itinerary : turn.itinerary;
+            if (itinerary === undefined) {
+              return toResult({
+                status: "failed",
+                sessionId: childSession.sessionId,
+                runId,
+                error: "子任务返回的双方案为空",
+              });
+            }
             // event_id 断链修复：按去重保序取回所选活动的校验/决策元信息，
             // 父 Agent 无需重跑 search_events 即可核对时间窗并合并站点。
-            const ids = [...new Set(turn.itinerary.stops.map((stop) => stop.event_id))];
+            const ids = [...new Set(itinerary.stops.map((stop) => stop.event_id))];
             const eventsById = await options.repository.getByIds(ids);
             const events: DelegatedEventMeta[] = [];
             for (const id of ids) {
@@ -434,7 +446,7 @@ export function createDelegateTaskTool(
               sessionId: childSession.sessionId,
               runId,
               constraints: turn.constraints,
-              itinerary: turn.itinerary,
+              itinerary,
               events,
             });
           } finally {

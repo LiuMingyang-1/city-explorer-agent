@@ -80,6 +80,9 @@ export async function runTurns(
     traceNew();
     if (turn.kind === "itinerary") {
       io.out(JSON.stringify(turn.itinerary));
+    } else if (turn.kind === "comparison") {
+      // 双方案比选：原样输出方案列表（首个为 active 方案）。
+      io.out(JSON.stringify({ mode: "comparison", plans: turn.plans }));
     } else if (turn.kind === "clarification") {
       io.out(JSON.stringify({ question: turn.question }));
     } else {

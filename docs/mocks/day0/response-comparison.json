@@ -6,7 +6,7 @@
   "revision": 1,
   "mode": "comparison",
   "active_plan": "plan_mock_a",
-  "coordinate_system": "WGS84",
+  "coordinate_system": "GCJ-02",
   "plans": [
     {
       "plan_id": "plan_mock_a",

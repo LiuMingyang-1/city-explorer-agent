@@ -28,8 +28,8 @@ export async function handleAMap(
     return json(enabled ? {
       enabled: true, jsKey: env.AMAP_JS_KEY, serviceHost: '/_AMapService',
       style: /^amap:\/\/styles\/[\w-]+$/.test(env.AMAP_STYLE ?? '') ? env.AMAP_STYLE : 'amap://styles/light',
-      backendCoordinateSystem: env.AMAP_BACKEND_COORDINATE_SYSTEM === 'GCJ02' ? 'GCJ02' : 'WGS84',
-    } : { enabled: false });
+      backendCoordinateSystem: env.AMAP_BACKEND_COORDINATE_SYSTEM === 'WGS84' ? 'WGS84' : 'GCJ02',
+    } : { enabled: false, backendCoordinateSystem: env.AMAP_BACKEND_COORDINATE_SYSTEM === 'WGS84' ? 'WGS84' : 'GCJ02' });
   }
   if (!enabled) return json({ error: 'Map configuration unavailable' }, 503);
   for (const name of ['Origin', 'Referer']) {

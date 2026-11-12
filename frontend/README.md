@@ -1,6 +1,6 @@
 # 西安漫游前端
 
-独立静态前端，AI 对话通过同源 `/api/chat` 接口调用仓库 Agent 后端，不在浏览器保存模型密钥。
+独立静态前端，AI 对话通过同源 `/api/chat/stream` 接口调用仓库 Agent 后端，不在浏览器保存模型密钥。
 
 ## 运行
 
@@ -51,7 +51,7 @@ https://wlj.xa.gov.cn/wlml/lyjq/1.html 。坐标来自 OpenStreetMap/Nominatim�
 
 ## Agent 接口
 
-对话逻辑在 `chat.js`：发送走 `POST /api/chat`（body 为 `{message}`，带 `location` 与既有
+对话逻辑在 `chat.js`：发送默认走 `POST /api/chat/stream`（body 为 `{message}`，带 `location` 与既有
 `session_id` 时一并发送），成功返回 `{kind:'clarification',session_id,question}` 或
 `{kind:'itinerary',session_id,itinerary,events}`，前端记下 `session_id` 续用同一对话，
 非 2xx 返回 `{error}`；`GET /api/chat/history?session_id=…` 可显式还原指定对话
@@ -76,4 +76,4 @@ npm run check:frontend
 
 填写根目录 `.env` 中的 `AMAP_JS_KEY` 和 `AMAP_SECURITY_JSCODE` 后，`npm run dev:frontend` 会启用原生高德地图、搜索、定位转换和天气。默认 `AMAP_STYLE=amap://styles/light`。不配置则保留原有底图；安全密钥通过同源代理使用，不写入网页。P0 方案可显示 WGS84 或 GCJ-02 轨迹，前者在入口转换一次。后端位置契约的兼容边界见 [高德准备清单](../docs/amap-setup.md#已实现的运行入口)。
 
-地图活动假数据已随前端提供，执行 `npm run mock:events` 可从仓库种子模板重新生成当天起 7 天的数据，不必下载或修改数据库。`-- --date=YYYY-MM-DD` 可固定日期。活动点点击打开右上角预览；聊天方案入口点击后覆盖左卡，左上角返回对话。演示配图与活动均有标识；`WANDER_CONFIG.eventsEndpoint` 可替换成后端活动列表地址，字段见 `docs/p0-frontend.md`。
+地图活动假数据已随前端提供，执行 `npm run mock:events` 可从仓库种子模板重新生成当天起 7 天的数据，不必下载或修改数据库。`-- --date=YYYY-MM-DD` 可固定日期。活动点点击打开右上角预览；聊天方案入口点击后覆盖左卡，左上角返回对话。演示配图与活动均有标识；默认读取 `/api/events`（GCJ-02）；独立静态开发环境没有该 API 时回退演示数据。`WANDER_CONFIG.eventsEndpoint` 可替换活动列表地址，字段见 `docs/p0-frontend.md`。

@@ -19,7 +19,7 @@ async function activitySetup(){
 test('seed activity feed groups daily repeats at venues and pins open independently of chat',async()=>{
  const h=await activitySetup();assert.equal(sample.events.length,119);assert.equal(h.groups().length,16);
  const all=h.groups().flatMap(g=>g.events);assert.equal(all.length,119);
- assert(h.groups().every(g=>g.coordinateSystem==='WGS84'));
+ assert(h.groups().every(g=>g.coordinateSystem==='GCJ-02'));
  const group=h.groups()[0];assert(h.activities.currentEvents(group.events).length<group.events.length);
  h.activities.openEvents(group.events,{placeName:group.name});const panel=h.$('activity-detail'),allText=content(panel);
  assert.equal(panel.hidden,false);assert(allText.includes('示例活动'));assert(allText.includes('¥120–150'));assert(allText.includes('学生票半价'));
@@ -43,7 +43,7 @@ test('map activity previews reject unsafe links, keep literal titles, and show a
  const h=await activitySetup(),event={...sample.events[0],is_demo:false,title:'<img src=x onerror=alert(1)>',guide_url:'javascript:alert(1)',source_url:null};
  h.activities.openEvents([event]);const panel=h.$('activity-detail');assert.equal(find(panel,'activity-source').length,0);
  assert.equal(find(panel,'activity-title')[0]!.textContent,event.title);assert.equal(find(panel,'activity-title')[0]!.innerHTML,'');
- h.activities.openNearby({name:'远处景点',lat:35,lng:110});assert(content(panel).includes('暂未收录活动'));
+ await h.activities.openNearby({name:'远处景点',lat:35,lng:110});assert(content(panel).includes('暂未收录活动'));
  h.$('new-chat').click();assert.equal(panel.hidden,true);
 });
 
@@ -51,4 +51,19 @@ test('missing event feed does not block map and plan-derived events still popula
  const h=await activitySetup();h.context.fetch=async()=>{throw new Error('offline')};await h.activities.reload();
  h.activities.addPlanEvents({coordinate_system:'GCJ02',events:[{event_id:'new',title:'后端活动',latitude:34.2,longitude:108.9,venue_name:'后端场馆'}]});
  assert(h.groups().some(g=>g.coordinateSystem==='GCJ02'&&g.events[0].event_id==='new'));
+});
+
+test('current activities API uses GCJ contract and map selection passes a real event reference',async()=>{
+ const h=await activitySetup(),event={...sample.events[0],event_id:'real-event',is_demo:false,description:'展览介绍',guide_url:'https://city.example/event'};
+ const paths:string[]=[];h.context.fetch=async(url:string)=>{paths.push(url);return new Response(JSON.stringify({events:[event]}))};await h.activities.reload();
+ assert.deepEqual(paths,['/api/events']);assert.equal(h.groups()[0].coordinateSystem,'GCJ-02');
+ h.context.window.WanderAMap.backendLocation=()=>null;
+ h.activities.openEvents([event]);find(h.$('activity-detail'),'activity-ask')[0]!.click();
+ const draft=h.$('message-input').value;
+ // Return to the fixture's deferred chat transport after loading the event API.
+ let body:any;h.context.window.WanderTransport.request=async(value:any)=>{body=value;return {kind:'clarification',question:'什么时候去？'}};
+ h.context.draft=draft;await h.run('window.sendMessage(draft)');assert.equal(body.referenced_event_id,'real-event');
+ h.activities.openEvents([event]);find(h.$('activity-detail'),'activity-ask')[0]!.click();
+ h.$('message-input').value='改成去看别的';h.$('message-input').listeners.get('input')!();
+ await h.run('window.sendMessage("改成去看别的")');assert.equal(body.referenced_event_id,undefined);
 });

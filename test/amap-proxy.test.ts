@@ -7,7 +7,7 @@ const request=(path:string,init?:RequestInit)=>new Request('https://city.example
 test('map config exposes only the JS identifier and stays disabled without credentials',async()=>{
  const response=await handleAMap(request('/api/map-config'),env);const raw=await response!.text();
  assert(raw.includes('test-js-key'));assert(!raw.includes(env.AMAP_SECURITY_JSCODE));assert.equal(JSON.parse(raw).style,'amap://styles/light');
- const disabled=await handleAMap(request('/api/map-config'),{});assert.deepEqual(await disabled!.json(),{enabled:false});
+ const disabled=await handleAMap(request('/api/map-config'),{});assert.deepEqual(await disabled!.json(),{enabled:false,backendCoordinateSystem:'GCJ02'});
  assert.equal(await handleAMap(request('/api/chat'),env),null);
 });
 

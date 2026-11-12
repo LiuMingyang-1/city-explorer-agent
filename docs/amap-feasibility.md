@@ -43,7 +43,7 @@ const map = new AMap.Map('map', {
 - 高德搜索/路线返回 GCJ-02；现有 OSM/Nominatim、浏览器 GPS 以及样例中的 WGS-84 坐标必须按来源处理。GPS 使用官方 `AMap.convertFrom(points, 'gps', callback)` 转换一次，高德返回的数据不再重复转换。
 - AMap 常用坐标顺序是 `[lng, lat]`，当前 Leaflet 常用 `[lat, lng]`，迁移时需同时处理顺序。
 - 前后端统一坐标契约后，可以直接绘制后端高德 POI 和路径结果，减少偏移和二次转换。后端不依赖地图底图库本身；统一坐标和返回数据才是对接关键。
-- 当前服务器接口校验较严格，不应单方面增加坐标系字段。字段与数据迁移需遵循 Day 0 约定并与后端一起确认；数据库不因地图切换而重建。
+- 当前主分支通过 `agent-impl-contracts.md` 约定全链路 GCJ-02，支持 `active_plan` 与 `referenced_event_id`。前端遵循该契约，外部 WGS 数据只在地图入口转换，数据库不因底图库切换而重建。
 - JS API Key 是浏览器 SDK 的公开标识，应设置域名限制；安全密钥建议留在服务器，通过官方 `serviceHost` / `/_AMapService` 代理配置使用。后端 Web 服务 Key 与模型密钥不放入静态前端或 Git 仓库。
 - Open-Meteo 接收经纬度查询；切换到 GCJ-02 后应保留原始 GPS/WGS-84 天气查询坐标，或独立改用高德天气。不能把现有天气、定位、景点数据的坐标系标识直接改名。
 

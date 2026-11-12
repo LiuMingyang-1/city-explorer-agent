@@ -2,16 +2,25 @@ import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import { isCalendarDate, isClockTime } from "../itinerary/constraints.ts";
 import type { ConstraintsPatch } from "../itinerary/constraints.ts";
 
+/** comparison 形态里的单个候选方案：label 恰为 "A"/"B"，itinerary 未校验。 */
+export interface ComparisonPlanCandidate {
+  label: "A" | "B";
+  title: string;
+  candidate: unknown;
+}
+
 /**
  * 模型每轮回复的 envelope（见 prompt.ts 的输出契约）：
- * clarify 表示信息不足在追问；itinerary 携带约束补丁与候选行程。
+ * clarify 表示信息不足在追问；itinerary 携带约束补丁与候选行程；
+ * comparison 携带共享的约束补丁与 A/B 两个候选方案（逐 plan 独立校验）。
  * constraints 是 ConstraintsPatch：字符串设置字段、null 显式清除、
  * 缺省沿用会话已确认值（由 PlannerSession 合并后再校验）。
  * candidate 保持未校验的原始值，交给 validateItinerary 做结构检查。
  */
 export type PlannerResponse =
   | { type: "clarify"; question: string }
-  | { type: "itinerary"; constraints: ConstraintsPatch; candidate: unknown };
+  | { type: "itinerary"; constraints: ConstraintsPatch; candidate: unknown }
+  | { type: "comparison"; constraints: ConstraintsPatch; plans: ComparisonPlanCandidate[] };
 
 /** 回复不是约定 envelope 时抛出，message 可直接回喂给模型修正。 */
 export class PlannerResponseError extends Error {}
@@ -90,7 +99,47 @@ export function parsePlannerResponse(text: string): PlannerResponse {
     }
     return { type: "itinerary", constraints: parseConstraints(obj.constraints), candidate: obj.itinerary };
   }
-  throw new PlannerResponseError('"type" 必须是 "clarify" 或 "itinerary"');
+  if (type === "comparison") {
+    const obj = raw as Record<string, unknown>;
+    return {
+      type: "comparison",
+      constraints: parseConstraints(obj.constraints),
+      plans: parseComparisonPlans(obj.plans),
+    };
+  }
+  throw new PlannerResponseError('"type" 必须是 "clarify"、"itinerary" 或 "comparison"');
+}
+
+/**
+ * comparison 的 plans 数组：恒 2 条、label 恰为 "A" 与 "B" 各一（顺序不限，
+ * 首个即 active 方案）；各元素必须带非空 title 与未校验的 itinerary 对象。
+ */
+function parseComparisonPlans(raw: unknown): ComparisonPlanCandidate[] {
+  if (!Array.isArray(raw) || raw.length !== 2) {
+    throw new PlannerResponseError('comparison 形态的 "plans" 必须是恰好 2 条的数组（方案 A 与方案 B）');
+  }
+  const plans: ComparisonPlanCandidate[] = raw.map((value, index) => {
+    const where = `plans[${index}]`;
+    if (typeof value !== "object" || value === null || Array.isArray(value)) {
+      throw new PlannerResponseError(`${where} 必须是对象，得到 ${JSON.stringify(value)}`);
+    }
+    const p = value as Record<string, unknown>;
+    const label = p.label === "A" ? "A" : p.label === "B" ? "B" : undefined;
+    if (label === undefined) {
+      throw new PlannerResponseError(`${where}.label 必须是 "A" 或 "B"，得到 ${JSON.stringify(p.label)}`);
+    }
+    if (typeof p.title !== "string" || !p.title.trim()) {
+      throw new PlannerResponseError(`${where}.title 必须是非空字符串（方案一句话标题）`);
+    }
+    if (!("itinerary" in p)) {
+      throw new PlannerResponseError(`${where} 必须带 "itinerary" 行程对象`);
+    }
+    return { label, title: p.title.trim(), candidate: p.itinerary };
+  });
+  if (plans[0].label === plans[1].label) {
+    throw new PlannerResponseError('comparison 的 plans label 必须是 "A" 与 "B" 各一，不得重复');
+  }
+  return plans;
 }
 
 /** 从未校验的候选行程里收集 event_id 列表，供 repository.getByIds 批量取详情。 */

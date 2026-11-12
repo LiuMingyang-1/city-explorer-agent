@@ -12,5 +12,5 @@ const events=generateSeedEvents(date).map(e=>({
  thumbnail_url:'/assets/demo/'+(/书|讲座/.test(e.category)?'books':/市集/.test(e.category)?'market':/演出|音乐|放映/.test(e.category)?'performance':'exhibition')+'.jpg',image_urls:[],
 }));
 mkdirSync('frontend/data',{recursive:true});
-writeFileSync('frontend/data/demo-events.json',JSON.stringify({is_demo:true,coordinate_system:'WGS84',generated_for:date,source_url:source,events},null,2)+'\n');
+writeFileSync('frontend/data/demo-events.json',JSON.stringify({is_demo:true,coordinate_system:'GCJ-02',generated_for:date,source_url:source,events},null,2)+'\n');
 console.log(`Exported ${events.length} seed events for ${date}; no database was modified.`);

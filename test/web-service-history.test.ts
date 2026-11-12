@@ -20,7 +20,7 @@ import { ChatServiceError, createChatService } from "../src/web/service.ts";
 import type { ManagedChatService } from "../src/web/service.ts";
 import { ChatClientError } from "../src/web/types.ts";
 import type { ChatResult } from "../src/web/types.ts";
-import { BASE, CONFIG, DAY1, envelope, isDistillRequest, makeStreamFn } from "./e2e-fixture.ts";
+import { BASE, CONFIG, DAY1, comparisonEnvelope, envelope, isDistillRequest, makeStreamFn } from "./e2e-fixture.ts";
 
 function makeEvent(id: string, over: Partial<Event> = {}): Event {
   return {
@@ -151,8 +151,11 @@ test("行程轮：send 返回校验后 itinerary + EventView；history 一致且
     ),
   ]);
   const result = await sendTurn(service, "u-a", "安排一下");
-  assert.equal(result.kind, "itinerary");
-  if (result.kind !== "itinerary") return;
+  assert.equal(result.kind, "plans");
+  if (result.kind !== "plans") return;
+  assert.equal(result.mode, "single");
+  assert.equal(result.active_plan, "A");
+  assert.equal(result.plans.length, 1);
   assert.deepEqual(
     result.events.map((e) => e.event_id),
     ["evt_2", "evt_1"],
@@ -166,7 +169,10 @@ test("行程轮：send 返回校验后 itinerary + EventView；history 一致且
 
   const h = await service.history("u-a", result.session_id);
   assert.deepEqual(h.messages, [{ role: "user", text: "安排一下" }]); // 无重复 assistant 卡片
-  assert.deepEqual(h.itinerary, result.itinerary);
+  assert.deepEqual(h.itinerary, result.plans[0].itinerary);
+  assert.equal(h.mode, "single"); // 单方案轮同样还原 plans 视图（前端统一渲染）
+  assert.equal(h.active_plan, "A");
+  assert.deepEqual(h.plans, result.plans);
   assert.deepEqual(h.events, result.events);
 });
 
@@ -193,8 +199,8 @@ test("多轮同对话：澄清 → 行程 → 修改行程，显式带 session_i
   const sid = r1.session_id;
   const r2 = await sendTurn(service, "u-a", "14 号", sid);
   const r3 = await sendTurn(service, "u-a", "再加一站", sid); // 每次 send 重开同一持久会话
-  assert.equal(r2.kind, "itinerary");
-  assert.equal(r3.kind, "itinerary");
+  assert.equal(r2.kind, "plans");
+  assert.equal(r3.kind, "plans");
   assert.equal(r2.session_id, sid);
   assert.equal(r3.session_id, sid);
 
@@ -211,6 +217,120 @@ test("多轮同对话：澄清 → 行程 → 修改行程，显式带 session_i
     h.events?.map((e) => e.event_id),
     ["evt_1", "evt_2"],
   );
+});
+
+test("comparison 轮：双方案映射 kind:plans，history 还原 plans/mode/active_plan", async (t) => {
+  const ev1 = makeEvent("evt_1");
+  const ev2 = makeEvent("evt_2");
+  const { service, faux } = setup(t, [ev1, ev2]);
+  const planA: Itinerary = {
+    date: DAY1,
+    summary: "方案A：上午看展",
+    stops: [stop("evt_1", "10:00", "11:00")],
+  };
+  const planB: Itinerary = {
+    date: DAY1,
+    summary: "方案B：连看两场",
+    stops: [stop("evt_1", "10:00", "11:00"), stop("evt_2", "13:00", "14:00")],
+  };
+  faux.setResponses([
+    fauxAssistantMessage(
+      comparisonEnvelope(
+        [
+          { label: "A", title: "轻松单站", itinerary: planA },
+          { label: "B", title: "紧凑双站", itinerary: planB },
+        ],
+        { date: DAY1 },
+      ),
+    ),
+  ]);
+
+  const result = await sendTurn(service, "u-a", "两种玩法都行，给两套");
+  assert.equal(result.kind, "plans");
+  if (result.kind !== "plans") return;
+  assert.equal(result.mode, "comparison");
+  assert.equal(result.active_plan, "A");
+  assert.equal(result.coordinate_system, "GCJ-02");
+  assert.deepEqual(
+    result.plans.map((p) => p.label),
+    ["A", "B"],
+  );
+  assert.deepEqual(result.plans[0].itinerary, planA);
+  assert.deepEqual(result.plans[1].itinerary, planB);
+  // events 为全部方案 stops 的并集去重。
+  assert.deepEqual(
+    result.events.map((e) => e.event_id),
+    ["evt_1", "evt_2"],
+  );
+
+  // history：最近一轮是 comparison → plans/mode/active_plan 还原；
+  // itinerary 仍是首个（active）方案提交的当前指针；双方案轮本身
+  // 不重复进 messages（由独立卡片呈现）。
+  const h = await service.history("u-a", result.session_id);
+  assert.deepEqual(h.messages, [{ role: "user", text: "两种玩法都行，给两套" }]);
+  assert.equal(h.mode, "comparison");
+  assert.equal(h.active_plan, "A");
+  assert.deepEqual(
+    h.plans?.map((p) => p.label),
+    ["A", "B"],
+  );
+  assert.deepEqual(h.itinerary, planA); // active 方案的行程即当前指针
+  assert.deepEqual(
+    h.events?.map((e) => e.event_id),
+    ["evt_1", "evt_2"],
+  );
+});
+
+test("comparison 轮后接修改轮：history 退回单方案视图，plans 字段不再出现", async (t) => {
+  const ev1 = makeEvent("evt_1");
+  const ev2 = makeEvent("evt_2");
+  const { service, faux } = setup(t, [ev1, ev2]);
+  const planA: Itinerary = {
+    date: DAY1,
+    summary: "A",
+    stops: [stop("evt_1", "10:00", "11:00")],
+  };
+  const planB: Itinerary = {
+    date: DAY1,
+    summary: "B",
+    stops: [stop("evt_2", "13:00", "14:00")],
+  };
+  const planC: Itinerary = {
+    date: DAY1,
+    summary: "改后单方案",
+    stops: [stop("evt_1", "10:00", "12:00")],
+  };
+  faux.setResponses([
+    fauxAssistantMessage(
+      comparisonEnvelope(
+        [
+          { label: "A", title: "甲", itinerary: planA },
+          { label: "B", title: "乙", itinerary: planB },
+        ],
+        { date: DAY1 },
+      ),
+    ),
+    fauxAssistantMessage(envelope(planC, { date: DAY1 })),
+  ]);
+  const r1 = await sendTurn(service, "u-a", "两套都要看看");
+  const r2 = await sendTurn(service, "u-a", "就选甲，加长一点", r1.session_id);
+  assert.equal(r2.kind, "plans");
+  if (r2.kind !== "plans") return;
+  assert.equal(r2.mode, "single");
+
+  const h = await service.history("u-a", r1.session_id);
+  // 最新一轮是 single → 收敛回单方案视图（plans 恒一条，前端统一按
+  // plans 渲染含 legs）；comparison 轮 assistant 文本（方案标题串）留在 messages。
+  assert.equal(h.mode, "single");
+  assert.equal(h.active_plan, "A");
+  assert.equal(h.plans?.length, 1);
+  assert.equal(h.plans?.[0].label, "A");
+  assert.deepEqual(h.itinerary, planC);
+  assert.deepEqual(h.messages, [
+    { role: "user", text: "两套都要看看" },
+    { role: "assistant", text: "方案 A：甲；方案 B：乙" },
+    { role: "user", text: "就选甲，加长一点" },
+  ]);
 });
 
 test("不带 sessionId 的 send 每次各建一条独立 main 对话", async (t) => {
@@ -403,7 +523,7 @@ test("跨对话长期记忆：对话 1 确认行程 close 蒸馏后，新对话�
 
   // 对话 1：确认行程 → plan 标注 → close 即触发后台蒸馏。
   const r1 = await sendTurn(service, "u-m", "帮我安排行程");
-  assert.equal(r1.kind, "itinerary");
+  assert.equal(r1.kind, "plans");
   assert.equal(seenMemory[0], null); // 蒸馏前：首轮请求无 memory_context
   const deadline = Date.now() + 5_000;
   while ((await sessions.getUserMemory("u-m")) === undefined) {
