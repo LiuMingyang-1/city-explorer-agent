@@ -35,7 +35,7 @@ test("unknown time completion reuses an immutable registry ID and multiple occur
   assert.throws(() => registerSlot(another.state, "edition", "venue", null), /AMBIGUOUS_OCCURRENCE_IDENTITY/);
 });
 
-test("publish and repeat update keep one row, all 18 columns, stable ID and historical firstSeen", async () => {
+test("publish and repeat update keep one row, all 29 migration-compatible columns, stable ID and historical firstSeen", async () => {
   const folder = root();
   try {
     const { prepared, item, asOf } = await fixture();
@@ -47,7 +47,7 @@ test("publish and repeat update keep one row, all 18 columns, stable ID and hist
     const release = inspectRelease(folder), db = new DatabaseSync(release.database, { readOnly: true });
     try {
       assert.equal(db.prepare("SELECT count(*) n FROM events").get()!.n, 1);
-      assert.equal(db.prepare("PRAGMA table_info(events)").all().length, 18);
+      assert.equal(db.prepare("PRAGMA table_info(events)").all().length, 29);
       assert.equal(db.prepare("SELECT guide_url FROM events").get()!.guide_url, item.document.url);
       assert.equal(release.sidecar.events[next.dataset.events[0].id].freshness.firstSeenAt, item.first_seen_at);
     } finally { db.close(); }
@@ -133,7 +133,7 @@ test("NULL-time activities stay discoverable and remain unplannable", async () =
   const reader = createReleasedRepository(folder, () => asOf);
   try {
     await publishRelease(folder, prepared, { batchId: "unknown-time", asOf });
-    assert.equal((await reader.search({})).length, 1); assert.equal((await reader.search({ date: "2026-11-14" })).length, 0);
+    assert.equal((await reader.search({})).length, 1); assert.equal((await reader.search({ date: "2026-11-14" })).length, 1);
     assert.equal(reader.getStatus(prepared.dataset.events[0].id)!.allowPlanning, false);
   } finally { reader.close(); rmSync(folder, { recursive: true, force: true }); }
 });

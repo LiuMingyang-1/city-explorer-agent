@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { checkFacts, inferredEndDate } from "./extraction.ts";
 import type { ActivityFacts, ExtractionDocument } from "./extraction.ts";
-import { gcj02ToWgs84, CONVERSION_VERSION } from "./coordinates.ts";
+
 import { venueRequestKey, matchesVenue } from "./geocoding.ts";
 import type { VerifiedLocation } from "./geocoding.ts";
 import { registerSlot } from "./identity.ts";
@@ -24,10 +24,11 @@ export interface PreparedCollection {
 export interface LocatedActivity {
   facts: ActivityFacts; document: ExtractionDocument; location: VerifiedLocation;
   source_event_key: string; first_seen_at: string;
+  processed_at?: string;
 }
 export function locationQueryForFacts(facts: ActivityFacts): VenueQuery {
   return { venue_name: facts.venue_name, address: facts.address,
-    require_entrance: facts.category === "户外活动" || /公园|景区|城墙|遗址/.test(facts.venue_name) };
+    require_entrance: facts.record_type !== "attraction" && (facts.category === "户外活动" || /公园|景区|城墙|遗址/.test(facts.venue_name)) };
 }
 
 /** The model has no access to this step. Recheck facts, source policy and map binding
@@ -35,21 +36,19 @@ export function locationQueryForFacts(facts: ActivityFacts): VenueQuery {
  */
 export function prepareCollection(items: readonly LocatedActivity[], options: { asOf: string; baseDate: string; identities?: readonly SlotIdentity[] }) {
   if (!isCalendarDate(options.baseDate)) throw new Error("INVALID_BASE_DATE");
-  const horizon = new Date(Date.parse(options.baseDate + "T00:00:00Z") + 14 * 86400000).toISOString().slice(0, 10);
-  const prepared: PreparedCollection = { dataset: { schema_version: "xian-events/3", base_date: options.baseDate, days: 14, events: [], provenance: [] },
+  const prepared: PreparedCollection = { dataset: { schema_version: "xian-events/4", base_date: options.baseDate, days: 14, events: [], provenance: [] },
     metadata: {}, identities: structuredClone([...(options.identities ?? [])]), documents: new Map(), witnesses: {} };
   const rejected: { source_event_key: string; reasons: string[] }[] = [];
   for (const item of items) {
     const { facts, document, location } = item;
-    if (facts.confirmed_start_date !== null && facts.confirmed_start_date >= horizon) { rejected.push({ source_event_key: item.source_event_key, reasons: ["OUTSIDE_BATCH"] }); continue; }
     const checked = checkFacts(facts, document, options.asOf, true);
     if (!checked.valid || checked.needs_primary_source) {
       rejected.push({ source_event_key: item.source_event_key, reasons: [...checked.issues, ...(checked.needs_primary_source ? ["PRIMARY_SOURCE_REQUIRED"] : [])] }); continue;
     }
     const requested = venueRequestKey(locationQueryForFacts(facts));
     const age = Date.parse(options.asOf) - Date.parse(location.verified_at);
-    let mapValid = location.request_key === requested && location.system === "WGS-84" && location.input_system === "GCJ-02"
-      && location.conversion === CONVERSION_VERSION && /^6101\d{2}$/.test(location.adcode) && location.venue_name === facts.venue_name
+    let mapValid = location.request_key === requested && location.system === "GCJ-02" && location.input_system === "GCJ-02"
+      && location.conversion === null && /^6101\d{2}$/.test(location.adcode) && location.venue_name === facts.venue_name
       && (["https://restapi.amap.com/v3/place/text", "https://restapi.amap.com/v3/geocode/geo"].includes(location.source_url)
         || location.method === "share" && isAmapShareUrl(location.source_url) && location.share_reference?.source_url === location.source_url
           && location.share_reference.poi_id === location.poi_id && location.share_reference.original.lat === location.original.lat
@@ -57,7 +56,7 @@ export function prepareCollection(items: readonly LocatedActivity[], options: { 
           && location.address === `西安市${location.district}${location.share_reference.address}`)
       && age >= 0 && age < 30 * 86400000 && location.address.includes("西安");
     try {
-      const computed = gcj02ToWgs84(location.original);
+      const computed = location.original;
       mapValid &&= Math.abs(computed.lat - location.latitude) < 1e-7 && Math.abs(computed.lng - location.longitude) < 1e-7;
     } catch { mapValid = false; }
     if (!mapValid) { rejected.push({ source_event_key: item.source_event_key, reasons: ["LOCATION_NOT_VERIFIED_OR_NOT_BOUND"] }); continue; }
@@ -78,10 +77,14 @@ export function prepareCollection(items: readonly LocatedActivity[], options: { 
       venue_key: identity.entry.venue_key, slot_key: identity.entry.slot_key, schedule_type: facts.schedule_type,
       source_kind: document.authority as EventProvenance["source_kind"], verified_at: options.asOf, city: "西安市",
       city_evidence: { source_url: location.source_url, quote: location.address },
-      coordinates: { system: "WGS-84", source_url: location.source_url, method: "geocoding", input_system: "GCJ-02", conversion: location.conversion },
+      coordinates: { system: "GCJ-02", source_url: location.source_url, method: "geocoding", input_system: "GCJ-02", conversion: location.conversion },
       duration_basis: facts.suggested_duration_minutes === null ? "unknown" : durationIsExplicit ? "source" : "estimated", duration_note: facts.suggested_duration_minutes === null ? "来源未提供建议时长" : facts.evidence?.suggested_duration_minutes ?? "模型建议，未经原文逐字核验",
       evidence };
-    const event = { id, title: facts.title, description: facts.description, category: facts.category, venue_name: facts.venue_name,
+    const event = { id, record_type: facts.record_type ?? "activity", city: "西安市", amap_poi_id: location.poi_id,
+      valid_from: facts.valid_from ?? facts.confirmed_start_date, valid_to: facts.valid_to ?? facts.confirmed_end_date,
+      schedule_json: facts.schedule_json ?? null, status: facts.status === "past" ? "ended" as const : facts.status,
+      source_published_at: document.published_at, source_updated_at: document.updated_at ?? null, fetched_at: document.fetched_at, updated_at: item.processed_at ?? options.asOf,
+      title: facts.title, description: facts.description, category: facts.category, venue_name: facts.venue_name,
       address: location.address, latitude: location.latitude, longitude: location.longitude, start_at: facts.start_at, end_at: facts.end_at,
       suggested_duration_minutes: facts.suggested_duration_minutes, budget_min: facts.budget_min, budget_max: facts.budget_max,
       currency: "CNY" as const, budget_note: facts.budget_note, guide_url: document.url, thumbnail_url: document.image_urls[0] ?? null, image_urls: [...document.image_urls] };
@@ -94,8 +97,8 @@ export function prepareCollection(items: readonly LocatedActivity[], options: { 
     prepared.identities = identity.state;
     prepared.documents = documents;
     prepared.dataset.events.push(event); prepared.dataset.provenance.push(provenance);
-    prepared.witnesses[id] = structuredClone(item);
-    prepared.metadata[id] = { firstSeenAt: item.first_seen_at, lastVerifiedAt: options.asOf, sourcePublishedAt: document.published_at,
+    prepared.witnesses[id] = structuredClone({ ...item, processed_at: item.processed_at ?? options.asOf });
+    prepared.metadata[id] = { recordType: facts.record_type ?? "activity", firstSeenAt: item.first_seen_at, lastVerifiedAt: options.asOf, sourcePublishedAt: document.published_at,
       confirmedEndDate: facts.confirmed_end_date, status: facts.status === "unknown" ? "unknown" : "active", sourceUpdatedAt: document.updated_at ?? null, confirmedStartDate: facts.confirmed_start_date,
       availability: facts.confirmed_start_date && facts.confirmed_start_date > new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Shanghai" }).format(Date.parse(options.asOf)) ? "upcoming" : facts.confirmed_end_date ? "within_period" : /常设展|常设陈列|长期开放|长期陈列/.test(document.text) ? "permanent" : "unknown",
       dateBasis: facts.confirmed_end_date && inferredEndDate(document, options.asOf) === facts.confirmed_end_date ? "recent-publication-inference" : facts.confirmed_end_date ? "explicit" : "unknown" };

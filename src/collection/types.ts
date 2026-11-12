@@ -1,8 +1,11 @@
 /** Final publication format. Incomplete extraction candidates are NOT this type. */
+import type { Schedule } from "../data/schedule.ts";
+import type { CollectionCategory } from "../data/categories.ts";
 import { CATEGORIES } from "../data/categories.ts";
 export { CATEGORIES } from "../data/categories.ts";
 export interface RealEvent {
-  id: string; title: string; description: string; category: typeof CATEGORIES[number];
+  id: string; title: string; description: string; category: CollectionCategory;
+  record_type?: "activity" | "attraction"; city?: string; amap_poi_id?: string | null; valid_from?: string | null; valid_to?: string | null; schedule_json?: Schedule | null; status?: "active" | "paused" | "cancelled" | "ended" | "unknown"; source_published_at?: string | null; source_updated_at?: string | null; fetched_at?: string; updated_at?: string;
   venue_name: string; address: string; latitude: number; longitude: number;
   start_at: string | null; end_at: string | null; suggested_duration_minutes: number | null;
   budget_min: number | null; budget_max: number | null; currency: "CNY";
@@ -24,11 +27,11 @@ export interface EventProvenance {
   /** Immutable slot key registered at discovery; independent of corrected start time. */
   slot_key: string;
   verified_at: string; city: "西安市"; city_evidence: {source_url: string; quote: string};
-  coordinates: {system: "WGS-84"; source_url: string; method: "source" | "existing_verified" | "geocoding"; input_system: "WGS-84" | "GCJ-02" | "BD-09"; conversion: string | null};
+  coordinates: {system: "GCJ-02"; source_url: string; method: "source" | "existing_verified" | "geocoding"; input_system: "WGS-84" | "GCJ-02" | "BD-09"; conversion: string | null};
   duration_basis: "source" | "estimated" | "unknown"; duration_note: string; evidence: FieldEvidence[];
 }
 export interface RealDataset {
-  schema_version: "xian-events/3"; base_date: string; days: 14;
+  schema_version: "xian-events/4"; base_date: string; days: 14;
   events: RealEvent[]; provenance: EventProvenance[];
 }
 export interface ValidationIssue { code: string; event_id?: string; field?: string; }

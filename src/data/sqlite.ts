@@ -1,6 +1,7 @@
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { parseSchedule, availabilityOnDate } from "./schedule.ts";
 import type { EventRepository } from "./repository.ts";
 import { ensureEventsSchema } from "./schema.ts";
 import type { Event, SearchEventsInput } from "./types.ts";
@@ -19,6 +20,7 @@ const SEARCH_LIMIT = 100;
 const EARTH_RADIUS_KM = 6371;
 
 type EventRow = {
+  record_type?: "activity" | "attraction"; city?: string; amap_poi_id?: string | null; valid_from?: string | null; valid_to?: string | null; schedule_json?: string | null; status?: string; source_published_at?: string | null; source_updated_at?: string | null; fetched_at?: string | null; updated_at?: string | null;
   id: string;
   title: string;
   description: string;
@@ -53,6 +55,11 @@ function parseImageUrls(raw: string): string[] {
 
 function toEvent(row: EventRow): Event {
   return {
+    ...(row.record_type === "attraction" || row.schedule_json || row.valid_from || row.valid_to || row.fetched_at || row.status && row.status !== "unknown" ? {
+      recordType: row.record_type ?? "activity", coordinateSystem: "GCJ-02" as const, city: row.city, amapPoiId: row.amap_poi_id,
+      validFrom: row.valid_from ?? null, validTo: row.valid_to ?? null, schedule: parseSchedule(row.schedule_json), status: row.status,
+      sourcePublishedAt: row.source_published_at ?? null, sourceUpdatedAt: row.source_updated_at ?? null, fetchedAt: row.fetched_at ?? null, updatedAt: row.updated_at ?? null,
+    } : {}),
     id: row.id,
     title: row.title,
     description: row.description,
@@ -107,11 +114,8 @@ export function createSqliteEventRepository(dbPath: string, options: { readOnly?
       const clauses: string[] = ["latitude IS NOT NULL", "longitude IS NOT NULL"];
       if (options.isAvailable) clauses.push("collection_available(id) = 1");
       const params: string[] = [];
-      if (input.date) {
-        // 活动时间窗与当日有交集即可参加（窗口可跨多日）。
-        clauses.push("substr(start_at, 1, 10) <= ? AND substr(end_at, 1, 10) >= ?");
-        params.push(input.date, input.date);
-      }
+      if (input.recordType) { clauses.push("record_type = ?"); params.push(input.recordType); }
+      clauses.push("status NOT IN ('paused','cancelled','ended')");
       if (input.category) {
         clauses.push("category = ?");
         params.push(input.category);
@@ -122,35 +126,27 @@ export function createSqliteEventRepository(dbPath: string, options: { readOnly?
         params.push(pattern, pattern);
       }
       const where = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
-      const { near, radiusKm } = input;
-      if (near) {
-        // 距离是查询派生值：SQL 只做原条件过滤（不排序），取出后在 JS 侧
-        // 算球面距离。radiusKm 过滤与升序排序都用未取整的原始距离——
-        // 先取整会放宽半径边界、并列值还会丢掉真实次序；输出的
-        // distanceKm 才保留两位小数。截断到 SEARCH_LIMIT 在排序后。
-        const rows = db
-          .prepare(`SELECT * FROM events ${where}`)
-          .all(...params) as EventRow[];
-        let events = rows.map((row) => ({
-          event: toEvent(row),
-          distance: haversineKm(near.lat, near.lng, row.latitude, row.longitude),
-        }));
-        if (radiusKm != null) {
-          events = events.filter((e) => e.distance <= radiusKm);
-        }
-        events.sort((a, b) => a.distance - b.distance);
-        return Promise.resolve(
-          events.slice(0, SEARCH_LIMIT).map(({ event, distance }) => ({
-            ...event,
-            distanceKm: Math.round(distance * 100) / 100,
-          })),
-        );
+      // Resolve all date rules before LIMIT so closed early rows cannot hide an open one.
+      const rows = db.prepare(`SELECT * FROM events ${where} ORDER BY start_at, id`).all(...params) as EventRow[];
+      let events = rows.map(toEvent);
+      if (input.date) {
+        events = events.flatMap(event => {
+          const availability = availabilityOnDate(event, input.date!);
+          if (availability.state === "closed") return [];
+          if (!event.recordType && availability.state === "unknown") return [];
+          const one = availability.windows.length === 1 ? availability.windows[0] : null;
+          return [{ ...event, ...(event.recordType ? { availableWindows: availability.windows, availability: availability.state,
+            startAt: one?.startAt ?? null, endAt: one?.endAt ?? null } : {}) }];
+        });
       }
-      // 无 near 时单独传的 radiusKm 被忽略，维持原排序与上限。
-      const rows = db
-        .prepare(`SELECT * FROM events ${where} ORDER BY start_at, id LIMIT ?`)
-        .all(...params, SEARCH_LIMIT) as EventRow[];
-      return Promise.resolve(rows.map(toEvent));
+      if (input.near) {
+        const { lat, lng } = input.near;
+        let distances = events.map(event => ({ event, distance: haversineKm(lat, lng, event.latitude, event.longitude) }));
+        if (input.radiusKm != null) distances = distances.filter(e => e.distance <= input.radiusKm!);
+        distances.sort((a,b) => a.distance-b.distance);
+        return Promise.resolve(distances.slice(0, SEARCH_LIMIT).map(({event,distance}) => ({...event,distanceKm:Math.round(distance*100)/100})));
+      }
+      return Promise.resolve(events.slice(0, SEARCH_LIMIT));
     },
 
     getByIds(ids: string[]): Promise<Map<string, Event>> {

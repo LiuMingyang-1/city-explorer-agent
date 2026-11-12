@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 import { isIP } from "node:net";
 import { Ajv2020 } from "ajv/dist/2020.js";
 import { isCalendarDate } from "../itinerary/constraints.ts";
+import { scheduleProblems } from "../data/schedule.ts";
+import { SCENIC_LEVELS, CATEGORIES } from "../data/categories.ts";
 import { eventId } from "./identity.ts";
 import { datasetSchema } from "./contracts.ts";
 import type { RealDataset, ValidationIssue, ValidationReport } from "./types.ts";
@@ -45,7 +47,9 @@ export function validateDataset(value:unknown,options:ValidationOptions):Validat
   if(/模拟|虚构|mock|fixture|example/i.test([e.title,e.description,e.venue_name,e.address].join(" ")))issue("SYNTHETIC_CONTENT",e.id);
   const start=e.start_at===null?NaN:localTime(e.start_at),end=e.end_at===null?NaN:localTime(e.end_at);
   if(e.start_at!==null&&!Number.isFinite(start)||e.end_at!==null&&!Number.isFinite(end)||Number.isFinite(start)&&Number.isFinite(end)&&(end<=start||end-start>86400000))issue("INVALID_SLOT",e.id);
-  if(start<from||end>until)issue("OUTSIDE_BATCH",e.id);
+  for(const code of scheduleProblems(e.schedule_json))issue(code,e.id);
+  if(e.record_type === "attraction" ? !SCENIC_LEVELS.includes(e.category as any) : !CATEGORIES.includes(e.category as any))issue("CATEGORY_RECORD_TYPE_MISMATCH",e.id);
+  if(e.valid_from && !isCalendarDate(e.valid_from) || e.valid_to && !isCalendarDate(e.valid_to) || e.valid_from && e.valid_to && e.valid_from>e.valid_to)issue("INVALID_VALIDITY_DATE",e.id);
   if(end<=asOf)issue("ALREADY_ENDED",e.id);
   if(e.suggested_duration_minutes!==null&&e.suggested_duration_minutes>(end-start)/60000)issue("DURATION_EXCEEDS_WINDOW",e.id);
   if(p.schedule_type==="fixed"&&e.suggested_duration_minutes!==null&&Number.isFinite(start)&&Number.isFinite(end)&&(e.suggested_duration_minutes!==(end-start)/60000||p.duration_basis!=="source"))issue("FIXED_DURATION_UNCONFIRMED",e.id);
@@ -59,7 +63,7 @@ export function validateDataset(value:unknown,options:ValidationOptions):Validat
   // and the geocoder's administrative match remain mandatory; this is not a boundary polygon.
   if(e.latitude<33||e.latitude>35.5||e.longitude<107||e.longitude>110.5)issue("COORDINATE_OUTSIDE_COARSE_REGION",e.id);
   if(!p.city_evidence.quote.includes("西安")||!e.address.includes("西安"))issue("CITY_NOT_CONFIRMED",e.id);
-  if(p.coordinates.input_system!=="WGS-84"&&!p.coordinates.conversion?.trim())issue("COORDINATE_CONVERSION_MISSING",e.id);
+  if(p.coordinates.system!=="GCJ-02"||p.coordinates.input_system!=="GCJ-02"||p.coordinates.conversion!==null)issue("COORDINATE_SYSTEM_MISMATCH",e.id);
   if(e.guide_url!==null&&e.guide_url!==p.source_url)issue("SOURCE_URL_MISMATCH",e.id,"guide_url");
   const urls=[p.source_url,p.city_evidence.source_url,p.coordinates.source_url,...p.evidence.map(x=>x.source_url),...e.image_urls,...(e.thumbnail_url?[e.thumbnail_url]:[]),...(e.guide_url!==null?[e.guide_url]:[])];
   if(urls.some(u=>!publicUrl(u)))issue("INVALID_PUBLIC_URL",e.id);

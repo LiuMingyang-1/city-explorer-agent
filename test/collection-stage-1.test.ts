@@ -4,7 +4,7 @@ import { DatabaseSync } from "node:sqlite";
 import { mkdtempSync, rmSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { CATEGORIES } from "../src/data/categories.ts";
+import { CATEGORIES, COLLECTION_CATEGORIES } from "../src/data/categories.ts";
 import { ensureEventsSchema, EVENTS_TABLE_DDL } from "../src/data/schema.ts";
 import { createSqliteEventRepository } from "../src/data/sqlite.ts";
 import { normalizeCandidate } from "../src/collection/contracts.ts";
@@ -14,7 +14,7 @@ import { collectionFixture } from "./collection-fixture.ts";
 
 test("all 12 categories agree across SQL and the standalone JSON contract", () => {
   const schema = JSON.parse(readFileSync(new URL("../src/collection/dataset.schema.json", import.meta.url), "utf8"));
-  assert.deepEqual(schema.properties.events.items.properties.category.enum, [...CATEGORIES]);
+  assert.deepEqual(schema.properties.events.items.properties.category.enum, [...COLLECTION_CATEGORIES]);
   const db = new DatabaseSync(":memory:");
   try {
     ensureEventsSchema(db);

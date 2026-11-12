@@ -3,7 +3,7 @@
   "additionalProperties": false,
   "properties": {
     "schema_version": {
-      "const": "xian-events/3"
+      "const": "xian-events/4"
     },
     "base_date": {
       "type": "string",
@@ -43,7 +43,13 @@
               "放映",
               "景点参观",
               "户外活动",
-              "体育赛事"
+              "体育赛事",
+              "1A",
+              "2A",
+              "3A",
+              "4A",
+              "5A",
+              "等级未知"
             ]
           },
           "venue_name": {
@@ -108,7 +114,10 @@
             ]
           },
           "guide_url": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "thumbnail_url": {
             "type": [
@@ -124,6 +133,274 @@
               "maxLength": 8192
             },
             "uniqueItems": true
+          },
+          "record_type": {
+            "enum": [
+              "activity",
+              "attraction"
+            ]
+          },
+          "city": {
+            "type": "string"
+          },
+          "amap_poi_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "valid_from": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "valid_to": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "schedule_json": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": false,
+            "required": [
+              "timezone",
+              "mode"
+            ],
+            "properties": {
+              "timezone": {
+                "const": "Asia/Shanghai"
+              },
+              "mode": {
+                "enum": [
+                  "weekly",
+                  "dates",
+                  "always_open",
+                  "unknown"
+                ]
+              },
+              "weekly": {
+                "type": "array",
+                "maxItems": 14,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "weekdays",
+                    "windows"
+                  ],
+                  "properties": {
+                    "weekdays": {
+                      "type": "array",
+                      "minItems": 1,
+                      "maxItems": 7,
+                      "uniqueItems": true,
+                      "items": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 7
+                      }
+                    },
+                    "valid_from": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "valid_to": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "windows": {
+                      "type": "array",
+                      "maxItems": 24,
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "start",
+                          "end"
+                        ],
+                        "properties": {
+                          "start": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "end": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "end_day_offset": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1
+                          },
+                          "last_entry": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "dates": {
+                "type": "array",
+                "maxItems": 1000,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "date"
+                  ],
+                  "properties": {
+                    "date": {
+                      "type": "string"
+                    },
+                    "closed": {
+                      "type": "boolean"
+                    },
+                    "windows": {
+                      "type": "array",
+                      "maxItems": 24,
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "start",
+                          "end"
+                        ],
+                        "properties": {
+                          "start": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "end": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "end_day_offset": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1
+                          },
+                          "last_entry": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "exceptions": {
+                "type": "array",
+                "maxItems": 1000,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "date"
+                  ],
+                  "properties": {
+                    "date": {
+                      "type": "string"
+                    },
+                    "closed": {
+                      "type": "boolean"
+                    },
+                    "windows": {
+                      "type": "array",
+                      "maxItems": 24,
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "start",
+                          "end"
+                        ],
+                        "properties": {
+                          "start": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "end": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "end_day_offset": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1
+                          },
+                          "last_entry": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "note": {
+                "type": "string",
+                "maxLength": 2000
+              }
+            }
+          },
+          "status": {
+            "enum": [
+              "active",
+              "paused",
+              "cancelled",
+              "ended",
+              "unknown"
+            ]
+          },
+          "source_published_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_updated_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fetched_at": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
           }
         },
         "required": [
@@ -145,6 +422,54 @@
           "guide_url",
           "thumbnail_url",
           "image_urls"
+        ],
+        "allOf": [
+          {
+            "if": {
+              "required": [
+                "record_type"
+              ],
+              "properties": {
+                "record_type": {
+                  "const": "attraction"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "category": {
+                  "enum": [
+                    "1A",
+                    "2A",
+                    "3A",
+                    "4A",
+                    "5A",
+                    "等级未知"
+                  ]
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "category": {
+                  "enum": [
+                    "展览",
+                    "音乐现场",
+                    "演出",
+                    "市集",
+                    "节庆活动",
+                    "书店活动",
+                    "讲座",
+                    "工作坊",
+                    "放映",
+                    "景点参观",
+                    "户外活动",
+                    "体育赛事"
+                  ]
+                }
+              }
+            }
+          }
         ]
       },
       "minItems": 1,
@@ -214,7 +539,7 @@
             "additionalProperties": false,
             "properties": {
               "system": {
-                "const": "WGS-84"
+                "const": "GCJ-02"
               },
               "source_url": {
                 "type": "string",

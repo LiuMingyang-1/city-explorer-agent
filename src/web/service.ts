@@ -100,6 +100,7 @@ export interface ManagedChatService extends ChatService {
  */
 export function toEventView(event: Event): EventView {
   return {
+    ...(event.recordType ? { record_type: event.recordType, valid_from: event.validFrom, valid_to: event.validTo, available_windows: event.availableWindows, coordinate_system: "GCJ-02" as const } : {}),
     event_id: event.id,
     title: event.title,
     latitude: event.latitude,

@@ -4,7 +4,7 @@ import { extractionFixture, locatedFixture } from "./collection-downstream-fixtu
 import { processCollection, createDeepSeekExtractor } from "../src/collection/pipeline.ts";
 import { geocodingKey } from "../src/collection/config.ts";
 
-test("offline pipeline turns trusted facts plus a bound mocked map response into 18 publication fields", async () => {
+test("offline pipeline turns trusted facts plus a bound mocked map response into 29 migration-compatible publication fields", async () => {
   const { item, asOf } = await locatedFixture();
   let model = 0;
   const result = await processCollection([{ document: item.document, structured: { activities: [item.facts] } }], {
@@ -13,7 +13,7 @@ test("offline pipeline turns trusted facts plus a bound mocked map response into
   });
   assert.deepEqual(result.rejected, []); assert.equal(model, 0);
   assert.equal(result.prepared.dataset.events.length, 1);
-  assert.equal(Object.keys(result.prepared.dataset.events[0]).length, 18);
+  assert.equal(Object.keys(result.prepared.dataset.events[0]).length, 29);
 });
 
 test("unverified posts never consume map requests or become published facts without corroboration", async () => {

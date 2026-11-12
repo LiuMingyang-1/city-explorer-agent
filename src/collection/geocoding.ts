@@ -1,5 +1,4 @@
 import { createHash } from "node:crypto";
-import { gcj02ToWgs84, CONVERSION_VERSION } from "./coordinates.ts";
 import type { Coordinate } from "./coordinates.ts";
 import { readAmapSharedVenue, isAmapShareUrl } from "./amap-share.ts";
 import type { AmapSharedVenue } from "./amap-share.ts";
@@ -8,8 +7,8 @@ export interface VenueQuery { venue_name: string; address: string | null; requir
 export interface VerifiedLocation {
   request_key: string; venue_name: string; address: string; poi_id: string | null;
   adcode: string; district: string; latitude: number; longitude: number;
-  input_system: "GCJ-02"; system: "WGS-84"; original: Coordinate;
-  conversion: string; source_url: string; verified_at: string; method: "poi" | "geocoding" | "share";
+  input_system: "GCJ-02"; system: "GCJ-02"; original: Coordinate;
+  conversion: string | null; source_url: string; verified_at: string; method: "poi" | "geocoding" | "share";
   share_reference?: AmapSharedVenue;
   address_confirmation?: { address: string; level: string; original: Coordinate };
 }
@@ -24,7 +23,8 @@ const norm = (value: string) => value.normalize("NFKC").toLowerCase().replace(/[
 /** Strip a local floor/stage/door, but keep the parent venue and branch. */
 export function venueSearchLabel(value: string): string {
   return value.normalize("NFKC")
-    .replace(/\s*(?:[bB]?\d+[fF]|[fFbB]\d+|[一二三四五六七八九十百0-9]+[楼层])[^()]*(?=\)|$)/g, "")
+    .replace(/\s*(?:[bB]?\d+[fF]|[fFbB]\d+|负?[一二三四五六七八九十百0-9]+[楼层])[^()]*(?=\)|$)/g, "")
+    .replace(/(.{3,}?)(?:第[一二三四五六七八九十百0-9]+(?:号)?展厅|[东西南北中]展厅)(?:负?[一二三四五六七八九十0-9]+层)?$/, "$1")
     .replace(/\s*[一二三四五六七八九十0-9]+号门(?:前|外|内|入口|出口)?$/, "").trim();
 }
 const venueName = (value: string) => norm(venueSearchLabel(value)).replace(/馆区$/, "馆");
@@ -109,7 +109,7 @@ export function createGeocoder(options: GeocoderOptions) {
       const cached = cache.get(key);
       if (cached && cached.request_key === key && Number.isFinite(cached.latitude) && Number.isFinite(cached.longitude)
         && cached.latitude >= 33 && cached.latitude <= 35.5 && cached.longitude >= 107 && cached.longitude <= 110.5
-        && cached.system === "WGS-84" && cached.conversion === CONVERSION_VERSION && /^6101\d{2}$/.test(cached.adcode)
+        && cached.system === "GCJ-02" && cached.conversion === null && /^6101\d{2}$/.test(cached.adcode)
         && instant >= Date.parse(cached.verified_at) && instant - Date.parse(cached.verified_at) < 30 * 86400000) {
         return { ok: true, location: structuredClone(cached), cached: true };
       }
@@ -157,11 +157,11 @@ export function createGeocoder(options: GeocoderOptions) {
             const reverse = await request("/v3/geocode/regeo", { location: `${reference.original.lng},${reference.original.lat}`, extensions: "base", radius: "100" });
             const component = reverse.regeocode?.addressComponent;
             if (!component || !xian(component) || typeof component.district !== "string") return { ok: false, reason: "SHARE_OUTSIDE_XIAN" };
-            const converted = gcj02ToWgs84(reference.original);
+            const converted = reference.original;
             const location: VerifiedLocation = { request_key: key, venue_name: query.venue_name,
               address: `西安市${component.district}${reference.address}`, poi_id: reference.poi_id,
               adcode: component.adcode, district: component.district, ...{ latitude: converted.lat, longitude: converted.lng },
-              original: reference.original, input_system: "GCJ-02", system: "WGS-84", conversion: CONVERSION_VERSION,
+              original: reference.original, input_system: "GCJ-02", system: "GCJ-02", conversion: null,
               source_url: reference.source_url, method: "share", verified_at: now, share_reference: reference };
             trace({ stage: "official-share", candidates: [{ id: reference.poi_id, name: reference.name, address: location.address, district: component.district }] });
             cache.set(key, structuredClone(location)); return { ok: true, location, cached: false };
@@ -206,10 +206,10 @@ export function createGeocoder(options: GeocoderOptions) {
           point = coordinate(row.location); address = row.formatted_address; method = "geocoding"; source = "https://restapi.amap.com/v3/geocode/geo";
         }
         if (!point) return { ok: false, reason: "INVALID_MAP_COORDINATE" };
-        const converted = gcj02ToWgs84(point);
+        const converted = point;
         const location: VerifiedLocation = { request_key: key, venue_name: query.venue_name, address, poi_id: method === "poi" ? row.id : null,
           adcode: String(row.adcode), district: String(row.adname ?? row.district), latitude: converted.lat, longitude: converted.lng,
-          input_system: "GCJ-02", system: "WGS-84", original: point, conversion: CONVERSION_VERSION, source_url: source, verified_at: now, method,
+          input_system: "GCJ-02", system: "GCJ-02", original: point, conversion: null, source_url: source, verified_at: now, method,
           ...(confirmation ? { address_confirmation: confirmation } : {}) };
         cache.set(key, structuredClone(location));
         return { ok: true, location, cached: false };

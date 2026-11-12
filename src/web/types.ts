@@ -22,6 +22,10 @@ export interface ChatMessage {
  */
 export interface EventView {
   /** 对应 Event.id；itinerary.stops[].event_id 以此关联详情。 */
+  record_type?: "activity" | "attraction";
+  valid_from?: string | null; valid_to?: string | null;
+  available_windows?: import("../data/schedule.ts").AvailableWindow[];
+  coordinate_system?: "GCJ-02";
   event_id: string;
   title: string;
   latitude: number;

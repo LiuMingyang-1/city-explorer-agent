@@ -9,7 +9,7 @@ const query = { venue_name: "文化展厅", address: "西安市雁塔区文化�
 const poi = { id: "B_OFFLINE_TEST", name: "文化展厅", cityname: "西安市", adcode: "610113", adname: "雁塔区", address: "文化路1号", location: "108.95,34.23" };
 const answer = (pois: unknown[]) => ({ status: "1", count: String(pois.length), pois });
 
-test("POI resolution restricts city, binds branch/address and converts longitude-first GCJ coordinates", async () => {
+test("POI resolution restricts city, binds branch/address and preserves longitude-first GCJ coordinates", async () => {
   const service = createGeocoder({ key: "private-map-key", now: () => now, fetch: async (value, options) => {
     const url = new URL(String(value));
     assert.equal(url.hostname, "restapi.amap.com"); assert.equal(url.searchParams.get("citylimit"), "true");
@@ -19,8 +19,8 @@ test("POI resolution restricts city, binds branch/address and converts longitude
   const result = await service.resolve(query);
   assert.equal(result.ok, true);
   if (!result.ok) return;
-  assert.equal(result.location.system, "WGS-84"); assert.equal(result.location.original.lng, 108.95);
-  assert.notEqual(result.location.longitude, 108.95);
+  assert.equal(result.location.system, "GCJ-02"); assert.equal(result.location.original.lng, 108.95);
+  assert.equal(result.location.longitude, 108.95); assert.equal(result.location.conversion, null);
   assert(!JSON.stringify(result).includes("private-map-key"));
 });
 

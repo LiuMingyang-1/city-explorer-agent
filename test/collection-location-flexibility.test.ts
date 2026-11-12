@@ -37,6 +37,8 @@ test("venue search separates floors, stages and doors while retaining the origin
   assert.equal(venueSearchLabel("星悦MALL 1F舞台"), "星悦MALL");
   assert.equal(venueSearchLabel("鸟剑居酒屋（西安高新万达店）1号门前"), "鸟剑居酒屋(西安高新万达店)");
   assert.equal(venueSearchLabel("陕西省文化馆（曲江馆五楼展厅）"), "陕西省文化馆(曲江馆)");
+  assert.equal(venueSearchLabel("陕西历史博物馆第七展厅"), "陕西历史博物馆");
+  assert.equal(venueSearchLabel("陕西历史博物馆东展厅负一层"), "陕西历史博物馆");
 });
 
 const now = "2026-11-12T03:00:00Z";

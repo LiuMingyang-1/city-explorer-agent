@@ -1,5 +1,5 @@
 import type { DatabaseSync } from "node:sqlite";
-import { CATEGORIES } from "./categories.ts";
+import { CATEGORIES, SCENIC_LEVELS } from "./categories.ts";
 
 /**
  * events 表结构定义与幂等迁移。
@@ -30,6 +30,18 @@ const BASE_EVENT_COLUMNS: readonly string[] = [
  * repository 读边界检查（CHECK 内不能遍历 json_each）。
  */
 export const ADDED_EVENT_COLUMNS: ReadonlyArray<{ name: string; definition: string }> = [
+  { name: "record_type", definition: "record_type TEXT NOT NULL DEFAULT 'activity' CHECK(record_type IN ('activity','attraction'))" },
+  { name: "city", definition: "city TEXT NOT NULL DEFAULT '西安市'" },
+  { name: "amap_poi_id", definition: "amap_poi_id TEXT DEFAULT NULL" },
+  { name: "valid_from", definition: "valid_from TEXT DEFAULT NULL" },
+  { name: "valid_to", definition: "valid_to TEXT DEFAULT NULL" },
+  { name: "schedule_json", definition: "schedule_json TEXT DEFAULT NULL CHECK(schedule_json IS NULL OR json_valid(schedule_json))" },
+  { name: "status", definition: "status TEXT NOT NULL DEFAULT 'unknown' CHECK(status IN ('active','paused','cancelled','ended','unknown'))" },
+  { name: "source_published_at", definition: "source_published_at TEXT DEFAULT NULL" },
+  { name: "source_updated_at", definition: "source_updated_at TEXT DEFAULT NULL" },
+  { name: "fetched_at", definition: "fetched_at TEXT DEFAULT NULL" },
+  { name: "updated_at", definition: "updated_at TEXT DEFAULT NULL" },
+
   {
     name: "budget_min",
     definition:
@@ -52,9 +64,9 @@ export const ADDED_EVENT_COLUMNS: ReadonlyArray<{ name: string; definition: stri
 ];
 
 /** 完整建表语句：新库一次建齐 v0 + v1 全部列。 */
-const COLLECTION_CHECK = `CONSTRAINT events_collection_v3 CHECK (
+const COLLECTION_CHECK = `CONSTRAINT events_collection_v4 CHECK (
   ${["id", "title", "description", "category", "venue_name", "address"].map(name => `${name} IS NOT NULL AND length(trim(${name}, char(9)||char(10)||char(13)||' ')) > 0`).join(" AND ")}
-  AND category IN (${CATEGORIES.map(value => `'${value}'`).join(",")})
+  AND ((record_type='activity' AND category IN (${CATEGORIES.map(value => `'${value}'`).join(",")})) OR (record_type='attraction' AND category IN (${SCENIC_LEVELS.map(value => `'${value}'`).join(",")})))
   AND ((latitude IS NULL AND longitude IS NULL) OR (
     latitude IS NOT NULL AND longitude IS NOT NULL
     AND typeof(latitude) IN ('real','integer') AND latitude BETWEEN -90 AND 90
@@ -66,6 +78,18 @@ const COLLECTION_CHECK = `CONSTRAINT events_collection_v3 CHECK (
 export const EVENTS_TABLE_DDL = `CREATE TABLE IF NOT EXISTS events (
   ${[...BASE_EVENT_COLUMNS, ...ADDED_EVENT_COLUMNS.map((c) => c.definition), COLLECTION_CHECK].join(",\n  ")}
 )`;
+
+/** Remove the old final CHECK without discarding custom columns/indexes/triggers. */
+function removeOldCollectionCheck(sql: string): string {
+  const at = sql.indexOf("CONSTRAINT events_collection_v3");
+  if (at < 0) return sql;
+  const open = sql.indexOf("(", at); let depth = 0, end = open;
+  for (; end < sql.length; end++) { if (sql[end] === "(") depth++; else if (sql[end] === ")" && --depth === 0) { end++; break; } }
+  let tail = end; while (/\s/.test(sql[tail] ?? "") && tail < sql.length) tail++;
+  if (sql[tail] === ",") return sql.slice(0, at) + sql.slice(tail + 1);
+  let begin = at - 1; while (begin >= 0 && /\s/.test(sql[begin])) begin--;
+  return sql.slice(0, sql[begin] === "," ? begin : at) + sql.slice(end);
+}
 
 /**
  * 保证 db 内 events 表具备完整 v1 结构：表不存在则建表，已存在则
@@ -92,11 +116,11 @@ export function ensureEventsSchema(db: DatabaseSync): void {
       const nullable = ["latitude", "longitude", "start_at", "end_at", "suggested_duration_minutes"];
       const currentSql = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='events'").get()!.sql as string;
       const defaults = db.prepare("PRAGMA table_info(events)").all() as Array<{name:string;notnull:number;dflt_value:string|null}>;
-      if (!currentSql.includes("CONSTRAINT events_collection_v3") || defaults.some(c => nullable.includes(c.name) && (c.notnull === 1 || c.dflt_value?.toUpperCase() !== "NULL"))) {
+      if (!currentSql.includes("CONSTRAINT events_collection_v4") || defaults.some(c => nullable.includes(c.name) && (c.notnull === 1 || c.dflt_value?.toUpperCase() !== "NULL"))) {
         const temporary = "events__nullable_migration";
         if (db.prepare("SELECT 1 FROM sqlite_master WHERE name=?").get(temporary)) throw new Error("Migration temporary table already exists");
-        const schema = currentSql;
-        const unknown = db.prepare(`SELECT id FROM events WHERE category IS NULL OR category NOT IN (${CATEGORIES.map(() => "?").join(",")}) LIMIT 1`).get(...CATEGORIES);
+        const schema = removeOldCollectionCheck(currentSql);
+        const unknown = db.prepare(`SELECT id FROM events WHERE category IS NULL OR (record_type='activity' AND category NOT IN (${CATEGORIES.map(() => "?").join(",")})) OR (record_type='attraction' AND category NOT IN (${SCENIC_LEVELS.map(() => "?").join(",")})) LIMIT 1`).get(...CATEGORIES, ...SCENIC_LEVELS);
         if (unknown) throw new Error("UNSUPPORTED_EXISTING_CATEGORY: migration stopped without changing rows");
         const extras = db.prepare("SELECT sql FROM sqlite_master WHERE tbl_name='events' AND type IN ('index','trigger') AND sql IS NOT NULL").all() as {sql: string}[];
         let replacement = schema.replace(/^CREATE TABLE\s+(?:IF NOT EXISTS\s+)?(?:"events"|`events`|\[events\]|events)(?=\s*\()/i, `CREATE TABLE "${temporary}"`);
@@ -105,7 +129,7 @@ export function ensureEventsSchema(db: DatabaseSync): void {
           if (!declaration.test(replacement)) throw new Error(`Unsupported legacy column declaration: ${name}`);
           replacement = replacement.replace(declaration, "$1 DEFAULT NULL");
         }
-        if (!replacement.includes("CONSTRAINT events_collection_v3")) {
+        if (!replacement.includes("CONSTRAINT events_collection_v4")) {
           const closing = replacement.lastIndexOf(")");
           replacement = replacement.slice(0, closing) + ",\n" + COLLECTION_CHECK + replacement.slice(closing);
         }

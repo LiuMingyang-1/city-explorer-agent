@@ -1,8 +1,15 @@
+import type { Schedule, AvailableWindow } from "./schedule.ts";
 /**
  * 一条活动时段记录，对应 SQLite events 表的一行（字段见 docs/database-design.md）。
  * TS 侧用 camelCase，数据库列名为 snake_case，由 repository 实现负责映射。
  */
 export interface Event {
+  recordType?: "activity" | "attraction";
+  coordinateSystem?: "GCJ-02";
+  validFrom?: string | null; validTo?: string | null; schedule?: Schedule | null;
+  availableWindows?: AvailableWindow[]; availability?: "open" | "closed" | "unknown";
+  city?: string; amapPoiId?: string | null; status?: string;
+  sourcePublishedAt?: string | null; sourceUpdatedAt?: string | null; fetchedAt?: string | null; updatedAt?: string | null;
   id: string;
   title: string;
   description: string;
@@ -40,6 +47,7 @@ export interface Event {
 
 /** search_events 工具参数与 EventRepository.search 共用的查询条件，均可选。 */
 export interface SearchEventsInput {
+  recordType?: "activity" | "attraction";
   /** 出行日期 "YYYY-MM-DD"；匹配该日可参加的活动。 */
   date?: string;
   /** 活动类型，例如 展览 / 书店活动 / 市集 / 演出。 */

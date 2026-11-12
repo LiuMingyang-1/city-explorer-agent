@@ -1,5 +1,8 @@
 # Database Design
 
+> 当前实现已升级为活动/景点共表v4，旧版字段/校验描述作为历史记录。以[统一表实现与验收](unified-events-v4.md)为准。
+
+
 本文说明活动库的 Schema、字段语义、查询行为、迁移与种子策略。
 范围限第一版单进程 CLI 的活动数据；架构与模块分工见 [architecture.md](architecture.md)，
 运行命令见 [development.md](development.md)。

@@ -17,8 +17,8 @@ import type { ExtractionDocument } from "./extraction.ts";
 import { publicUrl } from "./validate.ts";
 import { isCalendarDate } from "../itinerary/constraints.ts";
 
-interface Sidecar { schema_version: "xian-release/1"; batch_id: string; identities: SlotIdentity[]; events: Record<string, {
-  freshness: NightlyMetadata; provenance: EventProvenance; window: { start_at: string | null; end_at: string | null };
+interface Sidecar { schema_version: "xian-release/2"; batch_id: string; identities: SlotIdentity[]; events: Record<string, {
+  freshness: NightlyMetadata; provenance: EventProvenance; window: { start_at: string | null; end_at: string | null; record_type?: "activity" | "attraction"; schedule_json?: import("../data/schedule.ts").Schedule | null };
   status_evidence?: { source_url: string; quote: string; verified_at: string };
 }>; }
 const checksum = (path: string) => createHash("sha256").update(readFileSync(path)).digest("hex");
@@ -29,11 +29,11 @@ export function inspectRelease(root: string) {
   if (!validBatch(batch)) throw new Error("INVALID_CURRENT_POINTER");
   const directory = join(root, "releases", batch);
   const manifest = JSON.parse(readFileSync(join(directory, "manifest.json"), "utf8"));
-  if (manifest.schema_version !== "xian-release/1" || manifest.batch_id !== batch
+  if (manifest.schema_version !== "xian-release/2" || manifest.batch_id !== batch
     || manifest.database_sha256 !== checksum(join(directory, "events.db"))
     || manifest.sidecar_sha256 !== checksum(join(directory, "provenance.json"))) throw new Error("RELEASE_INTEGRITY_FAILED");
   const sidecar = JSON.parse(readFileSync(join(directory, "provenance.json"), "utf8")) as Sidecar;
-  if (sidecar.schema_version !== "xian-release/1" || sidecar.batch_id !== batch || !sidecar.events || !Array.isArray(sidecar.identities)) throw new Error("INVALID_RELEASE_SIDECAR");
+  if (sidecar.schema_version !== "xian-release/2" || sidecar.batch_id !== batch || !sidecar.events || !Array.isArray(sidecar.identities)) throw new Error("INVALID_RELEASE_SIDECAR");
   for (const [id, row] of Object.entries(sidecar.events)) {
     if (!/^xa_[a-f0-9]{32}$/.test(id) || !row?.freshness || !row.window || row.provenance?.event_id !== id
       || !["active", "unknown", "cancelled"].includes(row.freshness.status)
@@ -55,7 +55,7 @@ export async function publishRelease(rootPath: string, input: PreparedCollection
   if (input.dataset.events.length) {
     const report = validateDataset(input.dataset, { asOf: options.asOf, documents: input.documents });
     if (!report.valid) throw new Error("INVALID_PUBLICATION_DATASET");
-  } else if (!options.cancellations?.length || input.dataset.provenance.length || input.dataset.schema_version !== "xian-events/3"
+  } else if (!options.cancellations?.length || input.dataset.provenance.length || input.dataset.schema_version !== "xian-events/4"
     || input.dataset.days !== 14 || !isCalendarDate(input.dataset.base_date)) throw new Error("EMPTY_OR_INVALID_PUBLICATION");
   for (const event of input.dataset.events) {
     const meta = input.metadata[event.id];
@@ -87,11 +87,11 @@ export async function publishRelease(rootPath: string, input: PreparedCollection
       try { await backup(source, database); } finally { source.close(); }
     }
     const db = new DatabaseSync(database);
-    const sidecar: Sidecar = previous ? structuredClone(previous.sidecar) : { schema_version: "xian-release/1", batch_id: options.batchId, identities: [], events: {} };
+    const sidecar: Sidecar = previous ? structuredClone(previous.sidecar) : { schema_version: "xian-release/2", batch_id: options.batchId, identities: [], events: {} };
     sidecar.batch_id = options.batchId;
     try {
       ensureEventsSchema(db); db.exec("PRAGMA journal_mode=DELETE");
-      const columns = ["id", "title", "description", "category", "venue_name", "address", "latitude", "longitude", "start_at", "end_at", "suggested_duration_minutes", "budget_min", "budget_max", "currency", "budget_note", "guide_url", "thumbnail_url", "image_urls"] as const;
+      const columns = ["id", "title", "description", "category", "venue_name", "address", "latitude", "longitude", "start_at", "end_at", "suggested_duration_minutes", "budget_min", "budget_max", "currency", "budget_note", "guide_url", "thumbnail_url", "image_urls", "record_type", "city", "amap_poi_id", "valid_from", "valid_to", "schedule_json", "status", "source_published_at", "source_updated_at", "fetched_at", "updated_at"] as const;
       const insert = db.prepare(`INSERT INTO events (${columns.join(",")}) VALUES (${columns.map(() => "?").join(",")}) ON CONFLICT(id) DO UPDATE SET ${columns.filter(c => c !== "id").map(c => `${c}=excluded.${c}`).join(",")}`);
       db.exec("BEGIN IMMEDIATE");
       try {
@@ -110,9 +110,9 @@ export async function publishRelease(rootPath: string, input: PreparedCollection
             }
             if (!assessFreshness(event, incoming, options.asOf).includeInDiscovery) { discarded.push({ event_id: event.id, reason: "UNCHANGED_SOURCE_NEEDS_REVERIFICATION" }); continue; }
           }
-          insert.run(...columns.map(c => c === "image_urls" ? JSON.stringify(event[c]) : event[c]));
+          insert.run(...columns.map(c => c === "image_urls" ? JSON.stringify(event[c]) : c === "schedule_json" ? event.schedule_json ? JSON.stringify(event.schedule_json) : null : event[c] ?? (c === "record_type" ? "activity" : c === "city" ? "西安市" : c === "status" ? "unknown" : null)));
           written++;
-          sidecar.events[event.id] = { freshness: incoming, provenance, window: { start_at: event.start_at, end_at: event.end_at } };
+          sidecar.events[event.id] = { freshness: incoming, provenance, window: { start_at: event.start_at, end_at: event.end_at, record_type: event.record_type, schedule_json: event.schedule_json } };
         }
         for (const notice of options.cancellations ?? []) {
           const row = sidecar.events[notice.event_id];
@@ -135,7 +135,7 @@ export async function publishRelease(rootPath: string, input: PreparedCollection
       if (db.prepare("PRAGMA integrity_check").get()!.integrity_check !== "ok") throw new Error("DATABASE_INTEGRITY_FAILED");
     } finally { db.close(); }
     writeFileSync(join(destination, "provenance.json"), JSON.stringify(sidecar, null, 2) + "\n", { flag: "wx" });
-    const manifest = { schema_version: "xian-release/1", batch_id: options.batchId, created_at: options.asOf,
+    const manifest = { schema_version: "xian-release/2", batch_id: options.batchId, created_at: options.asOf,
       database_sha256: checksum(database), sidecar_sha256: checksum(join(destination, "provenance.json")), incoming_events: input.dataset.events.length, written_events: written, discarded };
     writeFileSync(join(destination, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n", { flag: "wx" });
     options.beforeSwitch?.();
@@ -180,7 +180,7 @@ export function createReleasedRepository(root: string, now: () => string): Event
     const state = load(); state.users++;
     try { return await operation(state); } finally { state.users--; releaseIfIdle(state); }
   };
-  const decision = (event: Event, row: Sidecar["events"][string]) => assessFreshness({ start_at: event.startAt, end_at: event.endAt }, row.freshness, now());
+  const decision = (event: Event, row: Sidecar["events"][string]) => assessFreshness({ start_at: event.startAt, end_at: event.endAt, record_type: event.recordType, schedule_json: event.schedule }, row.freshness, now());
   return {
     search(input) {
       return use(async current => (await current.repository.search(input)).filter(event => {

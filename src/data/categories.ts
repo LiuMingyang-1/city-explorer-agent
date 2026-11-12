@@ -5,3 +5,7 @@ export const CATEGORIES = [
 ] as const;
 
 export type EventCategory = typeof CATEGORIES[number];
+
+export const SCENIC_LEVELS = ["1A", "2A", "3A", "4A", "5A", "等级未知"] as const;
+export const COLLECTION_CATEGORIES = [...CATEGORIES, ...SCENIC_LEVELS] as const;
+export type CollectionCategory = typeof COLLECTION_CATEGORIES[number];

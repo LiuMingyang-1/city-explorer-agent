@@ -1,11 +1,11 @@
 import { readFileSync } from "node:fs";
 import { Ajv2020 } from "ajv/dist/2020.js";
-import { CATEGORIES } from "../data/categories.ts";
+import { COLLECTION_CATEGORIES } from "../data/categories.ts";
 import type { CandidateEvent } from "./types.ts";
 
 /** Runtime consumers share categories with SQLite and extraction prompts. */
 export const datasetSchema = JSON.parse(readFileSync(new URL("./dataset.schema.json", import.meta.url), "utf8"));
-datasetSchema.properties.events.items.properties.category.enum = [...CATEGORIES];
+datasetSchema.properties.events.items.properties.category.enum = [...COLLECTION_CATEGORIES];
 
 const candidateSchema = structuredClone(datasetSchema.properties.events.items);
 for (const name of ["latitude", "longitude"]) {

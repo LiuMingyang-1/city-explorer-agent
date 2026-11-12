@@ -46,7 +46,7 @@ test("guide_url retains the original social or web source without adding an even
     assert.deepEqual(result.rejected, []);
     assert.equal(result.prepared.dataset.events[0].guide_url, source);
     assert.equal(result.prepared.dataset.provenance[0].source_url, source);
-    assert.equal(Object.keys(result.prepared.dataset.events[0]).length, 18);
+    assert.equal(Object.keys(result.prepared.dataset.events[0]).length, 29);
   }
 });
 
