@@ -78,6 +78,18 @@ export interface Run {
   finishedAt: string | null;
 }
 
+/** 用户长期记忆行：跨会话蒸馏出的持久偏好文档 + 蒸馏游标。 */
+export interface UserMemory {
+  userId: string;
+  /** 整篇 markdown 文档（固定小节由上层 memory 模块约定，存储层不解析）。 */
+  content: string;
+  /** 蒸馏游标所属会话；null 表示从未蒸馏过。 */
+  sourceSessionId: string | null;
+  /** 已覆盖到的 message_seq；随每次成功蒸馏推进（含 UNCHANGED 结果）。 */
+  throughMessageSeq: number;
+  updatedAt: string;
+}
+
 /** 已通过校验的规划元信息：完整生效约束 + 行程。 */
 export interface ValidatedPlan {
   constraints: PlanningConstraints;
@@ -154,6 +166,13 @@ export type RunFinishOutcome =
   | { status: "completed"; result?: unknown }
   | { status: "failed"; error: string }
   | { status: "cancelled"; error?: string };
+
+/** putUserMemory 的写入参数：三字段全显式给，游标只随蒸馏结果推进。 */
+export interface PutUserMemoryInput {
+  content: string;
+  sourceSessionId: string | null;
+  throughMessageSeq: number;
+}
 
 /** latestCompaction 的返回：记录本体 + 已解析并通过边界校验的 payload。 */
 export interface ValidatedCompaction {

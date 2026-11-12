@@ -6,11 +6,13 @@ import type {
   CreateUserInput,
   CurrentItinerary,
   LeaseWriter,
+  PutUserMemoryInput,
   Run,
   RunFinishOutcome,
   Session,
   SessionRecord,
   User,
+  UserMemory,
   ValidatedCompaction,
   ValidatedPlan,
 } from "./types.ts";
@@ -153,6 +155,12 @@ export interface SessionRepository {
   ): Promise<void>;
   /** 非终态 → 置 cancel_requested 并返回 true；已终态 → false（不覆盖）。 */
   requestCancelRun(writer: LeaseWriter, userId: string, runId: string): Promise<boolean>;
+
+  // ---- user_memory（用户级；蒸馏由会话租约持有方触发，天然串行，故不校验租约） ----
+  /** 无行（未写过记忆或用户不存在）→ undefined，不报错。 */
+  getUserMemory(userId: string): Promise<UserMemory | undefined>;
+  /** upsert 整行；用户不存在 → not_found。单事务。 */
+  putUserMemory(userId: string, input: PutUserMemoryInput): Promise<void>;
 
   /** 释放底层连接；进程内单例使用。 */
   close(): void;

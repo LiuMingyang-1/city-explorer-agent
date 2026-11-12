@@ -1,9 +1,9 @@
 import type { DatabaseSync } from "node:sqlite";
 
 /**
- * 会话库表结构：users / sessions / session_records / runs 四表一次建齐，
- * 语义见 docs/users-and-sessions.md。全部 CREATE IF NOT EXISTS，幂等；
- * 不做列迁移（本库首期落地即完整结构）。
+ * 会话库表结构：users / sessions / session_records / runs / user_memory
+ * 五表一次建齐，语义见 docs/users-and-sessions.md。全部 CREATE IF NOT
+ * EXISTS，幂等；不做列迁移（本库首期落地即完整结构）。
  *
  * 约束要点：
  * - 每用户唯一 main 会话：sessions 上的部分唯一索引。
@@ -13,6 +13,7 @@ import type { DatabaseSync } from "node:sqlite";
  *   payload CHECK json_valid。
  * - runs: root_run_id 自引用（根 run 指自身），parent/reply_to 的跨用户
  *   校验在仓库层（FK 只保证存在性）。
+ * - user_memory: 每用户一行长期记忆文档 + 蒸馏游标（through_message_seq）。
  */
 export const SESSION_SCHEMA_DDL = `
 CREATE TABLE IF NOT EXISTS users (
@@ -93,9 +94,17 @@ CREATE TABLE IF NOT EXISTS runs (
 CREATE INDEX IF NOT EXISTS idx_runs_session ON runs(session_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_runs_parent ON runs(parent_run_id);
 CREATE INDEX IF NOT EXISTS idx_runs_user ON runs(user_id, created_at);
+
+CREATE TABLE IF NOT EXISTS user_memory (
+  user_id TEXT PRIMARY KEY REFERENCES users(user_id),
+  content TEXT NOT NULL,
+  source_session_id TEXT,
+  through_message_seq INTEGER NOT NULL DEFAULT 0,
+  updated_at TEXT NOT NULL
+);
 `;
 
-/** 幂等建齐四表与索引；单事务，失败回滚。 */
+/** 幂等建齐五表与索引；单事务，失败回滚。 */
 export function ensureSessionSchema(db: DatabaseSync): void {
   db.exec("BEGIN");
   try {

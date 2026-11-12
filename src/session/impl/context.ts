@@ -13,6 +13,7 @@ import {
   type RecordType,
   type RunStatus,
   type User,
+  type UserMemory,
 } from "../types.ts";
 
 /**
@@ -167,6 +168,22 @@ export const toRun = (row: RunRow): Run => ({
   createdAt: row.created_at,
   startedAt: row.started_at,
   finishedAt: row.finished_at,
+});
+
+export type UserMemoryRow = {
+  user_id: string;
+  content: string;
+  source_session_id: string | null;
+  through_message_seq: number;
+  updated_at: string;
+};
+
+export const toUserMemory = (row: UserMemoryRow): UserMemory => ({
+  userId: row.user_id,
+  content: row.content,
+  sourceSessionId: row.source_session_id,
+  throughMessageSeq: row.through_message_seq,
+  updatedAt: row.updated_at,
 });
 
 // ---- 共享取行与归属/租约断言 ----
