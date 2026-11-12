@@ -6,6 +6,8 @@
 
 2026-11-13完成本轮Demo结构设计收尾验收，结果和已知限制见[最终小样本验收](collection-final-acceptance.md)。后续优先修正数据质量，不继续扩展当前表结构。
 
+分析模型现可用同一个DeepSeek Key补查景点A级，查不到回退“等级未知”，不新增表字段，见[景点等级搜索工具](scenic-level-search-tool.md)。
+
 ## 表字段
 
 在现有 events 表新增两列，其他字段保留，包括临时兼容的 start_at/end_at。共 29 个业务字段，物理表含兼容字段共 31 列。

@@ -42,7 +42,7 @@ const searchMs=Date.now()-start;save("web-documents.json",web);
 const map=createAmapSearch({key,requestLimit:60,onRequest:e=>mapRequests.push({document:active,...e})});
 const invoke=createToolAnalysisExtractor({...credentials,model:credentials.extractionModel,map,extractLimit:80,searchLimit:0,record:a=>{
   save(`analysis-${++attemptNo}.json`,a);attempts.push({stage:"analysis",document:active,elapsed_ms:a.elapsed_ms,code:a.code});
-  const message=(a.response as any)?.choices?.[0]?.message;if(typeof message?.content==="string"&&!message.tool_calls?.length)raw=message.content.trim().replace(/^```(?:json)?\s*/i,"").replace(/\s*```$/,"");
+  const message=(a.response as any)?.choices?.[0]?.message;if(a.query==="activity-analysis-tools"&&typeof message?.content==="string"&&!message.tool_calls?.length)raw=message.content.trim().replace(/^```(?:json)?\s*/i,"").replace(/\s*```$/,"");
 }});
 const ocr=createLocalOcr({python:resolve(".local-data/tools/mediacrawler-venv/Scripts/python.exe"),record:(url,r)=>{save(`ocr-${active}.json`,{url,...r});ocrText=r.pages.map(p=>`【图片${p.image}】\n${p.text}`).join("\n\n");}});
 const processingStart=Date.now();
