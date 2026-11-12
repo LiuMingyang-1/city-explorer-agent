@@ -342,7 +342,7 @@ test("delegate_task dispatches a child and returns itinerary + events meta", asy
     spawnChild: spawnWithChildRun(sessions, child, spawned, runs),
   });
 
-  const result = await tool.execute("c4", { task: "  周六下午西岸看展  ", title: " 西岸看展 " });
+  const result = await tool.execute("c4", { task: "  周六下午大雁塔看展  ", title: " 大雁塔看展 " });
   assert.equal(result.isError, false);
   const payload = payloadOf(result);
 
@@ -353,7 +353,7 @@ test("delegate_task dispatches a child and returns itinerary + events meta", asy
   assert.ok(childSession);
   assert.equal(childSession.kind, "child");
   assert.equal(childSession.parentSessionId, main.sessionId);
-  assert.equal(childSession.title, "西岸看展");
+  assert.equal(childSession.title, "大雁塔看展");
 
   // spawnChild 收到完整派发参数（depth+1、父 run/会话指针）。
   assert.equal(spawned.length, 1);
@@ -374,7 +374,7 @@ test("delegate_task dispatches a child and returns itinerary + events meta", asy
 
   // task trim 后透传；父 location 原样透传。
   assert.equal(child.prompts.length, 1);
-  assert.equal(child.prompts[0].text, "周六下午西岸看展");
+  assert.equal(child.prompts[0].text, "周六下午大雁塔看展");
   assert.deepEqual(child.prompts[0].options, { location: { lat: 31.2, lng: 121.5 } });
   assert.equal(child.cancels, 0);
   assert.equal(child.closes, 1);

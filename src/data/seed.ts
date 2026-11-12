@@ -7,7 +7,7 @@ import { TEMPLATES, VENUES } from "./seed-templates.ts";
 import type { Event } from "./types.ts";
 
 /**
- * 模拟活动种子数据：默认城市为上海，场地、地址、活动均为虚构 mock 数据，
+ * 模拟活动种子数据：默认城市为西安，场地、地址、活动均为虚构 mock 数据，
  * 不是真实活动。生成对基准日期确定：同一 baseDate 结果完全一致，可重复测试。
  * 覆盖基准日起共 SEED_DAYS 天（含当天），每天混合时间窗活动与固定场次。
  * 费用、攻略与图片字段由模板 extras 确定性填充（见 seed-templates/seed-extras）。

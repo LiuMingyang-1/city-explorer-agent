@@ -165,8 +165,8 @@ test("empty search returns all events within the limit", async (t) => {
 
 test("search with near sorts by distance and annotates distanceKm", async (t) => {
   const { repo } = seededRepo(t);
-  // 参考点取西岸美术馆（模拟）坐标：同场地活动距离为 0，其余场馆按球面距离递增。
-  const near = { lat: 31.1895, lng: 121.4702 };
+  // 参考点取西安美术馆（模拟）坐标：同场地活动距离为 0，其余场馆按球面距离递增。
+  const near = { lat: 34.2116, lng: 108.9667 };
   // 独立复算 haversine 期望值，验证 repository 的距离值与取整。
   const expectedKm = (lat: number, lng: number) => {
     const rad = Math.PI / 180;
@@ -192,14 +192,14 @@ test("search with near sorts by distance and annotates distanceKm", async (t) =>
 
 test("search with near and radiusKm filters by distance", async (t) => {
   const { repo } = seededRepo(t);
-  const near = { lat: 31.1895, lng: 121.4702 };
+  const near = { lat: 34.2116, lng: 108.9667 };
   const within = await repo.search({ near, radiusKm: 1 });
   assert.ok(within.length > 0);
   assert.ok(within.every((e) => e.distanceKm! <= 1));
-  // 参考点 1km 内只有西岸美术馆、余德耀美术馆、钟书阁徐汇店三处场地的活动。
+  // 参考点 1km 内只有西安美术馆、曲江艺术博物馆、曲江书城三处场地的活动。
   assert.deepEqual(
     new Set(within.map((e) => e.venueName)),
-    new Set(["西岸美术馆（模拟）", "余德耀美术馆（模拟）", "钟书阁徐汇店（模拟）"]),
+    new Set(["西安美术馆（模拟）", "曲江艺术博物馆（模拟）", "曲江书城（模拟）"]),
   );
 });
 

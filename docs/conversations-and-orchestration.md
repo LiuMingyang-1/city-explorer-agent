@@ -321,7 +321,7 @@
   - `task: string`（必填）：自包含的子任务说明。系统提示明确要求父模型写入
     推断后的具体日期 `YYYY-MM-DD`、可用时段、探索方向/区域及已知预算或偏好
     约束——child 看不到父对话消息流。
-  - `title?: string`（可选）：简短子任务标题（如 `"周六下午西岸看展方案"`），
+  - `title?: string`（可选）：简短子任务标题（如 `"周六下午大雁塔看展方案"`），
     落入 `sessions.title` 供会话树与日志排查。
   - 位置与长期记忆由运行时自动注入，不在工具参数中重复暴露经纬度。
 - **`buildSystemPrompt` 分支**：`buildSystemPrompt(currentDate, { canDelegate })`

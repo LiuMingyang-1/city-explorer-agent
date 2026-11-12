@@ -220,7 +220,7 @@ const delegateTaskParameters = Type.Object({
   }),
   title: Type.Optional(
     Type.String({
-      description: '简短子任务标题（如"周六下午西岸看展方案"），落入会话树供排查。',
+      description: '简短子任务标题（如"周六下午大雁塔看展方案"），落入会话树供排查。',
     }),
   ),
 });

@@ -72,9 +72,9 @@ test("location 随轮次更新并重算锚点；本轮不带则沿用上轮", as
 
 test("缺省锚点用活动库最近场馆：30km 内给锚点文案，远端坐标无锚点", async (t) => {
   const { session } = await makePersistent(t, [clarify(), clarify()]);
-  // 种子场馆 西岸美术馆（模拟）坐标原地 → 最近距离恰为 0 公里。
-  await session.prompt("在美术馆边上", { location: { lat: 31.1895, lng: 121.4702 } });
-  assert.match(locationSection(session) ?? "", /距「西岸美术馆（模拟）」约 0 公里/);
+  // 种子场馆 西安美术馆（模拟）坐标原地 → 最近距离恰为 0 公里。
+  await session.prompt("在美术馆边上", { location: { lat: 34.2116, lng: 108.9667 } });
+  assert.match(locationSection(session) ?? "", /距「西安美术馆（模拟）」约 0 公里/);
 
   // 南半球坐标距全部种子场馆数千公里 → 只有坐标，无锚点行。
   await session.prompt("第二轮", { location: { lat: -33.87, lng: 151.21 } });
