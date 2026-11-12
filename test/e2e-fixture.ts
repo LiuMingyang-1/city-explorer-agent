@@ -100,44 +100,56 @@ export function isSummaryRequest(context: { messages: unknown[] }): boolean {
 }
 
 /**
- * 记忆蒸馏旁路请求与正常请求也走同一个 streamFn：会话 close 时 distill.ts
- * 发出的模型输入以 <memory> 包裹现有文档开头（同时含 <conversation>，
- * 检查顺序须在 isSummaryRequest 之前），按此标记分流，互不消耗响应。
+ * 记忆蒸馏旁路请求与正常请求也走同一个 streamFn：distill.ts 的模型输入是
+ * 唯一一条 user 消息，文本以 `<memory>` 开头（其内还含 `<conversation>`，
+ * 因此各分流点必须先查本判别再查 isSummaryRequest）。按"首条 user 消息
+ * 以 <memory> 开头"分流，互不消耗响应。
  */
 export function isDistillRequest(context: { messages: unknown[] }): boolean {
-  return (context.messages as Array<{ role?: string; content?: unknown }>).some(
-    (message) =>
-      message.role === "user" &&
-      (typeof message.content === "string"
-        ? message.content.includes("<memory>")
-        : JSON.stringify(message.content).includes("<memory>")),
+  const firstUser = (context.messages as Array<{ role?: string; content?: unknown }>).find(
+    (message) => message.role === "user",
   );
+  return typeof firstUser?.content === "string" && firstUser.content.startsWith("<memory>");
 }
 
 export interface SummaryControl {
-  /** 摘要请求计数（含重试）。 */
+  /** 旁路请求（摘要/蒸馏）计数（含重试）。 */
   calls: () => number;
 }
 
 /**
- * 双队列 streamFn：摘要请求 → 独立小队列（每次请求重建，
- * 同一批响应可反复消费），其余 → 主 faux（测试脚本队列）。
+ * 三队列 streamFn：蒸馏请求 → 独立小队列，摘要请求 → 独立小队列
+ * （两者都每次请求重建，同一批响应可反复消费），其余 → 主 faux
+ * （测试脚本队列）。蒸馏判别必须在摘要之前：蒸馏输入也含
+ * `<conversation>`，顺序反了会被吞进摘要队列。
  */
 export function makeStreamFn(
   faux: ReturnType<typeof createFauxCore>,
   summaryResponses: FauxResponseStep[] = [
     fauxAssistantMessage("## 摘要\n- 已确认约束与行程要点已保留"),
   ],
-): { streamFn: StreamFn; summary: SummaryControl } {
-  let calls = 0;
+  distillResponses: FauxResponseStep[] = [fauxAssistantMessage("UNCHANGED")],
+): { streamFn: StreamFn; summary: SummaryControl; distill: SummaryControl } {
+  let summaryCalls = 0;
+  let distillCalls = 0;
   const streamFn: StreamFn = (model, context, options) => {
+    if (isDistillRequest(context)) {
+      distillCalls += 1;
+      const distillCore = createFauxCore({});
+      distillCore.setResponses(distillResponses);
+      return distillCore.streamSimple(model, context, options);
+    }
     if (!isSummaryRequest(context)) return faux.streamSimple(model, context, options);
-    calls += 1;
+    summaryCalls += 1;
     const summaryCore = createFauxCore({});
     summaryCore.setResponses(summaryResponses);
     return summaryCore.streamSimple(model, context, options);
   };
-  return { streamFn, summary: { calls: () => calls } };
+  return {
+    streamFn,
+    summary: { calls: () => summaryCalls },
+    distill: { calls: () => distillCalls },
+  };
 }
 
 export interface PersistentFixtureOptions {
@@ -172,8 +184,8 @@ export async function makePersistent(
   if (!options.sessions) t.after(() => sessions.close());
   const faux = createFauxCore({});
   faux.setResponses(responses);
-  const { streamFn, summary } = options.streamFn
-    ? { streamFn: options.streamFn, summary: undefined }
+  const { streamFn, summary, distill } = options.streamFn
+    ? { streamFn: options.streamFn, summary: undefined, distill: undefined }
     : makeStreamFn(faux);
   const session = await createPersistentPlanner({
     config: options.config ?? CONFIG,
@@ -193,5 +205,5 @@ export async function makePersistent(
   t.after(async () => {
     await session.close();
   });
-  return { session, repo, sessions, faux, summary };
+  return { session, repo, sessions, faux, summary, distill };
 }

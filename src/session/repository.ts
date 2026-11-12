@@ -156,10 +156,15 @@ export interface SessionRepository {
   /** 非终态 → 置 cancel_requested 并返回 true；已终态 → false（不覆盖）。 */
   requestCancelRun(writer: LeaseWriter, userId: string, runId: string): Promise<boolean>;
 
-  // ---- user_memory（用户级；蒸馏由会话租约持有方触发，天然串行，故不校验租约） ----
+  // ---- user_memory（用户级；蒸馏是 close 时的机会性写入，写方不持会话租约，故不校验租约） ----
   /** 无行（未写过记忆或用户不存在）→ undefined，不报错。 */
   getUserMemory(userId: string): Promise<UserMemory | undefined>;
-  /** upsert 整行；用户不存在 → not_found。单事务。 */
+  /**
+   * upsert 整行：content 与游标作为一致对原子写入、不撕裂；并发 close 的
+   * 竞争写最坏 last-writer-wins，v1 接受。用户不存在 → not_found；
+   * content 必须非空且 ≤8000 字符、throughMessageSeq 必须非负整数、
+   * sourceSessionId 为 string 或 null，否则 → invalid_payload。单事务。
+   */
   putUserMemory(userId: string, input: PutUserMemoryInput): Promise<void>;
 
   /** 释放底层连接；进程内单例使用。 */

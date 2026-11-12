@@ -688,7 +688,10 @@ export class PersistentRuntime implements PlannerRuntime {
       // 不依赖已退订的事件钩子；超时兜底不让 close 无限挂起。整个调用吞掉
       // 所有异常——蒸馏是机会行为，绝不破坏 close 路径。返回的 outcome 无
       // 需处理：updated/unchanged 已写库推游标，skipped 未达门槛，error
-      // 留给下次 close 重试。
+      // 留给下次 close 重试。注意本调用位于 web send 的响应路径上
+      // （src/web/service.ts 的 send finally 里 await planner.close()）：
+      // 阈值命中时该次响应被蒸馏推迟，游标积压追平期每次 send 都会触发；
+      // 挪出响应路径（独立 worker / 后台任务）列为后续优化项。
       if (this.sessionKind === "main" && this.sessionIdValue !== "" && !this.guard.failure) {
         try {
           await distillMemory({

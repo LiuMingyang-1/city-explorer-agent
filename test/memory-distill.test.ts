@@ -197,6 +197,7 @@ test("模型输出垃圾（无小节/空）→ error、不写库不推游标", a
   assert.equal(await sessions.getUserMemory(user.userId), undefined);
 
   // 空输出质量重试一次后仍空 → error
+  const callsBefore = faux.state.callCount;
   faux.setResponses([fauxAssistantMessage(""), fauxAssistantMessage("")]);
   const empty = await distillMemory({
     agent,
@@ -205,6 +206,7 @@ test("模型输出垃圾（无小节/空）→ error、不写库不推游标", a
     sessionId: main.sessionId,
   });
   assert.equal(empty.status, "error");
+  assert.equal(faux.state.callCount, callsBefore + 2, "空输出应真的触发一次质量重试");
   assert.equal(await sessions.getUserMemory(user.userId), undefined);
 });
 
@@ -251,6 +253,23 @@ test("row.sourceSessionId 与传入 sessionId 不同 → 游标重置从头蒸",
   const memory = await sessions.getUserMemory(user.userId);
   assert.equal(memory?.sourceSessionId, child.sessionId);
   assert.equal(memory?.throughMessageSeq, 3);
+});
+
+test("maxRecords ≤ 0 → 空批直接 skipped，无模型调用、不写库", async (t) => {
+  const { sessions, user, main, writer, agent, faux } = await makeDistill(t);
+  await seedMessages(sessions, writer, user.userId, main.sessionId, ["a", "b", "c"]);
+  const outcome = await distillMemory({
+    agent,
+    sessions,
+    userId: user.userId,
+    sessionId: main.sessionId,
+    maxRecords: 0,
+  });
+  assert.equal(outcome.status, "skipped");
+  assert.match(outcome.reason ?? "", /本批为空/);
+  assert.equal(outcome.throughMessageSeq, undefined);
+  assert.equal(faux.state.callCount, 0);
+  assert.equal(await sessions.getUserMemory(user.userId), undefined);
 });
 
 test("error/skipped 不推游标：恢复后从同一游起重蒸", async (t) => {

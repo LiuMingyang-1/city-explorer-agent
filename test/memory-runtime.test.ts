@@ -3,6 +3,7 @@ import { test } from "node:test";
 import type { StreamFn } from "@earendil-works/pi-agent-core";
 import type { SystemMessage } from "@earendil-works/pi-ai";
 import { createFauxCore, fauxAssistantMessage } from "@earendil-works/pi-ai/providers/faux";
+import { runtimeSystemMessage } from "../src/agent/persistent/context.ts";
 import type { PlannerSession } from "../src/agent/session.ts";
 import type { SessionRepository } from "../src/session/repository.ts";
 import { createSqliteSessionRepository } from "../src/session/sqlite.ts";
@@ -74,6 +75,27 @@ test("user_memory 有行：system 注入 memory_context（标题+原文）；无
   // 同库另一用户无 memory 行 → 无该节，不串记忆。
   const other = await makePersistent(t, [], { sessions, userId: "u-other" });
   assert.ok(memorySection(other.session) == null);
+});
+
+test("memory_context 注入按行截到 ≤4000 字符：超大文档不整块吃上下文", () => {
+  const long = ["## 用户", ...Array.from({ length: 200 }, (_, i) => `第${i}行${"长".repeat(30)}`)].join(
+    "\n",
+  );
+  const message = runtimeSystemMessage(
+    undefined,
+    undefined,
+    "confirmed",
+    undefined,
+    long,
+  ) as SystemMessage;
+  const section = message.sections?.["memory_context"] ?? "";
+  const header = "## 用户长期记忆（跨会话持久数据，背景参考）\n";
+  assert.ok(section.startsWith(header));
+  const doc = section.slice(header.length);
+  assert.ok(doc.length <= 4_000, "注入的记忆文档不超过 4000 字符");
+  assert.ok(doc.length < long.length, "确已发生截断");
+  // 截断只落在行边界：结果是原文完整行前缀，下一字符必是换行。
+  assert.ok(long.startsWith(doc) && long[doc.length] === "\n");
 });
 
 test("≥3 条新 user 消息：close 触发蒸馏，文档落库、游标推进、重开注入", async (t) => {

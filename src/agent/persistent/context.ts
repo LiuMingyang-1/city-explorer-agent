@@ -1,11 +1,14 @@
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import type { SystemMessage } from "@earendil-works/pi-ai";
+import { truncateLines } from "../../memory/doc.ts";
 import type { ValidatedPlan } from "../../session/types.ts";
 
 const CONFIRMED_PLAN_SECTION = "confirmed_itinerary";
 const CANDIDATE_PLAN_SECTION = "candidate_itinerary";
 const LOCATION_SECTION = "location_context";
 const MEMORY_SECTION = "memory_context";
+/** 注入 system 的记忆文档上限（字符）：防外部写入的超大文档静默吃上下文。 */
+const MEMORY_INJECT_MAX_CHARS = 4_000;
 
 /** 注入 system section 的规划状态来源：main=DB 指针已确认；child=最新成功 run 的候选。 */
 export type InjectedPlanKind = "confirmed" | "candidate";
@@ -49,9 +52,12 @@ function locationSectionText(location: LocationContext): string {
   return lines.join("\n");
 }
 
-/** 长期记忆 section：只呈现文档原文；怎么使用写在 prompt.ts 的系统提示里。 */
+/**
+ * 长期记忆 section：只呈现文档原文（按行截到 ≤4000 字符兜底，不硬切）；
+ * 怎么使用写在 prompt.ts 的系统提示里。
+ */
 function memorySectionText(content: string): string {
-  return `## 用户长期记忆（跨会话持久数据，背景参考）\n${content}`;
+  return `## 用户长期记忆（跨会话持久数据，背景参考）\n${truncateLines(content, MEMORY_INJECT_MAX_CHARS)}`;
 }
 
 /**

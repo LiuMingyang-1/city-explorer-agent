@@ -58,6 +58,37 @@ test("putUserMemory upserts: a second write overwrites all fields and bumps upda
   assert.ok(second.updatedAt > first.updatedAt);
 });
 
+test("putUserMemory rejects invalid payloads with invalid_payload", async (t) => {
+  const repo = openMemoryRepo(t);
+  const { main } = await makeUser(repo, "u-mem");
+  const base = { content: "ok", sourceSessionId: main.sessionId, throughMessageSeq: 1 };
+  const rejects = (input: Parameters<typeof repo.putUserMemory>[1]) =>
+    assert.rejects(repo.putUserMemory("u-mem", input), (e) =>
+      isSessionError(e, "invalid_payload"),
+    );
+
+  // content：非空字符串且 ≤8000 字符
+  await rejects({ ...base, content: "" });
+  await rejects({ ...base, content: "x".repeat(8_001) });
+  await rejects({ ...base, content: 42 as unknown as string });
+  // throughMessageSeq：非负整数
+  await rejects({ ...base, throughMessageSeq: -1 });
+  await rejects({ ...base, throughMessageSeq: 1.5 });
+  await rejects({ ...base, throughMessageSeq: Number.NaN });
+  // sourceSessionId：string 或 null
+  await rejects({ ...base, sourceSessionId: 7 as unknown as string });
+
+  // 边界值合法：8000 字符、游标 0、null 源会话
+  await repo.putUserMemory("u-mem", {
+    content: "x".repeat(8_000),
+    sourceSessionId: null,
+    throughMessageSeq: 0,
+  });
+  const memory = await repo.getUserMemory("u-mem");
+  assert.equal(memory?.content.length, 8_000);
+  assert.equal(memory?.throughMessageSeq, 0);
+});
+
 test("putUserMemory rejects unknown user with not_found", async (t) => {
   const repo = openMemoryRepo(t);
   await assert.rejects(

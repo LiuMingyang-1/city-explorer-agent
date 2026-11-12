@@ -104,6 +104,13 @@ export async function distillMemory(options: DistillMemoryOptions): Promise<Dist
       chars += serializeMessage(message).length;
     }
   }
+  // 空批（maxRecords≤0 或首条即超限）直接 skipped：不发模型调用、不写库。
+  if (batch.length === 0) {
+    return {
+      status: "skipped",
+      reason: `本批为空，无消息进入蒸馏输入（maxRecords=${maxRecords}）`,
+    };
+  }
   const through = batch.at(-1)?.messageSeq ?? cursor;
   const feed = batch
     .map(recordMessage)

@@ -167,7 +167,11 @@ export type RunFinishOutcome =
   | { status: "failed"; error: string }
   | { status: "cancelled"; error?: string };
 
-/** putUserMemory 的写入参数：三字段全显式给，游标只随蒸馏结果推进。 */
+/**
+ * putUserMemory 的写入参数：三字段全显式给，游标只随蒸馏结果推进。
+ * content 非空且 ≤8000 字符、throughMessageSeq 非负整数、
+ * sourceSessionId 为 string 或 null；不合 → invalid_payload。
+ */
 export interface PutUserMemoryInput {
   content: string;
   sourceSessionId: string | null;
