@@ -24,3 +24,4 @@ datasets/**/*.db-journal
 browser_data/
 cookies/
 *.cookies.json
+__pycache__/
