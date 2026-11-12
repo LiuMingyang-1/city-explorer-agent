@@ -51,8 +51,10 @@ export interface PlannerPromptOptions {
   requestId?: string;
   /**
    * 本轮用户位置（web 端经 service 透传）：持久运行时注入
-   * location_context system section（不进用户消息、不落库），
-   * 本轮没带时沿用上轮值；内存路径（performTurn）不处理。
+   * location_context system section（不进用户消息/raw/消息表），
+   * 坐标随本条 run 的 input 快照落库；本轮没带时沿用会话最近位置
+   * （每次 reload 从最新 location run 恢复，跨实例/重启一致）。
+   * 内存路径（performTurn）不处理。
    */
   location?: { lat: number; lng: number };
 }

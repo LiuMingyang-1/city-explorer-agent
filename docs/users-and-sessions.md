@@ -232,7 +232,7 @@ seq=41  type=message     message_seq=40   user: "第二个换一个"
 | `root_run_id` | TEXT | 否 | 递归树的根 run；无父时等于自身 run_id |
 | `reply_to_session_id` | TEXT | 否 | **结果投递目标**会话；与执行所在 `session_id` 是两列，分开校验（同用户） |
 | `status` | TEXT | 是 | `'queued'` / `'running'` / `'completed'` / `'failed'` / `'cancelled'` |
-| `input` | TEXT（JSON） | 是 | 输入快照：任务目标、相关约束、必要资料（不复制父会话全部历史）；上层约定可携带 `requestId` 作请求级幂等键 |
+| `input` | TEXT（JSON） | 是 | 输入快照：任务目标、相关约束、必要资料（不复制父会话全部历史）；上层约定可携带 `requestId` 作请求级幂等键、`location` 记录该轮透传的用户位置（恢复会话最近位置的依据） |
 | `result` | TEXT（JSON） | 否 | 完成时的结果摘要；须持久化，供回投与重放（上层存 `{ turn }` 快照） |
 | `error` | TEXT | 否 | 失败原因 |
 | `cancel_requested` | INTEGER | 是 | 0/1；取消是状态标记，不删除记录 |

@@ -53,7 +53,7 @@ function locationSectionText(location: LocationContext): string {
  * 恢复与 plan 提交后重建一次，使之后的每个模型请求都携带最新规划状态，
  * 而不是指望压缩摘要记住它。main 注入已确认指针状态，child 注入候选
  * （明确标注候选身份，绝不冒充 main 的正式行程）。位置与会话类型无关，
- * main/child 注入同一份（该轮没透传位置时 location 为 undefined → 无该节）。
+ * main/child 注入同一份（会话尚无已存位置时 location 为 undefined → 无该节）。
  */
 export function runtimeSystemMessage(
   base: SystemMessage | undefined,

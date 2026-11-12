@@ -15,6 +15,7 @@ import { closeInterrupted } from "../interrupted.ts";
 import type { SessionRepository } from "../../session/repository.ts";
 import type {
   CompactionPayload,
+  Run,
   SessionKind,
   ValidatedPlan,
 } from "../../session/types.ts";
@@ -36,6 +37,7 @@ import {
   findRunByRequestId,
   latestCandidatePlan,
   replayedTurn,
+  requestInputLocation,
   requestInputText,
   settleRun,
 } from "./runs.ts";
@@ -101,8 +103,11 @@ export class PersistentRuntime implements PlannerRuntime {
    */
   private candidatePlan: ValidatedPlan | undefined;
   /**
-   * 最近一轮透传的用户位置（含锚点）：渲染进 system section，不落 raw、
-   * 不进消息表；本轮没带 location 时沿用上轮值，随 applyContext 重建。
+   * 用户最近位置（含锚点）：渲染进 system section，不落 raw、不进消息表。
+   * 跨实例/请求沿用靠"最新一条 input 带 location 的 run"持久化——
+   * reload 每次从会话库恢复（与 DB 一致，含另一实例的提交）；本轮
+   * 透传新位置时在租约内覆盖并随新 run 的 input 快照落库。锚点不入
+   * 快照，恢复时按当前活动库重解。
    */
   private locationContext?: LocationContext;
   private readonly history = new RawHistory();
@@ -252,7 +257,11 @@ export class PersistentRuntime implements PlannerRuntime {
       this.candidatePlan = latestCandidatePlan(runs, this.history.maxSeqByRun());
       this.planner.restorePlan(this.candidatePlan);
     }
-    // 6) 重建有效上下文：system 由当前配置重建，摘要 + 保留尾部用 raw 同对象。
+    // 6) 用户最近位置：会话最新一条 input 带 location 的 run（runs 按
+    //    created_at 升序，取末尾匹配者）即最近位置；本轮透传的新位置在
+    //    reload 之后由 runPrompt 覆盖，并随新 run 的 input 落库。
+    this.locationContext = await this.persistedLocation(runs);
+    // 7) 重建有效上下文：system 由当前配置重建，摘要 + 保留尾部用 raw 同对象。
     this.applyContext();
     this.baseline.clear();
   }
@@ -384,14 +393,7 @@ export class PersistentRuntime implements PlannerRuntime {
   ): Promise<PlannerTurn> {
     try {
       return await this.guard.run(async () => {
-        // 本轮透传位置则先更新注入坐标（锚点解析失败降级为无，不毁掉本轮）；
-        // 没带 location 时沿用上轮值。必须在 reload 前：reload 末尾的
-        // applyContext 会把它渲染进本轮起的 system section。
-        if (options.location) {
-          const { lat, lng } = options.location;
-          this.locationContext = { lat, lng, anchor: await this.anchorFor(lat, lng) };
-        }
-        // 每轮先同步 DB 最新上下文与规划指针，再处理本轮。
+        // 每轮先同步 DB 最新上下文、规划指针与最近位置，再处理本轮。
         await this.reload();
         // 同步恢复期间被取消/关闭：不查重放、不建 run、不发模型请求。
         const stopped = abortedTurn(signal);
@@ -414,10 +416,23 @@ export class PersistentRuntime implements PlannerRuntime {
             };
           }
         }
+        // 本轮透传位置则覆盖恢复值（锚点解析失败降级为无，不毁掉本轮）；
+        // 没带 location 时沿用 reload 恢复的最近位置。必须在建 run 前
+        // 渲染：performTurn 的首个模型请求就要带上新 section。坐标随本
+        // 条 run 的 input 快照落库，成为后续写者/实例的最近位置。
+        if (options.location) {
+          const { lat, lng } = options.location;
+          this.locationContext = { lat, lng, anchor: await this.anchorFor(lat, lng) };
+          this.applyContext();
+        }
         const run = await this.guard.guarded((w) =>
           this.repo.createRun(w, this.userId, {
             sessionId: this.sessionIdValue,
-            input: { text, requestId: options.requestId ?? null },
+            input: {
+              text,
+              requestId: options.requestId ?? null,
+              location: options.location ?? null,
+            },
             startImmediately: true,
           }),
         );
@@ -462,6 +477,22 @@ export class PersistentRuntime implements PlannerRuntime {
     } catch (error) {
       return { kind: "error", message: errorText(error) };
     }
+  }
+
+  /**
+   * 会话最近位置：runs（listRunsBySession 按 created_at 升序）中最后
+   * 一条 input 带合法 location 的 run——它创建的那轮就是用户最近
+   * 一次透传位置的轮次。锚点不随快照持久化，这里按当前活动库重解
+   * （失败降级为无锚点，不阻塞恢复）。
+   */
+  private async persistedLocation(runs: Run[]): Promise<LocationContext | undefined> {
+    for (let i = runs.length - 1; i >= 0; i--) {
+      const location = requestInputLocation(runs[i]);
+      if (location !== undefined) {
+        return { ...location, anchor: await this.anchorFor(location.lat, location.lng) };
+      }
+    }
+    return undefined;
   }
 
   /** 锚点解析的降级封装：未配置 resolver 或解析抛错一律返回 undefined。 */

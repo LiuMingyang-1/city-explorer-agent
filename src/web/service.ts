@@ -250,7 +250,8 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
       signal?.addEventListener("abort", onAbort, { once: true });
       let turn: PlannerTurn;
       try {
-        // abort 时 prompt 自行 settle；location 只进 prompt options（本轮透传）。
+        // abort 时 prompt 自行 settle；location 只进 prompt options（持久层
+        // 会沿用到本会话后续请求，见 PlannerPromptOptions.location）。
         turn = await planner.prompt(message, { location: options?.location });
       } catch (error) {
         // 中止引起的 prompt 异常也归为 AbortError，不伪装成内部错误。
