@@ -83,3 +83,12 @@ export function putUserMemory(
       );
   });
 }
+
+/**
+ * 删除该用户的记忆行（含蒸馏游标）。幂等：行不存在（从未写过或已删过、
+ * 用户本身不存在）时静默 no-op——DELETE /api/memory 的"清除即成功"
+ * 语义由这里保证，调用方无需先查存在性。
+ */
+export function deleteUserMemory(ctx: SessionDbContext, userId: string): void {
+  ctx.db.prepare("DELETE FROM user_memory WHERE user_id = ?").run(userId);
+}

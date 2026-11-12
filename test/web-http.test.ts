@@ -76,6 +76,17 @@ function fakeService(
         }
       );
     },
+    // /api/events 与 /api/memory 的接口占位数（本文件不测这两组路由）。
+    async listEvents() {
+      return { events: [] };
+    },
+    async getMemory() {
+      return { content: "", updated_at: null };
+    },
+    async putMemory() {
+      return { content: "", updated_at: null };
+    },
+    async deleteMemory() {},
   };
   return svc;
 }

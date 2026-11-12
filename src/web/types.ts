@@ -77,6 +77,38 @@ export type ChatResult =
   | { kind: "clarification"; session_id: string; question: string }
   | { kind: "itinerary"; session_id: string; itinerary: Itinerary; events: EventView[] };
 
+/** GCJ-02 经纬度包围盒（GET /api/events 的 bbox=minLng,minLat,maxLng,maxLat 解析结果）。 */
+export interface EventBBox {
+  minLng: number;
+  minLat: number;
+  maxLng: number;
+  maxLat: number;
+}
+
+/**
+ * GET /api/events 已校验的查询条件：date 与 from/to 二选一（都不给时
+ * 由实现方按服务端本地"今天"处理）；bbox 可选；limit 已由 HTTP 层
+ * 钳进契约上限。
+ */
+export interface EventsQuery {
+  date?: string;
+  from?: string;
+  to?: string;
+  bbox?: EventBBox;
+  limit?: number;
+}
+
+/** GET /api/events 的响应体。 */
+export interface EventsResult {
+  events: EventView[];
+}
+
+/** GET/PUT /api/memory 的响应体：无记录时 content 为空串、updated_at 为 null。 */
+export interface UserMemoryView {
+  content: string;
+  updated_at: string | null;
+}
+
 /** 所有非 2xx 响应的统一错误体形。 */
 export interface ChatErrorResponse {
   error: string;
@@ -127,4 +159,20 @@ export interface ChatService {
     message: string,
     options?: { signal?: AbortSignal; location?: ChatLocation; sessionId?: string },
   ): Promise<ChatResult>;
+  /**
+   * 近期活动只读查询（GET /api/events）：活动库全局共享、不按 userId
+   * 过滤，userId 仅为接口一致性保留（并保证匿名 cookie 照常签发）。
+   * date 与 from/to 二选一，都不给时按"今天"（实现方的本地日期）；
+   * bbox 为 GCJ-02 包围盒过滤；limit 已由 HTTP 层校验/钳限。
+   */
+  listEvents(userId: string, query: EventsQuery): Promise<EventsResult>;
+  /** 读该用户的长期记忆文档；无记录 → {content:"",updated_at:null}。 */
+  getMemory(userId: string): Promise<UserMemoryView>;
+  /**
+   * 覆盖式更新记忆文档（PUT /api/memory，HTTP 层已按 trim 后
+   * 1..8000 字符校验 content）：只换正文，保留既有蒸馏游标。
+   */
+  putMemory(userId: string, content: string): Promise<UserMemoryView>;
+  /** 清除该用户记忆（DELETE /api/memory）；无记录时幂等成功。 */
+  deleteMemory(userId: string): Promise<void>;
 }

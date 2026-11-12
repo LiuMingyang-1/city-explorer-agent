@@ -1,5 +1,5 @@
 /**
- * Web Chat HTTP 协议层：把 /api/chat/* 请求翻译成可注入 ChatService 调用，
+ * Web Chat HTTP 协议层：把 /api/* 请求翻译成可注入 ChatService 调用，
  * 返回可直接交给 node:http createServer 的 RequestListener。
  * 只依赖 ./types.ts 的契约类型——不 import 真实 Agent；service 实现与
  * server 装配由上层完成（本层不接 CLI、不建库）。
@@ -7,6 +7,10 @@
  * 路由契约（响应均为 JSON + Cache-Control: no-store）：
  * - GET  /api/chat/history[?session_id=…] → ChatHistory（无参 = 空历史）
  * - POST /api/chat         → ChatResult（严格 {message, location?, session_id?} 入参）
+ * - GET  /api/events[?date=…|from=…&to=…][&bbox=…][&limit=…] → {events: EventView[]}
+ * - GET  /api/memory       → {content, updated_at}（无记录 content 空串、updated_at null）
+ * - PUT  /api/memory       → {content, updated_at}（严格 {content} 入参，覆盖式更新）
+ * - DELETE /api/memory     → 204（清除该 cookie 用户的记忆，幂等）
  * - 会话不存在/跨用户/child → 404，归档/租约忙 → 409（均不记 onError）；
  *   其他路径 404，方法不符 405 + Allow，非 2xx 一律 {error:string}
  *
@@ -19,17 +23,23 @@ import {
   BODY_TOO_LARGE,
   isChatHistory,
   isChatResult,
+  isEventsResult,
   isSameOriginRequest,
+  isUserMemoryView,
   mediaType,
   parseChatSend,
+  parseEventsQuery,
+  parseMemoryPut,
   parseSessionIdQuery,
   readRequestBody,
 } from "./request.ts";
 import { ChatClientError } from "./types.ts";
-import type { ChatService } from "./types.ts";
+import type { ChatService, EventsQuery } from "./types.ts";
 
 const HISTORY_PATH = "/api/chat/history";
 const CHAT_PATH = "/api/chat";
+const EVENTS_PATH = "/api/events";
+const MEMORY_PATH = "/api/memory";
 const DEFAULT_MAX_BODY_BYTES = 16 * 1024;
 const MAX_MESSAGE_CHARS = 1000;
 
@@ -49,6 +59,14 @@ export interface WebChatOptions {
   /** 内部错误回调（默认 console.error）；细节只留服务端，绝不写进响应。 */
   onError?: (error: unknown, req: IncomingMessage) => void;
 }
+
+/** 路径 → 允许的方法集合（405 的 Allow 与 preflight 的 Allow-Methods 同源）。 */
+const ROUTES: Record<string, readonly string[]> = {
+  [HISTORY_PATH]: ["GET"],
+  [CHAT_PATH]: ["POST"],
+  [EVENTS_PATH]: ["GET"],
+  [MEMORY_PATH]: ["GET", "PUT", "DELETE"],
+};
 
 export function createChatHandler(
   service: ChatService,
@@ -78,13 +96,17 @@ export function createChatHandler(
     } catch {
       return fail(req, res, 400, "bad request");
     }
-    const allow =
-      pathname === HISTORY_PATH ? "GET" : pathname === CHAT_PATH ? "POST" : undefined;
-    if (allow === undefined) return fail(req, res, 404, "not found");
+    const methods = ROUTES[pathname];
+    if (methods === undefined) return fail(req, res, 404, "not found");
+    const allow = methods.join(", ");
     if (req.method === "OPTIONS") return preflight(req, res, allow);
-    if (req.method !== allow) return fail(req, res, 405, "method not allowed", { Allow: allow });
+    if (req.method === undefined || !methods.includes(req.method)) {
+      return fail(req, res, 405, "method not allowed", { Allow: allow });
+    }
     if (pathname === HISTORY_PATH) return history(req, res);
-    return chat(req, res);
+    if (pathname === CHAT_PATH) return chat(req, res);
+    if (pathname === EVENTS_PATH) return events(req, res);
+    return memory(req, res);
   }
 
   /**
@@ -160,6 +182,84 @@ export function createChatHandler(
     }
   }
 
+  /** GET /api/events：近期活动只读查询；query 解析失败一律 400 不调 service。 */
+  async function events(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    let query: EventsQuery;
+    try {
+      const parsed = parseEventsQuery(
+        new URL(req.url ?? "/", "http://localhost").searchParams,
+      );
+      if ("error" in parsed) return fail(req, res, 400, parsed.error);
+      query = parsed;
+    } catch {
+      return fail(req, res, 400, "bad request");
+    }
+    const userId = ensureUser(req, res);
+    try {
+      const data = await service.listEvents(userId, query);
+      if (!isEventsResult(data)) throw new Error("service.listEvents returned invalid shape");
+      sendJson(req, res, 200, data);
+    } catch (error) {
+      failServiceError(req, res, error);
+    }
+  }
+
+  /**
+   * /api/memory 统一入口：写接口（PUT/DELETE）先过 /api/chat 同款的
+   * Origin 同源（或白名单）检查——它们修改用户状态，同属 CSRF 防线。
+   * PUT 另有 JSON media-type 校验（在 putMemory 内，与 chat 同序）；
+   * DELETE 不带请求体，没有 media-type 可校验。
+   */
+  async function memory(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    if (req.method !== "GET" && !isSameOriginRequest(req, allowedOrigins)) {
+      return fail(req, res, 403, "origin not allowed");
+    }
+    if (req.method === "GET") return getMemory(req, res);
+    if (req.method === "PUT") return putMemory(req, res);
+    return deleteMemory(req, res);
+  }
+
+  async function getMemory(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    const userId = ensureUser(req, res);
+    try {
+      const data = await service.getMemory(userId);
+      if (!isUserMemoryView(data)) throw new Error("service.getMemory returned invalid shape");
+      sendJson(req, res, 200, data);
+    } catch (error) {
+      failServiceError(req, res, error);
+    }
+  }
+
+  async function putMemory(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    if (mediaType(req) !== "application/json") {
+      return fail(req, res, 415, "content type must be application/json");
+    }
+    try {
+      const body = await readRequestBody(req, maxBodyBytes);
+      if (body === BODY_TOO_LARGE) return fail(req, res, 413, "request body too large");
+      const parsed = parseMemoryPut(body);
+      if ("error" in parsed) return fail(req, res, 400, parsed.error);
+      if (res.destroyed) return; // body 读完前客户端已走：不再派活。
+      const userId = ensureUser(req, res);
+      const data = await service.putMemory(userId, parsed.content);
+      if (!isUserMemoryView(data)) throw new Error("service.putMemory returned invalid shape");
+      sendJson(req, res, 200, data);
+    } catch (error) {
+      failServiceError(req, res, error);
+    }
+  }
+
+  async function deleteMemory(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    req.resume(); // 不带体接口：若客户端仍附带了 body，丢弃它保持连接可复用。
+    const userId = ensureUser(req, res);
+    try {
+      await service.deleteMemory(userId);
+      sendNoContent(req, res, 204);
+    } catch (error) {
+      failServiceError(req, res, error);
+    }
+  }
+
   /** 取 cookie 里的合法 userId，否则铸新值并挂 Set-Cookie（先于响应发出）。 */
   function ensureUser(req: IncomingMessage, res: ServerResponse): string {
     const existing = readUserIdCookie(req.headers.cookie, cookieName);
@@ -200,6 +300,18 @@ export function createChatHandler(
     sendJson(req, res, status, { error }, headers);
   }
 
+  /** 白名单跨域时的 CORS 响应头；同源/无 Origin 为空对象。 */
+  function corsHeaders(req: IncomingMessage): Record<string, string> {
+    const origin = req.headers.origin;
+    return origin !== undefined && allowedOrigins.includes(origin)
+      ? {
+          "Access-Control-Allow-Origin": origin,
+          "Access-Control-Allow-Credentials": "true",
+          Vary: "Origin",
+        }
+      : {};
+  }
+
   /** 统一 JSON 响应：白名单跨域补 CORS 头；所有响应禁缓存、防嗅探。 */
   function sendJson(
     req: IncomingMessage,
@@ -209,24 +321,26 @@ export function createChatHandler(
     headers: Record<string, string> = {},
   ): void {
     if (res.destroyed) return; // socket 已关：不写响应（客户端断连等）
-    const origin = req.headers.origin;
-    const cors =
-      origin !== undefined && allowedOrigins.includes(origin)
-        ? {
-            "Access-Control-Allow-Origin": origin,
-            "Access-Control-Allow-Credentials": "true",
-            Vary: "Origin",
-          }
-        : {};
     // 先序列化再发头：body 不可序列化时还能回 500，而不是 200 半截响应。
     const payload = JSON.stringify(body);
     res.writeHead(status, {
       "Content-Type": "application/json; charset=utf-8",
       "Cache-Control": "no-store",
       "X-Content-Type-Options": "nosniff",
-      ...cors,
+      ...corsHeaders(req),
       ...headers,
     });
     res.end(payload);
+  }
+
+  /** 204 响应：无 body 故无 Content-Type；缓存/嗅探/CORS 头与 JSON 响应同口径。 */
+  function sendNoContent(req: IncomingMessage, res: ServerResponse, status: number): void {
+    if (res.destroyed) return;
+    res.writeHead(status, {
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff",
+      ...corsHeaders(req),
+    });
+    res.end();
   }
 }

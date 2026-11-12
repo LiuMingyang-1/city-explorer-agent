@@ -170,6 +170,8 @@ export interface SessionRepository {
    * sourceSessionId 为 string 或 null，否则 → invalid_payload。单事务。
    */
   putUserMemory(userId: string, input: PutUserMemoryInput): Promise<void>;
+  /** 删除该用户的记忆行（含游标）；行不存在（含用户不存在）时幂等 no-op。 */
+  deleteUserMemory(userId: string): Promise<void>;
 
   /** 释放底层连接；进程内单例使用。 */
   close(): void;

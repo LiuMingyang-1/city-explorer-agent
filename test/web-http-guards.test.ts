@@ -33,6 +33,17 @@ function fakeService(
         }
       );
     },
+    // /api/events 与 /api/memory 的接口占位数（本文件只测 /api/chat 守卫）。
+    async listEvents() {
+      return { events: [] };
+    },
+    async getMemory() {
+      return { content: "", updated_at: null };
+    },
+    async putMemory() {
+      return { content: "", updated_at: null };
+    },
+    async deleteMemory() {},
   };
   return svc;
 }
