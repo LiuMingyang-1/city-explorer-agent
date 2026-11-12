@@ -641,3 +641,28 @@ test("首次蒸馏期间 DELETE（无基线行）：墓碑推版本 → skipped�
   assert.match(outcome.reason ?? "", /并发修改/);
   assert.equal(await sessions.getUserMemory(user.userId), undefined);
 });
+
+test("删除记忆后再来新消息：墓碑版本作基线，下一次蒸馏正常写回", async (t) => {
+  const { sessions, user, main, writer, agent, faux } = await makeDistill(t);
+  await sessions.putUserMemory(user.userId, {
+    content: "旧文",
+    sourceSessionId: main.sessionId,
+    throughMessageSeq: 0,
+  });
+  await sessions.deleteUserMemory(user.userId); // 墓碑 version=2，游标保留
+  await seedMessages(sessions, writer, user.userId, main.sessionId, ["a", "b", "c"]);
+  faux.setResponses([
+    fauxAssistantMessage("## 用户\n新事实\n\n## 偏好\n\n## 足迹\n"),
+  ]);
+  const outcome = await distillMemory({
+    agent,
+    sessions,
+    userId: user.userId,
+    sessionId: main.sessionId,
+    minNewUserMessages: 3,
+  });
+  assert.equal(outcome.status, "updated");
+  const memory = await sessions.getUserMemory(user.userId);
+  assert.equal(memory?.content, "## 用户\n新事实\n\n## 偏好\n\n## 足迹\n");
+  assert.equal(memory?.version, 3); // 墓碑版本继续推进，未被卡死
+});

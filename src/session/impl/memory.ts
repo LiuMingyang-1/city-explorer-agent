@@ -23,16 +23,25 @@ import {
 /** content 存储硬上限（字符）；system 注入侧另有更小的截断（context.ts）。 */
 const MAX_MEMORY_CONTENT_CHARS = 8_000;
 
-export function getUserMemory(
+/** 含墓碑的原始读：蒸馏 CAS 基线与手工 PUT 游标保留用。 */
+export function getUserMemoryRaw(
   ctx: SessionDbContext,
   userId: string,
 ): UserMemory | undefined {
   const row = ctx.db.prepare("SELECT * FROM user_memory WHERE user_id = ?").get(userId) as
     | UserMemoryRow
     | undefined;
+  return row ? toUserMemory(row) : undefined;
+}
+
+export function getUserMemory(
+  ctx: SessionDbContext,
+  userId: string,
+): UserMemory | undefined {
+  const memory = getUserMemoryRaw(ctx, userId);
   // content="" 是 DELETE 留下的墓碑行（合法正文非空，"" 只可能是墓碑）：
-  // 对读路径按"无记忆"处理，行保留是为了让 version 留痕供 CAS 检测删除。
-  return row && row.content !== "" ? toUserMemory(row) : undefined;
+  // 对读路径按"无记忆"处理，行保留是为了让 version/游标留痕供 CAS。
+  return memory && memory.content !== "" ? memory : undefined;
 }
 
 export function putUserMemory(
@@ -101,10 +110,11 @@ export function putUserMemory(
 }
 
 /**
- * 删除该用户的记忆（含蒸馏游标）：写墓碑行而不是物理删行——行保留使
- * version 继续单调递增，在途蒸馏的 expectedVersion CAS 能检出"蒸馏
- * 期间被删"而不复活旧文。墓碑 content="" 由 getUserMemory 过滤为
- * 无记忆；幂等照旧（重复删只推版本，用户不存在仍 no-op 保外键）。
+ * 删除该用户的记忆：写墓碑行而不是物理删行——行保留使 version 继续
+ * 单调递增，在途蒸馏的 expectedVersion CAS 能检出"蒸馏期间被删"而不
+ * 复活旧文；蒸馏游标原样保留——已蒸过的消息不应因手工删除被重新蒸
+ * 馏、把刚删掉的偏好推导回来。墓碑 content="" 由 getUserMemory 过滤
+ * 为无记忆；幂等照旧（重复删只推版本，用户不存在仍 no-op 保外键）。
  */
 export function deleteUserMemory(ctx: SessionDbContext, userId: string): void {
   return tx(ctx, true, () => {
@@ -115,8 +125,6 @@ export function deleteUserMemory(ctx: SessionDbContext, userId: string): void {
          VALUES (?, '', NULL, 0, 1, ?)
          ON CONFLICT(user_id) DO UPDATE SET
            content = '',
-           source_session_id = NULL,
-           through_message_seq = 0,
            version = user_memory.version + 1,
            updated_at = excluded.updated_at`,
       )

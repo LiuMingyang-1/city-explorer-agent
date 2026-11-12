@@ -686,7 +686,9 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
    */
   async function runPutMemory(userId: string, content: string): Promise<UserMemoryView> {
     await sessions.createUser({ userId });
-    const existing = await sessions.getUserMemory(userId);
+    // 用含墓碑的原始读：删除后手工重写仍沿用原游标，已蒸过的消息不会
+    // 因墓碑被重新蒸馏回偏好。
+    const existing = await sessions.getUserMemoryRaw(userId);
     await sessions.putUserMemory(userId, {
       content,
       sourceSessionId: existing?.sourceSessionId ?? null,

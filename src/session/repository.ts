@@ -161,8 +161,13 @@ export interface SessionRepository {
   requestCancelRun(writer: LeaseWriter, userId: string, runId: string): Promise<boolean>;
 
   // ---- user_memory（用户级；蒸馏是 close 时的机会性写入，写方不持会话租约，故不校验租约） ----
-  /** 无行（未写过记忆或用户不存在）→ undefined，不报错。 */
+  /** 无行 / 删除墓碑（content=""）→ undefined，不报错。 */
   getUserMemory(userId: string): Promise<UserMemory | undefined>;
+  /**
+   * 含墓碑行的原始读：蒸馏取 version 做 CAS 基线、手工 PUT 保游标用；
+   * 墓碑行 content=""，消费方自行判定。
+   */
+  getUserMemoryRaw(userId: string): Promise<UserMemory | undefined>;
   /**
    * upsert 整行：content 与游标作为一致对原子写入、不撕裂；并发 close 的
    * 竞争写最坏 last-writer-wins，v1 接受。用户不存在 → not_found；
@@ -170,7 +175,11 @@ export interface SessionRepository {
    * sourceSessionId 为 string 或 null，否则 → invalid_payload。单事务。
    */
   putUserMemory(userId: string, input: PutUserMemoryInput): Promise<void>;
-  /** 删除该用户的记忆行（含游标）；行不存在（含用户不存在）时幂等 no-op。 */
+  /**
+   * 删除该用户的记忆：写墓碑行（content=""、version+1），蒸馏游标
+   * （sourceSessionId/throughMessageSeq）保留——已蒸过的消息不应因手工
+   * 删除而被重新蒸馏回偏好。用户不存在时幂等 no-op（外键）。
+   */
   deleteUserMemory(userId: string): Promise<void>;
 
   /** 释放底层连接；进程内单例使用。 */

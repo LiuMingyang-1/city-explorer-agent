@@ -95,8 +95,10 @@ export async function distillMemory(options: DistillMemoryOptions): Promise<Dist
   const maxDocChars = options.maxDocChars ?? 4_000;
   const maxTokens = options.maxTokens ?? 4_096;
 
-  const row = await sessions.getUserMemory(userId);
-  const current = row?.content ?? emptyMemoryDoc();
+  // 用含墓碑的原始读：墓碑 version 是 CAS 基线——删除后照常按当前版本
+  // 续蒸（不会被墓碑卡死），墓碑 content="" 按空文档起步。
+  const row = await sessions.getUserMemoryRaw(userId);
+  const current = row && row.content !== "" ? row.content : emptyMemoryDoc();
   // 版本 CAS 基线：蒸馏期间被手工 PUT/DELETE 触碰（含墓碑）时放弃写回。
   let expectedVersion = row?.version ?? 0;
   // 换了源会话从头蒸
