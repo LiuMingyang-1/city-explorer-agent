@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { checkFacts, inferredEndDate } from "./extraction.ts";
 import type { ActivityFacts, ExtractionDocument } from "./extraction.ts";
 import { gcj02ToWgs84, CONVERSION_VERSION } from "./coordinates.ts";
-import { venueRequestKey } from "./geocoding.ts";
+import { venueRequestKey, matchesVenue } from "./geocoding.ts";
 import type { VerifiedLocation } from "./geocoding.ts";
 import { registerSlot } from "./identity.ts";
 import type { SlotIdentity } from "./identity.ts";
@@ -12,6 +12,7 @@ import type { SourceDocument } from "./validate.ts";
 import { validateDataset } from "./validate.ts";
 import { isCalendarDate } from "../itinerary/constraints.ts";
 import type { VenueQuery } from "./geocoding.ts";
+import { isAmapShareUrl } from "./amap-share.ts";
 
 export const textHash = (text: string) => createHash("sha256").update(text).digest("hex");
 export interface PreparedCollection {
@@ -49,7 +50,11 @@ export function prepareCollection(items: readonly LocatedActivity[], options: { 
     const age = Date.parse(options.asOf) - Date.parse(location.verified_at);
     let mapValid = location.request_key === requested && location.system === "WGS-84" && location.input_system === "GCJ-02"
       && location.conversion === CONVERSION_VERSION && /^6101\d{2}$/.test(location.adcode) && location.venue_name === facts.venue_name
-      && ["https://restapi.amap.com/v3/place/text", "https://restapi.amap.com/v3/geocode/geo"].includes(location.source_url)
+      && (["https://restapi.amap.com/v3/place/text", "https://restapi.amap.com/v3/geocode/geo"].includes(location.source_url)
+        || location.method === "share" && isAmapShareUrl(location.source_url) && location.share_reference?.source_url === location.source_url
+          && location.share_reference.poi_id === location.poi_id && location.share_reference.original.lat === location.original.lat
+          && location.share_reference.original.lng === location.original.lng && matchesVenue(facts.venue_name, location.share_reference.name)
+          && location.address === `西安市${location.district}${location.share_reference.address}`)
       && age >= 0 && age < 30 * 86400000 && location.address.includes("西安");
     try {
       const computed = gcj02ToWgs84(location.original);

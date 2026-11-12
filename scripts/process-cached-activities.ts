@@ -13,7 +13,8 @@ import type { Attempt } from "../src/collection/pilot-api.ts";
 async function main() {
   const args = process.argv.slice(2);
   const value = (name: string) => args.find(a => a.startsWith(`--${name}=`))?.slice(name.length + 3);
-  if (args.some(a => a !== "--live" && !/^--(?:input|output|date|publish-root)=.+$/.test(a))) throw new Error("INVALID_PROCESS_ARGUMENTS");
+  if (args.some(a => a !== "--live" && !/^--(?:input|output|date|publish-root|map-share)=.+$/.test(a))) throw new Error("INVALID_PROCESS_ARGUMENTS");
+  const shareUrls = args.filter(a => a.startsWith("--map-share=")).map(a => a.slice("--map-share=".length));
   const date = value("date"), input = value("input"), output = value("output"), publication = value("publish-root");
   if (!date || !isCalendarDate(date) || !input || !output || publication && !args.includes("--live")) throw new Error("PROCESS_ARGUMENTS_REQUIRED");
   const privatePath = (path: string) => {
@@ -42,7 +43,7 @@ async function main() {
   const result = await processCollection(selected.map(document => ({ document })), { asOf, baseDate: date, now: () => new Date().toISOString(),
     identities: prior?.sidecar.identities, modelBudget: 10, eventLimit: 10,
     invoke: createDeepSeekExtractor({ deepseekKey: credentials.deepseekKey, model: credentials.extractionModel, record, extractLimit: 10, searchLimit: 0 }),
-    geocoder: createGeocoder({ key: mapKey, now: () => new Date().toISOString(), requestLimit: 10 }),
+    geocoder: createGeocoder({ key: mapKey, now: () => new Date().toISOString(), requestLimit: 10, shareUrls }),
   });
   save("dataset.json", result.prepared.dataset); save("rejected.json", result.rejected);
   save("metrics.json", result.metrics); save("metadata.json", result.prepared.metadata); save("validation-documents.json", [...result.prepared.documents]);

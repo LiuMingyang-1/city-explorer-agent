@@ -1,23 +1,51 @@
 import { createHash } from "node:crypto";
 import { gcj02ToWgs84, CONVERSION_VERSION } from "./coordinates.ts";
 import type { Coordinate } from "./coordinates.ts";
+import { readAmapSharedVenue, isAmapShareUrl } from "./amap-share.ts";
+import type { AmapSharedVenue } from "./amap-share.ts";
 
 export interface VenueQuery { venue_name: string; address: string | null; require_entrance?: boolean; }
 export interface VerifiedLocation {
   request_key: string; venue_name: string; address: string; poi_id: string | null;
   adcode: string; district: string; latitude: number; longitude: number;
   input_system: "GCJ-02"; system: "WGS-84"; original: Coordinate;
-  conversion: string; source_url: string; verified_at: string; method: "poi" | "geocoding";
+  conversion: string; source_url: string; verified_at: string; method: "poi" | "geocoding" | "share";
+  share_reference?: AmapSharedVenue;
   address_confirmation?: { address: string; level: string; original: Coordinate };
 }
 export type GeoResult = { ok: true; location: VerifiedLocation; cached: boolean } | { ok: false; reason: string };
 export interface GeocoderOptions {
   key?: string; fetch?: typeof fetch; now: () => string;
   cache?: Map<string, VerifiedLocation>; requestLimit?: number;
+  shareUrls?: readonly string[];
+  onDiagnostic?: (event: { stage: string; keywords?: string; count?: number; candidates?: { id: string; name: string; address: string; district: string; level?: string }[] }) => void;
 }
-const norm = (value: string) => value.normalize("NFKC").replace(/[\s（）()，,]/g, "");
-// Keep branch identity; remove only a floor/exhibition-room suffix and punctuation.
-const venueName = (value: string) => norm(value).replace(/[一二三四五六七八九十百0-9]+楼(?:展厅|展馆)?$/, "").replace(/馆区$/, "馆");
+const norm = (value: string) => value.normalize("NFKC").toLowerCase().replace(/[\s（）()，,·•・]/g, "").replaceAll("見", "见").replaceAll("鳥", "鸟").replace(/[剣劍]/g, "剑");
+/** Strip a local floor/stage/door, but keep the parent venue and branch. */
+export function venueSearchLabel(value: string): string {
+  return value.normalize("NFKC")
+    .replace(/\s*(?:[bB]?\d+[fF]|[fFbB]\d+|[一二三四五六七八九十百0-9]+[楼层])[^()]*(?=\)|$)/g, "")
+    .replace(/\s*[一二三四五六七八九十0-9]+号门(?:前|外|内|入口|出口)?$/, "").trim();
+}
+const venueName = (value: string) => norm(venueSearchLabel(value)).replace(/馆区$/, "馆");
+function parts(value: string) {
+  const text = venueSearchLabel(value), match = /^(.*?)\(([^()]+)\)$/.exec(text);
+  return { base: match?.[1] ?? text, branch: match?.[2] ?? "" };
+}
+const branchName = (value: string) => norm(value).replace(/西安市?|店|广场/g, "");
+export function matchesVenue(query: string, candidate: string): boolean {
+  if (venueName(query) === venueName(candidate)) return true;
+  const a = parts(query), b = parts(candidate);
+  if (venueName(a.base) !== venueName(b.base)) return false;
+  const x = branchName(a.branch), y = branchName(b.branch);
+  // Reordered city/branch labels are allowed; a different branch is not.
+  return x === y || x.length >= 4 && [...x].sort().join("") === [...y].sort().join("");
+}
+function alternateKeywords(value: string): string[] {
+  const clean = venueSearchLabel(value), p = parts(value);
+  const shorter = clean.replace(/西安市?/g, "");
+  return [...new Set([shorter, p.branch ? p.base : ""].filter(q => q && norm(q) !== norm(clean)))];
+}
 const districts = ["新城区", "碑林区", "莲湖区", "灞桥区", "未央区", "雁塔区", "阎良区", "临潼区", "长安区", "高陵区", "鄠邑区", "蓝田县", "周至县"];
 const cityAddress = (address: string) => districts.reduce((s, d) => s.replaceAll(d, ""), norm(address).replaceAll("陕西省", "").replaceAll("西安市", "").replaceAll("曲江新区", ""));
 function sameAddress(request: string, actual: string): boolean {
@@ -40,8 +68,14 @@ export function venueRequestKey(query: VenueQuery): string {
 
 /** Fixed endpoints, bounded body/time/call budgets, no raw error or key-bearing URL logs. */
 export function createGeocoder(options: GeocoderOptions) {
+  if ((options.shareUrls?.length ?? 0) > 3 || options.shareUrls?.some(url => !isAmapShareUrl(url))) throw new Error("INVALID_MAP_SHARE_URL");
   const cache = options.cache ?? new Map<string, VerifiedLocation>();
+  const shared = new Map<string, Promise<AmapSharedVenue | null>>();
+  // Share candidate responses across floors/activities in the same short batch.
+  // Misses are never persisted across nightly runs.
+  const searchCache = new Map<string, { at: number; data: Record<string, any> }>();
   let requests = 0;
+  const trace = (event: Parameters<NonNullable<GeocoderOptions["onDiagnostic"]>>[0]) => { try { options.onDiagnostic?.(event); } catch { /* diagnostics must not interrupt collection */ } };
   async function request(path: string, params: Record<string, string>): Promise<Record<string, any>> {
     if (!options.key?.trim()) throw new Error("MAP_KEY_MISSING");
     if (requests >= (options.requestLimit ?? 10)) throw new Error("MAP_BUDGET_EXHAUSTED");
@@ -80,19 +114,60 @@ export function createGeocoder(options: GeocoderOptions) {
         return { ok: true, location: structuredClone(cached), cached: true };
       }
       try {
-        const data = await request("/v3/place/text", { keywords: venueName(query.venue_name), city: "西安", citylimit: "true", extensions: "all", offset: "25", page: "1", children: "0" });
-        if (!Array.isArray(data.pois)) return { ok: false, reason: "MAP_INVALID_POI_RESPONSE" };
-        if (!/^\d+$/.test(String(data.count))) return { ok: false, reason: "MAP_INVALID_POI_RESPONSE" };
-        const truncated = Number(data.count) > data.pois.length;
-        // Fuzzy count includes unrelated amenities; exact venue candidates are matched below.
-        let matches = data.pois.filter((poi: any) => poi && xian(poi) && venueName(String(poi.name)) === venueName(query.venue_name)
-          && typeof poi.id === "string" && !!poi.id && typeof poi.address === "string" && poi.address.length >= 5
+        const search = async (keywords: string) => {
+          const stored = searchCache.get(norm(keywords));
+          const reuse = stored && instant >= stored.at && instant - stored.at < 5 * 60000;
+          const data = reuse ? stored.data : await request("/v3/place/text", { keywords, city: "西安", citylimit: "true", extensions: "all", offset: "25", page: "1", children: "0" });
+          if (!Array.isArray(data.pois) || !/^\d+$/.test(String(data.count))) throw new Error("MAP_INVALID_POI_RESPONSE");
+          if (!reuse) searchCache.set(norm(keywords), { at: instant, data });
+          trace({ stage: reuse ? "poi-cache" : "poi-search", keywords, count: Number(data.count), candidates: data.pois.map((p: any) => ({ id: String(p.id ?? ""), name: String(p.name ?? ""), address: String(p.address ?? ""), district: String(p.adname ?? "") })) });
+          return data;
+        };
+        let data = await search(venueSearchLabel(query.venue_name));
+        const pool = new Map<string, any>();
+        const collect = (rows: any[]) => { for (const row of rows) if (row && typeof row.id === "string") pool.set(row.id, row); };
+        collect(data.pois);
+        const select = () => [...pool.values()].filter((poi: any) => xian(poi)
+          && [poi.name, ...(typeof poi.alias === "string" ? [poi.alias] : Array.isArray(poi.alias) ? poi.alias : [])].some(name => typeof name === "string" && matchesVenue(query.venue_name, name))
+          && typeof poi.id === "string" && !!poi.id && typeof poi.address === "string" && !!poi.address.trim()
           && typeof poi.adname === "string" && !!poi.adname);
+        let matches = select();
+        for (const keyword of alternateKeywords(query.venue_name)) {
+          if (matches.length) break;
+          data = await search(keyword); collect(data.pois); matches = select();
+        }
+        const truncated = Number(data.count) > data.pois.length;
         if (matches.length > 1 && query.address) {
           const addressed = matches.filter((poi: any) => sameAddress(query.address!, poi.address));
           if (addressed.length === 1) matches = addressed;
         }
         if (matches.length > 1) return { ok: false, reason: "AMBIGUOUS_POI" };
+        // Optional official share metadata can expose an App POI absent from Web search.
+        // It is separately labeled, not represented as a successful POI detail lookup.
+        if (!matches.length && options.shareUrls?.length) {
+          const references: AmapSharedVenue[] = [];
+          for (const url of options.shareUrls) {
+            if (!shared.has(url)) shared.set(url, readAmapSharedVenue(url, options.fetch ?? fetch).catch(() => null));
+            const reference = await shared.get(url)!;
+            if (reference && matchesVenue(query.venue_name, reference.name)) references.push(reference);
+          }
+          if (references.length === 1) {
+            if (query.require_entrance) return { ok: false, reason: "ENTRANCE_NOT_CONFIRMED" };
+            const reference = references[0];
+            const reverse = await request("/v3/geocode/regeo", { location: `${reference.original.lng},${reference.original.lat}`, extensions: "base", radius: "100" });
+            const component = reverse.regeocode?.addressComponent;
+            if (!component || !xian(component) || typeof component.district !== "string") return { ok: false, reason: "SHARE_OUTSIDE_XIAN" };
+            const converted = gcj02ToWgs84(reference.original);
+            const location: VerifiedLocation = { request_key: key, venue_name: query.venue_name,
+              address: `西安市${component.district}${reference.address}`, poi_id: reference.poi_id,
+              adcode: component.adcode, district: component.district, ...{ latitude: converted.lat, longitude: converted.lng },
+              original: reference.original, input_system: "GCJ-02", system: "WGS-84", conversion: CONVERSION_VERSION,
+              source_url: reference.source_url, method: "share", verified_at: now, share_reference: reference };
+            trace({ stage: "official-share", candidates: [{ id: reference.poi_id, name: reference.name, address: location.address, district: component.district }] });
+            cache.set(key, structuredClone(location)); return { ok: true, location, cached: false };
+          }
+          if (references.length > 1) return { ok: false, reason: "AMBIGUOUS_POI" };
+        }
         let row: Record<string, any>, point: Coordinate | null, method: VerifiedLocation["method"], address: string, source: string;
         let confirmation: VerifiedLocation["address_confirmation"];
         if (matches.length === 1) {
@@ -119,11 +194,12 @@ export function createGeocoder(options: GeocoderOptions) {
             confirmation = { address: geo.formatted_address, level: geo.level, original: geoPoint };
           }
         } else {
-          if (data.pois.length) return { ok: false, reason: "NO_EXACT_POI_MATCH" };
+          if (pool.size) return { ok: false, reason: parts(query.venue_name).branch ? "BRANCH_NOT_CONFIRMED" : "NO_EXACT_POI_MATCH" };
           if (!query.address || !/\d+号/.test(norm(query.address))) return { ok: false, reason: "PRECISE_ADDRESS_REQUIRED" };
           const geocoded = await request("/v3/geocode/geo", { address: query.address, city: "西安" });
           if (!Array.isArray(geocoded.geocodes) || geocoded.geocodes.length !== 1) return { ok: false, reason: "AMBIGUOUS_GEOCODE" };
           row = geocoded.geocodes[0];
+          trace({ stage: "address-fallback", candidates: [{ id: "", name: "", address: String(row.formatted_address ?? ""), district: String(row.district ?? ""), level: String(row.level ?? "") }] });
           if (!xian(row) || !["门牌号", "单元号", "门址"].includes(row.level)
             || typeof row.formatted_address !== "string" || !sameAddress(query.address, row.formatted_address)) return { ok: false, reason: "COARSE_OR_CONFLICTING_GEOCODE" };
           if (query.require_entrance) return { ok: false, reason: "ENTRANCE_NOT_CONFIRMED" };

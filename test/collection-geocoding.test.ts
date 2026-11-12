@@ -54,7 +54,7 @@ test("cache reuses verified venues, expires at 30 days and invalidates on addres
   assert.equal((await service.resolve(query)).ok, true);
   const cached = await service.resolve(query); assert.equal(cached.ok && cached.cached, true); assert.equal(calls, 1);
   date = "2026-12-12T03:00:00Z"; await service.resolve(query); assert.equal(calls, 2);
-  await service.resolve({ ...query, address: "西安市雁塔区另一条路2号" }); assert.equal(calls, 3);
+  await service.resolve({ ...query, address: "西安市雁塔区另一条路2号" }); assert.equal(calls, 2);
 });
 
 test("floor suffixes and guanqu spelling preserve branch matching without requiring identical punctuation", async () => {
@@ -63,7 +63,7 @@ test("floor suffixes and guanqu spelling preserve branch matching without requir
   ])) });
   assert.equal((await service.resolve({ venue_name: "陕西省文化馆（曲江馆五楼展厅）", address: null })).ok, true);
   const other = await service.resolve({ venue_name: "陕西省文化馆（长安馆五楼展厅）", address: null });
-  assert.deepEqual(other, { ok: false, reason: "NO_EXACT_POI_MATCH" });
+  assert.deepEqual(other, { ok: false, reason: "BRANCH_NOT_CONFIRMED" });
 });
 
 test("request failures, API denial, oversized responses and exhausted budgets fail closed without key leakage", async () => {

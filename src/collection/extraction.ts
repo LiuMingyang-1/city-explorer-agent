@@ -4,6 +4,7 @@ import { CATEGORIES } from "../data/categories.ts";
 import type { EventCategory } from "../data/categories.ts";
 import { isCalendarDate } from "../itinerary/constraints.ts";
 import { publicUrl } from "./validate.ts";
+import { normalizeActivityTime } from "./time-normalization.ts";
 
 /** Source authority is assigned by the collector's source policy, never by a model. */
 export interface ExtractionDocument {
@@ -144,7 +145,9 @@ export async function extractActivities(doc: ExtractionDocument, options: { asOf
     if (validateShape(raw)) {
       const digest = createHash("sha256").update(doc.text).digest("hex");
       result.activities = (raw as { activities: ActivityFacts[] }).activities.map(original => {
-        const facts = route === "model" ? completeFacts(original, doc, options.asOf) : structuredClone(original);
+        const facts = route === "model" ? completeFacts(original, doc, options.asOf) : {
+          ...structuredClone(original), start_at: normalizeActivityTime(original.start_at), end_at: normalizeActivityTime(original.end_at),
+        };
         return { facts, document_sha256: digest, check: checkFacts(facts, doc, options.asOf) };
       });
       const repairable = result.activities.flatMap(a => a.check.issues).filter(code => /^(INVALID_(?:START|END)_DATE)/.test(code));
@@ -175,6 +178,8 @@ export function inferredEndDate(doc: ExtractionDocument, asOf: string): string |
 /** Bounded year inference, optional note completion and date arithmetic. */
 export function completeFacts(original: ActivityFacts, doc: ExtractionDocument, asOf: string): ActivityFacts {
   const f = structuredClone(original);
+  f.start_at = normalizeActivityTime(f.start_at);
+  f.end_at = normalizeActivityTime(f.end_at);
   f.evidence ??= {};
   for (const field of ["title", "description", "venue_name", "address", "city"] as const) {
     const value = f[field];
