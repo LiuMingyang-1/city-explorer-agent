@@ -101,11 +101,30 @@ export function createSqliteEventRepository(dbPath: string): EventRepository {
   return {
     search(input: SearchEventsInput): Promise<Event[]> {
       const clauses: string[] = [];
-      const params: string[] = [];
+      const params: Array<string | number> = [];
       if (input.date) {
         // 活动时间窗与当日有交集即可参加（窗口可跨多日）。
         clauses.push("substr(start_at, 1, 10) <= ? AND substr(end_at, 1, 10) >= ?");
         params.push(input.date, input.date);
+      }
+      // from/to 是同一交集判定的两半：窗口终点不早于 from、起点不晚于 to。
+      // 可单独给（开区间），与 date 叠加时按 AND 收窄。
+      if (input.from) {
+        clauses.push("substr(end_at, 1, 10) >= ?");
+        params.push(input.from);
+      }
+      if (input.to) {
+        clauses.push("substr(start_at, 1, 10) <= ?");
+        params.push(input.to);
+      }
+      if (input.bbox) {
+        clauses.push("longitude >= ? AND longitude <= ? AND latitude >= ? AND latitude <= ?");
+        params.push(
+          input.bbox.minLng,
+          input.bbox.maxLng,
+          input.bbox.minLat,
+          input.bbox.maxLat,
+        );
       }
       if (input.category) {
         clauses.push("category = ?");
@@ -117,6 +136,13 @@ export function createSqliteEventRepository(dbPath: string): EventRepository {
         params.push(pattern, pattern);
       }
       const where = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
+      // limit 为 API 查询能力扩展；工具路径不传时仍走 SEARCH_LIMIT，
+      // 防御性下限 1（LIMIT 0/-1 在 SQLite 里分别是空集/无限制，都不该是
+      // 调用方能打出的语义）。
+      const limit =
+        input.limit !== undefined && Number.isFinite(input.limit)
+          ? Math.max(1, Math.floor(input.limit))
+          : SEARCH_LIMIT;
       const { near, radiusKm } = input;
       if (near) {
         // 距离是查询派生值：SQL 只做原条件过滤（不排序），取出后在 JS 侧
@@ -135,7 +161,7 @@ export function createSqliteEventRepository(dbPath: string): EventRepository {
         }
         events.sort((a, b) => a.distance - b.distance);
         return Promise.resolve(
-          events.slice(0, SEARCH_LIMIT).map(({ event, distance }) => ({
+          events.slice(0, limit).map(({ event, distance }) => ({
             ...event,
             distanceKm: Math.round(distance * 100) / 100,
           })),
@@ -144,7 +170,7 @@ export function createSqliteEventRepository(dbPath: string): EventRepository {
       // 无 near 时单独传的 radiusKm 被忽略，维持原排序与上限。
       const rows = db
         .prepare(`SELECT * FROM events ${where} ORDER BY start_at, id LIMIT ?`)
-        .all(...params, SEARCH_LIMIT) as EventRow[];
+        .all(...params, limit) as EventRow[];
       return Promise.resolve(rows.map(toEvent));
     },
 

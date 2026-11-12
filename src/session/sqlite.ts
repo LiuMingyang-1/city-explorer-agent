@@ -83,6 +83,7 @@ export function createSqliteSessionRepository(
     // user_memory
     getUserMemory: async (userId) => memory.getUserMemory(ctx, userId),
     putUserMemory: async (userId, input) => memory.putUserMemory(ctx, userId, input),
+    deleteUserMemory: async (userId) => memory.deleteUserMemory(ctx, userId),
 
     close: () => ctx.db.close(),
   };

@@ -34,7 +34,10 @@ import type {
   ChatMessage,
   ChatResult,
   ChatService,
+  EventsQuery,
+  EventsResult,
   EventView,
+  UserMemoryView,
 } from "./types.ts";
 
 /**
@@ -180,6 +183,16 @@ export interface SendOptions {
   onSession?: (sessionId: string) => void;
   /** 规划阶段进度回调（轮内可多次）；SSE progress 事件据此转发。 */
   onProgress?: (progress: PlannerProgress) => void;
+}
+
+/** GET /api/events 未传 limit 时的契约默认条数（上限校验在 HTTP 层）。 */
+const DEFAULT_EVENTS_LIMIT = 200;
+
+/** 服务端本地"今天"（YYYY-MM-DD）：GET /api/events 不带日期参数时的默认窗口。 */
+function localToday(): string {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
 /** 客户端中止信号对应的异常；优先复用 signal.reason。 */
@@ -421,6 +434,55 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
     return history;
   }
 
+  /**
+   * GET /api/events：活动库全局共享，不按 userId 过滤（签名与接口其余
+   * 方法一致以 cookie 用户起头）。date 与 from/to 二选一由 HTTP 层保证；
+   * 都不给时按"今天"（currentDate 可注入固定，缺省服务端本地日期）。
+   */
+  async function runListEvents(query: EventsQuery): Promise<EventsResult> {
+    const date =
+      query.date ??
+      (query.from === undefined && query.to === undefined
+        ? (options.currentDate ?? localToday())
+        : undefined);
+    const events = await repository.search({
+      date,
+      from: query.from,
+      to: query.to,
+      bbox: query.bbox,
+      // 契约默认 200 是 API 语义（上限 500 已由 HTTP 层校验）；
+      // 活动库自身缺省 100 是 search_events 工具的保护上限，不在此复用。
+      limit: query.limit ?? DEFAULT_EVENTS_LIMIT,
+    });
+    return { events: events.map(toEventView) };
+  }
+
+  async function runGetMemory(userId: string): Promise<UserMemoryView> {
+    const memory = await sessions.getUserMemory(userId);
+    return { content: memory?.content ?? "", updated_at: memory?.updatedAt ?? null };
+  }
+
+  /**
+   * PUT /api/memory：覆盖式更新正文。cookie 用户可能从未发过消息而还没
+   * users 行——createUser 幂等，先保证 user_memory 的外键主行存在。
+   * 蒸馏游标 throughMessageSeq 原样保留（手工编辑不重置蒸馏进度）；
+   * sourceSessionId 置 null——本行不再是某次蒸馏的产物快照。
+   */
+  async function runPutMemory(userId: string, content: string): Promise<UserMemoryView> {
+    await sessions.createUser({ userId });
+    const existing = await sessions.getUserMemory(userId);
+    await sessions.putUserMemory(userId, {
+      content,
+      sourceSessionId: null,
+      throughMessageSeq: existing?.throughMessageSeq ?? 0,
+    });
+    return runGetMemory(userId);
+  }
+
+  async function runDeleteMemory(userId: string): Promise<void> {
+    await sessions.deleteUserMemory(userId);
+  }
+
   return {
     // async 使 assertOpen 的拒绝也走 rejected promise（与 HTTP/测试约定一致）。
     async send(
@@ -440,6 +502,26 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
     async history(userId: string, sessionId?: string): Promise<ChatHistory> {
       assertOpen();
       return track(runHistory(userId, sessionId));
+    },
+
+    async listEvents(_userId: string, query: EventsQuery): Promise<EventsResult> {
+      assertOpen();
+      return track(runListEvents(query));
+    },
+
+    async getMemory(userId: string): Promise<UserMemoryView> {
+      assertOpen();
+      return track(runGetMemory(userId));
+    },
+
+    async putMemory(userId: string, content: string): Promise<UserMemoryView> {
+      assertOpen();
+      return track(runPutMemory(userId, content));
+    },
+
+    async deleteMemory(userId: string): Promise<void> {
+      assertOpen();
+      return track(runDeleteMemory(userId));
     },
 
     shutdown(): Promise<void> {
