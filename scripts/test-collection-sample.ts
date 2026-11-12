@@ -53,7 +53,7 @@ for(const [provider,docs] of [["xiaohongshu",xhs],["deepseek_web",web]] as const
     const result=await processCollection([{document:doc}],{asOf,baseDate:date,now:()=>new Date().toISOString(),invoke,ocr:provider==="xiaohongshu"?ocr:undefined,modelBudget:2,eventLimit:3,geocoder:{resolve:async()=>{throw new Error("UNEXPECTED_MECHANICAL_GEOCODING");}}});
     const merged=ocrText?{...doc,text:(doc.text.slice(0,15000)+"\n\n【图片OCR，可能存在识别错误】\n"+ocrText.slice(0,14000)).slice(0,30000)}:doc;
     const extracted=raw?await extractActivities(merged,{asOf:new Date().toISOString(),structured:JSON.parse(raw)}):{activities:[]};
-    save(`result-${active}.json`,{dataset:result.prepared.dataset,rejected:result.rejected,metrics:result.metrics});
+    save(`result-${active}.json`,{dataset:result.prepared.dataset,rejected:result.rejected,deduplicated:result.deduplicated,metrics:result.metrics});
     let database:string|null=null;
     if(result.prepared.dataset.events.length){
       const folder=`${root}/release-${active}`;await publishRelease(folder,result.prepared,{batchId:"sample",asOf:new Date().toISOString()});database=inspectRelease(folder).database;

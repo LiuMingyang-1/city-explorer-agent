@@ -49,6 +49,7 @@ async function main() {
     geocoder: createGeocoder({ key: mapKey, now: () => new Date().toISOString(), requestLimit: 10, shareUrls }),
   });
   save("dataset.json", result.prepared.dataset); save("rejected.json", result.rejected);
+  save("attraction-duplicates.json", result.deduplicated);
   save("metrics.json", result.metrics); save("metadata.json", result.prepared.metadata); save("validation-documents.json", [...result.prepared.documents]);
   if (publishRoot && result.prepared.dataset.events.length) await publishRelease(publishRoot, result.prepared, { batchId: `batch-${Date.now()}`, asOf: new Date().toISOString() });
   console.log(JSON.stringify({ mode: "live-cached-processing", prepared_events: result.prepared.dataset.events.length, rejected: result.rejected.length,

@@ -27,6 +27,7 @@ export interface ProcessingOptions {
   corroborate?: (facts: ActivityFacts, original: ExtractionDocument) => Promise<ExtractionDocument | null>;
   modelBudget?: number; eventLimit?: number;
   requirePrimary?: boolean;
+  attractionDuplicateMeters?: number;
   /** Local OCR returns only image text; failures stay observable, never invented. */
   ocr?: (document: ExtractionDocument) => Promise<{text: string; errors?: string[]}>;
 }
@@ -99,6 +100,6 @@ export async function processCollection(input: readonly PipelineDocument[], opti
         first_seen_at: candidate.document.fetched_at });
     }
   }
-  const built = prepareCollection(located, { asOf: clock(), baseDate: options.baseDate, identities: options.identities });
-  return { prepared: built.prepared, rejected: [...rejected, ...built.rejected], metrics };
+  const built = prepareCollection(located, { asOf: clock(), baseDate: options.baseDate, identities: options.identities, attractionDuplicateMeters: options.attractionDuplicateMeters });
+  return { prepared: built.prepared, rejected: [...rejected, ...built.rejected], deduplicated: built.prepared.attraction_duplicates ?? [], metrics };
 }

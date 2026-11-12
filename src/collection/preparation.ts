@@ -13,6 +13,8 @@ import { validateDataset } from "./validate.ts";
 import { isCalendarDate } from "../itinerary/constraints.ts";
 import type { VenueQuery } from "./geocoding.ts";
 import { isAmapShareUrl } from "./amap-share.ts";
+import { deduplicateAttractions } from "./attraction-dedup.ts";
+import type { AttractionDuplicate } from "./attraction-dedup.ts";
 
 export const textHash = (text: string) => createHash("sha256").update(text).digest("hex");
 export interface PreparedCollection {
@@ -20,6 +22,7 @@ export interface PreparedCollection {
   identities: SlotIdentity[]; documents: Map<string, SourceDocument>;
   /** Private validation inputs; never included in the published database or sidecar. */
   witnesses: Record<string, LocatedActivity>;
+  attraction_duplicates?: AttractionDuplicate[];
 }
 export interface LocatedActivity {
   facts: ActivityFacts; document: ExtractionDocument; location: VerifiedLocation;
@@ -34,7 +37,7 @@ export function locationQueryForFacts(facts: ActivityFacts): VenueQuery {
 /** The model has no access to this step. Recheck facts, source policy and map binding
  * before assigning an ID. Original posts are valid sources; map evidence independently confirms the city.
  */
-export function prepareCollection(items: readonly LocatedActivity[], options: { asOf: string; baseDate: string; identities?: readonly SlotIdentity[] }) {
+export function prepareCollection(items: readonly LocatedActivity[], options: { asOf: string; baseDate: string; identities?: readonly SlotIdentity[]; attractionDuplicateMeters?: number }) {
   if (!isCalendarDate(options.baseDate)) throw new Error("INVALID_BASE_DATE");
   const prepared: PreparedCollection = { dataset: { schema_version: "xian-events/4", base_date: options.baseDate, days: 14, events: [], provenance: [] },
     metadata: {}, identities: structuredClone([...(options.identities ?? [])]), documents: new Map(), witnesses: {} };
@@ -104,5 +107,11 @@ export function prepareCollection(items: readonly LocatedActivity[], options: { 
       availability: facts.confirmed_start_date && facts.confirmed_start_date > new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Shanghai" }).format(Date.parse(options.asOf)) ? "upcoming" : facts.confirmed_end_date ? "within_period" : /常设展|常设陈列|长期开放|长期陈列/.test(document.text) ? "permanent" : "unknown",
       dateBasis: facts.confirmed_end_date && inferredEndDate(document, options.asOf) === facts.confirmed_end_date ? "recent-publication-inference" : facts.confirmed_end_date ? "explicit" : "unknown" };
   }
+  const dedup = deduplicateAttractions(prepared.dataset.events, options.attractionDuplicateMeters);
+  prepared.attraction_duplicates = dedup.duplicates;
+  prepared.dataset.events = dedup.records;
+  const retained = new Set(dedup.records.map(e=>e.id));
+  prepared.dataset.provenance = prepared.dataset.provenance.filter(p=>retained.has(p.event_id));
+  for (const id of Object.keys(prepared.metadata)) if (!retained.has(id)) { delete prepared.metadata[id]; delete prepared.witnesses[id]; }
   return { prepared, rejected };
 }

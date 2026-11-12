@@ -16,8 +16,10 @@ import type { EventProvenance } from "./types.ts";
 import type { ExtractionDocument } from "./extraction.ts";
 import { publicUrl } from "./validate.ts";
 import { isCalendarDate } from "../itinerary/constraints.ts";
+import { deduplicateAttractions } from "./attraction-dedup.ts";
+import type { AttractionDuplicate } from "./attraction-dedup.ts";
 
-interface Sidecar { schema_version: "xian-release/2"; batch_id: string; identities: SlotIdentity[]; events: Record<string, {
+interface Sidecar { schema_version: "xian-release/2"; batch_id: string; identities: SlotIdentity[]; attraction_duplicates?: AttractionDuplicate[]; events: Record<string, {
   freshness: NightlyMetadata; provenance: EventProvenance; window: { start_at: string | null; end_at: string | null; record_type?: "activity" | "attraction"; schedule_json?: import("../data/schedule.ts").Schedule | null };
   status_evidence?: { source_url: string; quote: string; verified_at: string };
 }>; }
@@ -48,7 +50,7 @@ export function inspectRelease(root: string) {
  * for diagnosis. There is no seed, destructive replace, or background scheduling here.
  */
 export interface CancellationNotice { event_id: string; source_event_key: string; document: ExtractionDocument; quote: string; }
-export async function publishRelease(rootPath: string, input: PreparedCollection, options: { batchId: string; asOf: string; beforeSwitch?: () => void; cancellations?: readonly CancellationNotice[] }) {
+export async function publishRelease(rootPath: string, input: PreparedCollection, options: { batchId: string; asOf: string; beforeSwitch?: () => void; cancellations?: readonly CancellationNotice[]; attractionDuplicateMeters?: number }) {
   const root = resolve(rootPath);
   if (!validBatch(options.batchId)) throw new Error("INVALID_BATCH_ID");
   if (!isCalendarDate(options.asOf.slice(0, 10)) || !/^\d{4}-\d{2}-\d{2}T.*Z$/.test(options.asOf) || !Number.isFinite(Date.parse(options.asOf))) throw new Error("INVALID_PUBLICATION_CLOCK");
@@ -95,6 +97,7 @@ export async function publishRelease(rootPath: string, input: PreparedCollection
       const insert = db.prepare(`INSERT INTO events (${columns.join(",")}) VALUES (${columns.map(() => "?").join(",")}) ON CONFLICT(id) DO UPDATE SET ${columns.filter(c => c !== "id").map(c => `${c}=excluded.${c}`).join(",")}`);
       db.exec("BEGIN IMMEDIATE");
       try {
+        const inserted = new Set<string>();
         for (const event of input.dataset.events) {
           const incoming = structuredClone(input.metadata[event.id]);
           const old = sidecar.events[event.id];
@@ -112,6 +115,7 @@ export async function publishRelease(rootPath: string, input: PreparedCollection
           }
           insert.run(...columns.map(c => c === "image_urls" ? JSON.stringify(event[c]) : c === "schedule_json" ? event.schedule_json ? JSON.stringify(event.schedule_json) : null : event[c] ?? (c === "record_type" ? "activity" : c === "city" ? "西安市" : c === "time_status" ? "unknown" : c === "status" ? "unknown" : null)));
           written++;
+          inserted.add(event.id);
           sidecar.events[event.id] = { freshness: incoming, provenance, window: { start_at: event.start_at, end_at: event.end_at, record_type: event.record_type, schedule_json: event.schedule_json } };
         }
         for (const notice of options.cancellations ?? []) {
@@ -129,7 +133,21 @@ export async function publishRelease(rootPath: string, input: PreparedCollection
         const identities = new Map(sidecar.identities.map(e => [e.event_id, e]));
         for (const entry of input.identities) identities.set(entry.event_id, structuredClone(entry));
         sidecar.identities = [...identities.values()];
-        if (!written && !options.cancellations?.length) throw new Error("NO_ELIGIBLE_UPDATES");
+        // Also compare with previous snapshots: nightly batches may discover the
+        // same attraction under a different title, URL or POI identifier.
+        const stored = db.prepare("SELECT * FROM events").all() as unknown as import("./types.ts").RealEvent[];
+        const dedup = deduplicateAttractions(stored, options.attractionDuplicateMeters);
+        for (const duplicate of dedup.duplicates) {
+          db.prepare("DELETE FROM events WHERE id=?").run(duplicate.removed_id);
+          delete sidecar.events[duplicate.removed_id];
+          discarded.push({event_id:duplicate.removed_id,reason:"ATTRACTION_COORDINATE_DUPLICATE"});
+          if (inserted.has(duplicate.removed_id)) written--;
+        }
+        const replacements = new Map(dedup.duplicates.map(d=>[d.removed_id,d.kept_id]));
+        const audit = [...(sidecar.attraction_duplicates ?? []), ...(input.attraction_duplicates ?? []), ...dedup.duplicates]
+          .map(d=>({...d,kept_id:replacements.get(d.kept_id) ?? d.kept_id}));
+        sidecar.attraction_duplicates = [...new Map(audit.map(d=>[JSON.stringify([d.removed_id,d.kept_id]),d])).values()];
+        if (!written && !dedup.duplicates.length && !options.cancellations?.length) throw new Error("NO_ELIGIBLE_UPDATES");
         db.exec("COMMIT");
       } catch (error) { db.exec("ROLLBACK"); throw error; }
       if (db.prepare("PRAGMA integrity_check").get()!.integrity_check !== "ok") throw new Error("DATABASE_INTEGRITY_FAILED");
