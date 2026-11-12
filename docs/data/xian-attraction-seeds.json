@@ -1,0 +1,3091 @@
+{
+  "schema_version": "xian-attraction-seed-plan/1",
+  "prepared_on": "2026-11-13",
+  "city": "西安市",
+  "phase": "bootstrap_attractions",
+  "content_engine": "deepseek",
+  "target_record_type": "attraction",
+  "target_count": 247,
+  "status": "planned_not_collected",
+  "verification_policy": "所有目标均须由DeepSeek补查来源、模型提取、高德确认坐标后再判定入库；清单不是已核验events数据。高德仍可用于定位。",
+  "references": {
+    "A": {
+      "title": "西安市A级旅游景区信息表",
+      "url": "https://www.xa.gov.cn/ztzl/ztzl/lzledc/ywdc/1824366329290301442.html",
+      "published_at": "2026-02-25",
+      "usage": "仅用于目标名称和地域线索；等级在实际采集时另行核验。"
+    },
+    "M": {
+      "title": "西安市博物馆信息",
+      "url": "https://wwj.xa.gov.cn/xxgk/wbxx/62d8ba0ef8fd1c4c210ae016.html",
+      "published_at": "2024-05-29",
+      "usage": "旧名录只证明有登记线索，不直接采用其旧开放时间、票价或开放状态。"
+    },
+    "P": {
+      "title": "西安旅游景点目录（扩展线索）",
+      "url": "https://www.yyxbj.com/jingdian/city/xian.html",
+      "published_at": null,
+      "usage": "第三方目录仅作待核验名称线索，不采用其评分、时间或地址作为入库事实。"
+    },
+    "U": {
+      "title": "西安交通大学官方创新港参观报道",
+      "url": "https://news.xjtu.edu.cn/info/1219/231566.htm",
+      "published_at": null,
+      "usage": "支持校区主体线索，不证明校园对校外访客自由开放。"
+    }
+  },
+  "targets": [
+    {
+      "seed_id": "XA-S0001",
+      "name": "秦始皇帝陵博物院",
+      "aliases": [],
+      "area_hint": "临潼区",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 秦始皇帝陵博物院 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A",
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0002",
+      "name": "华清宫",
+      "aliases": [
+        "陕西华清宫文化旅游景区"
+      ],
+      "area_hint": "临潼区华清路038号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 华清宫 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0003",
+      "name": "大明宫国家遗址公园",
+      "aliases": [],
+      "area_hint": "未央区自强东路585号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 大明宫国家遗址公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0004",
+      "name": "陕西历史博物馆",
+      "aliases": [],
+      "area_hint": "雁塔区小寨东路91号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 陕西历史博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A",
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0005",
+      "name": "翠华山景区",
+      "aliases": [
+        "陕西翠华山国家地质公园"
+      ],
+      "area_hint": "长安区太乙宫镇翠华山",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 翠华山景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0006",
+      "name": "曲江海洋极地公园",
+      "aliases": [],
+      "area_hint": "曲江二路1号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 曲江海洋极地公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0007",
+      "name": "太平国家森林公园",
+      "aliases": [
+        "陕西太平国家森林公园"
+      ],
+      "area_hint": "鄠邑区沣京路26号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 太平国家森林公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0008",
+      "name": "西安秦岭野生动物园",
+      "aliases": [],
+      "area_hint": "长安区滦镇",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 西安秦岭野生动物园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0009",
+      "name": "大唐西市",
+      "aliases": [
+        "西安大唐西市文化景区"
+      ],
+      "area_hint": "莲湖区劳动南路118号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 大唐西市 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0010",
+      "name": "西安关中民俗艺术博物院",
+      "aliases": [],
+      "area_hint": "长安区",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 西安关中民俗艺术博物院 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A",
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0011",
+      "name": "西安半坡博物馆",
+      "aliases": [],
+      "area_hint": "灞桥区半坡路155号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 西安半坡博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A",
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0012",
+      "name": "西安博物院",
+      "aliases": [
+        "西安博物院（小雁塔）"
+      ],
+      "area_hint": "碑林区友谊西路72号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 西安博物院 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A",
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0013",
+      "name": "西安世博园",
+      "aliases": [],
+      "area_hint": "浐灞生态区浐灞大道1号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 西安世博园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0014",
+      "name": "曲江楼观生态文化旅游景区",
+      "aliases": [],
+      "area_hint": "周至县集贤镇",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 曲江楼观生态文化旅游景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0015",
+      "name": "汉城湖旅游风景区",
+      "aliases": [
+        "西安汉城湖景区"
+      ],
+      "area_hint": "未央区北二环和朱宏路立交",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 汉城湖旅游风景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0016",
+      "name": "黑河国家森林公园",
+      "aliases": [
+        "西安市黑河旅游景区"
+      ],
+      "area_hint": "周至县城南61公里",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 黑河国家森林公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0017",
+      "name": "西安浐灞国家湿地公园",
+      "aliases": [],
+      "area_hint": "浐灞生态区启源三路1号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 西安浐灞国家湿地公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0018",
+      "name": "王顺山国家森林公园",
+      "aliases": [
+        "西安市王顺山景区"
+      ],
+      "area_hint": "蓝田县蓝桥镇",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 王顺山国家森林公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0019",
+      "name": "金龙峡风景区",
+      "aliases": [
+        "西安金龙峡风景区"
+      ],
+      "area_hint": "鄠邑区石井镇蔡家坡",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 金龙峡风景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0020",
+      "name": "朱雀国家森林公园",
+      "aliases": [],
+      "area_hint": "鄠邑区涝峪",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 朱雀国家森林公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0021",
+      "name": "陕西自然博物馆",
+      "aliases": [],
+      "area_hint": "雁塔区长安南路88号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 陕西自然博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A",
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0022",
+      "name": "周至水街沙沙河景区",
+      "aliases": [],
+      "area_hint": "周至县108国道与沙河桥交汇处",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 周至水街沙沙河景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0023",
+      "name": "白鹿原影视城",
+      "aliases": [
+        "白鹿原影视城景区"
+      ],
+      "area_hint": "蓝田县焦岱镇老虎沟村",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 白鹿原影视城 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0024",
+      "name": "白鹿原·白鹿仓",
+      "aliases": [
+        "白鹿原·白鹿仓景区"
+      ],
+      "area_hint": "灞桥区水安路368号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 白鹿原·白鹿仓 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0025",
+      "name": "广仁寺",
+      "aliases": [
+        "广仁寺文化景区"
+      ],
+      "area_hint": "莲湖区西北一路152号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 广仁寺 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0026",
+      "name": "秦岭国家植物园",
+      "aliases": [],
+      "area_hint": "周至县集贤镇",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 秦岭国家植物园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0027",
+      "name": "终南山南五台景区",
+      "aliases": [
+        "南五台景区"
+      ],
+      "area_hint": "长安区五台街办星火村",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 终南山南五台景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0028",
+      "name": "水陆庵",
+      "aliases": [],
+      "area_hint": "蓝田县普化镇河湾口村",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 水陆庵 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0029",
+      "name": "临潼区博物馆",
+      "aliases": [],
+      "area_hint": "临潼区环城东路1号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 临潼区博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A",
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0030",
+      "name": "八路军西安办事处纪念馆",
+      "aliases": [],
+      "area_hint": "新城区北新街七贤庄1号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 八路军西安办事处纪念馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A",
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0031",
+      "name": "西安祥峪森林公园",
+      "aliases": [],
+      "area_hint": "长安区东大街办祥峪沟",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 西安祥峪森林公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0032",
+      "name": "西安常宁宫休闲山庄",
+      "aliases": [],
+      "area_hint": "长安区王曲街道鱼鲍头村甲字一号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 西安常宁宫休闲山庄 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0033",
+      "name": "蓝田猿人遗址",
+      "aliases": [
+        "蓝田猿人遗址博物馆"
+      ],
+      "area_hint": "蓝田县九间房镇公王村",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 蓝田猿人遗址 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A",
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0034",
+      "name": "西安阎良航空科技馆",
+      "aliases": [],
+      "area_hint": "阎良区蓝天三路东侧",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 西安阎良航空科技馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0035",
+      "name": "西安幸福林带景区",
+      "aliases": [],
+      "area_hint": "新城区幸福林带长乐路南",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 西安幸福林带景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0036",
+      "name": "西安高陵奇石博物馆",
+      "aliases": [],
+      "area_hint": "高陵区桑军大道与东西七路交汇处",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 西安高陵奇石博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A",
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0037",
+      "name": "西安青龙寺遗址景区",
+      "aliases": [],
+      "area_hint": "雁塔区西影路铁炉庙",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 西安青龙寺遗址景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0038",
+      "name": "西安大汉上林苑（杜陵）生态景区",
+      "aliases": [],
+      "area_hint": "曲江雁翔路南段1号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 西安大汉上林苑（杜陵）生态景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0039",
+      "name": "西安广新园民族村",
+      "aliases": [],
+      "area_hint": "长安区沣峪",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 西安广新园民族村 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0040",
+      "name": "西安辋川溶洞风景区",
+      "aliases": [],
+      "area_hint": "蓝田县辋川镇",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 西安辋川溶洞风景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0041",
+      "name": "蓝田县蔡文姬纪念馆",
+      "aliases": [
+        "蔡文姬纪念馆"
+      ],
+      "area_hint": "蓝田县工业园区文姬路中段",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 蓝田县蔡文姬纪念馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A",
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0042",
+      "name": "西安高陵场畔农耕文化生态观光产业园",
+      "aliases": [],
+      "area_hint": "高陵区通远镇仁村",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 西安高陵场畔农耕文化生态观光产业园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0043",
+      "name": "曲江秦二世陵遗址公园",
+      "aliases": [
+        "曲江秦二世陵遗址公园景区"
+      ],
+      "area_hint": "曲江池南路252号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 曲江秦二世陵遗址公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0044",
+      "name": "永兴坊景区",
+      "aliases": [],
+      "area_hint": "新城区东新街1号（中山门里）",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 永兴坊景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0045",
+      "name": "上王村景区",
+      "aliases": [],
+      "area_hint": "长安区滦镇上王村",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 上王村景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0046",
+      "name": "临潼奥特莱斯景区",
+      "aliases": [],
+      "area_hint": "临潼区凤凰大道11号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 临潼奥特莱斯景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0047",
+      "name": "金鼎蓝田玉文化石艺博览园",
+      "aliases": [],
+      "area_hint": "蓝田县焦岱镇",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 金鼎蓝田玉文化石艺博览园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0048",
+      "name": "鲸鱼沟竹海景区",
+      "aliases": [],
+      "area_hint": "灞桥区白鹿原狄寨风光路南西车村",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 鲸鱼沟竹海景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0049",
+      "name": "西安御品轩幸福烘焙魔法城堡景区",
+      "aliases": [],
+      "area_hint": "经开区草滩四路尚稷路",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 西安御品轩幸福烘焙魔法城堡景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0050",
+      "name": "蓝田丝路慢城玉山景区",
+      "aliases": [],
+      "area_hint": "蓝田县玉山镇峒峪河",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 蓝田丝路慢城玉山景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0051",
+      "name": "秦龙乳业旅游园",
+      "aliases": [],
+      "area_hint": "阎良区关山镇北冯村",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 秦龙乳业旅游园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0052",
+      "name": "百跃羊乳文化景区",
+      "aliases": [],
+      "area_hint": "阎良区武屯街道办",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 百跃羊乳文化景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0053",
+      "name": "亮宝楼艺术文化景区",
+      "aliases": [
+        "陕西亮宝楼艺术博物馆"
+      ],
+      "area_hint": "雁塔区雁引路35号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 亮宝楼艺术文化景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A",
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0054",
+      "name": "西安高家大院",
+      "aliases": [
+        "西安市高家大院古典服饰博物馆"
+      ],
+      "area_hint": "莲湖区北院门200号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 西安高家大院 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A",
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0055",
+      "name": "高陵区博物馆",
+      "aliases": [],
+      "area_hint": "高陵区昭慧广场",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 高陵区博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A",
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0056",
+      "name": "秦汉酒文化园",
+      "aliases": [],
+      "area_hint": "浐灞生态区酒十路北端189号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 秦汉酒文化园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0057",
+      "name": "爱菊健康文化体验园",
+      "aliases": [],
+      "area_hint": "国际港务区秦汉大道（国际港务区段）999号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 爱菊健康文化体验园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0058",
+      "name": "红色葛牌景区",
+      "aliases": [],
+      "area_hint": "蓝田县葛牌镇",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 红色葛牌景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0059",
+      "name": "仪祉湖水利旅游景区",
+      "aliases": [],
+      "area_hint": "西安市高新区兴隆街道仪祉湖水利旅游景区（沣惠渠西）",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 仪祉湖水利旅游景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0060",
+      "name": "雏鹰展翅航空文化景区",
+      "aliases": [],
+      "area_hint": "阎良区蓝天路5号孵化器西区A座",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 雏鹰展翅航空文化景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0061",
+      "name": "西安饭庄·陕菜文化体验博物馆旅游景区",
+      "aliases": [],
+      "area_hint": "碑林区东大街298号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 西安饭庄·陕菜文化体验博物馆旅游景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0062",
+      "name": "易俗社文化旅游景区",
+      "aliases": [],
+      "area_hint": "新城区西一路 282 号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 易俗社文化旅游景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0063",
+      "name": "兴庆宫公园",
+      "aliases": [
+        "兴庆宫公园旅游景区"
+      ],
+      "area_hint": "碑林区咸宁西路55号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 兴庆宫公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0064",
+      "name": "杜邑遗址公园",
+      "aliases": [
+        "杜邑遗址公园旅游景区"
+      ],
+      "area_hint": "雁塔区踏青路1388号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 杜邑遗址公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0065",
+      "name": "西安事变纪念馆（张学良公馆）",
+      "aliases": [
+        "西安事变纪念馆（张学良将军公馆）景区",
+        "西安事变纪念馆"
+      ],
+      "area_hint": "西安市碑林区建国路69号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 西安事变纪念馆（张学良公馆） 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A",
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0066",
+      "name": "汉长安城未央宫国家遗址公园",
+      "aliases": [
+        "汉长安城未央宫国家遗址公园景区"
+      ],
+      "area_hint": "陕西省西安市未央区邓六路",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 汉长安城未央宫国家遗址公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0067",
+      "name": "飞翔梦航空体验基地旅游景区",
+      "aliases": [],
+      "area_hint": "西安市阎良区新型工业园经发二路",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 飞翔梦航空体验基地旅游景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0068",
+      "name": "蓝田荞麦岭景区",
+      "aliases": [],
+      "area_hint": "西安市蓝田县九间房镇",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 蓝田荞麦岭景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0069",
+      "name": "吉利汽车西安制造基地旅游景区",
+      "aliases": [],
+      "area_hint": "陕西省西安经开区泾渭新城吉利大道666号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 吉利汽车西安制造基地旅游景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0070",
+      "name": "秦岭九龙潭",
+      "aliases": [],
+      "area_hint": "长安区喂子坪210国道43公里处",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 秦岭九龙潭 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0071",
+      "name": "伊利集团西安乳业园景区",
+      "aliases": [],
+      "area_hint": "蓝田县工业园区文姬路88号",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 伊利集团西安乳业园景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0072",
+      "name": "西安连珠潭风景区",
+      "aliases": [],
+      "area_hint": "长安区沣峪口",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 西安连珠潭风景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0073",
+      "name": "汪锋故居纪念馆",
+      "aliases": [],
+      "area_hint": "蓝田县九间房镇街子村",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 汪锋故居纪念馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A",
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0074",
+      "name": "长安区杜甫纪念馆",
+      "aliases": [
+        "西安市长安区杜甫纪念馆"
+      ],
+      "area_hint": "长安区韦曲街办双竹村",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 长安区杜甫纪念馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "A",
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0075",
+      "name": "西安碑林博物馆",
+      "aliases": [],
+      "area_hint": "碑林区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安碑林博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0076",
+      "name": "西安大唐西市博物馆",
+      "aliases": [],
+      "area_hint": "莲湖区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安大唐西市博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0077",
+      "name": "西安唐皇城墙含光门遗址博物馆",
+      "aliases": [],
+      "area_hint": "曲江新区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安唐皇城墙含光门遗址博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0078",
+      "name": "西安中国书法艺术博物馆",
+      "aliases": [],
+      "area_hint": "曲江新区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安中国书法艺术博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0079",
+      "name": "汉长安城遗址长乐宫四、五号遗址陈列馆",
+      "aliases": [],
+      "area_hint": "未央区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 汉长安城遗址长乐宫四、五号遗址陈列馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0080",
+      "name": "丰镐遗址车马坑陈列馆",
+      "aliases": [],
+      "area_hint": "长安区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 丰镐遗址车马坑陈列馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0081",
+      "name": "华清池唐华清宫御汤遗址博物馆",
+      "aliases": [],
+      "area_hint": "临潼区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 华清池唐华清宫御汤遗址博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0082",
+      "name": "西安市临潼区扁鹊纪念馆",
+      "aliases": [],
+      "area_hint": "临潼区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市临潼区扁鹊纪念馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0083",
+      "name": "仙游寺博物馆",
+      "aliases": [],
+      "area_hint": "周至县",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 仙游寺博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0084",
+      "name": "葛牌镇区苏维埃政府纪念馆",
+      "aliases": [],
+      "area_hint": "蓝田县",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 葛牌镇区苏维埃政府纪念馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0085",
+      "name": "陕西科学技术馆",
+      "aliases": [],
+      "area_hint": "新城区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 陕西科学技术馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0086",
+      "name": "汉长安城遗址陈列馆",
+      "aliases": [],
+      "area_hint": "未央区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 汉长安城遗址陈列馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0087",
+      "name": "西北大学博物馆",
+      "aliases": [],
+      "area_hint": "碑林区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西北大学博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ],
+      "access_note": "名录含大学/专业机构博物馆；须核对校外访问、预约或团队参观条件。"
+    },
+    {
+      "seed_id": "XA-S0088",
+      "name": "陕西师范大学博物馆",
+      "aliases": [],
+      "area_hint": "长安区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 陕西师范大学博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ],
+      "access_note": "名录含大学/专业机构博物馆；须核对校外访问、预约或团队参观条件。"
+    },
+    {
+      "seed_id": "XA-S0089",
+      "name": "西安建筑科技大学校史馆",
+      "aliases": [],
+      "area_hint": "碑林区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安建筑科技大学校史馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ],
+      "access_note": "名录含大学/专业机构博物馆；须核对校外访问、预约或团队参观条件。"
+    },
+    {
+      "seed_id": "XA-S0090",
+      "name": "西安建筑科技大学贾平凹文学艺术馆",
+      "aliases": [],
+      "area_hint": "碑林区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安建筑科技大学贾平凹文学艺术馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ],
+      "access_note": "名录含大学/专业机构博物馆；须核对校外访问、预约或团队参观条件。"
+    },
+    {
+      "seed_id": "XA-S0091",
+      "name": "西安市长安博物馆",
+      "aliases": [],
+      "area_hint": "长安区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市长安博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0092",
+      "name": "长安大学地质博物馆",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 长安大学地质博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ],
+      "access_note": "名录含大学/专业机构博物馆；须核对校外访问、预约或团队参观条件。"
+    },
+    {
+      "seed_id": "XA-S0093",
+      "name": "西安市秦阿房宫遗址博物馆",
+      "aliases": [],
+      "area_hint": "长安区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市秦阿房宫遗址博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0094",
+      "name": "西安经文牛文化陶瓷博物馆",
+      "aliases": [],
+      "area_hint": "未央区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安经文牛文化陶瓷博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0095",
+      "name": "陕西元阳文化博物馆",
+      "aliases": [],
+      "area_hint": "碑林区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 陕西元阳文化博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0096",
+      "name": "西安大明宫陶瓷艺术博物馆",
+      "aliases": [],
+      "area_hint": "曲江新区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安大明宫陶瓷艺术博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0097",
+      "name": "陕西体育博物馆",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 陕西体育博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0098",
+      "name": "西安海棠职业学院中医美容博物馆",
+      "aliases": [],
+      "area_hint": "灞桥区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安海棠职业学院中医美容博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ],
+      "access_note": "名录含大学/专业机构博物馆；须核对校外访问、预约或团队参观条件。"
+    },
+    {
+      "seed_id": "XA-S0099",
+      "name": "西安工程大学纺织服装博物馆",
+      "aliases": [],
+      "area_hint": "临潼区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安工程大学纺织服装博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ],
+      "access_note": "名录含大学/专业机构博物馆；须核对校外访问、预约或团队参观条件。"
+    },
+    {
+      "seed_id": "XA-S0100",
+      "name": "秦二世陵遗址博物馆",
+      "aliases": [],
+      "area_hint": "曲江新区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 秦二世陵遗址博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0101",
+      "name": "陕西汉唐石刻博物馆",
+      "aliases": [],
+      "area_hint": "沣东新城",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 陕西汉唐石刻博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0102",
+      "name": "西安皇家艺术博物馆",
+      "aliases": [],
+      "area_hint": "未央区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安皇家艺术博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0103",
+      "name": "西安美都博物馆",
+      "aliases": [],
+      "area_hint": "未央区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安美都博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0104",
+      "name": "西安秦砖汉瓦博物馆",
+      "aliases": [],
+      "area_hint": "曲江新区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安秦砖汉瓦博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0105",
+      "name": "西安于右任书法艺术博物馆",
+      "aliases": [],
+      "area_hint": "莲湖区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安于右任书法艺术博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0106",
+      "name": "陕西万达博物院",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 陕西万达博物院 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0107",
+      "name": "蓝田水陆庵壁塑博物馆",
+      "aliases": [],
+      "area_hint": "蓝田县",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 蓝田水陆庵壁塑博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0108",
+      "name": "陕西唐三彩艺术博物馆",
+      "aliases": [],
+      "area_hint": "碑林区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 陕西唐三彩艺术博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0109",
+      "name": "西安户邑民间艺术博物馆",
+      "aliases": [],
+      "area_hint": "曲江新区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安户邑民间艺术博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0110",
+      "name": "西安曲江艺术博物馆",
+      "aliases": [],
+      "area_hint": "曲江新区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安曲江艺术博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0111",
+      "name": "西安曲江富陶国际陶艺博物馆",
+      "aliases": [],
+      "area_hint": "曲江新区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安曲江富陶国际陶艺博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0112",
+      "name": "西安毛泽东敬览馆",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安毛泽东敬览馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0113",
+      "name": "西安于右任故居纪念馆",
+      "aliases": [],
+      "area_hint": "碑林区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安于右任故居纪念馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0114",
+      "name": "西安雪花啤酒博物馆",
+      "aliases": [],
+      "area_hint": "经开区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安雪花啤酒博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0115",
+      "name": "西安源浩华藏博物馆",
+      "aliases": [],
+      "area_hint": "曲江新区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安源浩华藏博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0116",
+      "name": "西安健康博物馆",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安健康博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0117",
+      "name": "西安唐都新碑林艺术博物馆",
+      "aliases": [],
+      "area_hint": "曲江新区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安唐都新碑林艺术博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0118",
+      "name": "西安大华博物馆",
+      "aliases": [],
+      "area_hint": "曲江新区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安大华博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0119",
+      "name": "西安锦业美术博物馆",
+      "aliases": [],
+      "area_hint": "高新区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安锦业美术博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0120",
+      "name": "西安曲江大玉坊博物馆",
+      "aliases": [],
+      "area_hint": "临潼区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安曲江大玉坊博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0121",
+      "name": "西安柴窑文化博物馆",
+      "aliases": [],
+      "area_hint": "曲江新区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安柴窑文化博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0122",
+      "name": "大明宫国家遗址公园考古探索中心",
+      "aliases": [],
+      "area_hint": "新城区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 大明宫国家遗址公园考古探索中心 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0123",
+      "name": "大明宫遗址博物馆",
+      "aliases": [],
+      "area_hint": "新城区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 大明宫遗址博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0124",
+      "name": "大明宫国家遗址公园丹凤门遗址博物馆",
+      "aliases": [],
+      "area_hint": "新城区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 大明宫国家遗址公园丹凤门遗址博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0125",
+      "name": "西安高陵钱币博物馆",
+      "aliases": [],
+      "area_hint": "高陵区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安高陵钱币博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0126",
+      "name": "高陵祥顺博物馆",
+      "aliases": [],
+      "area_hint": "高陵区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 高陵祥顺博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0127",
+      "name": "陕西钱币博物馆",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 陕西钱币博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0128",
+      "name": "临潼区鸿门宴博物馆",
+      "aliases": [],
+      "area_hint": "临潼区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 临潼区鸿门宴博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0129",
+      "name": "西安市青龙寺遗址博物馆",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市青龙寺遗址博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0130",
+      "name": "空军军医大学口腔医学博物馆",
+      "aliases": [],
+      "area_hint": "新城区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 空军军医大学口腔医学博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ],
+      "access_note": "名录含大学/专业机构博物馆；须核对校外访问、预约或团队参观条件。"
+    },
+    {
+      "seed_id": "XA-S0131",
+      "name": "西安交通大学博物馆",
+      "aliases": [],
+      "area_hint": "碑林区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安交通大学博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ],
+      "access_note": "名录含大学/专业机构博物馆；须核对校外访问、预约或团队参观条件。"
+    },
+    {
+      "seed_id": "XA-S0132",
+      "name": "高陵区防震减灾科普馆",
+      "aliases": [],
+      "area_hint": "高陵区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 高陵区防震减灾科普馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0133",
+      "name": "西安浐灞生态区城建博物馆",
+      "aliases": [],
+      "area_hint": "浐灞生态区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安浐灞生态区城建博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0134",
+      "name": "西安市新美域和镜博物馆",
+      "aliases": [],
+      "area_hint": "碑林区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市新美域和镜博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0135",
+      "name": "西安市曲江红色记忆博物馆",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市曲江红色记忆博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0136",
+      "name": "西安市大唐青铜镜博物馆",
+      "aliases": [],
+      "area_hint": "高新区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市大唐青铜镜博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0137",
+      "name": "西安市雅观陶瓷艺术博物馆",
+      "aliases": [],
+      "area_hint": "未央区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市雅观陶瓷艺术博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0138",
+      "name": "西安市非物质文化遗产博物馆",
+      "aliases": [],
+      "area_hint": "碑林区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市非物质文化遗产博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0139",
+      "name": "西安美术学院美术博物馆",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安美术学院美术博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ],
+      "access_note": "名录含大学/专业机构博物馆；须核对校外访问、预约或团队参观条件。"
+    },
+    {
+      "seed_id": "XA-S0140",
+      "name": "西安市贾平凹文学艺术博物馆",
+      "aliases": [],
+      "area_hint": "曲江新区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市贾平凹文学艺术博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0141",
+      "name": "起良蔡侯纸博物馆",
+      "aliases": [],
+      "area_hint": "高新区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 起良蔡侯纸博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0142",
+      "name": "西安市蓝田玉文化博物馆",
+      "aliases": [],
+      "area_hint": "蓝田县",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市蓝田玉文化博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0143",
+      "name": "西安市水墨长安艺术博物馆",
+      "aliases": [],
+      "area_hint": "灞桥区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市水墨长安艺术博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0144",
+      "name": "西安市荞麦园美术博物馆",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市荞麦园美术博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0145",
+      "name": "西安市曲江丝路遗珍博物馆",
+      "aliases": [],
+      "area_hint": "曲江新区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市曲江丝路遗珍博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0146",
+      "name": "西安市明清皮影艺术博物馆",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市明清皮影艺术博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0147",
+      "name": "长安大学公路交通博物馆",
+      "aliases": [],
+      "area_hint": "未央区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 长安大学公路交通博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ],
+      "access_note": "名录含大学/专业机构博物馆；须核对校外访问、预约或团队参观条件。"
+    },
+    {
+      "seed_id": "XA-S0148",
+      "name": "西安音乐学院艺术博物馆",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安音乐学院艺术博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ],
+      "access_note": "名录含大学/专业机构博物馆；须核对校外访问、预约或团队参观条件。"
+    },
+    {
+      "seed_id": "XA-S0149",
+      "name": "西安汉风水务博物馆",
+      "aliases": [],
+      "area_hint": "未央区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安汉风水务博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0150",
+      "name": "西安市城市记忆博物馆",
+      "aliases": [],
+      "area_hint": "新城区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市城市记忆博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0151",
+      "name": "西安市圣普美术博物馆",
+      "aliases": [],
+      "area_hint": "曲江新区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市圣普美术博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0152",
+      "name": "唐华清宫梨园遗址博物馆",
+      "aliases": [],
+      "area_hint": "临潼区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 唐华清宫梨园遗址博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0153",
+      "name": "西安建筑科技大学中国音乐史博物馆",
+      "aliases": [],
+      "area_hint": "碑林区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安建筑科技大学中国音乐史博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ],
+      "access_note": "名录含大学/专业机构博物馆；须核对校外访问、预约或团队参观条件。"
+    },
+    {
+      "seed_id": "XA-S0154",
+      "name": "西安市中国古琴博物馆",
+      "aliases": [],
+      "area_hint": "沣东新城",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市中国古琴博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0155",
+      "name": "西安市新梦想影业博物馆",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市新梦想影业博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0156",
+      "name": "西安市新源民俗艺术博物馆",
+      "aliases": [],
+      "area_hint": "高陵区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市新源民俗艺术博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0157",
+      "name": "西安市德江陶瓷模范标本博物馆",
+      "aliases": [],
+      "area_hint": "灞桥区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市德江陶瓷模范标本博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0158",
+      "name": "西安市团结民俗博物馆",
+      "aliases": [],
+      "area_hint": "未央区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市团结民俗博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0159",
+      "name": "西安市惟德玉文化博物馆",
+      "aliases": [],
+      "area_hint": "沣东新城",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市惟德玉文化博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0160",
+      "name": "交大西迁博物馆",
+      "aliases": [],
+      "area_hint": "碑林区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 交大西迁博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0161",
+      "name": "西安红色体育博物馆",
+      "aliases": [],
+      "area_hint": "经开区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安红色体育博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0162",
+      "name": "陕西科技大学中国轻工业博物馆",
+      "aliases": [],
+      "area_hint": "未央区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 陕西科技大学中国轻工业博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ],
+      "access_note": "名录含大学/专业机构博物馆；须核对校外访问、预约或团队参观条件。"
+    },
+    {
+      "seed_id": "XA-S0163",
+      "name": "西安市高陵区西北人民革命大学旧址博物馆",
+      "aliases": [],
+      "area_hint": "高陵区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市高陵区西北人民革命大学旧址博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ],
+      "access_note": "名录含大学/专业机构博物馆；须核对校外访问、预约或团队参观条件。"
+    },
+    {
+      "seed_id": "XA-S0164",
+      "name": "西安市吉兆春皮肤医药博物馆",
+      "aliases": [],
+      "area_hint": "高陵区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市吉兆春皮肤医药博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0165",
+      "name": "西安市太乙面食文化博物馆",
+      "aliases": [],
+      "area_hint": "长安区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市太乙面食文化博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0166",
+      "name": "军用航空科技博物馆",
+      "aliases": [],
+      "area_hint": "灞桥区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 军用航空科技博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0167",
+      "name": "西安市城市影像博物馆",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市城市影像博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0168",
+      "name": "西安市石仟佛造像艺术博物馆",
+      "aliases": [],
+      "area_hint": "曲江新区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市石仟佛造像艺术博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0169",
+      "name": "西安市古陶瓷博物馆",
+      "aliases": [],
+      "area_hint": "灞桥区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市古陶瓷博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0170",
+      "name": "西安市羊文化博物馆",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市羊文化博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0171",
+      "name": "西安市太和医室博物馆",
+      "aliases": [],
+      "area_hint": "碑林区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市太和医室博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0172",
+      "name": "西安市瑛煌关中婚俗文化博物馆",
+      "aliases": [],
+      "area_hint": "鄠邑区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市瑛煌关中婚俗文化博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0173",
+      "name": "西安市云之翼航空博物馆",
+      "aliases": [],
+      "area_hint": "高新区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市云之翼航空博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0174",
+      "name": "西安市和璞玉文化博物馆",
+      "aliases": [],
+      "area_hint": "长安区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市和璞玉文化博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0175",
+      "name": "西安市沣峪口老油坊博物馆",
+      "aliases": [],
+      "area_hint": "长安区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市沣峪口老油坊博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0176",
+      "name": "西影电影博物馆",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西影电影博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0177",
+      "name": "西安市黄土画派博物馆",
+      "aliases": [],
+      "area_hint": "碑林区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市黄土画派博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0178",
+      "name": "西安市民俗博物馆",
+      "aliases": [],
+      "area_hint": "新城区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市民俗博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0179",
+      "name": "西安市鄠邑区非物质文化遗产博物馆",
+      "aliases": [],
+      "area_hint": "鄠邑区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市鄠邑区非物质文化遗产博物馆 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0180",
+      "name": "丰庆公园",
+      "aliases": [],
+      "area_hint": "莲湖区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 丰庆公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0181",
+      "name": "莲湖公园",
+      "aliases": [],
+      "area_hint": "莲湖区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 莲湖公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0182",
+      "name": "长乐公园",
+      "aliases": [],
+      "area_hint": "碑林区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 长乐公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0183",
+      "name": "革命公园",
+      "aliases": [],
+      "area_hint": "新城区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 革命公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0184",
+      "name": "西安城市运动公园",
+      "aliases": [],
+      "area_hint": "未央区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 西安城市运动公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0185",
+      "name": "西安植物园",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 西安植物园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0186",
+      "name": "唐大慈恩寺遗址公园",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 唐大慈恩寺遗址公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0187",
+      "name": "曲江池遗址公园",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 曲江池遗址公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0188",
+      "name": "文景山公园",
+      "aliases": [],
+      "area_hint": "未央区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 文景山公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0189",
+      "name": "文景公园",
+      "aliases": [],
+      "area_hint": "未央区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 文景公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0190",
+      "name": "西安牡丹苑",
+      "aliases": [],
+      "area_hint": "莲湖区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 西安牡丹苑 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0191",
+      "name": "清凉山森林公园",
+      "aliases": [],
+      "area_hint": "长安区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 清凉山森林公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0192",
+      "name": "灞桥生态湿地公园",
+      "aliases": [],
+      "area_hint": "灞桥区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 灞桥生态湿地公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0193",
+      "name": "航天城中湖公园",
+      "aliases": [],
+      "area_hint": "长安区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 航天城中湖公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0194",
+      "name": "西安渭河城市运动公园",
+      "aliases": [],
+      "area_hint": "未央区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 西安渭河城市运动公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0195",
+      "name": "雁鸣湖休闲公园",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 雁鸣湖休闲公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0196",
+      "name": "永阳公园",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 永阳公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0197",
+      "name": "红光公园",
+      "aliases": [],
+      "area_hint": "未央区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 红光公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0198",
+      "name": "开元公园",
+      "aliases": [],
+      "area_hint": "未央区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 开元公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0199",
+      "name": "天坛遗址公园",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 天坛遗址公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0200",
+      "name": "土门小树林公园",
+      "aliases": [],
+      "area_hint": "莲湖区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 土门小树林公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0201",
+      "name": "西安市纺织公园",
+      "aliases": [],
+      "area_hint": "灞桥区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 西安市纺织公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0202",
+      "name": "浐灞滋水公园",
+      "aliases": [],
+      "area_hint": "未央区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 浐灞滋水公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0203",
+      "name": "曲江青年公园",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 曲江青年公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0204",
+      "name": "阎良公园",
+      "aliases": [],
+      "area_hint": "阎良区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 阎良公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0205",
+      "name": "环城西苑公园",
+      "aliases": [],
+      "area_hint": "莲湖区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 环城西苑公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0206",
+      "name": "启航公园",
+      "aliases": [],
+      "area_hint": "灞桥区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 启航公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0207",
+      "name": "郭杜森林公园",
+      "aliases": [],
+      "area_hint": "长安区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 郭杜森林公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0208",
+      "name": "郭杜公园",
+      "aliases": [],
+      "area_hint": "长安区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 郭杜公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0209",
+      "name": "乐天公园",
+      "aliases": [],
+      "area_hint": "周至县",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 乐天公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0210",
+      "name": "东元公园",
+      "aliases": [],
+      "area_hint": "新城区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 东元公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0211",
+      "name": "潭滨公园",
+      "aliases": [],
+      "area_hint": "鄠邑区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 潭滨公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0212",
+      "name": "智慧文化公园",
+      "aliases": [],
+      "area_hint": "长安区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 智慧文化公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0213",
+      "name": "西安人才公园",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 西安人才公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0214",
+      "name": "星河运动公园",
+      "aliases": [],
+      "area_hint": "长安区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 星河运动公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0215",
+      "name": "西安国际陆港网球运动公园",
+      "aliases": [],
+      "area_hint": "灞桥区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 西安国际陆港网球运动公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0216",
+      "name": "鹦鹉寺公园",
+      "aliases": [],
+      "area_hint": "临潼区",
+      "kind": "公园/自然休闲",
+      "priority": 2,
+      "search_query": "西安 鹦鹉寺公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0217",
+      "name": "西安城墙",
+      "aliases": [],
+      "area_hint": "新城区",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 西安城墙 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0218",
+      "name": "大唐芙蓉园",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 大唐芙蓉园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0219",
+      "name": "大雁塔",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 大雁塔 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0220",
+      "name": "骊山国家森林公园",
+      "aliases": [],
+      "area_hint": "临潼区",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 骊山国家森林公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ],
+      "access_note": "山地和郊野场所须核对官方开放范围；不推荐未开放线路。"
+    },
+    {
+      "seed_id": "XA-S0221",
+      "name": "洪庆山国家森林公园",
+      "aliases": [],
+      "area_hint": "灞桥区",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 洪庆山国家森林公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ],
+      "access_note": "山地和郊野场所须核对官方开放范围；不推荐未开放线路。"
+    },
+    {
+      "seed_id": "XA-S0222",
+      "name": "楼观台国家森林公园",
+      "aliases": [],
+      "area_hint": "周至县",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 楼观台国家森林公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0223",
+      "name": "太平万花山风景区",
+      "aliases": [],
+      "area_hint": "鄠邑区",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 太平万花山风景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ],
+      "access_note": "山地和郊野场所须核对官方开放范围；不推荐未开放线路。"
+    },
+    {
+      "seed_id": "XA-S0224",
+      "name": "阿房宫遗址公园",
+      "aliases": [],
+      "area_hint": "未央区",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 阿房宫遗址公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0225",
+      "name": "明秦王愍王墓遗址",
+      "aliases": [],
+      "area_hint": "长安区",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 明秦王愍王墓遗址 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0226",
+      "name": "大兴汤院遗址公园",
+      "aliases": [],
+      "area_hint": "蓝田县",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 大兴汤院遗址公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0227",
+      "name": "明秦王府城墙遗址",
+      "aliases": [],
+      "area_hint": "新城区",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 明秦王府城墙遗址 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0228",
+      "name": "鄠邑区钟楼",
+      "aliases": [],
+      "area_hint": "鄠邑区",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 鄠邑区钟楼 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0229",
+      "name": "嘉午台风景区",
+      "aliases": [],
+      "area_hint": "长安区",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 嘉午台风景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0230",
+      "name": "西安湖",
+      "aliases": [],
+      "area_hint": "未央区",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 西安湖 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0231",
+      "name": "曲江寒窑遗址公园",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 曲江寒窑遗址公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0232",
+      "name": "陕西广播电视塔",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 陕西广播电视塔 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0233",
+      "name": "西安渼陂湖水系生态文化区",
+      "aliases": [],
+      "area_hint": "鄠邑区",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 西安渼陂湖水系生态文化区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0234",
+      "name": "中国唐苑",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 中国唐苑 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0235",
+      "name": "石川河阎良风景区",
+      "aliases": [],
+      "area_hint": "阎良区",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 石川河阎良风景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0236",
+      "name": "唐城墙遗址公园",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 唐城墙遗址公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0237",
+      "name": "王莽千亩荷花",
+      "aliases": [],
+      "area_hint": "长安区",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 王莽千亩荷花 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0238",
+      "name": "西寺沟旅游风景区",
+      "aliases": [],
+      "area_hint": "鄠邑区",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 西寺沟旅游风景区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ],
+      "access_note": "山地和郊野场所须核对官方开放范围；不推荐未开放线路。"
+    },
+    {
+      "seed_id": "XA-S0239",
+      "name": "长安唐村",
+      "aliases": [],
+      "area_hint": "长安区",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 长安唐村 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0240",
+      "name": "乐游原",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 乐游原 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0241",
+      "name": "汤峪湖森林公园",
+      "aliases": [],
+      "area_hint": "蓝田县",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 汤峪湖森林公园 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0242",
+      "name": "杨虎城别墅",
+      "aliases": [],
+      "area_hint": "莲湖区",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 杨虎城别墅 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0243",
+      "name": "长安塔",
+      "aliases": [],
+      "area_hint": "灞桥区",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 长安塔 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0244",
+      "name": "重阳成道宫",
+      "aliases": [],
+      "area_hint": "鄠邑区",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 重阳成道宫 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0245",
+      "name": "老子墓",
+      "aliases": [],
+      "area_hint": "周至县",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 老子墓 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0246",
+      "name": "泾渭分明观景台",
+      "aliases": [],
+      "area_hint": "高陵区",
+      "kind": "遗址/历史人文/自然景观",
+      "priority": 2,
+      "search_query": "西安 泾渭分明观景台 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "P"
+      ]
+    },
+    {
+      "seed_id": "XA-S0247",
+      "name": "西安交通大学创新港校区",
+      "aliases": [
+        "西交创新港",
+        "中国西部科技创新港"
+      ],
+      "area_hint": "长安区/沣西新城，最终以高德行政信息核验",
+      "kind": "校园（开发者彩蛋）",
+      "priority": 1,
+      "search_query": "西安 西安交通大学创新港校区 游览 开放时间 门票 预约",
+      "reference_ids": [
+        "U"
+      ],
+      "access_note": "开发者指定彩蛋。仅保留校园公开可参观范围；须核对校外访问政策，不将教学实验楼或办公场所作为公共景点。",
+      "developer_easter_egg": true
+    }
+  ]
+}
