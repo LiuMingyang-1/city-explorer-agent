@@ -99,6 +99,21 @@ export function isSummaryRequest(context: { messages: unknown[] }): boolean {
   );
 }
 
+/**
+ * 记忆蒸馏旁路请求与正常请求也走同一个 streamFn：会话 close 时 distill.ts
+ * 发出的模型输入以 <memory> 包裹现有文档开头（同时含 <conversation>，
+ * 检查顺序须在 isSummaryRequest 之前），按此标记分流，互不消耗响应。
+ */
+export function isDistillRequest(context: { messages: unknown[] }): boolean {
+  return (context.messages as Array<{ role?: string; content?: unknown }>).some(
+    (message) =>
+      message.role === "user" &&
+      (typeof message.content === "string"
+        ? message.content.includes("<memory>")
+        : JSON.stringify(message.content).includes("<memory>")),
+  );
+}
+
 export interface SummaryControl {
   /** 摘要请求计数（含重试）。 */
   calls: () => number;

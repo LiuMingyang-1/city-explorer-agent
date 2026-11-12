@@ -11,6 +11,7 @@ import { getCurrentSystemMessage, type SystemMessage } from "@earendil-works/pi-
 import { projectHistory, type Checkpoint } from "../../compaction/checkpoint.ts";
 import { compact, type CompactionOptions, type CompactionResult } from "../../compaction/compact.ts";
 import { createUsageBaseline, type UsageBaseline } from "../../compaction/tokens.ts";
+import { distillMemory } from "../../memory/distill.ts";
 import { closeInterrupted } from "../interrupted.ts";
 import type { SessionRepository } from "../../session/repository.ts";
 import type {
@@ -110,6 +111,12 @@ export class PersistentRuntime implements PlannerRuntime {
    * 快照，恢复时按当前活动库重解。
    */
   private locationContext?: LocationContext;
+  /**
+   * 用户长期记忆文档（user_memory.content）：用户级数据，与会话类型无关，
+   * main/child 注入同一份；渲染进 system section，不落 raw、不进消息表。
+   * 每次 reload 重读（含另一实例在 close 时蒸馏的新版）。
+   */
+  private memoryText: string | undefined;
   private readonly history = new RawHistory();
   private checkpoint: Checkpoint | undefined;
   private readonly baseline: UsageBaseline = createUsageBaseline();
@@ -262,7 +269,10 @@ export class PersistentRuntime implements PlannerRuntime {
     //    分配，与墙上时间无关）；本轮透传的新位置在 reload 之后由
     //    runPrompt 覆盖，并随新 run 的 input 落库。
     this.locationContext = await this.persistedLocation(runs);
-    // 7) 重建有效上下文：system 由当前配置重建，摘要 + 保留尾部用 raw 同对象。
+    // 7) 用户长期记忆：用户级读不需要写者凭证；读失败与其他恢复读一致，
+    //    原样抛出结束本轮恢复。
+    this.memoryText = (await this.repo.getUserMemory(this.userId))?.content;
+    // 8) 重建有效上下文：system 由当前配置重建，摘要 + 保留尾部用 raw 同对象。
     this.applyContext();
     this.baseline.clear();
   }
@@ -281,6 +291,7 @@ export class PersistentRuntime implements PlannerRuntime {
         this.sessionKind === "child" ? this.candidatePlan : this.persistedPlan,
         this.sessionKind === "child" ? "candidate" : "confirmed",
         this.locationContext,
+        this.memoryText,
       ),
     );
     this.agent.state.messages = messages;
@@ -672,6 +683,25 @@ export class PersistentRuntime implements PlannerRuntime {
       this.unsubscribe = undefined;
       this.agent.prepareRequest = this.prevPrepareRequest;
       this.prevPrepareRequest = undefined;
+      // 收尾机会蒸馏：仅 main 会话、租约闩锁未置位时触发（闩锁 = 写路径已
+      // 坏，蒸馏写库同样不会成功）。走 agent.streamFunction 旁路一次性请求，
+      // 不依赖已退订的事件钩子；超时兜底不让 close 无限挂起。整个调用吞掉
+      // 所有异常——蒸馏是机会行为，绝不破坏 close 路径。返回的 outcome 无
+      // 需处理：updated/unchanged 已写库推游标，skipped 未达门槛，error
+      // 留给下次 close 重试。
+      if (this.sessionKind === "main" && this.sessionIdValue !== "" && !this.guard.failure) {
+        try {
+          await distillMemory({
+            agent: this.agent,
+            sessions: this.repo,
+            userId: this.userId,
+            sessionId: this.sessionIdValue,
+            signal: AbortSignal.timeout(30_000),
+          });
+        } catch {
+          // 机会行为：任何蒸馏失败都不影响会话关闭。
+        }
+      }
       await this.guard.release();
     }
   }

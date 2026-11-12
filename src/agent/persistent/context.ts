@@ -5,6 +5,7 @@ import type { ValidatedPlan } from "../../session/types.ts";
 const CONFIRMED_PLAN_SECTION = "confirmed_itinerary";
 const CANDIDATE_PLAN_SECTION = "candidate_itinerary";
 const LOCATION_SECTION = "location_context";
+const MEMORY_SECTION = "memory_context";
 
 /** 注入 system section 的规划状态来源：main=DB 指针已确认；child=最新成功 run 的候选。 */
 export type InjectedPlanKind = "confirmed" | "candidate";
@@ -48,18 +49,25 @@ function locationSectionText(location: LocationContext): string {
   return lines.join("\n");
 }
 
+/** 长期记忆 section：只呈现文档原文；怎么使用写在 prompt.ts 的系统提示里。 */
+function memorySectionText(content: string): string {
+  return `## 用户长期记忆（跨会话持久数据，背景参考）\n${content}`;
+}
+
 /**
- * 当前权威 system 消息：基础提示 + 规划状态/用户位置 section；永不进 raw。
+ * 当前权威 system 消息：基础提示 + 规划状态/用户位置/长期记忆 section；永不进 raw。
  * 恢复与 plan 提交后重建一次，使之后的每个模型请求都携带最新规划状态，
  * 而不是指望压缩摘要记住它。main 注入已确认指针状态，child 注入候选
- * （明确标注候选身份，绝不冒充 main 的正式行程）。位置与会话类型无关，
- * main/child 注入同一份（会话尚无已存位置时 location 为 undefined → 无该节）。
+ * （明确标注候选身份，绝不冒充 main 的正式行程）。位置与长期记忆同会话
+ * 类型无关，main/child 注入同一份（无已存位置/记忆行时对应参数为
+ * undefined → 无该节）。
  */
 export function runtimeSystemMessage(
   base: SystemMessage | undefined,
   plan: ValidatedPlan | undefined,
   kind: InjectedPlanKind = "confirmed",
   location?: LocationContext,
+  memory?: string,
 ): AgentMessage {
   const baseSystem = base ?? ({ role: "system", content: "", timestamp: 0 } as SystemMessage);
   const sections: Record<string, string | null> = { ...(baseSystem.sections ?? {}) };
@@ -69,5 +77,6 @@ export function runtimeSystemMessage(
     sections[CANDIDATE_PLAN_SECTION] = plan ? candidateSectionText(plan) : null;
   }
   sections[LOCATION_SECTION] = location ? locationSectionText(location) : null;
+  sections[MEMORY_SECTION] = memory ? memorySectionText(memory) : null;
   return { ...baseSystem, sections } as AgentMessage;
 }
