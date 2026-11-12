@@ -22,7 +22,7 @@
   const entry={id:activeId,createdAt,updatedAt:Date.now(),title:title(),messages,
    sessionId:typeof state.sessionId==='string'?state.sessionId:null,
    latestPlan:state.latestPlan||null,routeNames:Array.isArray(state.routeNames)?state.routeNames:[],
-   location:state.location?{lat:state.location.lat,lng:state.location.lng,name:state.location.name}:null};
+   location:state.location?{lat:state.location.lat,lng:state.location.lng,name:state.location.name,coordinateSystem:state.location.coordinateSystem,wgs84:state.location.wgs84}:null};
   entries=[entry,...entries.filter(s=>s.id!==activeId)].sort((a,b)=>b.updatedAt-a.updatedAt).slice(0,MAX_SESSIONS);
   write();render();
  }
@@ -34,6 +34,8 @@
   epoch++;window.dispatchEvent(new Event('wander:reset'));
   state.messages=[];state.busy=false;state.sessionId=null;state.latestPlan=null;state.activePlanId=null;state.routeNames=[];
   $('messages').replaceChildren();$('message-input').value='';
+  window.WanderAMap?.cancelPending?.();
+  window.WanderAMap?.clearRoutes();
   if(map&&routeLayer){map.removeLayer(routeLayer);routeLayer=null;}
   if(map)updatePlaceMarkers([]);
   updateSendButton();
@@ -45,14 +47,19 @@
  function open(id){
   const entry=entries.find(s=>s.id===id);if(!entry)return;
   capture();clearConversation();activeId=entry.id;createdAt=entry.createdAt;
+  const restoreEpoch=epoch;
   state.sessionId=typeof entry.sessionId==='string'?entry.sessionId:null;
   const planText=window.WanderPlans?.summary(entry.latestPlan),planIndex=planText?entry.messages.map(m=>m.role==='assistant'&&m.text===planText).lastIndexOf(true):-1;
   entry.messages.forEach((m,index)=>{if(index===planIndex)window.WanderPlans.append(entry.latestPlan,{drawMap:false});else appendMessage(m.role,m.text);});
-  if(entry.location&&Number.isFinite(entry.location.lat)&&Number.isFinite(entry.location.lng))selectLocation(entry.location.lat,entry.location.lng,String(entry.location.name||'西安市'),13);
-  if(entry.latestPlan&&window.WanderPlans){
-   state.latestPlan=window.WanderPlans.normalize(entry.latestPlan);state.activePlanId=state.latestPlan?.active_plan;window.WanderPlans.draw(state.latestPlan);
-  }else if(Array.isArray(entry.routeNames)&&entry.routeNames.length&&typeof drawRoute==='function')drawRoute(entry.routeNames);
-  setExpanded(false);scrollMessages();$('message-input').focus({preventScroll:true});
+  function finish(){
+   if(restoreEpoch!==epoch)return;
+   if(entry.latestPlan&&window.WanderPlans){
+    state.latestPlan=window.WanderPlans.normalize(entry.latestPlan);state.activePlanId=state.latestPlan?.active_plan;window.WanderPlans.draw(state.latestPlan);
+   }else if(Array.isArray(entry.routeNames)&&entry.routeNames.length&&typeof drawRoute==='function')drawRoute(entry.routeNames);
+   setExpanded(false);scrollMessages();$('message-input').focus({preventScroll:true});
+  }
+  const locationJob=entry.location&&Number.isFinite(entry.location.lat)&&Number.isFinite(entry.location.lng)?selectLocation(entry.location.lat,entry.location.lng,String(entry.location.name||'西安市'),13,false,entry.location.coordinateSystem||'WGS84',entry.location.wgs84):null;
+  if(locationJob?.then)return locationJob.then(finish);finish();
  }
  function render(){
   const list=$('history-list');if(!list)return;

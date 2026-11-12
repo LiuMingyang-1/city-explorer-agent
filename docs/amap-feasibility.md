@@ -1,14 +1,14 @@
 # 高德地图替换可行性调研
 
-调研日期：2026-11-12。对应当前西安漫游前端；本次交付包含聊天布局和本机历史入口，地图尚未切换，也没有用未授权的瓦片地址替换底图。
+调研日期：2026-11-12。对应当前西安漫游前端；现已加入可配置高德 JS API 提供方和安全代理；没有采用未授权的瓦片地址。
 
 ## 结论
 
 1. **可以替换为高德。** 建议将地图渲染层改为官方高德 JS API 2.0，搜索、地理编码和真实道路路线逐步统一到高德。左侧玻璃卡片、历史规划和对话逻辑可复用。
 2. **可以保持接近现有的简洁浅色风格。** 可先用 `amap://styles/light`（月光银）或 `amap://styles/whitesmoke`（远山黛），再在高德自定义地图平台调整颜色和要素、发布样式 ID。现有 OpenFreeMap 样式 JSON 不能直接导入；道路几何、字体和标注规则不同，不能承诺像素级一致。
-3. 正式接入需要开发者账号、JS API Key、安全配置及部署域名；本次没有提供这些配置，因此不做带真实 Key 的加载、速度或配额验证。原有可用地图继续保留。
+3. 正式接入需要开发者账号、JS API Key、安全配置及部署域名；已完成 SDK 与地址服务的接口连通性验证；浏览器画面、速度和账号配额尚未实测。原有地图作为缺配置/加载失败时的回退。
 
-这与 [Day 0 约定](day0-contracts.md) 的“高德方向已确认、切换待实施”一致。
+实现遵循 [Day 0 约定](day0-contracts.md) 的高德方向；现有 WGS 数据不会直接改标签冒充 GCJ。
 
 ## 如何保留当前画面
 
@@ -22,7 +22,7 @@
 | 主要景区、搜索点和路线 | 用自定义点标记、文字标注及折线独立绘制 |
 | 深色玻璃卡片 | 普通 HTML/CSS 覆盖层，基本不受地图供应商影响 |
 
-高德支持 `bg`（区域面）、`point`（兴趣点）、`road`（道路及标注）、`building`（建筑物）的显示控制。下面是后续实施时的配置起点，**不是本次已启用的运行代码**：
+高德支持 `bg`（区域面）、`point`（兴趣点）、`road`（道路及标注）、`building`（建筑物）的显示控制。当前使用以下简洁主题配置；发布自定义样式后可替换样式 ID：
 
 ```js
 const map = new AMap.Map('map', {
@@ -39,7 +39,7 @@ const map = new AMap.Map('map', {
 
 ## 接入与后端协作
 
-- 当前 `frontend/app.js` 使用 Leaflet 初始化、标记、折线、视野控制和 Nominatim 搜索；需逐项适配为 AMap API，不能只换一个瓦片 URL 就得到官方样式和完整搜索能力。
+- 原有 Leaflet/Nominatim 路径保留作回退；`frontend/amap.js` 已适配地图初始化、标记、折线、视野控制、高德搜索和天气，并非只换瓦片 URL。
 - 高德搜索/路线返回 GCJ-02；现有 OSM/Nominatim、浏览器 GPS 以及样例中的 WGS-84 坐标必须按来源处理。GPS 使用官方 `AMap.convertFrom(points, 'gps', callback)` 转换一次，高德返回的数据不再重复转换。
 - AMap 常用坐标顺序是 `[lng, lat]`，当前 Leaflet 常用 `[lat, lng]`，迁移时需同时处理顺序。
 - 前后端统一坐标契约后，可以直接绘制后端高德 POI 和路径结果，减少偏移和二次转换。后端不依赖地图底图库本身；统一坐标和返回数据才是对接关键。
@@ -64,3 +64,7 @@ const map = new AMap.Map('map', {
 - [JS API 安全密钥与代理](https://lbs.amap.com/api/javascript-api-v2/guide/abc/jscode)：JS Key、安全密钥、`serviceHost`。
 - [其他坐标转高德坐标](https://lbs.amap.com/api/javascript-api-v2/guide/transform/convertfrom)：GCJ-02、WGS-84 与官方转换方式。
 - [地理编码与逆地理编码](https://lbs.amap.com/api/javascript-api-v2/guide/services/geocoder)：搜索与地址定位能力。
+
+## 实施补充
+
+调研之后已加入可配置的高德 JS API 2.0 提供方和服务端安全代理。高德可用时使用原生地图、搜索和天气；未配置或加载失败时保留原有底图。现有 WGS-84 点和轨迹使用官方转换；原生 GCJ-02 不重复转换。具体启用步骤及旧后端位置兼容限制见 [amap-setup.md](amap-setup.md#已实现的运行入口)。

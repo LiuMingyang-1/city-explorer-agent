@@ -62,3 +62,15 @@ test('continuing a saved conversation sends its original backend session id', as
   await pending;
   assert.equal(h.state.messages.at(-1)!.text, '想去哪片区域？');
 });
+
+test('a delayed map restore cannot redraw a history route after new chat', async () => {
+ const entry={...saved('old',11),location:{lat:34.27,lng:108.95,name:'西安市'},routeNames:['钟楼']};
+ const h=setup({entries:[entry]});
+ h.run('let finishLocation; selectLocation=()=>new Promise(resolve=>{finishLocation=resolve}); let redraws=0; drawRoute=()=>redraws++;');
+ h.run('window.WanderHistory.open("old")');
+ // Restore contains a legacy route; it must not reappear after the reset.
+ h.$('new-chat').click();
+ h.run('finishLocation()');await Promise.resolve();
+ assert.equal(h.state.latestPlan,null);assert.equal(h.state.messages.length,0);
+ assert.equal(h.run('redraws'),0);
+});

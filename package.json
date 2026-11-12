@@ -12,12 +12,12 @@
     "start": "node --env-file-if-exists=.env src/cli/main.ts",
     "dev:web": "node --env-file-if-exists=.env src/web/main.ts",
     "start:web": "node --env-file-if-exists=.env src/web/main.ts",
-    "dev:frontend": "node scripts/frontend-dev.mjs",
+    "dev:frontend": "node --env-file-if-exists=.env scripts/frontend-dev.mjs",
     "seed": "node --env-file-if-exists=.env scripts/seed.ts",
     "typecheck": "tsc --noEmit",
     "test": "node --test \"test/**/*.test.ts\"",
     "check": "npm run typecheck && npm test",
-    "check:frontend": "node --check frontend/app.js && node --check frontend/places.js && node --check frontend/plans.js && node --check frontend/transport.js && node --check frontend/chat.js && node --check frontend/history.js && node --check scripts/frontend-dev.mjs"
+    "check:frontend": "node --check frontend/amap.js && node --check frontend/app.js && node --check frontend/places.js && node --check frontend/plans.js && node --check frontend/transport.js && node --check frontend/chat.js && node --check frontend/history.js && node --check scripts/frontend-dev.mjs"
   },
   "dependencies": {
     "@earendil-works/pi-agent-core": "1.4.0",

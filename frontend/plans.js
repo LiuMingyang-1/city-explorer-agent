@@ -73,9 +73,9 @@
   if(event.budget_note)item.append(text('p','event-budget-note',event.budget_note));
   return item;
  }
- function compatibleCoordinates(model){return ['WGS84','WGS-84'].includes(String(model.coordinate_system||'WGS84').toUpperCase());}
+ function compatibleCoordinates(model){if(window.WanderAMap?.ready)return ['WGS84','WGS-84','GCJ02','GCJ-02'].includes(String(model.coordinate_system||'WGS84').toUpperCase());return ['WGS84','WGS-84'].includes(String(model.coordinate_system||'WGS84').toUpperCase());}
  function draw(data,{fit=true,onSelect}={}){
-  const model=normalize(data);if(!map||!model)return;
+  const model=normalize(data);if(!model)return;if(window.WanderAMap?.ready){window.WanderAMap.drawPlans(model,{fit,onSelect});return;}if(!map)return;
   if(routeLayer){map.removeLayer(routeLayer);routeLayer=null;}
   if(!compatibleCoordinates(model))return;
   const byId=new Map(model.events.map(e=>[e.event_id,e])),layers=[],bounds=[];

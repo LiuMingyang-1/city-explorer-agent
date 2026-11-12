@@ -19,7 +19,7 @@ function showSendError(text,error){
  scrollMessages();
 }
 function buildChatBody(text){
- const body={message:text},loc=state.location;
+ const body={message:text},loc=window.WanderAMap?.ready?window.WanderAMap.backendLocation(state.location):state.location;
  if(loc&&Number.isFinite(loc.lat)&&Number.isFinite(loc.lng))body.location={lat:loc.lat,lng:loc.lng};
  if(typeof state.sessionId==='string'&&state.sessionId)body.session_id=state.sessionId;
  // Legacy /api/chat rejects extra keys: only plans-capable replies enable this field.

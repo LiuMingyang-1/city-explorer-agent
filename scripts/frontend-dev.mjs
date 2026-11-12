@@ -1,3 +1,4 @@
+import { handleAMapNode } from '../src/web/amap-node.ts';
 import { createServer } from 'node:http';
 import { createReadStream } from 'node:fs';
 import { stat } from 'node:fs/promises';
@@ -17,6 +18,9 @@ const mime = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript
   '.png': 'image/png', '.jpg': 'image/jpeg', '.woff2': 'font/woff2' };
 
 const server = createServer(async (req, res) => {
+  if ((req.url || '').startsWith('/api/map-config') || (req.url || '').startsWith('/_AMapService/')) {
+    if (await handleAMapNode(req, res)) return;
+  }
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     res.writeHead(405, { Allow: 'GET, HEAD' }).end();
     return;

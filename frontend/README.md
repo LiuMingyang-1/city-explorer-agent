@@ -37,7 +37,7 @@ npm run dev:frontend
 | 地点搜索及逆地理编码 | Nominatim | 提交时查询，串行限速并缓存 |
 | 实时天气 | Open-Meteo | 自动随所选地点更新；失败显示暂不可用 |
 
-地图、搜索、天气需要网络。浏览器定位坐标与底图统一为 WGS-84。
+地图、搜索、天气需要网络。无高德配置时使用 WGS-84；启用高德后，外部 WGS 点与轨迹通过官方入口转换为 GCJ-02。
 保留页面内的地图版权标注，遵守各服务的使用政策；正式大规模部署需配置适合流量的服务。
 第三方库许可证见 `assets/*LICENSE.txt`。
 
@@ -68,6 +68,10 @@ npm run check:frontend
 
 ## 地图替换调研
 
-高德 JS API 2.0 可替换当前地图，并通过浅色主题、自定义样式和要素控制接近现有画面；正式切换需配置 Key、安全代理并处理 GCJ-02 坐标。当前仍使用可用的 OpenFreeMap 地图。详见 [高德可行性调研](../docs/amap-feasibility.md)。
+高德 JS API 2.0 可替换当前地图，并通过浅色主题、自定义样式和要素控制接近现有画面；正式切换需配置 Key、安全代理并处理 GCJ-02 坐标。已支持配置后启用高德，无配置时使用 OpenFreeMap。详见 [高德可行性调研](../docs/amap-feasibility.md)。
 
 高德切换所需配置和获取入口见 [高德准备清单](../docs/amap-setup.md)。
+
+## 高德地图运行配置
+
+填写根目录 `.env` 中的 `AMAP_JS_KEY` 和 `AMAP_SECURITY_JSCODE` 后，`npm run dev:frontend` 会启用原生高德地图、搜索、定位转换和天气。默认 `AMAP_STYLE=amap://styles/light`。不配置则保留原有底图；安全密钥通过同源代理使用，不写入网页。P0 方案可显示 WGS84 或 GCJ-02 轨迹，前者在入口转换一次。后端位置契约的兼容边界见 [高德准备清单](../docs/amap-setup.md#已实现的运行入口)。
