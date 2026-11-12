@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { SOCIAL_PLATFORMS, normalizeMediaCrawlerRow, importMediaCrawlerJsonl } from "../src/collection/mediacrawler.ts";
+import { SOCIAL_PLATFORMS, ENABLED_SOCIAL_PLATFORMS, normalizeMediaCrawlerRow, importMediaCrawlerJsonl } from "../src/collection/mediacrawler.ts";
 import type { SocialPlatform } from "../src/collection/mediacrawler.ts";
 
 const fetched = "2026-11-12T02:00:00Z";
@@ -64,4 +64,5 @@ test("Zhihu excerpts, missing content and unsafe numeric IDs never become valid 
   assert.throws(() => normalizeMediaCrawlerRow("wb", { note_id: Number.MAX_SAFE_INTEGER + 1, content: "活动" }, fetched), /UNSAFE_SOURCE_ID/);
   assert.throws(() => normalizeMediaCrawlerRow("xhs", { note_id: "../bad", desc: "活动" }, fetched), /INVALID_SOURCE_ID/);
   assert.equal(SOCIAL_PLATFORMS.length, 7);
+  assert.deepEqual([...ENABLED_SOCIAL_PLATFORMS], ["xhs", "dy", "ks", "bili", "wb", "tieba"]);
 });

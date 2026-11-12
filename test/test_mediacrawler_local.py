@@ -30,9 +30,22 @@ class CollectorBoundaryTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "PATH_MUST_BE_PRIVATE"):
                 runner.private_path(str(path))
 
-    def test_seven_platforms_have_distinct_login_destinations(self):
-        self.assertEqual(len(runner.PLATFORMS), 7)
-        self.assertEqual(len({value[2] for value in runner.PLATFORMS.values()}), 7)
+    def test_six_enabled_platforms_have_distinct_login_destinations(self):
+        self.assertEqual(len(runner.PLATFORMS), 6)
+        self.assertNotIn("zhihu", runner.PLATFORMS)
+        self.assertEqual(len({value[2] for value in runner.PLATFORMS.values()}), 6)
+
+    def test_platform_response_caps_and_unrecognized_errors(self):
+        for platform, key in [("dy", "data"), ("ks", "feeds"), ("bili", "result")]:
+            response = {key: list(range(20))}
+            result, count = runner.bound_response(platform, response, 5)
+            self.assertEqual(count, 20)
+            self.assertEqual(len(result[key]), 5)
+            self.assertEqual(len(response[key]), 20)
+        self.assertEqual(runner.bound_response("tieba", list(range(20)), 5), (list(range(5)), 20))
+        for platform in runner.PLATFORMS:
+            with self.assertRaisesRegex(ValueError, "UNRECOGNIZED_SEARCH_RESPONSE"):
+                runner.bound_response(platform, None, 5)
 
 
 if __name__ == "__main__":

@@ -5,6 +5,8 @@ import { isCalendarDate } from "../itinerary/constraints.ts";
 /** Export mappings verified against this upstream revision, not floating main. */
 export const MEDIACRAWLER_COMMIT = "306ab4ca26c0e44fb87ede0e40e98748752815a6";
 export const SOCIAL_PLATFORMS = ["xhs", "dy", "ks", "bili", "wb", "tieba", "zhihu"] as const;
+/** User scope: Zhihu is excluded; historical export parsing remains supported. */
+export const ENABLED_SOCIAL_PLATFORMS = ["xhs", "dy", "ks", "bili", "wb", "tieba"] as const;
 export type SocialPlatform = typeof SOCIAL_PLATFORMS[number];
 
 export interface CollectedDocument {

@@ -7,8 +7,9 @@ export function redact(value:unknown,secrets:string[]):unknown {
  text=text.replace(/sk-(?:qovia-)?[A-Za-z0-9_-]{16,}/g,"[REDACTED]");
  return JSON.parse(text);
 }
-export interface ApiOptions {qoviaKey?:string;deepseekKey:string;fetch?:typeof fetch;record:(attempt:Attempt)=>void;searchLimit?:number;extractLimit?:number;}
+export interface ApiOptions {qoviaKey?:string;deepseekKey:string;fetch?:typeof fetch;record:(attempt:Attempt)=>void;searchLimit?:number;extractLimit?:number;searchResultCount?:number;}
 export function createPilotApi(options:ApiOptions) {
+ if(options.searchResultCount!==undefined&&(!Number.isInteger(options.searchResultCount)||options.searchResultCount<1||options.searchResultCount>20))throw new PilotApiError("INVALID_SEARCH_RESULT_COUNT");
  let searches=0,extractions=0;
  const post=async(provider:Attempt["provider"],operation:Attempt["operation"],query:string,body:unknown,timeout:number):Promise<any>=>{
   if(provider==="qovia")throw new PilotApiError("QOVIA_DISABLED");
@@ -34,7 +35,7 @@ export function createPilotApi(options:ApiOptions) {
   search(provider:"qovia"|"deepseek",query:string,since:string,until:string){
    const max=provider==="qovia"?200:128;
    if(!query.trim()||[...query].length>max)throw new PilotApiError("INVALID_QUERY");
-   const body=provider==="qovia"?{query,since,until,platforms:["xiaohongshu","wechat","weibo","douyin"],types:["original","repost"],match:["title","content"],page:1,limit:20}:{query,count:20,need_content:true};
+   const body=provider==="qovia"?{query,since,until,platforms:["xiaohongshu","wechat","weibo","douyin"],types:["original","repost"],match:["title","content"],page:1,limit:20}:{query,count:options.searchResultCount??20,need_content:true};
    return post(provider,"search",query,body,provider==="qovia"?20000:15000);
   },
   extract(model:string,system:string,input:unknown){return post("deepseek","extract","activity-fields",{model,messages:[{role:"system",content:system},{role:"user",content:JSON.stringify(input)}],response_format:{type:"json_object"},thinking:{type:"disabled"},temperature:0,max_tokens:6000},60000);}

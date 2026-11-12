@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 import sys
 import time
+import traceback
 
 ROOT = Path(__file__).resolve().parents[1]
 PIN = "306ab4ca26c0e44fb87ede0e40e98748752815a6"
@@ -25,11 +26,10 @@ PLATFORMS = {
     "bili": ("bilibili", "BilibiliLogin", "https://www.bilibili.com"),
     "wb": ("weibo", "WeiboLogin", "https://weibo.com"),
     "tieba": ("tieba", "BaiduTieBaLogin", "https://tieba.baidu.com"),
-    "zhihu": ("zhihu", "ZhiHuLogin", "https://www.zhihu.com"),
 }
 CLIENT_CLASSES = {
     "xhs": "XiaoHongShuClient", "dy": "DouYinClient", "ks": "KuaiShouClient",
-    "bili": "BilibiliClient", "wb": "WeiboClient", "tieba": "BaiduTieBaClient", "zhihu": "ZhiHuClient",
+    "bili": "BilibiliClient", "wb": "WeiboClient", "tieba": "BaiduTieBaClient",
 }
 
 
@@ -52,6 +52,25 @@ def bounded_items(response, limit: int):
         items = [item for item in response["items"] if isinstance(item, dict) and item.get("model_type") not in ("rec_query", "hot_query")]
         return {**response, "items": items[:limit]}
     return response
+
+
+def bound_response(platform, response, limit):
+    if not 1 <= limit <= 5:
+        raise ValueError("INVALID_SAMPLE_LIMIT")
+    if platform == "tieba":
+        if not isinstance(response, list):
+            raise ValueError("UNRECOGNIZED_SEARCH_RESPONSE")
+        return response[:limit], len(response)
+    key = {"xhs": "items", "dy": "data", "ks": "feeds", "bili": "result", "wb": "cards"}[platform]
+    if not isinstance(response, dict) or not isinstance(response.get(key), list):
+        raise ValueError("UNRECOGNIZED_SEARCH_RESPONSE")
+    count = len(response[key])
+    if platform == "xhs":
+        return bounded_items(response, limit), count
+    # Weibo cards can contain nested groups. Cap extracted posts in its core adapter.
+    if platform == "wb":
+        return response, count
+    return {**response, key: response[key][:limit]}, count
 
 
 async def main() -> int:
@@ -88,7 +107,7 @@ async def main() -> int:
         if name.endswith(("_API_KEY", "_KEY", "_TOKEN", "_SECRET")):
             os.environ.pop(name, None)
     logging.disable(logging.CRITICAL)
-    from playwright.async_api import async_playwright, BrowserType
+    from playwright.async_api import async_playwright, BrowserType, Page
     # If the Playwright CDN is unavailable, use installed Edge with our own profile.
     # Never connect to the user's existing browser session or remote debugging port.
     edge = Path(os.environ.get("ProgramFiles(x86)", "C:/Program Files (x86)")) / "Microsoft/Edge/Application/msedge.exe"
@@ -113,6 +132,16 @@ async def main() -> int:
 
     BrowserType.launch_persistent_context = persistent
     BrowserType.launch = launch
+    original_goto = Page.goto
+
+    async def goto(page, url, **kwargs):
+        # Weibo's continuous resource loading can prevent the full load event.
+        # Wait for the initial document; subsequent account/API checks remain required.
+        if url.startswith("https://www.weibo.com"):
+            kwargs.setdefault("wait_until", "domcontentloaded")
+        return await original_goto(page, url, **kwargs)
+
+    Page.goto = goto
 
     profile = ROOT / ".local-data/tools/profiles" / f"{args.platform}_user_data_dir"
     if args.login:
@@ -180,19 +209,50 @@ async def main() -> int:
         client_class.pong = observed_pong
         crawler.CrawlerFactory.CRAWLERS[args.platform].search = skip_search
 
-    if args.platform == "xhs" and not args.verify_login:
+    metrics = {"search_calls": 0, "returned_items": 0, "search_errors": 0}
+    sort = "upstream_default"
+    if not args.verify_login:
         config.SORT_TYPE = "time_descending"
-        # Upstream rounds a requested count below 20 up to a full search page.
-        # Cap returned page items BEFORE detail retrieval, without another API request.
-        client_module = importlib.import_module("media_platform.xhs.client")
-        client_class = client_module.XiaoHongShuClient
-        original_search = client_class.get_note_by_keyword
+        config.WEIBO_SEARCH_TYPE = "real_time"
+        config.BILI_SEARCH_MODE = "normal"
+        config.PUBLISH_TIME_TYPE = 7
+        module_name = PLATFORMS[args.platform][0]
+        client_module = importlib.import_module(f"media_platform.{module_name}.client")
+        client_class = getattr(client_module, CLIENT_CLASSES[args.platform])
+        method = {"xhs": "get_note_by_keyword", "dy": "search_info_by_keyword", "ks": "search_info_by_keyword_v2",
+                  "bili": "search_video_by_keyword", "wb": "get_note_by_keyword", "tieba": "get_notes_by_keyword"}[args.platform]
+        original_search = getattr(client_class, method)
+        if args.platform in ("xhs", "dy", "bili", "wb", "tieba"):
+            sort = "latest"
+        if args.platform == "wb":
+            core = importlib.import_module("media_platform.weibo.core")
+            original_filter = core.filter_search_result_card
+            core.filter_search_result_card = lambda cards: original_filter(cards)[:args.limit]
 
         async def bounded_search(client, *positional, **kwargs):
-            response = await original_search(client, *positional, **kwargs)
-            return bounded_items(response, args.limit)
+            if metrics["search_calls"] >= 1:
+                raise RuntimeError("SAMPLE_SEARCH_LIMIT")
+            metrics["search_calls"] += 1
+            if args.platform == "dy":
+                field = importlib.import_module("media_platform.douyin.field")
+                kwargs["sort_type"] = field.SearchSortType.LATEST
+            elif args.platform == "bili":
+                field = importlib.import_module("media_platform.bilibili.field")
+                kwargs["order"] = field.SearchOrderType.LAST_PUBLISH
+                kwargs["pubtime_begin_s"] = int(time.time()) - 30 * 86400
+                kwargs["pubtime_end_s"] = int(time.time())
+            elif args.platform == "tieba":
+                kwargs["page_size"] = args.limit
+            try:
+                response = await original_search(client, *positional, **kwargs)
+                response, count = bound_response(args.platform, response, args.limit)
+                metrics["returned_items"] += count
+                return response
+            except Exception:
+                metrics["search_errors"] += 1
+                raise
 
-        client_class.get_note_by_keyword = bounded_search
+        setattr(client_class, method, bounded_search)
 
     async def stop_interactive_login(self):
         raise LoginRequired()
@@ -222,15 +282,19 @@ async def main() -> int:
         (state / f"{args.platform}.json").write_text(json.dumps(report, indent=2), encoding="utf8")
         print(json.dumps(report))
         return 0
-    report = {"status": "process_completed", "platform": args.platform,
+    exported = sum(sum(1 for line in path.read_text(encoding="utf8").splitlines() if line.strip())
+                   for path in destination.rglob("*contents*.jsonl"))
+    status = ("search_failed" if metrics["search_errors"] else "search_not_executed" if not metrics["search_calls"]
+              else "documents_exported" if exported else "detail_failed" if metrics["returned_items"] else "no_results")
+    report = {"status": status, "platform": args.platform,
               "elapsed_ms": round((time.perf_counter() - started) * 1000),
               "keyword": args.keyword, "requested_limit": args.limit,
-              "sort": "time_descending" if args.platform == "xhs" else "upstream_default",
+              "sort": sort, "exported_documents": exported, **metrics,
               "note": "Import and content checks are still required; exit zero does not verify coverage."}
     assert destination is not None
     (destination / "run.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf8")
     print(json.dumps(report, ensure_ascii=False))
-    return 0
+    return 0 if status in ("documents_exported", "no_results") else 6
 
 
 if __name__ == "__main__":
@@ -247,5 +311,7 @@ if __name__ == "__main__":
         sys.exit(5)
     except Exception as error:
         # Upstream exceptions may include signed URLs; do not print traceback or message.
-        print(json.dumps({"status": "crawler_failed", "error_type": type(error).__name__}))
+        frames = [{"file": Path(frame.filename).name, "line": frame.lineno, "function": frame.name}
+                  for frame in traceback.extract_tb(error.__traceback__)[-5:]]
+        print(json.dumps({"status": "crawler_failed", "error_type": type(error).__name__, "frames": frames}))
         sys.exit(1)

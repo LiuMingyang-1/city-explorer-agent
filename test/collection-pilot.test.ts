@@ -5,6 +5,14 @@ import type {Attempt} from "../src/collection/pilot-api.ts";
 import {documentsFrom,checkCandidate} from "../src/collection/pilot-extract.ts";
 import {latencySummary} from "../scripts/collect-pilot.ts";
 const keys={qoviaKey:"qovia-fixture-credential-123",deepseekKey:"deepseek-fixture-credential-123"};
+
+test("web sample uses an explicit result cap and rejects invalid caps before any network call",async()=>{
+ let sent=0;
+ const options={...keys,record:()=>{},fetch:async(_url:unknown,init?:RequestInit)=>{sent=JSON.parse(init!.body as string).count;return Response.json({results:[]});}};
+ const api=createPilotApi({...options,searchResultCount:5});
+ await api.search("deepseek","西安 展览","2026-11-12","2026-11-12");assert.equal(sent,5);
+ for(const count of [0,21,1.5,NaN])assert.throws(()=>createPilotApi({...options,searchResultCount:count}),/INVALID_SEARCH_RESULT_COUNT/);
+});
 test("search calls use correct endpoints and headers; records omit credentials",async()=>{
  const records:Attempt[]=[];const calls:{url:string;body:any;headers:any}[]=[];
  const api=createPilotApi({...keys,record:a=>records.push(a),fetch:async(url,init)=>{calls.push({url:String(url),body:JSON.parse(init!.body as string),headers:init!.headers});return Response.json({results:[],echo:keys.deepseekKey});}});
