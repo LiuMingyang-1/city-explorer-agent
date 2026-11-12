@@ -3,10 +3,11 @@ import type { DatabaseSync } from "node:sqlite";
 /**
  * 会话库表结构：users / sessions / session_records / runs / user_memory
  * 五表一次建齐，语义见 docs/users-and-sessions.md。全部 CREATE IF NOT
- * EXISTS，幂等；不做列迁移（本库首期落地即完整结构）。
+ * EXISTS，幂等；不做列迁移。
  *
  * 约束要点：
- * - 每用户唯一 main 会话：sessions 上的部分唯一索引。
+ * - kind='main' 是用户面对话会话（每用户可有多个，对话即 main）；
+ *   kind='child' 专职表示子 Agent 派生的任务会话。
  * - sessions 自洽：main 无父、child 必有父；current_itinerary_record_id 仅 main。
  * - session_records: (session_id,seq)、(session_id,message_seq 仅 message)、
  *   (session_id,dedupe_key 非空) 三个唯一；message_seq 与 type 联动 CHECK；
@@ -18,7 +19,6 @@ import type { DatabaseSync } from "node:sqlite";
 export const SESSION_SCHEMA_DDL = `
 CREATE TABLE IF NOT EXISTS users (
   user_id TEXT PRIMARY KEY,
-  main_session_id TEXT REFERENCES sessions(session_id),
   display_name TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
@@ -45,8 +45,6 @@ CREATE TABLE IF NOT EXISTS sessions (
   CHECK (kind = 'main' OR current_itinerary_record_id IS NULL)
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_sessions_main
-  ON sessions(user_id) WHERE kind = 'main';
 CREATE INDEX IF NOT EXISTS idx_sessions_parent
   ON sessions(parent_session_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_user_activity
@@ -104,11 +102,18 @@ CREATE TABLE IF NOT EXISTS user_memory (
 );
 `;
 
-/** 幂等建齐五表与索引；单事务，失败回滚。 */
+/**
+ * 幂等建齐五表与索引；单事务，失败回滚。
+ * 老库兼容：历史版本在 sessions(user_id) WHERE kind='main' 上有
+ * idx_sessions_main 部分唯一索引（且 users 带 main_session_id 死列，
+ * SQLite 不易 DROP COLUMN，保留无害、代码不再引用）；这里 DROP 掉
+ * 旧索引，使老库升级后可建第二个 kind='main' 对话会话。
+ */
 export function ensureSessionSchema(db: DatabaseSync): void {
   db.exec("BEGIN");
   try {
     db.exec(SESSION_SCHEMA_DDL);
+    db.exec("DROP INDEX IF EXISTS idx_sessions_main");
     db.exec("COMMIT");
   } catch (error) {
     db.exec("ROLLBACK");

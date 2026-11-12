@@ -14,7 +14,6 @@ export type RunStatus = "queued" | "running" | "completed" | "failed" | "cancell
 
 export interface User {
   userId: string;
-  mainSessionId: string | null;
   displayName: string | null;
   createdAt: string;
   updatedAt: string;
@@ -126,6 +125,10 @@ export interface CreateUserInput {
   /** 缺省生成 UUID；传已存在的 userId 时幂等返回既有用户。 */
   userId?: string;
   displayName?: string;
+}
+
+export interface CreateConversationInput {
+  title?: string;
 }
 
 export interface CreateChildSessionInput {

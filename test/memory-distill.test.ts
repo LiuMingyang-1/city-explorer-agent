@@ -30,18 +30,43 @@ async function makeDistill(t: TestContext) {
 test("新 user 消息不足门槛 → skipped，无模型调用、不写库", async (t) => {
   const { sessions, user, main, writer, agent, faux } = await makeDistill(t);
   await seedMessages(sessions, writer, user.userId, main.sessionId, ["你好", "再看一个"]);
+  // 不传 minNewUserMessages：默认保底门槛为 3，2 条新 user 消息不触发。
   const outcome = await distillMemory({
     agent,
     sessions,
     userId: user.userId,
     sessionId: main.sessionId,
-    minNewUserMessages: 3,
   });
   assert.equal(outcome.status, "skipped");
-  assert.match(outcome.reason ?? "", /未达保底门槛/);
+  assert.match(outcome.reason ?? "", /未达保底门槛 3/);
   assert.equal(outcome.throughMessageSeq, undefined);
   assert.equal(faux.state.callCount, 0);
   assert.equal(await sessions.getUserMemory(user.userId), undefined);
+});
+
+test("默认门槛为 3：满 3 条新 user 消息即触发蒸馏并推进游标", async (t) => {
+  const { sessions, user, main, writer, agent, faux } = await makeDistill(t);
+  await seedMessages(sessions, writer, user.userId, main.sessionId, [
+    "我住在西安",
+    "喜欢展览",
+    "周末有空",
+  ]);
+  faux.setResponses([
+    fauxAssistantMessage("## 用户\n常驻西安\n\n## 偏好\n喜欢展览\n\n## 足迹\n"),
+  ]);
+  const outcome = await distillMemory({
+    agent,
+    sessions,
+    userId: user.userId,
+    sessionId: main.sessionId,
+  });
+  assert.equal(outcome.status, "updated");
+  assert.equal(outcome.throughMessageSeq, 3);
+  assert.equal(faux.state.callCount, 1);
+  const memory = await sessions.getUserMemory(user.userId);
+  assert.ok(memory);
+  assert.equal(memory.sourceSessionId, main.sessionId);
+  assert.equal(memory.throughMessageSeq, 3);
 });
 
 test("成功蒸馏：content 落库、through = 该批最后一条 message_seq", async (t) => {

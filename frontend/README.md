@@ -21,7 +21,7 @@ npm run dev:frontend
 - 定位拒绝、超时或不支持时，静默保留西安市中心。浏览器定位要求 localhost 或 HTTPS。
 - 19 个主要 4A/5A 景点标注点（含联合景区内的独立参观点），标签自动避让；搜索结果常驻显示名称。
 - 回车或发送按钮与后端 Agent 对话；消息自动滚到底部。地图虚线按后端返回的活动坐标表示推荐游玩顺序，不是实际道路导航。
-- 对话历史由后端保存，页面加载时通过 `GET /api/chat/history` 恢复。
+- 每次打开页面即开启一段新对话（后端按 `session_id` 落库，历史不自动恢复）；跨对话连续性由后端长期记忆提供。
 - `npm run dev:frontend` 只托管静态文件，不代理 `/api/*`；单独运行时对话不可用，需由后端同源托管本目录。
 
 ## 地图和外部服务
@@ -44,9 +44,11 @@ https://wlj.xa.gov.cn/wlml/lyjq/1.html 。坐标来自 OpenStreetMap/Nominatim�
 
 ## Agent 接口
 
-对话逻辑在 `chat.js`：发送走 `POST /api/chat`（body 为 `{message}`），成功返回
-`{kind:'clarification',question}` 或 `{kind:'itinerary',itinerary,events}`，非 2xx 返回 `{error}`；
-历史走 `GET /api/chat/history`。接口为同源相对路径，依赖同源 cookie 会话。
+对话逻辑在 `chat.js`：发送走 `POST /api/chat`（body 为 `{message}`，带 `location` 与既有
+`session_id` 时一并发送），成功返回 `{kind:'clarification',session_id,question}` 或
+`{kind:'itinerary',session_id,itinerary,events}`，前端记下 `session_id` 续用同一对话，
+非 2xx 返回 `{error}`；`GET /api/chat/history?session_id=…` 可显式还原指定对话
+（不带参数返回空历史，不产生任何服务端记录）。接口为同源相对路径，依赖同源 cookie 会话。
 
 ## 检查
 

@@ -29,6 +29,11 @@ export interface ExplorerConfig {
    */
   userId?: string;
   /**
+   * CLI 钉住恢复的会话 ID（EXPLORER_SESSION_ID；缺省/空白 → undefined，
+   * 每次启动新建对话）。调试/回归用途，Web 会话由请求参数指定。
+   */
+  sessionId?: string;
+  /**
    * 蒸馏单请求输入总长上限（字符，EXPLORER_MEMORY_INPUT_CHARS；缺省 64_000，
    * 模型窗口折算更小者生效）。手工构造的 config 可省略，蒸馏层有同值缺省。
    */
@@ -38,6 +43,23 @@ export interface ExplorerConfig {
    * 缺省 90_000）。手工构造的 config 可省略，运行时按同值缺省。
    */
   memoryDistillTimeoutMs?: number;
+  /**
+   * 无新确认方案时触发蒸馏的保底新增 user 消息条数
+   * （EXPLORER_MEMORY_MIN_USER_MESSAGES；缺省 3）。手工构造的 config 可省略，
+   * 蒸馏层有同值缺省。
+   */
+  memoryMinUserMessages?: number;
+  /**
+   * 子 Agent 进程级并发信号量上限（EXPLORER_SUBAGENT_MAX_CONCURRENT；
+   * 缺省 8）。手工构造的 config 可省略，编排层按同值缺省。
+   */
+  subagentMaxConcurrent?: number;
+  /**
+   * 单次子 Agent 派发超时（毫秒，EXPLORER_SUBAGENT_TIMEOUT_MS；
+   * 缺省 120_000，自进入 execute 含信号量排队起算）。手工构造的 config
+   * 可省略，编排层按同值缺省。
+   */
+  subagentTimeoutMs?: number;
 }
 
 /** 读取 EXPLORER_* 环境配置并做基本检查；不发起模型请求。 */
@@ -85,12 +107,16 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ExplorerConfig
     dbPath: resolve(env.EXPLORER_DB_PATH?.trim() || "data/events.db"),
     sessionDbPath: resolve(env.EXPLORER_SESSION_DB_PATH?.trim() || "data/sessions.db"),
     userId: env.EXPLORER_USER_ID?.trim() || "local",
+    sessionId: env.EXPLORER_SESSION_ID?.trim() || undefined,
     memoryInputChars: positiveInteger(env, "EXPLORER_MEMORY_INPUT_CHARS", 64_000),
     memoryDistillTimeoutMs: positiveInteger(
       env,
       "EXPLORER_MEMORY_DISTILL_TIMEOUT_MS",
       90_000,
     ),
+    memoryMinUserMessages: positiveInteger(env, "EXPLORER_MEMORY_MIN_USER_MESSAGES", 3),
+    subagentMaxConcurrent: positiveInteger(env, "EXPLORER_SUBAGENT_MAX_CONCURRENT", 8),
+    subagentTimeoutMs: positiveInteger(env, "EXPLORER_SUBAGENT_TIMEOUT_MS", 120_000),
   };
 }
 

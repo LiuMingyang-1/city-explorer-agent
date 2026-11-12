@@ -11,33 +11,25 @@ import {
   userMessage,
 } from "./session-fixture.ts";
 
-test("createUser generates ids, binds exactly one main session atomically", async (t) => {
+test("createUser generates ids and does not create any session", async (t) => {
   const repo = openMemoryRepo(t);
   const user = await repo.createUser({ displayName: "测试" });
   assert.ok(user.userId.length > 0);
   assert.equal(user.displayName, "测试");
-  assert.ok(user.mainSessionId);
-
-  const main = await repo.getMainSession(user.userId);
-  assert.equal(main.sessionId, user.mainSessionId);
-  assert.equal(main.kind, "main");
-  assert.equal(main.parentSessionId, null);
-  assert.equal(main.status, "active");
-  assert.equal(main.leaseEpoch, 0);
-  const sessions = await repo.listSessions(user.userId);
-  assert.equal(sessions.length, 1);
+  // 对话由 createConversation 懒建：建用户本身不产生任何会话行。
+  assert.deepEqual(await repo.listSessions(user.userId), []);
 });
 
-test("createUser with an existing userId returns the same user and main session", async (t) => {
+test("createUser with an existing userId returns the same user idempotently", async (t) => {
   const repo = openMemoryRepo(t);
   const first = await repo.createUser({ userId: "u-1", displayName: "一" });
   const again = await repo.createUser({ userId: "u-1", displayName: "另一个名字" });
   assert.equal(again.userId, "u-1");
-  assert.equal(again.mainSessionId, first.mainSessionId);
-  assert.equal((await repo.listSessions("u-1")).length, 1);
+  assert.equal(again.displayName, first.displayName);
+  assert.equal((await repo.listSessions("u-1")).length, 0);
 });
 
-test("two connections initializing the same user produce one main session", async (t) => {
+test("two connections initializing the same user produce one user row", async (t) => {
   const dbPath = tempDbPath(t);
   const repoA = openFileRepo(t, dbPath);
   const repoB = openFileRepo(t, dbPath);
@@ -46,19 +38,43 @@ test("two connections initializing the same user produce one main session", asyn
     repoA.createUser({ userId: "u-shared" }),
     repoB.createUser({ userId: "u-shared" }),
   ]);
-  assert.equal(userA.mainSessionId, userB.mainSessionId);
+  assert.equal(userA.userId, userB.userId);
 
-  // 跨连接可见同一份数据，且仍只有一个 main。
+  // 跨连接可见同一个用户，且并发初始化不产生任何会话。
   for (const repo of [repoA, repoB]) {
-    const sessions = await repo.listSessions("u-shared");
-    assert.equal(sessions.length, 1);
-    assert.equal(sessions[0].kind, "main");
+    assert.ok(await repo.getUser("u-shared"));
+    assert.equal((await repo.listSessions("u-shared")).length, 0);
   }
 });
 
-test("getMainSession reports not_found for unknown user", async (t) => {
+test("createConversation creates multiple main conversations per user, title optional", async (t) => {
   const repo = openMemoryRepo(t);
-  await assert.rejects(repo.getMainSession("nobody"), (e) => isSessionError(e, "not_found"));
+  await repo.createUser({ userId: "u-conv" });
+
+  const first = await repo.createConversation("u-conv");
+  assert.equal(first.kind, "main");
+  assert.equal(first.parentSessionId, null);
+  assert.equal(first.title, null);
+  assert.equal(first.status, "active");
+  assert.equal(first.leaseEpoch, 0);
+  assert.equal(first.leaseOwner, null);
+  assert.equal(first.currentItineraryRecordId, null);
+
+  const second = await repo.createConversation("u-conv", { title: "周六看展" });
+  assert.equal(second.kind, "main");
+  assert.equal(second.title, "周六看展");
+  assert.notEqual(second.sessionId, first.sessionId);
+
+  const sessions = await repo.listSessions("u-conv");
+  assert.equal(sessions.length, 2);
+  assert.ok(sessions.every((s) => s.kind === "main"));
+});
+
+test("createConversation rejects an unknown user with not_found", async (t) => {
+  const repo = openMemoryRepo(t);
+  await assert.rejects(repo.createConversation("nobody"), (e) =>
+    isSessionError(e, "not_found"),
+  );
 });
 
 test("users are isolated: sessions and records never leak across user_id", async (t) => {
@@ -136,7 +152,7 @@ test("child sessions form a same-user tree; foreign parents are rejected", async
   );
 });
 
-test("archive makes a child session read-only; main cannot be archived", async (t) => {
+test("archive makes a session read-only; any active session including main can be archived", async (t) => {
   const repo = openMemoryRepo(t);
   const { main } = await makeUser(repo, "u-arch");
   const writer = await mustAcquire(repo, "u-arch", main.sessionId);
@@ -163,8 +179,18 @@ test("archive makes a child session read-only; main cannot be archived", async (
   // 读仍可用（归档会话只读）。
   assert.deepEqual(await repo.listRecords("u-arch", child.sessionId), []);
 
-  // 主会话不可归档。
-  await assert.rejects(repo.archiveSession(writer, "u-arch", main.sessionId), (e) =>
-    isSessionError(e, "conflict"),
+  // main 对话会话同样可归档，归档后租约字段清除、写与租约获取被拒。
+  await repo.archiveSession(writer, "u-arch", main.sessionId);
+  const archivedMain = await repo.getSession("u-arch", main.sessionId);
+  assert.equal(archivedMain?.status, "archived");
+  assert.equal(archivedMain?.leaseOwner, null);
+  await assert.rejects(
+    repo.appendMessage(writer, "u-arch", main.sessionId, {
+      payload: { message: userMessage("再写") },
+    }),
+    (e) => isSessionError(e, "archived"),
+  );
+  await assert.rejects(repo.acquireLease("u-arch", main.sessionId, "w3", 1000), (e) =>
+    isSessionError(e, "archived"),
   );
 });

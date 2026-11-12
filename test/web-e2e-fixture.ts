@@ -76,8 +76,12 @@ export const withCookie = (uid: string): Record<string, string> => ({
   Cookie: `chat_uid=${uid}`,
 });
 
-export const getHistory = (base: string, uid?: string): Promise<Reply> =>
-  call(base, "/api/chat/history", uid === undefined ? {} : { headers: withCookie(uid) });
+export const getHistory = (base: string, uid?: string, sessionId?: string): Promise<Reply> =>
+  call(
+    base,
+    `/api/chat/history${sessionId === undefined ? "" : `?session_id=${encodeURIComponent(sessionId)}`}`,
+    uid === undefined ? {} : { headers: withCookie(uid) },
+  );
 
 /** 从 Set-Cookie 里取服务端铸的 chat_uid（未签发时为 undefined）。 */
 export function cookieUserId(reply: Reply): string | undefined {

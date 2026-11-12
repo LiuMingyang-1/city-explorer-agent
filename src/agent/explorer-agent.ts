@@ -1,5 +1,5 @@
 import { Agent } from "@earendil-works/pi-agent-core";
-import type { StreamFn } from "@earendil-works/pi-agent-core";
+import type { AgentTool, StreamFn } from "@earendil-works/pi-agent-core";
 import type { ExplorerConfig } from "../config.ts";
 import type { EventRepository } from "../data/repository.ts";
 import { createExplorerModels } from "./model.ts";
@@ -19,6 +19,16 @@ export interface ExplorerAgentOptions {
    * 离线集成测试注入 pi-ai 的 faux provider 流即可跑通真实工具链。
    */
   streamFn?: StreamFn;
+  /**
+   * 追加挂载的工具（编排层在 depth<上限 时注入 delegate_task）；
+   * 缺省只挂 search_events。
+   */
+  extraTools?: AgentTool<any, any>[];
+  /**
+   * 系统提示是否附加 delegate_task 派发准则；应与 extraTools 里实际
+   * 是否挂了 delegate_task 保持一致，避免提示词提到不存在的工具。
+   */
+  canDelegate?: boolean;
 }
 
 /**
@@ -40,8 +50,10 @@ export async function createExplorerAgent(options: ExplorerAgentOptions): Promis
   return new Agent({
     initialState: {
       model,
-      systemPrompt: buildSystemPrompt(options.currentDate ?? localToday()),
-      tools: [createSearchEventsTool(options.repository)],
+      systemPrompt: buildSystemPrompt(options.currentDate ?? localToday(), {
+        canDelegate: options.canDelegate,
+      }),
+      tools: [createSearchEventsTool(options.repository), ...(options.extraTools ?? [])],
     },
     streamFn,
     getApiKey: () => config.apiKey,

@@ -1,11 +1,15 @@
 /**
  * Web Chat 业务服务：把 ./types.ts 的 ChatService 契约接到持久化 Planner 上。
  *
- * - send() 每次为该 userId 打开一个持久化 Planner（createPersistentPlanner
- *   缺省幂等建用户并绑定主会话），跑一轮 prompt 后立即 close() 释放租约——
- *   无内存会话常驻，重启/多实例安全。
- * - history() 不打模型：直接读会话库，从已完成 run 的 input/result 还原
- *   用户可见消息，当前生效行程走 current_itinerary 指针单独返回。
+ * - send() 每次为该 userId 打开一个持久化 Planner：带 sessionId 时校验
+ *   并续用该对话；不带时懒建一条新对话（标题取首条消息前 30 个码点），
+ *   跑一轮 prompt 后立即 close() 释放租约——无内存会话常驻，
+ *   重启/多实例安全。
+ * - history() 不打模型：带 sessionId 时从已完成 run 的 input/result 还原
+ *   用户可见消息，当前生效行程走 current_itinerary 指针单独返回；不带时
+ *   直接回空历史，不在库里建任何行。
+ * - 客户端语义错误（不存在/跨用户/child → not_found，归档/租约忙 →
+ *   conflict）抛 ChatClientError，HTTP 层映射 404/409；其余异常仍 500。
  * - 离线测试可注入 createPlanner 工厂（返回 stub planner）或只注入
  *   streamFn（faux provider，仍走真实持久链路）；本文件不发真实模型请求。
  */
@@ -21,7 +25,8 @@ import type { EventRepository } from "../data/repository.ts";
 import type { Event } from "../data/types.ts";
 import type { Itinerary } from "../itinerary/types.ts";
 import type { SessionRepository } from "../session/repository.ts";
-import type { Run } from "../session/types.ts";
+import { isSessionError, type Run } from "../session/types.ts";
+import { ChatClientError } from "./types.ts";
 import type {
   ChatHistory,
   ChatLocation,
@@ -36,6 +41,8 @@ import type {
  * 测试注入 stub 实现即可离线覆盖关闭/错误路径。
  */
 export interface ChatPlanner {
+  /** 该 planner 绑定的持久会话 ID；内存会话可为 undefined。 */
+  readonly sessionId?: string;
   prompt(text: string, options?: PlannerPromptOptions): Promise<PlannerTurn>;
   /** 中止在途请求（幂等；空闲时无副作用）。 */
   cancel(): void;
@@ -188,13 +195,62 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
   let closed = false;
   let shutdownPromise: Promise<void> | undefined;
 
-  /** 为该用户开一个新持久化 planner（缺省工厂内部幂等建用户/主会话）。 */
-  function openPlanner(userId: string): Promise<ChatPlanner> {
+  /**
+   * 新对话标题：首条消息 trim 后前 30 个码点。[...str] 按码点迭代，
+   * 绝不切碎 emoji 等 surrogate pair（message 已由 HTTP 层 trim+限长）。
+   */
+  function conversationTitle(message: string): string {
+    return [...message.trim()].slice(0, 30).join("");
+  }
+
+  /**
+   * 用户面对话校验：不存在、不属于该用户或 kind!=='main'（内部 child
+   * 任务会话）统一 not_found——不泄露跨用户/内部会话存在性；非 active
+   * （已归档）→ conflict。
+   */
+  async function requireMainSession(userId: string, sessionId: string): Promise<void> {
+    const session = await sessions.getSession(userId, sessionId);
+    if (!session || session.kind !== "main") {
+      throw new ChatClientError("not_found", "会话不存在");
+    }
+    if (session.status !== "active") {
+      throw new ChatClientError("conflict", "会话已归档");
+    }
+  }
+
+  /**
+   * 校验点之后的租约/归档竞争兜底：显式会话在 requireMainSession 到
+   * openPlanner/prompt 之间仍可能被归档或被另一写者占用，把那些异常统一
+   * 归并进 ChatClientError（HTTP 层 404/409），不当 500 报。其余异常原样。
+   */
+  function mapSessionError(error: unknown): unknown {
+    if (error instanceof ChatClientError) return error;
+    if (isSessionError(error, "archived")) {
+      return new ChatClientError("conflict", "会话已归档");
+    }
+    if (isSessionError(error, "not_found") || isSessionError(error, "cross_user")) {
+      return new ChatClientError("not_found", "会话不存在");
+    }
+    // LeaseGuard 在 acquireLease 失败时抛普通 Error（"写租约未释放"），
+    // 续约/接管失败也是同族写租约竞争——同会话并发写一律 409。
+    if (error instanceof Error && error.message.includes("写租约")) {
+      return new ChatClientError("conflict", "会话正由另一个写者处理，请稍后重试");
+    }
+    return error;
+  }
+
+  /** 为该用户开一个持久化 planner：显式 sessionId 续用对话，否则按 title 懒建新对话。 */
+  function openPlanner(
+    userId: string,
+    extra: { sessionId?: string; title?: string } = {},
+  ): Promise<ChatPlanner> {
     return factory({
       config,
       repository,
       sessions,
       userId,
+      sessionId: extra.sessionId,
+      title: extra.title,
       streamFn: options.streamFn,
       currentDate: options.currentDate,
       leaseTtlMs: options.leaseTtlMs,
@@ -236,12 +292,21 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
     handle: SendHandle,
     userId: string,
     message: string,
-    options?: { signal?: AbortSignal; location?: ChatLocation },
+    options?: { signal?: AbortSignal; location?: ChatLocation; sessionId?: string },
   ): Promise<ChatResult> {
     const signal = options?.signal;
     let planner: ChatPlanner | undefined;
     try {
-      planner = await openPlanner(userId);
+      if (options?.sessionId !== undefined) {
+        // 显式续用对话：先校验归属/kind/status，再交给工厂打开。
+        await requireMainSession(userId, options.sessionId);
+      }
+      planner = await openPlanner(
+        userId,
+        options?.sessionId !== undefined
+          ? { sessionId: options.sessionId }
+          : { title: conversationTitle(message) },
+      );
       handle.planner = planner;
       // openPlanner 期间可能已被 shutdown/abort 标记：不再启动模型轮。
       if (handle.cancelled || signal?.aborted) throw abortError(signal);
@@ -265,16 +330,29 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
       // 已中止：结果照常丢弃，向 HTTP 层报中止（客户端通常已断开）。
       if (handle.cancelled || signal?.aborted) throw abortError(signal);
       if (turn.kind === "error") {
+        // 租约竞争/归档竞争在轮内被压成 error turn（open 后、prompt 建 run
+        // 前会话被抢占/归档）：如实映射 409，不冒充服务端故障 500。
+        if (turn.message.includes("写租约") || turn.message.includes("已归档")) {
+          throw new ChatClientError("conflict", "会话暂不可用，请稍后重试");
+        }
         throw new ChatServiceError(`规划失败：${turn.message}`);
       }
+      const sessionId = planner.sessionId ?? options?.sessionId;
+      if (sessionId === undefined || sessionId === "") {
+        throw new ChatServiceError("本轮规划未返回 session_id");
+      }
       if (turn.kind === "clarification") {
-        return { kind: "clarification", question: turn.question };
+        return { kind: "clarification", session_id: sessionId, question: turn.question };
       }
       return {
         kind: "itinerary",
+        session_id: sessionId,
         itinerary: turn.itinerary,
         events: await eventViews(turn.itinerary),
       };
+    } catch (error) {
+      if (handle.cancelled || signal?.aborted) throw abortError(signal);
+      throw mapSessionError(error);
     } finally {
       activeSends.delete(handle);
       // 每次 send 用完即关：释放会话租约，让其他实例/请求能继续写。
@@ -282,13 +360,14 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
     }
   }
 
-  async function runHistory(userId: string): Promise<ChatHistory> {
-    // 幂等：已存在直接返回既有用户；没有则建 user + main 会话。
-    await sessions.createUser({ userId });
-    const session = await sessions.getMainSession(userId);
+  async function runHistory(userId: string, sessionId?: string): Promise<ChatHistory> {
+    // 未指定对话 = 新访客/新页面：不建用户、不查库建会话，空页面加载
+    // 绝不产生任何数据库会话行（对话在首条 POST 时才懒建）。
+    if (sessionId === undefined) return { messages: [], itinerary: null };
+    await requireMainSession(userId, sessionId);
     const [runs, current] = await Promise.all([
-      sessions.listRunsBySession(userId, session.sessionId),
-      sessions.getCurrentItinerary(userId, session.sessionId),
+      sessions.listRunsBySession(userId, sessionId),
+      sessions.getCurrentItinerary(userId, sessionId),
     ]);
     // 产生当前行程的那个 run：其 assistant 文本由独立行程卡片替代，不进 messages。
     const producingRunId = current?.record.runId ?? undefined;
@@ -319,7 +398,7 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
     async send(
       userId: string,
       message: string,
-      options?: { signal?: AbortSignal; location?: ChatLocation },
+      options?: { signal?: AbortSignal; location?: ChatLocation; sessionId?: string },
     ): Promise<ChatResult> {
       // 同步段：拒新请求 + 注册在途句柄，都先于第一个 await（防 shutdown 竞争）。
       assertOpen();
@@ -330,9 +409,9 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
       return track(runSend(handle, userId, message, options));
     },
 
-    async history(userId: string): Promise<ChatHistory> {
+    async history(userId: string, sessionId?: string): Promise<ChatHistory> {
       assertOpen();
-      return track(runHistory(userId));
+      return track(runHistory(userId, sessionId));
     },
 
     shutdown(): Promise<void> {

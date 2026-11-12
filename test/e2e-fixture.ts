@@ -156,6 +156,12 @@ export interface PersistentFixtureOptions {
   config?: ExplorerConfig;
   userId?: string;
   sessionId?: string;
+  /** 新建对话标题（仅未传 sessionId 时生效）。 */
+  title?: string;
+  /** 编排入参：所建 run 的父 run / 回投会话 / 递归深度，透传 createPersistentPlanner。 */
+  parentRunId?: string;
+  replyToSessionId?: string;
+  depth?: number;
   /** 复用同一 SessionRepository（多实例/重开场景必传）。 */
   sessions?: SessionRepository;
   repository?: EventRepository;
@@ -195,6 +201,10 @@ export async function makePersistent(
     sessions,
     userId: options.userId ?? "u-test",
     sessionId: options.sessionId,
+    title: options.title,
+    parentRunId: options.parentRunId,
+    replyToSessionId: options.replyToSessionId,
+    depth: options.depth,
     leaseTtlMs: options.leaseTtlMs,
     leaseRenewMs: options.leaseRenewMs,
     validate: options.validate,

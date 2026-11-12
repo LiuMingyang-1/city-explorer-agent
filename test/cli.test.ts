@@ -1,9 +1,13 @@
 import assert from "node:assert/strict";
-import { execFile } from "node:child_process";
+import { execFile, spawnSync } from "node:child_process";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { test } from "node:test";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import type { PlannerTurn, ToolCallRecord } from "../src/agent/session.ts";
+import { seedDatabase } from "../src/data/seed.ts";
 import type { CliIO, PlannerLike } from "../src/cli/loop.ts";
 import { runTurns } from "../src/cli/loop.ts";
 import type { Itinerary } from "../src/itinerary/types.ts";
@@ -155,4 +159,54 @@ test("node src/cli/main.ts --help prints usage without an API key", async () => 
   });
   assert.match(stdout, /用法/);
   assert.match(stdout, /npm run seed/);
+  assert.match(stdout, /EXPLORER_SESSION_ID/, "应说明 EXPLORER_SESSION_ID 恢复指定会话");
+  assert.match(stdout, /新建/, "默认每次启动新建对话");
+  assert.doesNotMatch(stdout, /延续同一主会话/);
+});
+
+/**
+ * 会话行为端到端：空 stdin 立即 EOF → main() 只做 createPersistentPlanner
+ * （建新对话/恢复指定会话并打印会话 ID）即正常退出，全程不发模型请求。
+ * 活动库与会话库都在临时目录，离线可跑。
+ */
+test("CLI opens a fresh conversation per start, prints its id, and resumes via EXPLORER_SESSION_ID", async (t) => {
+  const root = fileURLToPath(new URL("..", import.meta.url));
+  const dir = mkdtempSync(join(tmpdir(), "explorer-cli-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const dbPath = join(dir, "events.db");
+  seedDatabase(dbPath, "2026-11-11");
+  const baseEnv = {
+    EXPLORER_API_KEY: "k",
+    EXPLORER_DB_PATH: dbPath,
+    EXPLORER_SESSION_DB_PATH: join(dir, "sessions.db"),
+  };
+  const run = (env: Record<string, string> = {}) =>
+    spawnSync(process.execPath, ["src/cli/main.ts"], {
+      cwd: root,
+      env: { ...baseEnv, ...env },
+      input: "",
+      encoding: "utf8",
+      timeout: 30_000,
+    });
+
+  // 无 EXPLORER_SESSION_ID：新建对话并在 stderr 打印会话 ID；两次启动不同会话。
+  const first = run();
+  assert.equal(first.status, 0, first.stderr);
+  const sid1 = first.stderr.match(/新对话会话 (\S+)；/)?.[1];
+  assert.ok(sid1, `stderr 应打印会话 ID：\n${first.stderr}`);
+  assert.match(first.stderr, new RegExp(`EXPLORER_SESSION_ID=${sid1}`));
+  const second = run();
+  assert.equal(second.status, 0, second.stderr);
+  const sid2 = second.stderr.match(/新对话会话 (\S+)；/)?.[1];
+  assert.ok(sid2 && sid2 !== sid1, "每次启动应新建不同对话");
+
+  // 不存在的会话 ID：明确拒绝，不误建新会话。
+  const bad = run({ EXPLORER_SESSION_ID: "sess-missing" });
+  assert.notEqual(bad.status, 0);
+  assert.match(bad.stderr, /不存在|not_found/);
+
+  // 合法 ID：恢复指定会话。
+  const resumed = run({ EXPLORER_SESSION_ID: sid1 });
+  assert.equal(resumed.status, 0, resumed.stderr);
+  assert.match(resumed.stderr, new RegExp(`已恢复会话 ${sid1}`));
 });

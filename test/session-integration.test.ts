@@ -65,7 +65,11 @@ test("first prompt persists run+messages, close+reopen keeps main session and pl
   assert.equal(pointer.record.recordId, messages[1].recordId);
   await first.session.close();
 
-  const second = await makePersistent(t, [], { sessions, repository: first.repo });
+  const second = await makePersistent(t, [], {
+    sessions,
+    repository: first.repo,
+    sessionId: mainId,
+  });
   assert.equal(second.session.sessionId, mainId);
   assert.deepEqual(second.session.itinerary, first.session.itinerary);
   assert.deepEqual(second.session.constraints, first.session.constraints);
@@ -122,7 +126,7 @@ test("reopen restores checkpoint, kept tail and post-checkpoint messages", async
   assert.equal(turn.kind, "itinerary");
   await session.close();
 
-  const reopened = await makePersistent(t, [], { sessions });
+  const reopened = await makePersistent(t, [], { sessions, sessionId: sid });
   const ctx2 = reopened.session.agent.state.messages;
   assert.ok(asText(ctx2[1]).includes("摘要")); // 打开时重放到最新检查点
   assert.ok(asText(ctx2).includes("压缩后再排一个")); // 检查点后的新消息也在
@@ -201,6 +205,55 @@ test("cross-user session open is rejected; unknown session id is rejected", asyn
     }),
     (error: unknown) => isSessionError(error, "not_found"),
   );
+});
+
+test("no sessionId opens a fresh main conversation each time; title is stored", async (t) => {
+  const sessions = openMemoryRepo(t);
+  const a = await makePersistent(t, [], { sessions, title: "周六看展" });
+  const b = await makePersistent(t, [], { sessions });
+  assert.ok(a.session.sessionId);
+  assert.notEqual(a.session.sessionId, b.session.sessionId);
+  const rows = await sessions.listSessions("u-test");
+  assert.equal(rows.length, 2);
+  assert.ok(rows.every((s) => s.kind === "main" && s.parentSessionId === null));
+  const titled = await sessions.getSession("u-test", a.session.sessionId as string);
+  assert.equal(titled?.title, "周六看展");
+  const untitled = await sessions.getSession("u-test", b.session.sessionId as string);
+  assert.equal(untitled?.title, null);
+});
+
+test("parentRunId/replyToSessionId land on the child run; rootRunId follows the parent", async (t) => {
+  const sessions = openMemoryRepo(t);
+  const parent = await makePersistent(t, [], { sessions });
+  const parentSid = parent.session.sessionId as string;
+  const ev = await exhibition(parent.repo, DAY1);
+  parent.faux.setResponses([afternoonPlan(ev)]);
+  assert.equal((await parent.session.prompt("父轮安排")).kind, "itinerary");
+  const parentRun = (await sessions.listRunsBySession("u-test", parentSid)).at(-1);
+  assert.ok(parentRun);
+
+  const writer = await mustAcquire(sessions, "u-test", parentSid);
+  const child = await sessions.createChildSession(writer, "u-test", {
+    parentSessionId: parentSid,
+    title: "子任务",
+  });
+  await sessions.releaseLease(writer, "u-test", parentSid);
+
+  const childPlanner = await makePersistent(t, [], {
+    sessions,
+    repository: parent.repo,
+    sessionId: child.sessionId,
+    parentRunId: parentRun.runId,
+    replyToSessionId: parentSid,
+    depth: 1,
+  });
+  childPlanner.faux.setResponses([fauxAssistantMessage('{"type":"clarify","question":"q"}')]);
+  assert.equal((await childPlanner.session.prompt("子任务一轮")).kind, "clarification");
+  const childRun = (await sessions.listRunsBySession("u-test", child.sessionId)).at(-1);
+  assert.ok(childRun);
+  assert.equal(childRun.parentRunId, parentRun.runId);
+  assert.equal(childRun.replyToSessionId, parentSid);
+  assert.equal(childRun.rootRunId, parentRun.rootRunId);
 });
 
 // ---- 每轮写路径 ----
@@ -298,7 +351,7 @@ test("reopen closes an interrupted tool batch instead of re-executing it", async
   });
   await sessions.releaseLease(w, "u-test", sid);
 
-  const { session, repo, faux } = await makePersistent(t, [], { sessions });
+  const { session, repo, faux } = await makePersistent(t, [], { sessions, sessionId: sid });
   const messages = await messageRecords(sessions, sid);
   assert.equal(messages.length, 4); // 打开时补上了 call-2 的中断 toolResult
   const tail = parseStoredMessagePayload(messages[3].payload, "t").message;
@@ -325,7 +378,7 @@ test("a run left running by a crashed writer is marked failed on open", async (t
     startImmediately: true,
   });
   await sessions.releaseLease(w, "u-test", sid);
-  const { session: reopened } = await makePersistent(t, [], { sessions });
+  const { session: reopened } = await makePersistent(t, [], { sessions, sessionId: sid });
   const run = await sessions.getRun("u-test", dead.runId);
   assert.equal(run?.status, "failed");
   assert.match(run?.error ?? "", /中断/);
@@ -396,7 +449,7 @@ test("close releases the lease and further prompts are refused", async (t) => {
   const { session: next } = await makePersistent(
     t,
     [fauxAssistantMessage('{"type":"clarify","question":"q"}')],
-    { sessions },
+    { sessions, sessionId: sid },
   );
   const reopened = await next.prompt("新一轮");
   assert.equal(reopened.kind, "clarification");

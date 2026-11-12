@@ -1,20 +1,26 @@
 /**
  * Web ChatService 离线测试（history + 真实持久链路）：
  * faux 模型 → 真实 createPersistentPlanner → 真实 :memory: 会话库 →
- * 真实校验与指针提交。覆盖多轮顺序、修改、隔离、失败/工具消息过滤。
+ * 真实校验与指针提交。覆盖多轮顺序、修改、隔离、失败/工具消息过滤、
+ * 多对话 session_id 语义、会话标题、404/409 分类与跨对话记忆连续性。
  * send 路径的工厂/关闭语义见 web-service.test.ts。
  */
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { TestContext } from "node:test";
+import type { StreamFn } from "@earendil-works/pi-agent-core";
+import type { SystemMessage } from "@earendil-works/pi-ai";
 import { createFauxCore, fauxAssistantMessage, fauxToolCall } from "@earendil-works/pi-ai/providers/faux";
 import type { EventRepository } from "../src/data/repository.ts";
 import type { Event } from "../src/data/types.ts";
 import type { Itinerary } from "../src/itinerary/types.ts";
+import type { SessionRepository } from "../src/session/repository.ts";
 import { createSqliteSessionRepository } from "../src/session/sqlite.ts";
 import { ChatServiceError, createChatService } from "../src/web/service.ts";
+import type { ManagedChatService } from "../src/web/service.ts";
+import { ChatClientError } from "../src/web/types.ts";
 import type { ChatResult } from "../src/web/types.ts";
-import { BASE, CONFIG, DAY1, envelope, makeStreamFn } from "./e2e-fixture.ts";
+import { BASE, CONFIG, DAY1, envelope, isDistillRequest, makeStreamFn } from "./e2e-fixture.ts";
 
 function makeEvent(id: string, over: Partial<Event> = {}): Event {
   return {
@@ -63,7 +69,11 @@ function stop(event_id: string, arrive_at: string, leave_at: string) {
 }
 
 /** 离线 service：faux 响应队列 + 真实会话库/默认 planner 工厂。 */
-function setup(t: TestContext, events: Event[]) {
+function setup(
+  t: TestContext,
+  events: Event[],
+  options: { streamFn?: StreamFn } = {},
+): { service: ManagedChatService; sessions: SessionRepository; faux: ReturnType<typeof createFauxCore> } {
   const sessions = createSqliteSessionRepository(":memory:");
   t.after(() => sessions.close());
   const faux = createFauxCore({});
@@ -72,31 +82,51 @@ function setup(t: TestContext, events: Event[]) {
     config: CONFIG,
     repository: fakeRepo(events),
     sessions,
-    streamFn,
+    streamFn: options.streamFn ?? streamFn,
     currentDate: BASE,
+  });
+  t.after(async () => {
+    await service.shutdown();
   });
   return { service, sessions, faux };
 }
 
-test("空用户 history：幂等建 user+主会话，空消息、itinerary 为 null", async (t) => {
+/** send 链：首轮拿到 session_id 后同对话后续轮次显式带上。 */
+async function sendTurn(
+  service: ManagedChatService,
+  userId: string,
+  message: string,
+  sessionId?: string,
+): Promise<ChatResult> {
+  return service.send(userId, message, sessionId === undefined ? {} : { sessionId });
+}
+
+test("空 history：不带 sessionId 直接回空，库里不建用户/会话行", async (t) => {
   const { service, sessions } = setup(t, []);
   const h1 = await service.history("u-new");
-  assert.deepEqual(h1.messages, []);
-  assert.equal(h1.itinerary, null);
-  assert.equal(h1.events, undefined);
+  assert.deepEqual(h1, { messages: [], itinerary: null });
   const h2 = await service.history("u-new");
   assert.deepEqual(h2, h1);
-  const user = await sessions.getUser("u-new");
-  const main = await sessions.getMainSession("u-new");
-  assert.equal(main.sessionId, user?.mainSessionId); // 两次 history 同一主会话
+  assert.equal(await sessions.getUser("u-new"), undefined); // 不建用户
+  assert.deepEqual(await sessions.listSessions("u-new"), []); // 0 会话行
 });
 
-test("澄清轮：send 返回 clarification；history 按顺序还原 user+assistant，无行程", async (t) => {
-  const { service, faux } = setup(t, []);
+test("澄清轮：send 返回 clarification+session_id；history(sessionId) 还原消息", async (t) => {
+  const { service, sessions, faux } = setup(t, []);
   faux.setResponses([fauxAssistantMessage('{"type":"clarify","question":"哪天去？"}')]);
-  const result = await service.send("u-a", "帮我安排");
-  assert.deepEqual(result, { kind: "clarification", question: "哪天去？" });
-  const h = await service.history("u-a");
+  const result = await sendTurn(service, "u-a", "帮我安排");
+  assert.equal(result.kind, "clarification");
+  if (result.kind !== "clarification") return;
+  assert.equal(result.question, "哪天去？");
+  assert.equal(typeof result.session_id, "string");
+  // 新对话已懒建：一条 kind='main' 会话，标题为首条消息。
+  const conversations = await sessions.listSessions("u-a");
+  assert.equal(conversations.length, 1);
+  assert.equal(conversations[0].sessionId, result.session_id);
+  assert.equal(conversations[0].kind, "main");
+  assert.equal(conversations[0].title, "帮我安排");
+
+  const h = await service.history("u-a", result.session_id);
   assert.deepEqual(h.messages, [
     { role: "user", text: "帮我安排" },
     { role: "assistant", text: "哪天去？" },
@@ -120,7 +150,7 @@ test("行程轮：send 返回校验后 itinerary + EventView；history 一致且
       ),
     ),
   ]);
-  const result = await service.send("u-a", "安排一下");
+  const result = await sendTurn(service, "u-a", "安排一下");
   assert.equal(result.kind, "itinerary");
   if (result.kind !== "itinerary") return;
   assert.deepEqual(
@@ -131,17 +161,16 @@ test("行程轮：send 返回校验后 itinerary + EventView；history 一致且
   assert.equal(result.events[0].latitude, ev2.latitude);
 
   // planner 已关闭：会话写租约释放（不残留 owner）。
-  const main = await sessions.getMainSession("u-a");
-  const session = await sessions.getSession("u-a", main.sessionId);
+  const session = await sessions.getSession("u-a", result.session_id);
   assert.equal(session?.leaseOwner, null);
 
-  const h = await service.history("u-a");
+  const h = await service.history("u-a", result.session_id);
   assert.deepEqual(h.messages, [{ role: "user", text: "安排一下" }]); // 无重复 assistant 卡片
   assert.deepEqual(h.itinerary, result.itinerary);
   assert.deepEqual(h.events, result.events);
 });
 
-test("多轮：澄清 → 行程 → 修改行程，历史顺序完整、被替换行程摘要保留、当前行程独立", async (t) => {
+test("多轮同对话：澄清 → 行程 → 修改行程，显式带 session_id 续轮", async (t) => {
   const ev1 = makeEvent("evt_1");
   const ev2 = makeEvent("evt_2");
   const { service, faux } = setup(t, [ev1, ev2]);
@@ -160,13 +189,16 @@ test("多轮：澄清 → 行程 → 修改行程，历史顺序完整、被替�
     fauxAssistantMessage(envelope(planA, { date: DAY1 })),
     fauxAssistantMessage(envelope(planB, { date: DAY1 })),
   ]);
-  await service.send("u-a", "想出门");
-  const r2 = await service.send("u-a", "14 号");
-  const r3 = await service.send("u-a", "再加一站"); // 每次 send 重开持久会话（同 user 重开）
+  const r1 = await sendTurn(service, "u-a", "想出门");
+  const sid = r1.session_id;
+  const r2 = await sendTurn(service, "u-a", "14 号", sid);
+  const r3 = await sendTurn(service, "u-a", "再加一站", sid); // 每次 send 重开同一持久会话
   assert.equal(r2.kind, "itinerary");
   assert.equal(r3.kind, "itinerary");
+  assert.equal(r2.session_id, sid);
+  assert.equal(r3.session_id, sid);
 
-  const h = await service.history("u-a");
+  const h = await service.history("u-a", sid);
   assert.deepEqual(h.messages, [
     { role: "user", text: "想出门" },
     { role: "assistant", text: "哪天去？" },
@@ -179,6 +211,32 @@ test("多轮：澄清 → 行程 → 修改行程，历史顺序完整、被替�
     h.events?.map((e) => e.event_id),
     ["evt_1", "evt_2"],
   );
+});
+
+test("不带 sessionId 的 send 每次各建一条独立 main 对话", async (t) => {
+  const { service, sessions, faux } = setup(t, []);
+  faux.setResponses([
+    fauxAssistantMessage('{"type":"clarify","question":"q1"}'),
+    fauxAssistantMessage('{"type":"clarify","question":"q2"}'),
+  ]);
+  const r1 = await sendTurn(service, "u-a", "第一次");
+  const r2 = await sendTurn(service, "u-a", "第二次");
+  assert.notEqual(r1.session_id, r2.session_id);
+  const conversations = await sessions.listSessions("u-a");
+  assert.equal(conversations.length, 2);
+  assert.ok(conversations.every((s) => s.kind === "main" && s.parentSessionId === null));
+
+  // 各自历史独立：对话 1 只有第一轮消息。
+  const h1 = await service.history("u-a", r1.session_id);
+  assert.deepEqual(h1.messages, [
+    { role: "user", text: "第一次" },
+    { role: "assistant", text: "q1" },
+  ]);
+  const h2 = await service.history("u-a", r2.session_id);
+  assert.deepEqual(h2.messages, [
+    { role: "user", text: "第二次" },
+    { role: "assistant", text: "q2" },
+  ]);
 });
 
 test("失败 run 连同其输入被忽略；工具消息与纠错文本不进历史", async (t) => {
@@ -195,11 +253,11 @@ test("失败 run 连同其输入被忽略；工具消息与纠错文本不进历
     fauxAssistantMessage("still not json"),
     fauxAssistantMessage("nope"),
   ]);
-  const r1 = await service.send("u-a", "想看展");
+  const r1 = await sendTurn(service, "u-a", "想看展");
   assert.equal(r1.kind, "clarification");
-  await assert.rejects(service.send("u-a", "随便"), ChatServiceError);
+  await assert.rejects(sendTurn(service, "u-a", "随便", r1.session_id), ChatServiceError);
 
-  const h = await service.history("u-a");
+  const h = await service.history("u-a", r1.session_id);
   // 只剩第一轮的 user+question：工具调用、纠错消息、失败 run 的输入全部不可见。
   assert.deepEqual(h.messages, [
     { role: "user", text: "想看展" },
@@ -208,7 +266,7 @@ test("失败 run 连同其输入被忽略；工具消息与纠错文本不进历
   assert.equal(h.itinerary, null);
 });
 
-test("不同 user 隔离：u-b 看不到 u-a 的消息与行程", async (t) => {
+test("不同 user 隔离：u-b 看不到 u-a 的对话，跨用户 session_id 一律 not_found", async (t) => {
   const ev1 = makeEvent("evt_1");
   const { service, faux } = setup(t, [ev1]);
   const plan: Itinerary = {
@@ -220,19 +278,146 @@ test("不同 user 隔离：u-b 看不到 u-a 的消息与行程", async (t) => {
     fauxAssistantMessage(envelope(plan, { date: DAY1 })),
     fauxAssistantMessage('{"type":"clarify","question":"u-b 想去哪？"}'),
   ]);
-  const ra = await service.send("u-a", "安排");
-  const hA = await service.history("u-a");
-  const hB = await service.history("u-b");
-  assert.deepEqual(hB.messages, []);
-  assert.equal(hB.itinerary, null);
+  const ra = await sendTurn(service, "u-a", "安排");
+  const hA = await service.history("u-a", ra.session_id);
+  const hB = await service.history("u-b"); // 无 sessionId：空历史，不建任何行
+  assert.deepEqual(hB, { messages: [], itinerary: null });
   assert.ok(hA.messages.length > 0 && hA.itinerary !== null);
 
-  const rb: ChatResult = await service.send("u-b", "我也想去");
-  assert.deepEqual(rb, { kind: "clarification", question: "u-b 想去哪？" });
-  const hB2 = await service.history("u-b");
+  // u-b 拿着 u-a 的 session_id：send/history 都是 not_found（不泄露存在性）。
+  await assert.rejects(sendTurn(service, "u-b", "偷看", ra.session_id), (error) => {
+    assert.ok(error instanceof ChatClientError);
+    assert.equal(error.code, "not_found");
+    return true;
+  });
+  await assert.rejects(service.history("u-b", ra.session_id), (error) => {
+    assert.ok(error instanceof ChatClientError);
+    assert.equal(error.code, "not_found");
+    return true;
+  });
+
+  const rb: ChatResult = await sendTurn(service, "u-b", "我也想去");
+  assert.equal(rb.kind, "clarification");
+  assert.notEqual(rb.session_id, ra.session_id); // u-b 自己的新对话
+  const hB2 = await service.history("u-b", rb.session_id);
   assert.deepEqual(hB2.messages, [
     { role: "user", text: "我也想去" },
     { role: "assistant", text: "u-b 想去哪？" },
   ]);
-  assert.deepEqual(ra.kind, "itinerary");
+});
+
+test("sessionId 校验矩阵：child 会话 not_found、归档会话 conflict（send/history 同规则）", async (t) => {
+  const { service, sessions, faux } = setup(t, []);
+  faux.setResponses([
+    fauxAssistantMessage('{"type":"clarify","question":"q"}'),
+    fauxAssistantMessage('{"type":"clarify","question":"q2"}'),
+    fauxAssistantMessage('{"type":"clarify","question":"q3"}'),
+  ]);
+  const r1 = await sendTurn(service, "u-a", "建个对话");
+  const sid = r1.session_id;
+
+  // 造一条 child 会话：需持父对话租约。
+  const writer = await sessions.acquireLease("u-a", sid, "test", 60_000);
+  assert.ok(writer);
+  const child = await sessions.createChildSession(writer, "u-a", {
+    parentSessionId: sid,
+    title: "子任务",
+  });
+  await sessions.releaseLease(writer, "u-a", sid);
+
+  // 归档另一条独立对话（不能归档 sid 本身——child 的父必须留 active；
+  // 且测试还要用 sid 跑通放行对照组）。
+  const r2 = await sendTurn(service, "u-a", "再建一个");
+  const writer2 = await sessions.acquireLease("u-a", r2.session_id, "test", 60_000);
+  assert.ok(writer2);
+  await sessions.archiveSession(writer2, "u-a", r2.session_id);
+
+  const expectClientError = async (promise: Promise<unknown>, code: string) => {
+    await assert.rejects(promise, (error) => {
+      assert.ok(error instanceof ChatClientError);
+      assert.equal(error.code, code);
+      return true;
+    });
+  };
+
+  // child → not_found（send 与 history 同口径）。
+  await expectClientError(sendTurn(service, "u-a", "hi", child.sessionId), "not_found");
+  await expectClientError(service.history("u-a", child.sessionId), "not_found");
+  // archived → conflict。
+  await expectClientError(sendTurn(service, "u-a", "hi", r2.session_id), "conflict");
+  await expectClientError(service.history("u-a", r2.session_id), "conflict");
+  // 不存在 → not_found。
+  await expectClientError(sendTurn(service, "u-a", "hi", "conv_nope"), "not_found");
+  await expectClientError(service.history("u-a", "conv_nope"), "not_found");
+  // 健康对话对照组：放行且返回同一 session_id。
+  const ok = await sendTurn(service, "u-a", "继续", sid);
+  assert.equal(ok.session_id, sid);
+});
+
+test("同会话租约被占：send(sessionId) 映射 ChatClientError(conflict)", async (t) => {
+  const { service, sessions, faux } = setup(t, []);
+  faux.setResponses([fauxAssistantMessage('{"type":"clarify","question":"q"}')]);
+  const r1 = await sendTurn(service, "u-a", "先建对话");
+  const sid = r1.session_id;
+
+  // 另一写者占住该会话写租约：续写请求应得 409 而非 500。
+  const writer = await sessions.acquireLease("u-a", sid, "other-writer", 60_000);
+  assert.ok(writer);
+  await assert.rejects(sendTurn(service, "u-a", "并发写入", sid), (error) => {
+    assert.ok(error instanceof ChatClientError);
+    assert.equal(error.code, "conflict");
+    return true;
+  });
+  await sessions.releaseLease(writer, "u-a", sid);
+});
+
+test("跨对话长期记忆：对话 1 确认行程 close 蒸馏后，新对话自动注入记忆", async (t) => {
+  const ev1 = makeEvent("evt_1");
+  const faux = createFauxCore({});
+  const doc = "## 用户\n常驻西安\n\n## 偏好\n喜欢展览\n\n## 足迹\n2026-11-14 看展行程\n";
+  const { streamFn: base, distill } = makeStreamFn(faux, undefined, [
+    fauxAssistantMessage(doc),
+  ]);
+  // 记录每次正常会话请求看到的 memory_context（蒸馏/摘要旁路不计）。
+  const seenMemory: (string | null | undefined)[] = [];
+  const streamFn: StreamFn = (model, context, options) => {
+    if (!isDistillRequest(context)) {
+      const system = context.messages.find((m) => m.role === "system") as
+        | SystemMessage
+        | undefined;
+      seenMemory.push(system?.sections?.["memory_context"] ?? null);
+    }
+    return base(model, context, options);
+  };
+  const { service, sessions } = setup(t, [ev1], { streamFn });
+
+  const plan: Itinerary = {
+    date: DAY1,
+    summary: "看展行程",
+    stops: [stop("evt_1", "10:00", "11:00")],
+  };
+  faux.setResponses([
+    fauxAssistantMessage(envelope(plan, { date: DAY1 })),
+    fauxAssistantMessage('{"type":"clarify","question":"去哪？"}'),
+  ]);
+
+  // 对话 1：确认行程 → plan 标注 → close 即触发后台蒸馏。
+  const r1 = await sendTurn(service, "u-m", "帮我安排行程");
+  assert.equal(r1.kind, "itinerary");
+  assert.equal(seenMemory[0], null); // 蒸馏前：首轮请求无 memory_context
+  const deadline = Date.now() + 5_000;
+  while ((await sessions.getUserMemory("u-m")) === undefined) {
+    assert.ok(Date.now() < deadline, "close 的后台蒸馏应写出 user_memory");
+    await new Promise((r) => setTimeout(r, 10));
+  }
+  assert.equal(distill.calls(), 1);
+  const memory = await sessions.getUserMemory("u-m");
+  assert.match(memory?.content ?? "", /常驻西安/);
+
+  // 对话 2（不传 session_id 的新对话）：首轮模型请求即带上蒸馏出的记忆。
+  const r2 = await sendTurn(service, "u-m", "明天再出门");
+  assert.equal(r2.kind, "clarification");
+  assert.notEqual(r2.session_id, r1.session_id);
+  assert.equal(seenMemory.length, 2);
+  assert.match(seenMemory[1] ?? "", /常驻西安/);
 });

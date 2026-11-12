@@ -90,17 +90,72 @@ test("foreign keys and CHECK constraints are enforced at the database layer", as
         .run(main.sessionId),
     /CHECK|json/,
   );
-  // 每用户唯一 main 会话由部分唯一索引保证。
-  assert.throws(
-    () =>
-      db
-        .prepare(
-          `INSERT INTO sessions (session_id, user_id, kind, status, last_activity_at, created_at, updated_at)
-           VALUES ('s-dup', 'u-fk', 'main', 'active', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z')`,
-        )
-        .run(),
-    /UNIQUE/,
-  );
+  // kind='main' 不再唯一：同一用户可有多条对话会话（对话即 main）。
+  db.prepare(
+    `INSERT INTO sessions (session_id, user_id, kind, status, last_activity_at, created_at, updated_at)
+     VALUES ('s-dup', 'u-fk', 'main', 'active', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z')`,
+  ).run();
+});
+
+test("legacy database with unique main index upgrades: a second main conversation can be created", async (t) => {
+  const dbPath = tempDbPath(t);
+  // 模拟老库：users 带 main_session_id 死列 + idx_sessions_main 部分唯一索引。
+  // 只建最小两张表（其余表由 ensureSessionSchema 补齐），故先关 FK 检查。
+  const db = new DatabaseSync(dbPath);
+  db.exec("PRAGMA foreign_keys = OFF");
+  db.exec(`
+    CREATE TABLE users (
+      user_id TEXT PRIMARY KEY,
+      main_session_id TEXT REFERENCES sessions(session_id),
+      display_name TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE TABLE sessions (
+      session_id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(user_id),
+      kind TEXT NOT NULL CHECK (kind IN ('main', 'child')),
+      parent_session_id TEXT REFERENCES sessions(session_id),
+      title TEXT,
+      status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'archived')),
+      current_itinerary_record_id TEXT REFERENCES session_records(record_id),
+      lease_owner TEXT,
+      lease_epoch INTEGER NOT NULL DEFAULT 0,
+      lease_expires_at TEXT,
+      last_activity_at TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      CHECK (
+        (kind = 'main' AND parent_session_id IS NULL) OR
+        (kind = 'child' AND parent_session_id IS NOT NULL)
+      ),
+      CHECK (kind = 'main' OR current_itinerary_record_id IS NULL)
+    );
+    CREATE UNIQUE INDEX idx_sessions_main ON sessions(user_id) WHERE kind = 'main';
+  `);
+  const now = "2026-01-01T00:00:00Z";
+  db.prepare(
+    "INSERT INTO users (user_id, display_name, created_at, updated_at) VALUES ('u-legacy', NULL, ?, ?)",
+  ).run(now, now);
+  db.prepare(
+    `INSERT INTO sessions (session_id, user_id, kind, status, last_activity_at, created_at, updated_at)
+     VALUES ('s-old', 'u-legacy', 'main', 'active', ?, ?, ?)`,
+  ).run(now, now, now);
+  db.prepare("UPDATE users SET main_session_id = 's-old' WHERE user_id = 'u-legacy'").run();
+  db.close();
+
+  // 打开仓库触发 ensureSessionSchema：旧唯一索引被 DROP，老会话就地变成普通历史对话。
+  const repo = createSqliteSessionRepository(dbPath);
+  t.after(() => repo.close());
+  const old = await repo.getSession("u-legacy", "s-old");
+  assert.equal(old?.kind, "main");
+
+  const second = await repo.createConversation("u-legacy");
+  assert.equal(second.kind, "main");
+  assert.equal(second.parentSessionId, null);
+  const sessions = await repo.listSessions("u-legacy");
+  assert.equal(sessions.length, 2);
+  assert.ok(sessions.every((s) => s.kind === "main"));
 });
 
 test("session database file is independent from the events database path", async (t) => {

@@ -51,6 +51,58 @@ test("EXPLORER_SESSION_DB_PATH overrides the session db location", () => {
   assert.notEqual(loaded.sessionDbPath, loaded.dbPath);
 });
 
+test("EXPLORER_SESSION_ID pins a session; unset or blank falls back to undefined", () => {
+  assert.equal(loadConfig({ EXPLORER_API_KEY: "k" }).sessionId, undefined);
+  for (const value of ["", "   ", " \t "]) {
+    assert.equal(
+      loadConfig({ EXPLORER_API_KEY: "k", EXPLORER_SESSION_ID: value }).sessionId,
+      undefined,
+    );
+  }
+  assert.equal(
+    loadConfig({ EXPLORER_API_KEY: "k", EXPLORER_SESSION_ID: "  sess-42  " }).sessionId,
+    "sess-42",
+  );
+});
+
+test("EXPLORER_MEMORY_MIN_USER_MESSAGES defaults to 3 and validates positive integers", () => {
+  assert.equal(loadConfig({ EXPLORER_API_KEY: "k" }).memoryMinUserMessages, 3);
+  assert.equal(
+    loadConfig({ EXPLORER_API_KEY: "k", EXPLORER_MEMORY_MIN_USER_MESSAGES: "7" })
+      .memoryMinUserMessages,
+    7,
+  );
+  for (const bad of ["abc", "0", "-5", "4.5"]) {
+    assert.throws(
+      () => loadConfig({ EXPLORER_API_KEY: "k", EXPLORER_MEMORY_MIN_USER_MESSAGES: bad }),
+      /EXPLORER_MEMORY_MIN_USER_MESSAGES/,
+    );
+  }
+});
+
+test("EXPLORER_SUBAGENT_* defaults to 8 / 120000 and validates positive integers", () => {
+  const loaded = loadConfig({ EXPLORER_API_KEY: "k" });
+  assert.equal(loaded.subagentMaxConcurrent, 8);
+  assert.equal(loaded.subagentTimeoutMs, 120_000);
+  const custom = loadConfig({
+    EXPLORER_API_KEY: "k",
+    EXPLORER_SUBAGENT_MAX_CONCURRENT: "4",
+    EXPLORER_SUBAGENT_TIMEOUT_MS: "60000",
+  });
+  assert.equal(custom.subagentMaxConcurrent, 4);
+  assert.equal(custom.subagentTimeoutMs, 60_000);
+  for (const bad of ["abc", "0", "-5", "4.5"]) {
+    assert.throws(
+      () => loadConfig({ EXPLORER_API_KEY: "k", EXPLORER_SUBAGENT_MAX_CONCURRENT: bad }),
+      /EXPLORER_SUBAGENT_MAX_CONCURRENT/,
+    );
+    assert.throws(
+      () => loadConfig({ EXPLORER_API_KEY: "k", EXPLORER_SUBAGENT_TIMEOUT_MS: bad }),
+      /EXPLORER_SUBAGENT_TIMEOUT_MS/,
+    );
+  }
+});
+
 test("loadConfig requires an API key", () => {
   assert.throws(() => loadConfig({}), /EXPLORER_API_KEY|OPENAI_API_KEY/);
 });

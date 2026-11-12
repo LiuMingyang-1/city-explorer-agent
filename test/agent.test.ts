@@ -5,7 +5,9 @@ import { join } from "node:path";
 import { test } from "node:test";
 import type { TestContext } from "node:test";
 import { SEARCH_EVENTS_TOOL, createSearchEventsTool } from "../src/agent/tools.ts";
+import { DELEGATE_TASK_TOOL, createDelegateTaskTool } from "../src/agent/delegate.ts";
 import { buildSystemPrompt, localToday } from "../src/agent/prompt.ts";
+import { createExplorerAgent } from "../src/agent/explorer-agent.ts";
 import {
   extractEventIds,
   lastAssistantText,
@@ -14,9 +16,20 @@ import {
 } from "../src/agent/response.ts";
 import { seedDatabase } from "../src/data/seed.ts";
 import { createSqliteEventRepository } from "../src/data/sqlite.ts";
+import type { ExplorerConfig } from "../src/config.ts";
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
+import { openMemoryRepo } from "./session-fixture.ts";
 
 const BASE = "2026-11-11";
+
+const CONFIG: ExplorerConfig = {
+  provider: "openai",
+  model: "gpt-5.4",
+  apiKey: "k",
+  contextWindow: 128_000,
+  maxTokens: 4096,
+  dbPath: "unused.db",
+};
 
 function seededRepo(t: TestContext) {
   const dir = mkdtempSync(join(tmpdir(), "explorer-agent-"));
@@ -81,6 +94,60 @@ test("system prompt injects current date and the output contract", () => {
   assert.ok(prompt.includes('"clarify"') && prompt.includes('"itinerary"'));
   assert.ok(prompt.includes("constraints"));
   assert.equal(localToday(new Date(2026, 10, 11)), "2026-11-11");
+});
+
+test("system prompt stays byte-identical unless canDelegate is true", () => {
+  assert.equal(buildSystemPrompt(BASE), buildSystemPrompt(BASE, {}));
+  assert.equal(buildSystemPrompt(BASE), buildSystemPrompt(BASE, { canDelegate: false }));
+  const delegated = buildSystemPrompt(BASE, { canDelegate: true });
+  assert.notEqual(delegated, buildSystemPrompt(BASE));
+  assert.ok(delegated.includes(DELEGATE_TASK_TOOL));
+  assert.ok(delegated.includes("子任务委派"));
+  assert.ok(delegated.startsWith(buildSystemPrompt(BASE).split("用户位置")[0]));
+});
+
+test("explorer agent mounts delegate_task only via extraTools/canDelegate", async (t) => {
+  const repo = seededRepo(t);
+  const plain = await createExplorerAgent({ config: CONFIG, repository: repo, currentDate: BASE });
+  assert.deepEqual(plain.state.tools.map((tool) => tool.name), [SEARCH_EVENTS_TOOL]);
+  assert.equal(plain.state.systemPrompt, buildSystemPrompt(BASE));
+  assert.ok(!plain.state.systemPrompt.includes(DELEGATE_TASK_TOOL));
+
+  const sessions = openMemoryRepo(t);
+  const delegateTool = createDelegateTaskTool({
+    getContext: () => undefined,
+    repository: repo,
+    sessions,
+    spawnChild: async () => {
+      throw new Error("unused in this test");
+    },
+  });
+  const delegated = await createExplorerAgent({
+    config: CONFIG,
+    repository: repo,
+    currentDate: BASE,
+    canDelegate: true,
+    extraTools: [delegateTool],
+  });
+  assert.deepEqual(delegated.state.tools.map((tool) => tool.name), [
+    SEARCH_EVENTS_TOOL,
+    DELEGATE_TASK_TOOL,
+  ]);
+  assert.equal(delegated.state.systemPrompt, buildSystemPrompt(BASE, { canDelegate: true }));
+
+  // 挂了工具但没开提示词开关：提示词仍不提派发（防幻觉调用方向反过来才需要）。
+  const silent = await createExplorerAgent({
+    config: CONFIG,
+    repository: repo,
+    currentDate: BASE,
+    canDelegate: false,
+    extraTools: [delegateTool],
+  });
+  assert.deepEqual(silent.state.tools.map((tool) => tool.name), [
+    SEARCH_EVENTS_TOOL,
+    DELEGATE_TASK_TOOL,
+  ]);
+  assert.equal(silent.state.systemPrompt, buildSystemPrompt(BASE));
 });
 
 test("parsePlannerResponse parses clarify and itinerary envelopes", () => {

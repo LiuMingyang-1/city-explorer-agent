@@ -94,20 +94,34 @@ export async function readRequestBody(
   return overflow ? BODY_TOO_LARGE : Buffer.concat(chunks);
 }
 
+/** session_id 的统一长度上限（body 与 query 校验共用）。 */
+export const MAX_SESSION_ID_CHARS = 128;
+
+/**
+ * session_id 值校验：必须是 string 且 trim 后 1..128 字符；返回 trim 后的
+ * 合法值，不合法返回 undefined（调用方转 400，不回显输入）。
+ */
+function validSessionId(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length >= 1 && trimmed.length <= MAX_SESSION_ID_CHARS ? trimmed : undefined;
+}
+
 /**
  * 严格解析 POST /api/chat 请求体：必须是 JSON 对象，键只允许 message
- * （必填）与 location（可选）——其他任何字段（userId、messages、
- * itinerary 等）都直接拒绝，防止客户端越权指定身份或伪造历史。
- * message 按 trim 后 1..maxChars 字校验；location 若给出必须是恰好
- * {lat,lng} 的对象：均为有限 number，lat∈[-90,90]、lng∈[-180,180]，
- * 多出的键同样拒绝（只传坐标、不带地名等其他信息）。
- * 返回 {message,location?} 即通过（message 已 trim）；返回 {error}
- * 即 400 原因（通用、不回显输入）。
+ * （必填）、location（可选）与 session_id（可选）——其他任何字段
+ * （userId、messages、itinerary 等）都直接拒绝，防止客户端越权指定身份
+ * 或伪造历史。message 按 trim 后 1..maxChars 字校验；location 若给出
+ * 必须是恰好 {lat,lng} 的对象：均为有限 number，lat∈[-90,90]、
+ * lng∈[-180,180]，多出的键同样拒绝（只传坐标、不带地名等其他信息）。
+ * session_id 若给出必须是非空白 string（trim 后 1..128 字符）。
+ * 返回 {message,location?,session_id?} 即通过（message 已 trim）；
+ * 返回 {error} 即 400 原因（通用、不回显输入）。
  */
 export function parseChatSend(
   body: Buffer,
   maxChars: number,
-): { message: string; location?: ChatLocation } | ChatErrorResponse {
+): { message: string; location?: ChatLocation; session_id?: string } | ChatErrorResponse {
   let data: unknown;
   try {
     data = JSON.parse(body.toString("utf8"));
@@ -118,8 +132,14 @@ export function parseChatSend(
     return { error: "request body must be a JSON object" };
   }
   const keys = Object.keys(data);
-  if (!keys.includes("message") || !keys.every((k) => k === "message" || k === "location")) {
-    return { error: 'request body must contain only "message" (string) and optional "location"' };
+  if (
+    !keys.includes("message") ||
+    !keys.every((k) => k === "message" || k === "location" || k === "session_id")
+  ) {
+    return {
+      error:
+        'request body must contain only "message" (string), optional "location" and "session_id"',
+    };
   }
   const message = (data as { message?: unknown }).message;
   if (typeof message !== "string") {
@@ -129,8 +149,17 @@ export function parseChatSend(
   if (trimmed.length === 0 || trimmed.length > maxChars) {
     return { error: `message must be 1..${maxChars} characters after trim` };
   }
+  const rawSessionId = (data as { session_id?: unknown }).session_id;
+  const sessionId = rawSessionId === undefined ? undefined : validSessionId(rawSessionId);
+  if (rawSessionId !== undefined && sessionId === undefined) {
+    return { error: `session_id must be a string of 1..${MAX_SESSION_ID_CHARS} characters` };
+  }
   const rawLocation = (data as { location?: unknown }).location;
-  if (rawLocation === undefined) return { message: trimmed };
+  if (rawLocation === undefined) {
+    return sessionId === undefined
+      ? { message: trimmed }
+      : { message: trimmed, session_id: sessionId };
+  }
   if (typeof rawLocation !== "object" || rawLocation === null || Array.isArray(rawLocation)) {
     return { error: "location must be an object {lat,lng}" };
   }
@@ -151,7 +180,27 @@ export function parseChatSend(
   ) {
     return { error: "location lat must be in [-90,90] and lng in [-180,180]" };
   }
-  return { message: trimmed, location: { lat, lng } };
+  return sessionId === undefined
+    ? { message: trimmed, location: { lat, lng } }
+    : { message: trimmed, location: { lat, lng }, session_id: sessionId };
+}
+
+/**
+ * 校验 GET /api/chat/history 的 session_id 查询参数：未传 → {sessionId:
+ * undefined}（空历史分支）；传了但重复出现/空串/纯空白/超 128 字符 →
+ * {error}（400）。
+ */
+export function parseSessionIdQuery(
+  params: URLSearchParams,
+): { sessionId?: string } | ChatErrorResponse {
+  const values = params.getAll("session_id");
+  if (values.length === 0) return { sessionId: undefined };
+  if (values.length > 1) return { error: "session_id must appear at most once" };
+  const sessionId = validSessionId(values[0]);
+  if (sessionId === undefined) {
+    return { error: `session_id must be 1..${MAX_SESSION_ID_CHARS} characters` };
+  }
+  return { sessionId };
 }
 
 /**
@@ -182,14 +231,15 @@ export function isChatHistory(value: unknown): value is ChatHistory {
 /** service.send 返回值的形状判别；契约外形状按服务端错误处理而非透传。 */
 export function isChatResult(value: unknown): value is ChatResult {
   if (typeof value !== "object" || value === null) return false;
-  const kind = (value as { kind?: unknown }).kind;
-  if (kind === "clarification") {
+  const v = value as { kind?: unknown; session_id?: unknown };
+  if (typeof v.session_id !== "string" || v.session_id.length === 0) return false;
+  if (v.kind === "clarification") {
     return typeof (value as { question?: unknown }).question === "string";
   }
-  if (kind === "itinerary") {
-    const v = value as { itinerary?: unknown; events?: unknown };
+  if (v.kind === "itinerary") {
+    const it = value as { itinerary?: unknown; events?: unknown };
     return (
-      typeof v.itinerary === "object" && v.itinerary !== null && isEventViewList(v.events)
+      typeof it.itinerary === "object" && it.itinerary !== null && isEventViewList(it.events)
     );
   }
   return false;

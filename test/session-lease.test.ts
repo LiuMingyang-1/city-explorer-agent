@@ -119,8 +119,9 @@ test("lease fencing works across two repository connections", async (t) => {
   const dbPath = tempDbPath(t);
   const repoA = openFileRepo(t, dbPath, clock.now);
   const repoB = openFileRepo(t, dbPath, clock.now);
-  await repoA.createUser({ userId: "u-conn" });
-  const main = await repoB.getMainSession("u-conn");
+  const { main } = await makeUser(repoA, "u-conn");
+  // 另一连接可见同一对话会话。
+  assert.ok(await repoB.getSession("u-conn", main.sessionId));
 
   const wA = await mustAcquire(repoA, "u-conn", main.sessionId, "worker-A", 1_000);
   assert.equal(await repoB.acquireLease("u-conn", main.sessionId, "worker-B", 1_000), undefined);

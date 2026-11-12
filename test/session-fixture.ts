@@ -55,13 +55,13 @@ export function openFileRepo(
   return repo;
 }
 
-/** 建用户并取回 (user, mainSession)。 */
+/** 建用户并建一条对话会话，取回 (user, main)。 */
 export async function makeUser(
   repo: SessionRepository,
   userId = "u-test",
 ): Promise<{ user: User; main: Session }> {
   const user = await repo.createUser({ userId });
-  const main = await repo.getMainSession(userId);
+  const main = await repo.createConversation(userId);
   return { user, main };
 }
 

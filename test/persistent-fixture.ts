@@ -18,14 +18,15 @@ export async function until(cond: () => boolean, what = "condition"): Promise<vo
 }
 
 /**
- * 小窗配置：系统提示 ~1.5k、search({date}) 结果 ~3.6k tokens；
- * 首轮 ~1.7k 不触发（<0.4×9000），工具循环第二轮 ~6k 越过阈值触发压缩；
- * 窗口取 9000 让二次压缩的摘要输入（system+摘要+工具尾部 ~7.1k）也装得下。
+ * 小窗配置：系统提示 ~2.1k（含 delegate_task 工具声明与派发节）、
+ * search({date}) 结果 ~3.6k tokens；首轮 ~2.3k 不触发（<0.4×10500=4.2k），
+ * 工具循环第二轮 ~6.6k 越过阈值触发压缩；窗口取 10_500 让二次压缩的
+ * 摘要输入（system+摘要+工具尾部 ~9.0k）也装得下。
  */
 export const TINY: ExplorerConfig = {
   ...CONFIG,
   baseUrl: "http://faux.invalid",
-  contextWindow: 9_000,
+  contextWindow: 10_500,
   maxTokens: 300,
   compaction: {
     compactionThreshold: 0.4,

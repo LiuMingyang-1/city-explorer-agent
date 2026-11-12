@@ -339,9 +339,10 @@ test("main sessions keep the confirmed-pointer section and pointer restore", asy
   const ev = await exhibition(repo, DAY1);
   faux.setResponses([afternoonPlan(ev)]);
   assert.equal((await session.prompt("安排展览")).kind, "itinerary");
+  const sid = session.sessionId as string;
   await session.close();
 
-  const reopened = await makePersistent(t, [], { sessions });
+  const reopened = await makePersistent(t, [], { sessions, sessionId: sid });
   assert.equal(reopened.session.constraints?.availableStart, "13:00");
   const systemText = asText(reopened.session.agent.state.messages);
   assert.match(systemText, /已确认的规划状态/, "main 上下文注入正式已确认状态");

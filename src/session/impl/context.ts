@@ -62,7 +62,6 @@ export function tx<T>(ctx: SessionDbContext, write: boolean, fn: () => T): T {
 
 export type UserRow = {
   user_id: string;
-  main_session_id: string | null;
   display_name: string | null;
   created_at: string;
   updated_at: string;
@@ -117,7 +116,6 @@ export type RunRow = {
 
 export const toUser = (row: UserRow): User => ({
   userId: row.user_id,
-  mainSessionId: row.main_session_id,
   displayName: row.display_name,
   createdAt: row.created_at,
   updatedAt: row.updated_at,

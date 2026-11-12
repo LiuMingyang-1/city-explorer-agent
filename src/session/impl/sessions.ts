@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import {
   SessionRepositoryError,
   type CreateChildSessionInput,
+  type CreateConversationInput,
   type CreateUserInput,
   type LeaseWriter,
   type Session,
@@ -31,23 +32,11 @@ export function createUser(ctx: SessionDbContext, input: CreateUserInput): User 
       const existing = fetchUser(ctx, userId);
       if (existing) return toUser(existing);
       const now = ctx.nowIso();
-      const sessionId = randomUUID();
       ctx.db
         .prepare(
-          "INSERT INTO users (user_id, main_session_id, display_name, created_at, updated_at) VALUES (?, NULL, ?, ?, ?)",
+          "INSERT INTO users (user_id, display_name, created_at, updated_at) VALUES (?, ?, ?, ?)",
         )
         .run(userId, input.displayName ?? null, now, now);
-      ctx.db
-        .prepare(
-          `INSERT INTO sessions (session_id, user_id, kind, parent_session_id, title, status,
-             current_itinerary_record_id, lease_owner, lease_epoch, lease_expires_at,
-             last_activity_at, created_at, updated_at)
-           VALUES (?, ?, 'main', NULL, NULL, 'active', NULL, NULL, 0, NULL, ?, ?, ?)`,
-        )
-        .run(sessionId, userId, now, now, now);
-      ctx.db
-        .prepare("UPDATE users SET main_session_id = ? WHERE user_id = ?")
-        .run(sessionId, userId);
       return toUser(fetchUser(ctx, userId) as NonNullable<ReturnType<typeof fetchUser>>);
     });
   try {
@@ -67,18 +56,30 @@ export function getUser(ctx: SessionDbContext, userId: string): User | undefined
   return row ? toUser(row) : undefined;
 }
 
-export function getMainSession(ctx: SessionDbContext, userId: string): Session {
-  return tx(ctx, false, () => {
-    const user = fetchUser(ctx, userId);
-    if (!user) throw new SessionRepositoryError("not_found", `用户 ${userId} 不存在`);
-    if (user.main_session_id === null) {
-      throw new SessionRepositoryError("corrupt", `用户 ${userId} 未绑定主会话`);
+/**
+ * 建一条用户面对话会话（kind='main'、无父）。不需要 LeaseWriter——
+ * 无父会话就无树完整性要保护，归属由 userId 保证；用户不存在 → not_found。
+ */
+export function createConversation(
+  ctx: SessionDbContext,
+  userId: string,
+  input: CreateConversationInput = {},
+): Session {
+  return tx(ctx, true, () => {
+    if (!fetchUser(ctx, userId)) {
+      throw new SessionRepositoryError("not_found", `用户 ${userId} 不存在`);
     }
-    const session = fetchSession(ctx, user.main_session_id);
-    if (!session || session.kind !== "main" || session.user_id !== userId) {
-      throw new SessionRepositoryError("corrupt", `用户 ${userId} 的主会话指针非法`);
-    }
-    return toSession(session);
+    const now = ctx.nowIso();
+    const sessionId = randomUUID();
+    ctx.db
+      .prepare(
+        `INSERT INTO sessions (session_id, user_id, kind, parent_session_id, title, status,
+           current_itinerary_record_id, lease_owner, lease_epoch, lease_expires_at,
+           last_activity_at, created_at, updated_at)
+         VALUES (?, ?, 'main', NULL, ?, 'active', NULL, NULL, 0, NULL, ?, ?, ?)`,
+      )
+      .run(sessionId, userId, input.title ?? null, now, now, now);
+    return toSession(fetchSession(ctx, sessionId) as SessionRow);
   });
 }
 
@@ -129,10 +130,7 @@ export function archiveSession(
   sessionId: string,
 ): void {
   return tx(ctx, true, () => {
-    const row = assertWritableSession(ctx, userId, sessionId, writer);
-    if (row.kind === "main") {
-      throw new SessionRepositoryError("conflict", `主会话 ${sessionId} 不可归档`);
-    }
+    assertWritableSession(ctx, userId, sessionId, writer);
     ctx.db
       .prepare(
         `UPDATE sessions SET status = 'archived', lease_owner = NULL,

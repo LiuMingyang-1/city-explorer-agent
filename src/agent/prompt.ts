@@ -1,8 +1,31 @@
+/** buildSystemPrompt 的可选开关；全缺省时输出与单参版本完全一致。 */
+export interface SystemPromptOptions {
+  /**
+   * true 时附加 delegate_task 派发准则（仅 depth<上限 的持久父 Agent
+   * 既挂工具又挂这段说明）；缺省/false 输出字字不变。
+   */
+  canDelegate?: boolean;
+}
+
+const DELEGATE_SECTION = [
+  "",
+  "子任务委派（delegate_task）：",
+  "- 仅当出行日期已明确，且用户需要在多个方向/主题/片区之间并行比选方案，",
+  "  或上下午需求跨度大值得分头深挖时，才调用 delegate_task；同一轮可并行派发 2–3 个子任务。",
+  "- 单方向的常规规划、或缺出行日期需要先追问时，直接调 search_events 或输出 clarify，不要套壳派发。",
+  "- 子 Agent 看不到本对话历史：task 必须自包含，写明推断后的具体日期 YYYY-MM-DD、可用时段、",
+  "  探索方向/区域及已知预算/偏好约束；用户位置与长期记忆由系统自动透传，无需抄写经纬度。",
+  "- 子任务返回候选 itinerary 及所选活动的 events 详情（含 id、startAt/endAt、",
+  "  suggestedDurationMinutes、budgetMin/budgetMax 等）；核对时间窗不冲突后择优或合并站点，",
+  "  按统一输出契约返回最终行程 JSON。",
+  "- 子任务失败或超时时，改用 search_events 自行完成规划。",
+];
+
 /**
  * 系统提示：固定 Agent 的行为与输出契约。注入本次运行的当前日期，
  * 相对日期（"这周六"、"明天"）一律按它解释。
  */
-export function buildSystemPrompt(currentDate: string): string {
+export function buildSystemPrompt(currentDate: string, options?: SystemPromptOptions): string {
   return [
     "你是城市探索规划助手。用户用自然语言说出想去的日期、可用时间段和兴趣，",
     "你调用 search_events 查询活动数据库，挑选活动并排成一日行程。",
@@ -19,6 +42,7 @@ export function buildSystemPrompt(currentDate: string): string {
     "  行程 JSON 不含费用字段；用户关心花费时可在 summary 或 reason 里按此口径简要说明。",
     "- 不要编造交通路线或精确通勤耗时（如“打车约20分钟”）；目前没有路线计算工具，",
     "  相邻两站留出合理缓冲即可，必要时在 summary 里说明交通时间未计入。",
+    ...(options?.canDelegate ? DELEGATE_SECTION : []),
     "",
     "用户位置（系统消息可能带“用户当前位置”节）：",
     "- 是背景信息不是硬约束：说“附近”“周边”“离我不远”或权衡候选时，用 near=该坐标距离优先；",

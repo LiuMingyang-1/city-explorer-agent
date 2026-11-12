@@ -9,9 +9,17 @@ import type { Itinerary, PlanningConstraints } from "../itinerary/types.ts";
 import { validateItinerary } from "../itinerary/validation.ts";
 import type { ValidationIssue, ValidationResult } from "../itinerary/validation.ts";
 import type { SessionRepository } from "../session/repository.ts";
+import {
+  DEFAULT_MAX_SUBAGENT_DEPTH,
+  createDelegateTaskTool,
+  getDefaultSubagentSemaphore,
+} from "./delegate.ts";
+import type { SubagentSemaphore } from "./delegate.ts";
 import { createExplorerAgent } from "./explorer-agent.ts";
 import type { ExplorerAgentOptions } from "./explorer-agent.ts";
 import { PersistentRuntime } from "./persistent/runtime.ts";
+import type { ActiveDispatchTurn } from "./persistent/runtime.ts";
+export type { ActiveDispatchTurn };
 import {
   extractEventIds,
   lastAssistantText,
@@ -356,8 +364,25 @@ export interface PersistentPlannerOptions extends ExplorerAgentOptions {
   sessions: SessionRepository;
   /** 认证后的用户标识：存储层只校验归属，不识别身份。CLI 取 EXPLORER_USER_ID。 */
   userId: string;
-  /** 缺省 = 该用户主会话（没有则幂等建立）；显式给定时必须属于该用户。 */
+  /** 缺省新建一条 kind='main' 对话会话；显式给定时必须属于该用户且 active（main/child 均可）。 */
   sessionId?: string;
+  /** 新建对话时的会话标题（仅未传 sessionId 时生效；Web 取首条消息前 30 码点）。 */
+  title?: string;
+  /** 编排入参：本 planner 所建 run 的父 run（delegate_task 派生子任务时透传）。 */
+  parentRunId?: string;
+  /** 编排入参：结果回投目标会话（随 run 记录落库，本期同步派发仅存档）。 */
+  replyToSessionId?: string;
+  /** 编排递归深度：对话 = 0、child 任务 = 1；缺省 0。 */
+  depth?: number;
+  /**
+   * 子任务并发信号量：缺省按 config.subagentMaxConcurrent 取进程级共享池
+   * （同容量同池）；离线测试可注入独立池精确观测排队。
+   */
+  subagentSemaphore?: SubagentSemaphore;
+  /** 单次子任务超时（毫秒）；缺省 config.subagentTimeoutMs（再缺省 120s）。 */
+  subagentTimeoutMs?: number;
+  /** 递归深度上限：缺省 1（子任务不再挂 delegate_task，根除嵌套等锁死锁）。 */
+  maxSubagentDepth?: number;
   /** 写者标识（租约 owner）；缺省生成进程相关实例名。 */
   leaseOwner?: string;
   /** 会话写租约 TTL（毫秒）；默认 30s，忙时按 TTL/3 心跳续期。 */
@@ -413,7 +438,52 @@ export async function createPersistentPlanner(
   options: PersistentPlannerOptions,
 ): Promise<PlannerSession> {
   const compaction = options.compaction ?? resolveCompactionOptions(options.config);
-  const agent = await createExplorerAgent(options);
+  // 编排闭环：对话（depth 0）且未显式关 delegate 时挂载 delegate_task；
+  // child（depth>=maxDepth）既无该工具也无系统提示派发节，结构防嵌套死锁。
+  const depth = options.depth ?? 0;
+  const maxDepth = options.maxSubagentDepth ?? DEFAULT_MAX_SUBAGENT_DEPTH;
+  const canDelegate = options.canDelegate ?? depth < maxDepth;
+  const semaphore =
+    options.subagentSemaphore ??
+    getDefaultSubagentSemaphore(options.config.subagentMaxConcurrent);
+  const timeoutMs = options.subagentTimeoutMs ?? options.config.subagentTimeoutMs;
+  // 派发上下文槽：runPrompt 建 run 后置位、收尾清空；槽空时工具直接 isError。
+  let activeTurn: ActiveDispatchTurn | undefined;
+  const delegateTool = canDelegate
+    ? createDelegateTaskTool({
+        getContext: () => activeTurn,
+        repository: options.repository,
+        sessions: options.sessions,
+        semaphore,
+        maxDepth,
+        timeoutMs,
+        spawnChild: (childInput) =>
+          // extraTools 只透传调用方原值：绝不把父实例的 delegateTool 带进
+          // depth=1 的 child；leaseOwner 置空让 child 生成独立写者标识；
+          // detachDistill=false（child close 本就不蒸，语义对齐）。
+          createPersistentPlanner({
+            ...options,
+            userId: childInput.userId,
+            sessionId: childInput.sessionId,
+            title: undefined,
+            parentRunId: childInput.parentRunId,
+            replyToSessionId: childInput.replyToSessionId,
+            depth: childInput.depth,
+            maxSubagentDepth: maxDepth,
+            subagentSemaphore: semaphore,
+            subagentTimeoutMs: timeoutMs,
+            leaseOwner: undefined,
+            detachDistill: false,
+            extraTools: options.extraTools,
+            canDelegate: childInput.depth < maxDepth,
+          }),
+      })
+    : undefined;
+  const agent = await createExplorerAgent({
+    ...options,
+    canDelegate,
+    extraTools: [...(options.extraTools ?? []), ...(delegateTool ? [delegateTool] : [])],
+  });
   let runtime!: PersistentRuntime;
   const session = new PlannerSession({
     agent,
@@ -428,6 +498,10 @@ export async function createPersistentPlanner(
     sessions: options.sessions,
     userId: options.userId,
     sessionId: options.sessionId,
+    title: options.title,
+    parentRunId: options.parentRunId,
+    replyToSessionId: options.replyToSessionId,
+    depth: options.depth,
     leaseOwner: options.leaseOwner,
     leaseTtlMs: options.leaseTtlMs,
     leaseRenewMs: options.leaseRenewMs,
@@ -436,8 +510,12 @@ export async function createPersistentPlanner(
       options.locationAnchor ??
       ((lat, lng) => defaultLocationAnchor(options.repository, lat, lng)),
     memoryInputChars: options.config.memoryInputChars,
+    memoryMinUserMessages: options.config.memoryMinUserMessages,
     memoryDistillTimeoutMs: options.config.memoryDistillTimeoutMs,
     detachDistill: options.detachDistill,
+    onActiveTurnChange: (turn) => {
+      activeTurn = turn;
+    },
   });
   session.runtime = runtime;
   await runtime.open();

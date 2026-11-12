@@ -16,6 +16,7 @@ import { closeInterrupted } from "../interrupted.ts";
 import type { SessionRepository } from "../../session/repository.ts";
 import type {
   CompactionPayload,
+  LeaseWriter,
   Run,
   SessionKind,
   ValidatedPlan,
@@ -43,14 +44,48 @@ import {
   settleRun,
 } from "./runs.ts";
 
+/**
+ * 本轮可派发上下文（delegate_task 编排接缝）：runPrompt 建好 run 后由
+ * onActiveTurnChange 回调交给 dispatch 上下文槽；finally 清空时回调
+ * undefined。槽为空说明当前不在可派发的持久运行上下文中。
+ */
+export interface ActiveDispatchTurn {
+  userId: string;
+  sessionId: string;
+  runId: string;
+  /** 本轮持有的会话写租约（建 child 会话、写子 run 用它证明树归属）。 */
+  writer: LeaseWriter;
+  /** 父会话当前生效位置（本轮透传优先，否则 reload 恢复的最近位置）。 */
+  location?: { lat: number; lng: number };
+  /** 编排递归深度：对话 = 0，子任务 = 1。 */
+  depth: number;
+  /** 父会话写租约已失效（lease_lost/archived）时中止父轮，不空跑浪费 token。 */
+  failParentLease: (error: unknown) => void;
+}
+
 export interface PersistentRuntimeOptions {
   agent: Agent;
   /** 回调宿主：performTurn 执行纠正循环、restorePlan 恢复已确认规划。 */
   planner: PlannerSession;
   sessions: SessionRepository;
   userId: string;
-  /** 缺省 = 该用户主会话；显式给定时必须属于该用户且 active。 */
+  /** 缺省新建一条 kind='main' 对话会话；显式给定时必须属于该用户且 active（main/child 均可）。 */
   sessionId?: string;
+  /** 新建对话时的会话标题（仅未传 sessionId 时生效）。 */
+  title?: string;
+  /** 编排入参：本运行器所建 run 的父 run（child 任务派发时透传）。 */
+  parentRunId?: string;
+  /** 编排入参：结果回投目标会话，随 run 记录落库（本期同步派发仅存档）。 */
+  replyToSessionId?: string;
+  /** 编排递归深度：对话 = 0、child 任务 = 1；缺省 0。 */
+  depth?: number;
+  /** close 机会蒸馏的无方案保底门槛（新增 user 消息条数）；缺省走 distill.ts 的默认。 */
+  memoryMinUserMessages?: number;
+  /**
+   * runPrompt 派发上下文回调：建 run 成功置位、收尾清空；
+   * delegate_task 用它读取父 run/租约/位置/深度并级联父租约失败。
+   */
+  onActiveTurnChange?: (active: ActiveDispatchTurn | undefined) => void;
   leaseOwner?: string;
   /** 写租约 TTL；默认 30_000ms。 */
   leaseTtlMs?: number;
@@ -68,7 +103,8 @@ export interface PersistentRuntimeOptions {
   memoryDistillTimeoutMs?: number;
   /**
    * close 机会蒸馏后台执行：不阻塞 close（web send 的响应路径）。同用户
-   * 并发触发由进程内标记去重；已有在途直接跳过，积压游标由后续触发追平。
+   * 的多次触发进每用户串行尾随队列：在途时排入队尾等前序完成后顺次执行，
+   * 不丢末轮、不并发写 user_memory 游标。
    * 缺省 false（同步）——进程即将退出的调用方（CLI）应同步蒸完。
    */
   detachDistill?: boolean;
@@ -76,8 +112,56 @@ export interface PersistentRuntimeOptions {
 
 /** close 机会蒸馏的默认硬超时：须覆盖单次较大输入请求的时延。 */
 const DEFAULT_DISTILL_TIMEOUT_MS = 90_000;
-/** 进程内在途蒸馏：同一 userId 已在蒸时新触发直接跳过（不堆积）。 */
-const distillingUsers = new Set<string>();
+
+/**
+ * 每用户串行尾随蒸馏队列：detachDistill 的 close 触发按 userId 串行排水。
+ * 同 sessionId 在排队期间合并为最新一次；不同 sessionId 按插入序各蒸
+ * 一轮——既避免对话末轮被静默漏蒸，也消除同一用户跨对话并发
+ * putUserMemory 的游标覆盖竞态。job 出队先于执行：运行期间同会话再次
+ * close 会重新入队补跑一轮，末轮蒸馏不丢。
+ */
+interface DistillQueueState {
+  running: boolean;
+  pending: Map<string, () => Promise<void>>;
+}
+const distillQueues = new Map<string, DistillQueueState>();
+
+function enqueueDistill(userId: string, sessionId: string, job: () => Promise<void>): void {
+  let state = distillQueues.get(userId);
+  if (state === undefined) {
+    state = { running: false, pending: new Map() };
+    distillQueues.set(userId, state);
+  }
+  // 同 sessionId 合并为最新一次：先删再置，把它移到队尾，严格保持
+  // close 的先后顺序（否则 A → B → A' 会按 A 的旧位置执行成 A' → B）。
+  state.pending.delete(sessionId);
+  state.pending.set(sessionId, job);
+  if (state.running) return;
+  state.running = true;
+  void drainDistillQueue(userId, state);
+}
+
+async function drainDistillQueue(userId: string, state: DistillQueueState): Promise<void> {
+  try {
+    while (state.pending.size > 0) {
+      const [sessionId, job] = state.pending.entries().next().value as [
+        string,
+        () => Promise<void>,
+      ];
+      state.pending.delete(sessionId);
+      await job();
+    }
+  } finally {
+    // job 自身已兜底不抛；万一抛出且队列尚有新任务，重启排水不丢。
+    state.running = false;
+    if (state.pending.size === 0) {
+      distillQueues.delete(userId);
+    } else {
+      state.running = true;
+      void drainDistillQueue(userId, state);
+    }
+  }
+}
 
 /**
  * 持久化运行时：把 PlannerSession 的内存纠正循环接到 SQLite 会话仓库上。
@@ -101,12 +185,18 @@ export class PersistentRuntime implements PlannerRuntime {
   private readonly repo: SessionRepository;
   private readonly userId: string;
   private readonly requestedSessionId?: string;
+  private readonly title?: string;
+  private readonly parentRunId?: string;
+  private readonly replyToSessionId?: string;
+  private readonly depth: number;
   private readonly owner: string;
   private readonly compaction: CompactionOptions;
   private readonly resolveLocationAnchor?: PersistentRuntimeOptions["resolveLocationAnchor"];
   private readonly memoryInputChars?: number;
+  private readonly memoryMinUserMessages?: number;
   private readonly memoryDistillTimeoutMs: number;
   private readonly detachDistill: boolean;
+  private readonly onActiveTurnChange?: PersistentRuntimeOptions["onActiveTurnChange"];
   private readonly guard: LeaseGuard;
 
   private sessionIdValue = "";
@@ -169,12 +259,18 @@ export class PersistentRuntime implements PlannerRuntime {
     this.repo = options.sessions;
     this.userId = options.userId;
     this.requestedSessionId = options.sessionId;
+    this.title = options.title;
+    this.parentRunId = options.parentRunId;
+    this.replyToSessionId = options.replyToSessionId;
+    this.depth = options.depth ?? 0;
     this.owner = options.leaseOwner ?? `planner-${process.pid}-${randomUUID().slice(0, 8)}`;
     this.compaction = options.compaction;
     this.resolveLocationAnchor = options.resolveLocationAnchor;
     this.memoryInputChars = options.memoryInputChars;
+    this.memoryMinUserMessages = options.memoryMinUserMessages;
     this.memoryDistillTimeoutMs =
       options.memoryDistillTimeoutMs ?? DEFAULT_DISTILL_TIMEOUT_MS;
+    this.onActiveTurnChange = options.onActiveTurnChange;
     this.detachDistill = options.detachDistill ?? false;
     const ttlMs = options.leaseTtlMs ?? 30_000;
     this.guard = new LeaseGuard({
@@ -210,6 +306,7 @@ export class PersistentRuntime implements PlannerRuntime {
 
   private async resolveSession(): Promise<void> {
     if (this.requestedSessionId !== undefined) {
+      // 显式会话：main 与 child 都允许打开（编排层要开 child 会话）。
       const session = await this.repo.getSession(this.userId, this.requestedSessionId);
       if (!session) {
         throw new SessionRepositoryError(
@@ -224,14 +321,15 @@ export class PersistentRuntime implements PlannerRuntime {
       this.sessionKind = session.kind;
       return;
     }
-    // 幂等建立用户与主会话（并发首访只产生一个主会话）。
+    // 未指定会话：幂等建用户 + 懒建一条新对话（每次访问即新对话；
+    // 跨对话连续性由 user_memory 承担）。
     await this.repo.createUser({ userId: this.userId });
-    const main = await this.repo.getMainSession(this.userId);
-    if (main.status !== "active") {
-      throw new SessionRepositoryError("archived", `主会话 ${main.sessionId} 已归档，不能打开`);
-    }
-    this.sessionIdValue = main.sessionId;
-    this.sessionKind = main.kind;
+    const created = await this.repo.createConversation(
+      this.userId,
+      this.title !== undefined ? { title: this.title } : undefined,
+    );
+    this.sessionIdValue = created.sessionId;
+    this.sessionKind = created.kind;
   }
 
   // ---- 恢复 / 增量重载（调用方须持租约） ----
@@ -467,10 +565,24 @@ export class PersistentRuntime implements PlannerRuntime {
               requestId: options.requestId ?? null,
               location: options.location ?? null,
             },
+            parentRunId: this.parentRunId,
+            replyToSessionId: this.replyToSessionId,
             startImmediately: true,
           }),
         );
         this.activeRunId = run.runId;
+        // 派发上下文槽置位：delegate_task 本轮可读到父 run/租约/位置/深度。
+        this.onActiveTurnChange?.({
+          userId: this.userId,
+          sessionId: this.sessionIdValue,
+          runId: run.runId,
+          writer: this.guard.current!,
+          location: this.locationContext
+            ? { lat: this.locationContext.lat, lng: this.locationContext.lng }
+            : undefined,
+          depth: this.depth,
+          failParentLease: (error) => this.guard.fail(error),
+        });
         this.pendingDedupeKey =
           options.requestId !== undefined ? `request:${options.requestId}` : undefined;
         try {
@@ -506,6 +618,7 @@ export class PersistentRuntime implements PlannerRuntime {
         } finally {
           this.activeRunId = undefined;
           this.pendingDedupeKey = undefined;
+          this.onActiveTurnChange?.(undefined);
         }
       });
     } catch (error) {
@@ -710,27 +823,27 @@ export class PersistentRuntime implements PlannerRuntime {
       // 不依赖已退订的事件钩子；超时兜底不让蒸馏无限挂起。整个调用吞掉所
       // 有异常——蒸馏是机会行为，绝不破坏 close 路径。返回的 outcome 无
       // 需处理：updated/unchanged 已写库推游标，skipped 未达门槛，error
-      // 留给下次触发重试。detachDistill 时后台执行——本调用位于 web send
-      // 的响应路径上（service.ts 的 send finally 里 await planner.close()），
-      // 阈值命中不再推迟响应；同用户在途蒸馏去重，跳过的触发由后续 close
-      // 追平游标。
+      // 留给下次触发重试。detachDistill 时进每用户串行尾随队列后台执行——
+      // 本调用位于 web send 的响应路径上（service.ts 的 send finally 里
+      // await planner.close()），阈值命中不再推迟响应；在途期间同会话/同
+      // 用户的后续 close 排队等它完成后顺次补蒸，末轮不丢。
       if (this.sessionKind === "main" && this.sessionIdValue !== "" && !this.guard.failure) {
-        const distill = () =>
-          distillMemory({
+        const sessionId = this.sessionIdValue;
+        const distill = async () => {
+          await distillMemory({
             agent: this.agent,
             sessions: this.repo,
             userId: this.userId,
-            sessionId: this.sessionIdValue,
+            sessionId,
+            minNewUserMessages: this.memoryMinUserMessages,
             maxInputChars: this.memoryInputChars,
             signal: AbortSignal.timeout(this.memoryDistillTimeoutMs),
           }).catch(() => {
             // 机会行为：任何蒸馏失败都不影响会话关闭。
           });
+        };
         if (this.detachDistill) {
-          if (!distillingUsers.has(this.userId)) {
-            distillingUsers.add(this.userId);
-            void distill().finally(() => distillingUsers.delete(this.userId));
-          }
+          enqueueDistill(this.userId, sessionId, distill);
         } else {
           await distill();
         }

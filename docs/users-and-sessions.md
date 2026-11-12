@@ -13,14 +13,22 @@
 记录 Agent 运行生命周期。本文定义语义边界；方法级签名、参数与错误码以
 `src/session/types.ts`、`src/session/repository.ts` 的注释为准。
 
+2026-11-12 更新：`kind='main'` 语义由"每用户唯一长期主会话"重述为
+"用户面顶层对话会话"（每用户可有多个，每次访问即新对话），同步子 Agent
+派发工具 `delegate_task` 已落地；方案与验收见
+[conversations-and-orchestration.md](conversations-and-orchestration.md)。
+
 ## 1. 已确认的方向
 
 - 面向 Web 多用户部署，会话数据存数据库（Node ≥22 内置 `node:sqlite`），
   不按用户或会话建文件夹、不用 JSONL。
-- 每个 Web 用户拥有**一个长期主会话**，`users.main_session_id` 绑定；用户默认
-  一直与该主会话交互。
-- 主会话持续追加消息并压缩，**压缩不更换 session_id**。
-- 子 Agent 由主会话派出处理独立任务；子 Agent 可**递归**再派生子 Agent，
+- 每个 Web 用户可有**多个顶层对话会话**（`kind='main'`，"对话即 main"）：
+  每次访问即新对话，由 `createConversation` 在首条消息时懒建；跨对话
+  连续性完全由 `user_memory` 长期记忆承担（见
+  [conversations-and-orchestration.md](conversations-and-orchestration.md)）。
+- 对话会话持续追加消息并压缩，**压缩不更换 session_id**。
+- 子 Agent 由对话会话派出处理独立任务（`kind='child'`）；子 Agent 可
+  **递归**再派生子 Agent，
   所有会话通过 `parent_session_id` 构成树，全部上下文按用户授权隔离。
 - 本期只做后端库与 CLI 集成；不做登录/认证服务，`user_id` 由调用方在
   认证后给出，存储层只校验归属、不识别身份。前端由独立工作流推进，
@@ -29,15 +37,15 @@
   pi 1.4.0 的方案：同一模型独立摘要请求、近期原文按完整工具批次保留、
   写检查点成功后才切换运行上下文。
 
-主会话长期存在是数据层面的连续性，不要求 Agent 进程常驻；用户再次访问时
-从数据库恢复主会话上下文。
+对话会话数据长期保留，但不要求 Agent 进程常驻；恢复指定会话时从数据库
+重建其上下文。
 
 ## 2. 表结构总览
 
 ```text
 users
   ├─ user_memory         （每用户一行：长期记忆文档 + 蒸馏游标）
-  └─ main_session_id ─→ sessions            （每用户恰好一个 kind=main）
+  └─ sessions            （kind=main 对话会话，每用户可有多个）
                            ├─ session_records （统一追加日志：message | compaction）
                            ├─ sessions        （kind=child，parent_session_id 递归成树）
                            └─ runs            （一次 Agent 运行的生命周期记录）
@@ -72,21 +80,23 @@ events（既有活动表）：本方案不改动。
 `not_found` / `lease_lost` / `archived` / `conflict` / `invalid_state` /
 `invalid_payload` / `corrupt`（定义见 `src/session/types.ts`）。
 
-## 3. users：用户与主会话入口
+## 3. users：用户入口与对话创建
 
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
 | `user_id` | TEXT | 是 | 主键 |
-| `main_session_id` | TEXT | 初始化后是 | 指向该用户唯一主会话；初始化事务内先建会话再回填绑定 |
 | `display_name` | TEXT | 否 | 展示名，可改，不参与授权 |
 | `created_at` | TEXT | 是 | |
 | `updated_at` | TEXT | 是 | |
 
-约束：`users.main_session_id` 必须指向**同用户**、`kind='main'`、
-`parent_session_id IS NULL` 的会话。主会话唯一性由
-`sessions` 上的部分唯一索引保证（见下）。`createUser` 幂等：`user_id`
-已存在时返回既有用户，不重复初始化；有用户但主会话未绑定视为
-数据错误（`corrupt`）。
+约束：`createUser` 幂等——`user_id` 已存在时返回既有用户；只插入
+`users` 行，**不附带创建任何会话**。对话会话由
+`createConversation(userId, { title? })` 按需创建：`kind='main'`、
+`parent_session_id IS NULL`、不要求租约；用户不存在 → `not_found`。
+同一用户可创建任意多个对话会话（原"每用户唯一 main"的
+`idx_sessions_main` 部分唯一索引已移除；老库升级时
+`ensureSessionSchema` 会 DROP 掉该索引，`users.main_session_id`
+老列保留为死列、代码不再引用）。
 
 ## 4. sessions：会话归属、层级与运行权
 
@@ -97,8 +107,8 @@ events（既有活动表）：本方案不改动。
 | `kind` | TEXT | 是 | `'main'` / `'child'` |
 | `parent_session_id` | TEXT | child 必填 | 父会话，必须与 child 同用户；多级递归时指向直接父会话 |
 | `title` | TEXT | 否 | 便于识别，如"周六看展方案比较" |
-| `status` | TEXT | 是 | `'active'` / `'archived'`；主会话保持 active |
-| `current_itinerary_record_id` | TEXT | 否 | **仅主会话可维护**；指向本会话一条通过校验的 assistant 消息记录，见 §7 |
+| `status` | TEXT | 是 | `'active'` / `'archived'`；任意 active 会话可归档 |
+| `current_itinerary_record_id` | TEXT | 否 | **仅 kind='main' 对话会话可维护**；指向本会话一条通过校验的 assistant 消息记录，见 §7 |
 | `lease_owner` | TEXT | 否 | 当前写者标识（实例/worker ID）；为空表示无写者 |
 | `lease_epoch` | INTEGER | 是 | 租约纪元，每次成功获取 +1；写操作须携带当前 epoch |
 | `lease_expires_at` | TEXT | 否 | 租约过期时间；过期后他人可抢占 |
@@ -107,9 +117,9 @@ events（既有活动表）：本方案不改动。
 
 约束与规则：
 
-- 唯一主会话：`CREATE UNIQUE INDEX ... ON sessions(user_id) WHERE kind='main'`；
-  建用户事务（建会话 + 回填 `users.main_session_id`）必须原子，并发初始化
-  不能产生两个主会话。
+- 对话即 main：`kind='main'` 表示用户面顶层对话会话，每用户可有多个；
+  `kind='child'` 专职表示子 Agent 派生的任务会话（表内 CHECK：main 无父、
+  child 必有父）。
 - `parent_session_id` 指向的会话必须属于同一 `user_id`；跨用户父子关系拒绝。
   创建 child 会话需持**父会话**写租约，且父会话必须 active。
 - `current_itinerary_record_id` 指向的 `session_records` 行必须属于**本会话**，
@@ -126,7 +136,7 @@ events（既有活动表）：本方案不改动。
 - `last_activity_at` 由消息追加、run 状态推进与 plan 标注的同事务推进；
   `type='compaction'` 记录只推进 `updated_at`，**不**刷新
   `last_activity_at`（纯压缩不是用户可见进展），也不按"当前时间"随意刷新。
-- 归档：仅 child 会话可归档（main → `conflict`）；归档会话只读，
+- 归档：任意 active 会话（含 main 与 child）可归档；归档会话只读，
   所有写与租约操作拒绝（`archived`），租约字段同时清除。
 
 ## 5. session_records：统一追加日志
@@ -226,7 +236,10 @@ seq=41  type=message     message_seq=40   user: "第二个换一个"
 ## 6. runs：Agent 运行生命周期
 
 一次"请求 → 工具循环 → 产出"的执行记录。数据模型支持递归层级
-（子 run 可再派生 run），**本期只要求记录基础生命周期**，不实现自动调度。
+（子 run 可再派生 run）；同步派发工具 `delegate_task` 在运行时层已落地
+（父轮内建 child 会话与子 run，见
+[conversations-and-orchestration.md](conversations-and-orchestration.md) §5），
+**不实现后台异步调度**。
 
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
@@ -285,7 +298,7 @@ seq=41  type=message     message_seq=40   user: "第二个换一个"
 4. 无合法 compaction 时，有效消息 = 全部原始消息。
 5. system 提示、工具声明、规划状态注入节由当前配置重建，永远不回放
    旧配置；注入的规划节进 system section、进预算，但不进 raw/不落库。
-6. 规划状态：主会话读 current_itinerary_record_id → 取该 record 的
+6. 规划状态：kind='main' 对话会话读 current_itinerary_record_id → 取该 record 的
    plan 元信息恢复 confirmed constraints 与行程；child 会话不读指针，
    从自身最新一条 completed 且结果为 itinerary 的 run 恢复**候选**
    规划（见 §7.3）。
@@ -325,8 +338,8 @@ first_kept 不小于上一条有效检查点的边界。**每条检查点都按�
 - **child 会话无正式指针**：其"候选规划"只来自本 session 最新一条
   `completed` 且结果为 itinerary 的 run；failed/cancelled/追问轮与无法
   解析的结果不覆盖更早的成功候选。候选经 `candidate_itinerary`
-  section 注入并明确标注候选身份——绝不更新主会话指针、不冒充
-  main 的正式行程，main 与 child 的规划状态完全独立。"最新"必须由
+  section 注入并明确标注候选身份——绝不更新 main 对话会话的指针、
+  不冒充 main 的正式行程，main 与 child 的规划状态完全独立。"最新"必须由
   **确定性次序**判定：时间戳（含同毫秒并列）与随机 `run_id` 不构成
   次序依据，须以单调序号（如关联记录的 `message_seq`）决胜——
   当前实现的并列决胜仍可能选中旧候选，属已记录 P2 待修项
@@ -342,8 +355,8 @@ first_kept 不小于上一条有效检查点的边界。**每条检查点都按�
   不隐式并发；不同会话可并行。
 - `dedupe_key` 非空撞键：内容一致 ⇒ 幂等返回既有记录；内容不同 ⇒
   `conflict`，不重复追加。
-- 用户初始化、消息追加（seq/message_seq/last_activity_at）、检查点提交、
-  plan 标注+指针推进、租约变更、run 创建/状态推进均为单事务；
+- 用户初始化与对话创建、消息追加（seq/message_seq/last_activity_at）、
+  检查点提交、plan 标注+指针推进、租约变更、run 创建/状态推进均为单事务；
   长模型调用放在事务外。
 - **关闭/取消语义**（运行时层）：在会话操作的异步链（含 Agent 事件
   回调）内调 `close()` 明确 reject 且不改变状态——要中止当轮用
@@ -358,7 +371,8 @@ first_kept 不小于上一条有效检查点的边界。**每条检查点都按�
 - 跨归属检查：session→user、parent→同用户、run→同用户、
   reply_to→同用户、itinerary 指针→同会话且 main、record/run 关联→
   同会话/同用户，均在仓库层断言。
-- 归档会话只读；主会话不可归档。
+- 归档会话只读；任意 active 会话（含 main 对话会话）可归档，归档后
+  写与租约操作一律拒绝（`archived`）。
 
 ## 9. 本期实现范围 vs 明确暂不做
 
@@ -366,9 +380,17 @@ first_kept 不小于上一条有效检查点的边界。**每条检查点都按�
 
 - `node:sqlite` 持久仓库：users/sessions/session_records/runs/user_memory
   五表（user_memory 存跨会话蒸馏的长期记忆文档与游标）、
-  幂等建表、全方法 userId 归属校验、唯一主会话、并发初始化、
+  幂等建表（含老库 `idx_sessions_main` 索引 DROP 兼容）、
+  全方法 userId 归属校验、`createUser` 幂等初始化与
+  `createConversation` 多对话会话创建（对话即 main，每用户可有多个）、
   单写者租约（owner+epoch+expiry、过期抢占、不可复活）、消息去重
-  与冲突、孤立 toolResult 拒绝、run 状态机与终态保护。
+  与冲突、孤立 toolResult 拒绝、run 状态机与终态保护、
+  任意 active 会话可归档。
+- 对话即 main 会话模型与同步子 Agent 编排：`delegate_task` 派发工具
+  建 `kind='child'` 任务会话与子 run（`parent_run_id` /
+  `reply_to_session_id` / `root_run_id` 写全），结构化结果回传父 Agent
+  ——详见
+  [conversations-and-orchestration.md](conversations-and-orchestration.md) §5。
 - 独立压缩核心：自动（每次模型请求前，含工具循环续跑）与手动 compact、
   同一模型独立摘要预算（初始 8192）、安全工具批次切分、有限重试、取消、
   检查点落库成功才切换上下文；摘要提示词保留城市规划日期/约束/
@@ -382,9 +404,10 @@ first_kept 不小于上一条有效检查点的边界。**每条检查点都按�
 
 **数据支持但本期不实现（不假装已实现）：**
 
-- 自动多 Agent 调度：runs/父子会话层级已支持递归创建与关联查询，
-  但不做 LLM 自动派生工具、后台唤醒或异步投递执行器
-  （`delivered_at` 仅预留字段，恒为 NULL）。
+- 异步多 Agent 调度：`delegate_task` 同步派发已落地；runs/父子会话
+  层级支持递归创建与关联查询。本期不做 queued run 后台执行器、
+  后台唤醒与向 `reply_to_session_id` 的结果投递、`delivered_at` 标记
+  （字段保留，恒为 NULL）。
 - 历史分页读取工具（`read_session_history` 类）：数据具备条件，
   工具入口另行设计，未实现前摘要提示不得承诺可调用。
 - 新需求版本化、未确认约束的异步冲突解决、长期用户偏好表、
@@ -406,7 +429,8 @@ first_kept 不小于上一条有效检查点的边界。**每条检查点都按�
 
 1. 用户间隔离：任何读/写不能跨 `user_id`；pointer、parent、run、
    reply_to 的跨用户/跨会话注入被拒绝。
-2. 并发初始化：并发首访只产生一个用户主会话。
+2. 并发初始化：并发 `createUser` 幂等只产生一个用户行；对话会话由
+   `createConversation` 按需创建，同一用户可建多个 `kind='main'`。
 3. 单写者：两个"写者"竞争租约只有一个成功；过期租约可抢占且不可
    复活；旧 epoch 的写被拒绝。
 4. 重启恢复：摘要 + 保留边界 + 后续消息重建正确；无检查点会话正常；

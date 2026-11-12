@@ -56,7 +56,7 @@ export interface DistillMemoryOptions {
   /** 缺省 agent.state.model。 */
   model?: Model<Api>;
   /**
-   * 无新方案时的保底触发门槛（游标后新增 user 消息条数），缺省 10。
+   * 无新方案时的保底触发门槛（游标后新增 user 消息条数），缺省 3。
    * 游标后只要有新确认方案（plan 标注记录）即触发，不受此门槛限制。
    */
   minNewUserMessages?: number;
@@ -90,7 +90,7 @@ function recordMessage(record: SessionRecord): AgentMessage {
 export async function distillMemory(options: DistillMemoryOptions): Promise<DistillOutcome> {
   const { agent, sessions, userId, sessionId } = options;
   const model = options.model ?? agent.state.model;
-  const minNewUserMessages = options.minNewUserMessages ?? 10;
+  const minNewUserMessages = options.minNewUserMessages ?? 3;
   const maxRecords = options.maxRecords ?? 40;
   const maxDocChars = options.maxDocChars ?? 4_000;
   const maxTokens = options.maxTokens ?? 4_096;

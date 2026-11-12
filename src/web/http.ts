@@ -5,9 +5,10 @@
  * server 装配由上层完成（本层不接 CLI、不建库）。
  *
  * 路由契约（响应均为 JSON + Cache-Control: no-store）：
- * - GET  /api/chat/history → ChatHistory
- * - POST /api/chat         → ChatResult（严格 {message, location?} 入参）
- * - 其他路径 404，方法不符 405 + Allow，非 2xx 一律 {error:string}
+ * - GET  /api/chat/history[?session_id=…] → ChatHistory（无参 = 空历史）
+ * - POST /api/chat         → ChatResult（严格 {message, location?, session_id?} 入参）
+ * - 会话不存在/跨用户/child → 404，归档/租约忙 → 409（均不记 onError）；
+ *   其他路径 404，方法不符 405 + Allow，非 2xx 一律 {error:string}
  *
  * 安全边界见 identity.ts 顶部注释：匿名 cookie 是 bearer 凭证而非登录；
  * POST 校验 Origin 同源（或显式白名单），错误只回通用文案不泄内部细节。
@@ -21,8 +22,10 @@ import {
   isSameOriginRequest,
   mediaType,
   parseChatSend,
+  parseSessionIdQuery,
   readRequestBody,
 } from "./request.ts";
+import { ChatClientError } from "./types.ts";
 import type { ChatService } from "./types.ts";
 
 const HISTORY_PATH = "/api/chat/history";
@@ -84,15 +87,39 @@ export function createChatHandler(
     return chat(req, res);
   }
 
+  /**
+   * 业务异常分类映射：ChatClientError 是客户端语义错误（会话不存在/
+   * 已归档/租约忙），映射为 404/409 且不记 onError——不是服务端故障，
+   * 不能污染 500 告警；其余异常统一 500 + onError 留细节。
+   */
+  function failServiceError(req: IncomingMessage, res: ServerResponse, error: unknown): void {
+    if (error instanceof ChatClientError) {
+      return error.code === "not_found"
+        ? fail(req, res, 404, "session not found")
+        : fail(req, res, 409, "session unavailable");
+    }
+    onError(error, req);
+    fail(req, res, 500, "internal server error");
+  }
+
   async function history(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    let sessionId: string | undefined;
+    try {
+      const parsed = parseSessionIdQuery(
+        new URL(req.url ?? "/", "http://localhost").searchParams,
+      );
+      if ("error" in parsed) return fail(req, res, 400, parsed.error);
+      sessionId = parsed.sessionId;
+    } catch {
+      return fail(req, res, 400, "bad request");
+    }
     const userId = ensureUser(req, res);
     try {
-      const data = await service.history(userId);
+      const data = await service.history(userId, sessionId);
       if (!isChatHistory(data)) throw new Error("service.history returned invalid shape");
       sendJson(req, res, 200, data);
     } catch (error) {
-      onError(error, req);
-      fail(req, res, 500, "internal server error");
+      failServiceError(req, res, error);
     }
   }
 
@@ -121,13 +148,13 @@ export function createChatHandler(
       const result = await service.send(userId, parsed.message, {
         signal: controller.signal,
         location: parsed.location,
+        sessionId: parsed.session_id,
       });
       if (!isChatResult(result)) throw new Error("service.send returned invalid shape");
       sendJson(req, res, 200, result);
     } catch (error) {
-      onError(error, req);
       // res 已毁时 sendJson 直接返回，不会在关闭的 socket 上写响应。
-      fail(req, res, 500, "internal server error");
+      failServiceError(req, res, error);
     } finally {
       res.off("close", abortOnClose);
     }

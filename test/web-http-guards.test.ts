@@ -12,7 +12,7 @@ import { createChatHandler } from "../src/web/http.ts";
 import type { WebChatOptions } from "../src/web/http.ts";
 import type { ChatLocation, ChatResult, ChatService } from "../src/web/types.ts";
 
-type SendOptions = { signal?: AbortSignal; location?: ChatLocation };
+type SendOptions = { signal?: AbortSignal; location?: ChatLocation; sessionId?: string };
 
 /** 可注入 service：记录 send 调用；本文件只关心"有没有被调到、拿到什么"。 */
 function fakeService(
@@ -25,7 +25,13 @@ function fakeService(
     },
     async send(userId: string, message: string, options?: SendOptions): Promise<ChatResult> {
       svc.sendCalls.push({ userId, message });
-      return send?.(userId, message, options) ?? { kind: "clarification", question: "q" };
+      return (
+        send?.(userId, message, options) ?? {
+          kind: "clarification",
+          session_id: "s",
+          question: "q",
+        }
+      );
     },
   };
   return svc;
@@ -96,7 +102,7 @@ const expect400 = async (reply: Promise<Reply>, svc: { sendCalls: unknown[] }) =
   assert.equal(svc.sendCalls.length, 0);
 };
 
-test("严格 {message,location?}：多余字段（userId/messages 等越权字段）一律 400 且不调 service", async () => {
+test("严格 {message,location?,session_id?}：多余字段（userId/messages 等越权字段）一律 400 且不调 service", async () => {
   const svc = fakeService();
   const { base, close } = await start(svc);
   try {
@@ -109,8 +115,37 @@ test("严格 {message,location?}：多余字段（userId/messages 等越权字�
       post(base, { message: "hi", location: { lat: 1, lng: 2 }, userId: "s" }),
       svc,
     );
+    // 合法 session_id 旁挂的顶层越权键同样拒绝。
+    await expect400(
+      post(base, { message: "hi", session_id: "conv_1", userId: "s" }),
+      svc,
+    );
     // 只有 location 没有 message 也拒。
     await expect400(post(base, { location: { lat: 1, lng: 2 } }), svc);
+    // 只有 session_id 没有 message 也拒。
+    await expect400(post(base, { session_id: "conv_1" }), svc);
+  } finally {
+    await close();
+  }
+});
+
+test("session_id 字段校验：非字符串/空白/超长 400；合法值放行且可三键同传", async () => {
+  const svc = fakeService();
+  const { base, close } = await start(svc);
+  try {
+    for (const session_id of [123, null, true, {}, [], "", "   ", "x".repeat(129)]) {
+      await expect400(post(base, { message: "hi", session_id }), svc);
+    }
+    // 三键同传放行（session_id 非白名单时代这类请求一律 400）。
+    const full = await post(base, {
+      message: "hi",
+      location: { lat: 1, lng: 2 },
+      session_id: "conv_1",
+    });
+    assert.equal(full.status, 200);
+    const minimal = await post(base, { message: "hi", session_id: "s" });
+    assert.equal(minimal.status, 200);
+    assert.equal(svc.sendCalls.length, 2);
   } finally {
     await close();
   }

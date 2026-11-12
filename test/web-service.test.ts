@@ -15,9 +15,11 @@ import type { EventRepository } from "../src/data/repository.ts";
 import type { Event } from "../src/data/types.ts";
 import type { Itinerary } from "../src/itinerary/types.ts";
 import type { SessionRepository } from "../src/session/repository.ts";
-import type { Run } from "../src/session/types.ts";
+import { SessionRepositoryError } from "../src/session/types.ts";
+import type { Run, Session } from "../src/session/types.ts";
 import { ChatServiceError, createChatService } from "../src/web/service.ts";
 import type { ChatPlanner } from "../src/web/service.ts";
+import { ChatClientError } from "../src/web/types.ts";
 
 const CONFIG: ExplorerConfig = {
   provider: "openai",
@@ -80,7 +82,10 @@ interface StubCalls {
 }
 
 /** stub planner 工厂：记录开/关/取消/调用，prompt 行为由测试脚本决定。 */
-function stubFactory(script: (text: string) => Promise<PlannerTurn> | PlannerTurn) {
+function stubFactory(
+  script: (text: string) => Promise<PlannerTurn> | PlannerTurn,
+  sessionId = "stub-sid",
+) {
   const calls: StubCalls = {
     opens: 0,
     closes: 0,
@@ -93,6 +98,7 @@ function stubFactory(script: (text: string) => Promise<PlannerTurn> | PlannerTur
     calls.opens += 1;
     calls.options.push(o);
     return {
+      sessionId,
       async prompt(text, options) {
         calls.prompts.push(text);
         calls.promptOptions.push(options);
@@ -107,6 +113,38 @@ function stubFactory(script: (text: string) => Promise<PlannerTurn> | PlannerTur
     };
   };
   return { createPlanner, calls };
+}
+
+/** 假会话行：requireMainSession 走 getSession 的最小形状。 */
+function fakeSession(over: Partial<Session> = {}): Session {
+  return {
+    sessionId: "conv_1",
+    userId: "u-web",
+    kind: "main",
+    parentSessionId: null,
+    title: null,
+    status: "active",
+    currentItineraryRecordId: null,
+    leaseOwner: null,
+    leaseEpoch: 0,
+    leaseExpiresAt: null,
+    lastActivityAt: "t",
+    createdAt: "t",
+    updatedAt: "t",
+    ...over,
+  };
+}
+
+/** getSession 可控的会话库 stub：send 的 sessionId 分支专用。 */
+function sessionsWith(rows: Session[]): SessionRepository {
+  const map = new Map(rows.map((s) => [s.sessionId, s]));
+  return {
+    async getSession(userId: string, sessionId: string) {
+      const session = map.get(sessionId);
+      return session && session.userId === userId ? session : undefined;
+    },
+    close() {},
+  } as unknown as SessionRepository;
 }
 
 /** 可控 promise：供"在途"场景精确控制 settle 时机。 */
@@ -138,7 +176,11 @@ test("send 澄清透传；工厂拿到 config/repository/sessions/userId，plann
     createPlanner,
   });
   const result = await service.send("u-web", "  帮我安排  ");
-  assert.deepEqual(result, { kind: "clarification", question: "哪天去？" });
+  assert.deepEqual(result, {
+    kind: "clarification",
+    session_id: "stub-sid",
+    question: "哪天去？",
+  });
   assert.equal(calls.opens, 1);
   assert.equal(calls.closes, 1);
   assert.equal(calls.cancels, 0); // 正常完成不误 cancel
@@ -148,6 +190,8 @@ test("send 澄清透传；工厂拿到 config/repository/sessions/userId，plann
   assert.equal(passed.repository, repository);
   assert.equal(passed.sessions, SESSIONS);
   assert.equal(passed.userId, "u-web");
+  assert.equal(passed.sessionId, undefined); // 未传 sessionId → 按 title 懒建新对话
+  assert.equal(passed.title, "帮我安排");
 });
 
 test("send 带 location：planner.prompt 收到 {location}；不带则 options 无坐标", async () => {
@@ -195,6 +239,7 @@ test("send 行程：返回完整 itinerary + 按 stops 顺序去重、缺库跳�
   const result = await service.send("u-web", "安排一下");
   assert.equal(result.kind, "itinerary");
   if (result.kind !== "itinerary") return;
+  assert.equal(result.session_id, "stub-sid");
   assert.equal(result.itinerary, itinerary); // 完整对象原样返回
   assert.deepEqual(
     result.events.map((e) => e.event_id),
@@ -349,29 +394,10 @@ test("shutdown：取消在途 send 并等 settle+close，等在途 history，之
   const pendingTurn = deferred<PlannerTurn>();
   const pendingRuns = deferred<Run[]>();
   const sessions = {
-    // history 走到 listRunsBySession 时被吊住，制造可控在途读。
-    createUser: async (input: { userId?: string }) => ({
-      userId: input.userId ?? "u",
-      mainSessionId: "s1",
-      displayName: null,
-      createdAt: "t",
-      updatedAt: "t",
-    }),
-    getMainSession: async (userId: string) => ({
-      sessionId: "s1",
-      userId,
-      kind: "main",
-      parentSessionId: null,
-      title: null,
-      status: "active",
-      currentItineraryRecordId: null,
-      leaseOwner: null,
-      leaseEpoch: 0,
-      leaseExpiresAt: null,
-      lastActivityAt: "t",
-      createdAt: "t",
-      updatedAt: "t",
-    }),
+    // history(sessionId) 走到 listRunsBySession 时被吊住，制造可控在途读。
+    async getSession(userId: string, sessionId: string) {
+      return sessionId === "s1" ? fakeSession({ sessionId: "s1", userId }) : undefined;
+    },
     listRunsBySession: () => pendingRuns.promise,
     getCurrentItinerary: async () => undefined,
     close() {},
@@ -385,7 +411,7 @@ test("shutdown：取消在途 send 并等 settle+close，等在途 history，之
   });
 
   const sent = service.send("u-a", "hi");
-  const read = service.history("u-a");
+  const read = service.history("u-a", "s1");
   await tick();
   assert.equal(calls.prompts.length, 1);
 
@@ -414,8 +440,160 @@ test("shutdown：取消在途 send 并等 settle+close，等在途 history，之
 
   // shutdown 之后的新请求一律被拒，不再触达依赖。
   await assert.rejects(service.send("u-a", "again"), ChatServiceError);
-  await assert.rejects(service.history("u-a"), ChatServiceError);
+  await assert.rejects(service.history("u-a", "s1"), ChatServiceError);
   assert.equal(calls.opens, 1);
   // 幂等：重复 shutdown 直接返回。
   await service.shutdown();
+});
+
+test("send 带 sessionId：先校验会话归属再打开；不存在/跨用户/child → not_found", async () => {
+  const { createPlanner, calls } = stubFactory(() => ({
+    kind: "clarification",
+    question: "q",
+  }));
+  const sessions = sessionsWith([
+    fakeSession({ sessionId: "conv_ok", userId: "u-web" }),
+    fakeSession({ sessionId: "conv_other", userId: "u-other" }),
+    fakeSession({ sessionId: "conv_child", userId: "u-web", kind: "child" }),
+    fakeSession({ sessionId: "conv_archived", userId: "u-web", status: "archived" }),
+  ]);
+  const service = createChatService({
+    config: CONFIG,
+    repository: fakeRepo([]),
+    sessions,
+    createPlanner,
+  });
+
+  // 存在的 active main 对话：requireMainSession 放行，工厂收到 sessionId、不传 title。
+  const result = await service.send("u-web", "继续", { sessionId: "conv_ok" });
+  assert.deepEqual(result, { kind: "clarification", session_id: "stub-sid", question: "q" });
+  assert.equal(calls.options[0].sessionId, "conv_ok");
+  assert.equal(calls.options[0].title, undefined);
+
+  // 不存在 / 跨用户 / child / 已归档：都不触达工厂。
+  for (const [sessionId, code] of [
+    ["conv_missing", "not_found"],
+    ["conv_other", "not_found"], // 存在但属于别人：同样 404，不泄露存在性
+    ["conv_child", "not_found"], // 内部 child 会话：拒绝对它发用户消息
+    ["conv_archived", "conflict"],
+  ] as const) {
+    await assert.rejects(service.send("u-web", "hi", { sessionId }), (error) => {
+      assert.ok(error instanceof ChatClientError, sessionId);
+      assert.equal(error.code, code, sessionId);
+      return true;
+    });
+  }
+  assert.equal(calls.opens, 1); // 只有第一通真正建了 planner
+  assert.equal(calls.closes, 1);
+});
+
+test("send 无 sessionId：新对话 title 取首条消息前 30 码点（emoji 不碎代理对）", async () => {
+  const { createPlanner, calls } = stubFactory(() => ({
+    kind: "clarification",
+    question: "q",
+  }));
+  const service = createChatService({
+    config: CONFIG,
+    repository: fakeRepo([]),
+    sessions: SESSIONS,
+    createPlanner,
+  });
+
+  // 短消息：title 为整条 trim 后文本。
+  await service.send("u-web", "  想去海边  ");
+  assert.equal(calls.options[0].title, "想去海边");
+
+  // 超长含 emoji：按码点截 30 个，不切碎 surrogate pair。
+  const emoji = "🎉"; // 单码点、双 UTF-16 单元
+  const message = `${emoji.repeat(20)}然后${"字".repeat(20)}尾`;
+  await service.send("u-web", message);
+  const title = calls.options[1].title ?? "";
+  assert.equal([...title].length, 30);
+  assert.ok(title.startsWith(emoji.repeat(20)));
+  assert.ok(![...title].some((c) => c === "\uFFFD"));
+  // 截断点落在完整码点上：title 重新编码后无孤立代理半区。
+  for (let i = 0; i < title.length; i++) {
+    const code = title.charCodeAt(i);
+    if (code >= 0xd800 && code <= 0xdbff) {
+      const next = title.charCodeAt(i + 1);
+      assert.ok(next >= 0xdc00 && next <= 0xdfff, "lead surrogate 必须有 trail 配对");
+      i++;
+    }
+  }
+});
+
+test("planner 无 sessionId 且无 options.sessionId：结果缺会话标识 → ChatServiceError", async () => {
+  const factory = async (): Promise<ChatPlanner> => ({
+    async prompt() {
+      return { kind: "clarification", question: "q" };
+    },
+    cancel() {},
+    async close() {},
+  });
+  const service = createChatService({
+    config: CONFIG,
+    repository: fakeRepo([]),
+    sessions: SESSIONS,
+    createPlanner: factory,
+  });
+  await assert.rejects(service.send("u-web", "hi"), ChatServiceError);
+});
+
+test("会话竞争兜底：openPlanner 抛 archived/写租约错误 → ChatClientError(conflict)", async () => {
+  for (const thrown of [
+    new SessionRepositoryError("archived", "会话 conv_1 已归档，不能打开"),
+    new Error("会话正由另一个写者处理（写租约未释放），请稍后重试"),
+    new SessionRepositoryError("not_found", "会话 conv_1 不存在"),
+  ]) {
+    const createPlanner = async (): Promise<ChatPlanner> => {
+      throw thrown;
+    };
+    const service = createChatService({
+      config: CONFIG,
+      repository: fakeRepo([]),
+      sessions: sessionsWith([fakeSession({ sessionId: "conv_1", userId: "u-web" })]),
+      createPlanner,
+    });
+    await assert.rejects(service.send("u-web", "hi", { sessionId: "conv_1" }), (error) => {
+      assert.ok(error instanceof ChatClientError);
+      const expected = thrown instanceof SessionRepositoryError && thrown.code === "not_found"
+        ? "not_found"
+        : "conflict";
+      assert.equal(error.code, expected);
+      return true;
+    });
+  }
+});
+
+test("轮内竞争兜底：error turn 带写租约/已归档消息 → ChatClientError(conflict)，其余仍 ChatServiceError", async () => {
+  for (const message of [
+    "会话正由另一个写者处理（写租约未释放），请稍后重试",
+    "会话 conv_1 已归档，不能获取租约",
+    "行程校验通过但写入会话库失败：会话 conv_1 的写租约已过期",
+  ]) {
+    const { createPlanner } = stubFactory(() => ({ kind: "error", message }));
+    const service = createChatService({
+      config: CONFIG,
+      repository: fakeRepo([]),
+      sessions: sessionsWith([fakeSession({ sessionId: "conv_1", userId: "u-web" })]),
+      createPlanner,
+    });
+    await assert.rejects(service.send("u-web", "hi", { sessionId: "conv_1" }), (error) => {
+      assert.ok(error instanceof ChatClientError, message);
+      assert.equal(error.code, "conflict");
+      return true;
+    });
+  }
+  // 普通 error turn（校验失败等）仍是 ChatServiceError → HTTP 500。
+  const { createPlanner } = stubFactory(() => ({
+    kind: "error",
+    message: "行程未通过校验：未知活动",
+  }));
+  const service = createChatService({
+    config: CONFIG,
+    repository: fakeRepo([]),
+    sessions: SESSIONS,
+    createPlanner,
+  });
+  await assert.rejects(service.send("u-web", "hi"), ChatServiceError);
 });

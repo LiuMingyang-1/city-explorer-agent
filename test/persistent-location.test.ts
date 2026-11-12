@@ -141,21 +141,27 @@ test("service 跨请求沿用最近位置：新实例从 run.input 恢复，更�
     clarify(),
   ]);
 
-  // 首轮带位置：坐标注入本轮 system section。
-  await service.send("u-a", "附近逛逛", { location: { lat: 34.27, lng: 108.95 } });
+  // 首轮带位置：懒建对话，坐标注入本轮 system section。
+  const first = await service.send("u-a", "附近逛逛", {
+    location: { lat: 34.27, lng: 108.95 },
+  });
+  const sid = first.session_id;
   assert.ok(hasLat(seen[0], 34.27));
 
   // 次轮不带位置：planner 是全新实例，须从会话库恢复同一坐标。
   clock.advance(1_000);
-  await service.send("u-a", "明天下午，还是附近");
+  await service.send("u-a", "明天下午，还是附近", { sessionId: sid });
   assert.ok(hasLat(seen[1], 34.27));
 
   // 新位置覆盖旧值，之后的轮次沿用新坐标。
   clock.advance(1_000);
-  await service.send("u-a", "换地方了", { location: { lat: 31.2, lng: 121.5 } });
+  await service.send("u-a", "换地方了", {
+    location: { lat: 31.2, lng: 121.5 },
+    sessionId: sid,
+  });
   assert.ok(hasLat(seen[2], 31.2));
   clock.advance(1_000);
-  await service.send("u-a", "那附近呢");
+  await service.send("u-a", "那附近呢", { sessionId: sid });
   assert.ok(hasLat(seen[3], 31.2));
 
   // 另一用户的会话没有 location run：无该节，不串 u-a 的位置。
@@ -163,7 +169,7 @@ test("service 跨请求沿用最近位置：新实例从 run.input 恢复，更�
   assert.equal(seen[4], null);
 
   // 坐标只进 system section 与 run.input 快照：history 还原的消息不含坐标。
-  const history = await service.history("u-a");
+  const history = await service.history("u-a", sid);
   assert.ok(!JSON.stringify(history).includes("34.27"));
 });
 
@@ -182,10 +188,19 @@ test("同时间戳下最近位置按落库消息序号判定：冻结时钟多�
     clarify(),
     clarify(),
   ]);
-  for (let i = 1; i <= 3; i++) {
-    await service.send("u", `第${i}处`, { location: { lat: i, lng: 0 } });
+  // 同一对话内多次更新：首轮懒建，后续显式带 sessionId 续用。
+  const first = await service.send("u", "第1处", { location: { lat: 1, lng: 0 } });
+  const sid = first.session_id;
+  assert.ok(hasLat(seen.at(-1), 1), "第1处应注入 lat=1");
+  await service.send("u", "还是附近", { sessionId: sid });
+  assert.ok(hasLat(seen.at(-1), 1), "沿用应恢复 lat=1");
+  for (let i = 2; i <= 3; i++) {
+    await service.send("u", `第${i}处`, {
+      location: { lat: i, lng: 0 },
+      sessionId: sid,
+    });
     assert.ok(hasLat(seen.at(-1), i), `第${i}处应注入 lat=${i}`);
-    await service.send("u", "还是附近");
+    await service.send("u", "还是附近", { sessionId: sid });
     assert.ok(hasLat(seen.at(-1), i), `沿用应恢复 lat=${i}`);
   }
 });
@@ -200,13 +215,17 @@ test("时钟回拨不改新旧判定：created_at 更早的 run 仍按消息序�
     clarify(),
     clarify(),
   ]);
-  await service.send("u", "第一处", { location: { lat: 1, lng: 0 } });
-  await service.send("u", "还是附近");
+  const first = await service.send("u", "第一处", { location: { lat: 1, lng: 0 } });
+  const sid = first.session_id;
+  await service.send("u", "还是附近", { sessionId: sid });
 
   // 时钟回拨一天：第二处 run 的 created_at 比第一处更早，按时间排序会错。
   clock.set("2026-11-11T00:00:00.000Z");
-  await service.send("u", "第二处", { location: { lat: 2, lng: 0 } });
-  await service.send("u", "还是附近");
+  await service.send("u", "第二处", {
+    location: { lat: 2, lng: 0 },
+    sessionId: sid,
+  });
+  await service.send("u", "还是附近", { sessionId: sid });
   assert.ok(hasLat(seen[3], 2), "应按落库序号恢复 lat=2 而非 lat=1");
 });
 
@@ -217,7 +236,7 @@ test("上报未落地的 run（没有任何落库消息）不参与最近位置�
   const repository = await makeRepo(t);
   const userId = "u-test";
   await sessions.createUser({ userId });
-  const main = await sessions.getMainSession(userId);
+  const main = await sessions.createConversation(userId);
   const writer = (await sessions.acquireLease(userId, main.sessionId, "seed", 60_000))!;
   // 两条已落地位置（旧→新），随后一条坐标更新却没有任何消息的 run——
   // 建 run 后取消/失败时上报未落地，不能覆盖已生效的最近位置。
@@ -251,6 +270,7 @@ test("上报未落地的 run（没有任何落库消息）不参与最近位置�
   const { session } = await makePersistent(t, [clarify()], {
     sessions,
     repository,
+    sessionId: main.sessionId,
     locationAnchor: async () => undefined,
   });
   await session.prompt("再来");

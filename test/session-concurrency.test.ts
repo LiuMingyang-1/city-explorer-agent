@@ -36,7 +36,12 @@ test("two planners alternate on one session; a held lease rejects the rival", as
   const turnA = await a.session.prompt("A 的第一轮");
   assert.equal(turnA.kind, "itinerary");
 
-  const b = await makePersistent(t, [], { sessions, userId: "u-share", repository: a.repo });
+  const b = await makePersistent(t, [], {
+    sessions,
+    userId: "u-share",
+    repository: a.repo,
+    sessionId: a.session.sessionId,
+  });
   assert.equal(b.session.sessionId, a.session.sessionId);
   let sawA = false;
   b.faux.setResponses([
@@ -113,7 +118,7 @@ test("lease loss mid-run aborts, reports terminal-state failure, next owner repa
   const repair = await makePersistent(
     t,
     [fauxAssistantMessage('{"type":"clarify","question":"q"}')],
-    { sessions },
+    { sessions, sessionId: sid },
   );
   const repaired = (await sessions.listRunsBySession("u-test", sid)).at(-1);
   assert.equal(repaired?.status, "failed", "下一个写者打开时标记修复死 run");

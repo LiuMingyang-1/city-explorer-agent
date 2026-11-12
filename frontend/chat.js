@@ -1,5 +1,5 @@
 'use strict';
-let ready=false,initializing=false;
+let ready=true;
 async function apiJSON(url,{method='GET',body,timeout=10000}={}){
  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),timeout);
  try{
@@ -98,11 +98,14 @@ async function deliver(text){
  const pending=document.createElement('div');pending.className='message assistant';
  pending.innerHTML='<span class="message-label">漫游正在整理灵感</span><div class="bubble typing" aria-label="正在回复">···</div>';
  $('messages').append(pending);scrollMessages();
+ const slow=setTimeout(()=>{pending.querySelector('.message-label').textContent='漫游正在多路比选方案';},15000);
  try{
   const loc=state.location,body={message:text};
   if(loc&&Number.isFinite(loc.lat)&&Number.isFinite(loc.lng))body.location={lat:loc.lat,lng:loc.lng};
-  const data=await apiJSON('/api/chat',{method:'POST',body:JSON.stringify(body),timeout:60000});
+  if(typeof state.sessionId==='string'&&state.sessionId)body.session_id=state.sessionId;
+  const data=await apiJSON('/api/chat',{method:'POST',body:JSON.stringify(body),timeout:210000});
   pending.remove();
+  if(data&&typeof data.session_id==='string'&&data.session_id)state.sessionId=data.session_id;
   if(data&&data.kind==='itinerary'&&data.itinerary&&typeof data.itinerary==='object')appendItinerary(data.itinerary,data.events);
   else if(data&&data.kind==='clarification'&&typeof data.question==='string'&&data.question)appendMessage('assistant',data.question);
   else appendMessage('assistant','收到了意料之外的回复，再告诉我一次你的想法吧。');
@@ -110,7 +113,7 @@ async function deliver(text){
   pending.remove();
   showSendError(text,error&&error.name==='AbortError'?'请求超时':(error&&error.message)||'网络异常');
  }finally{
-  state.busy=false;updateSendButton();$('message-input').focus({preventScroll:true});
+  clearTimeout(slow);state.busy=false;updateSendButton();$('message-input').focus({preventScroll:true});
  }
 }
 async function sendMessage(text){
@@ -120,33 +123,7 @@ async function sendMessage(text){
 }
 window.sendMessage=sendMessage;
 function updateSendButton(){$('send-button').disabled=!ready||state.busy||!$('message-input').value.trim();}
-function showInitError(detail){
- const {message,bubble}=makeMessage('assistant');
- const note=document.createElement('span');note.textContent='历史对话暂时没有加载出来，发送前请重试'+(detail?'（'+detail+'）':'')+'。 ';
- const retry=document.createElement('button');retry.type='button';retry.className='retry-button';retry.textContent='重试';
- retry.addEventListener('click',()=>{if(ready||initializing)return;message.remove();initHistory();});
- bubble.append(note,retry);scrollMessages();
-}
-async function initHistory(){
- if(ready||initializing)return;
- initializing=true;updateSendButton();
- const pending=document.createElement('div');pending.className='message assistant';
- pending.innerHTML='<span class="message-label">漫游正在恢复历史对话</span><div class="bubble typing" aria-label="正在加载">···</div>';
- $('messages').append(pending);scrollMessages();
- let data;
- try{data=await apiJSON('/api/chat/history');}
- catch(error){
-  pending.remove();initializing=false;updateSendButton();
-  showInitError(error&&error.name==='AbortError'?'请求超时':(error&&error.message)||'网络异常');
-  return;
- }
- pending.remove();ready=true;initializing=false;updateSendButton();
- (data&&Array.isArray(data.messages)?data.messages:[]).forEach(entry=>{
-  if(entry&&(entry.role==='user'||entry.role==='assistant')&&typeof entry.text==='string')appendMessage(entry.role,entry.text);
- });
- if(data&&data.itinerary&&typeof data.itinerary==='object')appendItinerary(data.itinerary,data.events);
-}
 $('message-input').addEventListener('input',updateSendButton);
 $('chat-form').addEventListener('submit',event=>{event.preventDefault();if(!event.isComposing)sendMessage($('message-input').value);});
 $('message-input').addEventListener('keydown',event=>{if(event.key==='Enter'&&event.isComposing)event.preventDefault();});
-initHistory();
+updateSendButton();

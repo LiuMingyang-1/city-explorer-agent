@@ -30,9 +30,10 @@ export function createSqliteSessionRepository(
     // users / 初始化
     createUser: async (input) => accounts.createUser(ctx, input),
     getUser: async (userId) => accounts.getUser(ctx, userId),
-    getMainSession: async (userId) => accounts.getMainSession(ctx, userId),
 
     // sessions
+    createConversation: async (userId, input) =>
+      accounts.createConversation(ctx, userId, input),
     getSession: async (userId, sessionId) => accounts.getSession(ctx, userId, sessionId),
     listSessions: async (userId) => accounts.listSessions(ctx, userId),
     createChildSession: async (writer, userId, input) =>

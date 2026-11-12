@@ -21,7 +21,9 @@ const USAGE = `city-explorer-agent v0 — 用自然语言规划一日出行
 
 会话：
   对话与已确认行程持久化在 SQLite 会话库（默认 data/sessions.db，
-  EXPLORER_SESSION_DB_PATH 覆盖），重启 CLI 后延续同一主会话。
+  EXPLORER_SESSION_DB_PATH 覆盖）。默认每次启动新建一条对话，
+  启动时 stderr 打印本次会话 ID；设 EXPLORER_SESSION_ID=<id>
+  可恢复指定会话（调试/回归用）。
   EXPLORER_USER_ID 是本地演示标识（缺省/空白 → local），不是 Web 认证。
   会话内命令：/compact 手动压缩上下文（不会发给模型）。
 
@@ -75,6 +77,7 @@ export async function main(): Promise<void> {
       repository,
       sessions,
       userId: config.userId ?? "local",
+      sessionId: config.sessionId,
     });
     const io: CliIO = {
       out: (text) => process.stdout.write(`${text}\n`),
@@ -84,6 +87,12 @@ export async function main(): Promise<void> {
       `已连接 ${config.provider}/${config.model}；活动库 ${config.dbPath}、` +
         `会话库 ${config.sessionDbPath ?? "data/sessions.db"}` +
         `（内容为模拟数据；本地用户 ${config.userId ?? "local"}）。`,
+    );
+    io.err(
+      config.sessionId
+        ? `已恢复会话 ${planner.sessionId}。`
+        : `本次新对话会话 ${planner.sessionId}；` +
+            `恢复请设 EXPLORER_SESSION_ID=${planner.sessionId}。`,
     );
 
     const inline = argv.join(" ").trim();

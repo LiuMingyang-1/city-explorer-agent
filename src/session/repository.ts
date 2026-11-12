@@ -2,6 +2,7 @@ import type {
   AppendCompactionInput,
   AppendMessageInput,
   CreateChildSessionInput,
+  CreateConversationInput,
   CreateRunInput,
   CreateUserInput,
   CurrentItinerary,
@@ -33,15 +34,18 @@ import type {
  */
 export interface SessionRepository {
   // ---- users / 初始化 ----
-  /** 幂等：userId 已存在返回既有用户；否则单事务建 user+main 会话+回填绑定。 */
+  /** 幂等：userId 已存在返回既有用户；否则只插入 users 行，不附带建会话。 */
   createUser(input: CreateUserInput): Promise<User>;
   getUser(userId: string): Promise<User | undefined>;
-  /** 用户不存在 → not_found；有用户但主会话未绑定 → corrupt（数据错误）。 */
-  getMainSession(userId: string): Promise<Session>;
 
   // ---- sessions ----
+  /**
+   * 建一条用户面对话会话（kind='main'、无父）。不需要 LeaseWriter——
+   * 无父会话就无树完整性要保护，归属由 userId 保证；用户不存在 → not_found。
+   */
+  createConversation(userId: string, input?: CreateConversationInput): Promise<Session>;
   getSession(userId: string, sessionId: string): Promise<Session | undefined>;
-  /** 该用户全部会话，last_activity_at 降序。 */
+  /** 该用户全部会话（main 对话 + child 任务），last_activity_at 降序。 */
   listSessions(userId: string): Promise<Session[]>;
   /** 需持父会话租约；父会话必须同用户且 active。 */
   createChildSession(
@@ -49,7 +53,7 @@ export interface SessionRepository {
     userId: string,
     input: CreateChildSessionInput,
   ): Promise<Session>;
-  /** 仅 child 可归档（main → conflict）；归档后会话只读，租约字段清除。 */
+  /** 任意 active 会话（含 main 与 child）可归档；归档后会话只读，租约字段清除。 */
   archiveSession(writer: LeaseWriter, userId: string, sessionId: string): Promise<void>;
 
   // ---- 单写者租约 ----
