@@ -64,6 +64,18 @@ export function putUserMemory(
     if (!fetchUser(ctx, userId)) {
       throw new SessionRepositoryError("not_found", `用户 ${userId} 不存在`);
     }
+    // CAS：与手工 PUT/DELETE 竞争时放弃写入（检查与写同事务）。
+    if (input.expectedContent !== undefined) {
+      const row = ctx.db
+        .prepare("SELECT content FROM user_memory WHERE user_id = ?")
+        .get(userId) as { content: string } | undefined;
+      if ((row?.content ?? "") !== input.expectedContent) {
+        throw new SessionRepositoryError(
+          "conflict",
+          "user_memory 已被并发修改，本次写入放弃",
+        );
+      }
+    }
     ctx.db
       .prepare(
         `INSERT INTO user_memory (user_id, content, source_session_id, through_message_seq, updated_at)

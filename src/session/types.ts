@@ -179,6 +179,12 @@ export interface PutUserMemoryInput {
   content: string;
   sourceSessionId: string | null;
   throughMessageSeq: number;
+  /**
+   * 乐观并发条件：仅当库中现有 content 与它相等才写入（行不存在按 ""
+   * 比较），不等抛 "conflict"。蒸馏用它避免覆盖手工 PUT/DELETE；
+   * 常规写入省略。
+   */
+  expectedContent?: string;
 }
 
 /** latestCompaction 的返回：记录本体 + 已解析并通过边界校验的 payload。 */

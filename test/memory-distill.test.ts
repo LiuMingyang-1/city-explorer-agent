@@ -565,3 +565,57 @@ test("存量文档残留的蒸馏记录节：模型照抄也被 normalize 丢弃
   assert.doesNotMatch(memory.content, /蒸馏记录/, "审计节机制已移除，残留节不得延续");
   assert.match(memory.content, /## 足迹\nf\n$/);
 });
+
+test("蒸馏期间手工 PUT：CAS 冲突 → skipped，不覆盖手工正文", async (t) => {
+  const { sessions, user, main, writer, agent, faux } = await makeDistill(t);
+  await seedMessages(sessions, writer, user.userId, main.sessionId, ["a", "b", "c"]);
+  faux.setResponses([fauxAssistantMessage("## 用户\nx\n\n## 偏好\ny\n\n## 足迹\n")]);
+  // 模拟蒸馏写回前的并发手工编辑（基线是无行 → 期望 ""）。
+  const inner = agent.streamFunction;
+  agent.streamFunction = (m, c, o) => {
+    void sessions.putUserMemory(user.userId, {
+      content: "手工文",
+      sourceSessionId: null,
+      throughMessageSeq: 99,
+    });
+    return inner(m, c, o);
+  };
+  const outcome = await distillMemory({
+    agent,
+    sessions,
+    userId: user.userId,
+    sessionId: main.sessionId,
+    minNewUserMessages: 3,
+  });
+  assert.equal(outcome.status, "skipped");
+  assert.match(outcome.reason ?? "", /并发修改/);
+  const memory = await sessions.getUserMemory(user.userId);
+  assert.equal(memory?.content, "手工文"); // 手工正文不被蒸馏覆盖
+  assert.equal(memory?.throughMessageSeq, 99);
+});
+
+test("蒸馏期间手工 DELETE：CAS 冲突 → skipped，已删记忆不复活", async (t) => {
+  const { sessions, user, main, writer, agent, faux } = await makeDistill(t);
+  await sessions.putUserMemory(user.userId, {
+    content: "旧文",
+    sourceSessionId: main.sessionId,
+    throughMessageSeq: 0,
+  });
+  await seedMessages(sessions, writer, user.userId, main.sessionId, ["a", "b", "c"]);
+  faux.setResponses([fauxAssistantMessage("## 用户\nx\n\n## 偏好\ny\n\n## 足迹\n")]);
+  const inner = agent.streamFunction;
+  agent.streamFunction = (m, c, o) => {
+    void sessions.deleteUserMemory(user.userId);
+    return inner(m, c, o);
+  };
+  const outcome = await distillMemory({
+    agent,
+    sessions,
+    userId: user.userId,
+    sessionId: main.sessionId,
+    minNewUserMessages: 3,
+  });
+  assert.equal(outcome.status, "skipped");
+  assert.match(outcome.reason ?? "", /并发修改/);
+  assert.equal(await sessions.getUserMemory(user.userId), undefined); // 删除不被复活
+});

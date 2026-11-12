@@ -188,15 +188,23 @@ function planView(
     itinerary,
     legs,
     validation: { status: "passed", scope: "inter_stop", issues: [] },
-    warnings: [],
+    warnings: legs.some((leg) => leg.status === "error")
+      ? ["部分站间道路路线获取失败，对应轨迹已省略"]
+      : [],
   };
 }
 
-/** turn.warning 收进响应顶层 warnings；无警告时省略该键。 */
+/**
+ * turn.warning 收进响应顶层 warnings；无警告时省略该键。
+ * "run 终态…" 是租约丢失等内部故障的落库告警，原文含底层错误细节，
+ * 对外一律换成固定脱敏文案（详情仍在 run.result 供审计）。
+ */
 function topWarnings(turn: PlannerTurn): { warnings?: string[] } {
-  return turn.kind !== "error" && turn.warning !== undefined
-    ? { warnings: [turn.warning] }
-    : {};
+  if (turn.kind === "error" || turn.warning === undefined) return {};
+  const warning = turn.warning.startsWith("run 终态")
+    ? "本次回复已生成，但后台存档未完整落库"
+    : turn.warning;
+  return { warnings: [warning] };
 }
 
 /** send 的在途句柄：planner 就绪前即可被 shutdown/signal 标记取消。 */
@@ -386,6 +394,7 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
   async function assemblePlans(
     items: { label: "A" | "B"; title: string; itinerary: Itinerary }[],
     onProgress?: (progress: PlannerProgress) => void,
+    signal?: AbortSignal,
   ): Promise<{ plans: Plan[]; events: EventView[] }> {
     const eventsById = await planEvents(...items.map((i) => i.itinerary));
     const hasLegs = items.some((i) => i.itinerary.stops.length >= 2);
@@ -409,6 +418,7 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
           await computePlanLegs(item.itinerary.stops, eventsById, {
             router,
             transitThresholdM: config.routeTransitThresholdM,
+            signal,
           }),
         ),
       ),
@@ -448,6 +458,12 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
   ): Promise<ChatResult> {
     const signal = options?.signal;
     let planner: ChatPlanner | undefined;
+    // abort 监听从模型轮一路挂到 legs 算路与装配结束——取消链覆盖
+    // resolveReferencedEvent、prompt、computePlanLegs 全程。
+    const onAbort = () => {
+      handle.cancelled = true;
+      handle.planner?.cancel();
+    };
     try {
       if (options?.sessionId !== undefined) {
         // 显式续用对话：先校验归属/kind/status，再交给工厂打开。
@@ -471,10 +487,6 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
       }
       // openPlanner 期间可能已被 shutdown/abort 标记：不再启动模型轮。
       if (handle.cancelled || signal?.aborted) throw abortError(signal);
-      const onAbort = () => {
-        handle.cancelled = true;
-        handle.planner?.cancel();
-      };
       signal?.addEventListener("abort", onAbort, { once: true });
       let turn: PlannerTurn;
       try {
@@ -486,14 +498,14 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
         if (options?.activePlan !== undefined) promptOptions.activePlan = options.activePlan;
         const referenced = await resolveReferencedEvent(options?.referencedEventId);
         if (referenced !== undefined) promptOptions.referencedEvent = referenced;
+        // 点选查询是异步边界：期间断连不启动模型轮。
+        if (handle.cancelled || signal?.aborted) throw abortError(signal);
         if (options?.onProgress !== undefined) promptOptions.onProgress = options.onProgress;
         turn = await planner.prompt(message, promptOptions);
       } catch (error) {
         // 中止引起的 prompt 异常也归为 AbortError，不伪装成内部错误。
         if (handle.cancelled || signal?.aborted) throw abortError(signal);
         throw error;
-      } finally {
-        signal?.removeEventListener("abort", onAbort);
       }
       // 已中止：结果照常丢弃，向 HTTP 层报中止（客户端通常已断开）。
       if (handle.cancelled || signal?.aborted) throw abortError(signal);
@@ -517,7 +529,10 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
         const { plans, events } = await assemblePlans(
           turn.plans.map((p) => ({ label: p.label, title: p.title, itinerary: p.itinerary })),
           options?.onProgress,
+          signal,
         );
+        // 算路期间断连：丢弃装配结果（已提交的行程指针保留）。
+        if (handle.cancelled || signal?.aborted) throw abortError(signal);
         return {
           kind: "plans",
           session_id: sessionId,
@@ -532,7 +547,9 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
       const { plans, events } = await assemblePlans(
         [{ label: "A", title: turn.itinerary.summary, itinerary: turn.itinerary }],
         options?.onProgress,
+        signal,
       );
+      if (handle.cancelled || signal?.aborted) throw abortError(signal);
       return {
         kind: "plans",
         session_id: sessionId,
@@ -547,6 +564,7 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
       if (handle.cancelled || signal?.aborted) throw abortError(signal);
       throw mapSessionError(error);
     } finally {
+      signal?.removeEventListener("abort", onAbort);
       activeSends.delete(handle);
       // 每次 send 用完即关：释放会话租约，让其他实例/请求能继续写。
       if (planner) await planner.close();
@@ -641,15 +659,16 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
   /**
    * PUT /api/memory：覆盖式更新正文。cookie 用户可能从未发过消息而还没
    * users 行——createUser 幂等，先保证 user_memory 的外键主行存在。
-   * 蒸馏游标 throughMessageSeq 原样保留（手工编辑不重置蒸馏进度）；
-   * sourceSessionId 置 null——本行不再是某次蒸馏的产物快照。
+   * 蒸馏游标（sourceSessionId + throughMessageSeq）整对保留——它是
+   * "蒸到哪儿"的读取指针，与正文内容无关；清掉会话 ID 会让下次蒸馏
+   * 从头重读，可能把刚删掉/改掉的偏好重新蒸回来。
    */
   async function runPutMemory(userId: string, content: string): Promise<UserMemoryView> {
     await sessions.createUser({ userId });
     const existing = await sessions.getUserMemory(userId);
     await sessions.putUserMemory(userId, {
       content,
-      sourceSessionId: null,
+      sourceSessionId: existing?.sourceSessionId ?? null,
       throughMessageSeq: existing?.throughMessageSeq ?? 0,
     });
     return runGetMemory(userId);

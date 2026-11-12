@@ -135,3 +135,56 @@ test("user memories are isolated per user", async (t) => {
   assert.equal((await repo.getUserMemory("u-a"))?.content, "A 的记忆 v2");
   assert.equal((await repo.getUserMemory("u-b"))?.content, "B 的记忆");
 });
+
+test("putUserMemory CAS：expectedContent 匹配才写入，不匹配抛 conflict 且不落库", async (t) => {
+  const repo = openMemoryRepo(t);
+  const { main } = await makeUser(repo, "u-mem");
+  await repo.putUserMemory("u-mem", {
+    content: "旧文",
+    sourceSessionId: main.sessionId,
+    throughMessageSeq: 5,
+  });
+
+  // 基线不符（被手工改过）→ conflict，原行原封不动。
+  await assert.rejects(
+    repo.putUserMemory("u-mem", {
+      content: "蒸馏结果",
+      sourceSessionId: main.sessionId,
+      throughMessageSeq: 9,
+      expectedContent: "已不是旧文",
+    }),
+    (e) => isSessionError(e, "conflict"),
+  );
+  assert.equal((await repo.getUserMemory("u-mem"))?.content, "旧文");
+
+  // 基线相符 → 正常写入并把新正文作为下一轮基线。
+  await repo.putUserMemory("u-mem", {
+    content: "蒸馏结果",
+    sourceSessionId: main.sessionId,
+    throughMessageSeq: 9,
+    expectedContent: "旧文",
+  });
+  assert.equal((await repo.getUserMemory("u-mem"))?.content, "蒸馏结果");
+  assert.equal((await repo.getUserMemory("u-mem"))?.throughMessageSeq, 9);
+
+  // 行不存在时按 "" 比较：DELETE 后期望旧正文的写入被拒绝（防复活）。
+  await repo.deleteUserMemory("u-mem");
+  await assert.rejects(
+    repo.putUserMemory("u-mem", {
+      content: "蒸馏结果",
+      sourceSessionId: main.sessionId,
+      throughMessageSeq: 10,
+      expectedContent: "蒸馏结果",
+    }),
+    (e) => isSessionError(e, "conflict"),
+  );
+  assert.equal(await repo.getUserMemory("u-mem"), undefined);
+  // 期望 "" 与无行匹配 → 写入成功。
+  await repo.putUserMemory("u-mem", {
+    content: "新蒸馏",
+    sourceSessionId: main.sessionId,
+    throughMessageSeq: 10,
+    expectedContent: "",
+  });
+  assert.equal((await repo.getUserMemory("u-mem"))?.content, "新蒸馏");
+});

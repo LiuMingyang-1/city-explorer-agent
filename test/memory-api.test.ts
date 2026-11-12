@@ -103,7 +103,7 @@ test("PUT → GET 往返：覆盖式写入并可读回；未建过 users 行的 
   assert.equal(view(await getMemory(stack, uid)).content, "改去市集");
 });
 
-test("PUT 覆盖正文但保留既有蒸馏游标，sourceSessionId 置 null", async (t) => {
+test("PUT 覆盖正文且整对保留蒸馏游标（sourceSessionId + seq 不回退）", async (t) => {
   const stack = await openStack(t);
   const uid = "b".repeat(32);
   await stack.sessions.createUser({ userId: uid });
@@ -117,7 +117,8 @@ test("PUT 覆盖正文但保留既有蒸馏游标，sourceSessionId 置 null", a
   const stored = await stack.sessions.getUserMemory(uid);
   assert.equal(stored?.content, "手工新文");
   assert.equal(stored?.throughMessageSeq, 42); // 蒸馏进度不回退
-  assert.equal(stored?.sourceSessionId, null); // 手工编辑后不再是蒸馏快照
+  // 游标是会话+序号的整体：清会话 ID 会让下次蒸馏从头重读、可能复活刚删掉的内容。
+  assert.equal(stored?.sourceSessionId, "sess_src");
 });
 
 test("DELETE → 204 清除记忆；无记录/重复删幂等，GET 回到空文档", async (t) => {

@@ -10,7 +10,7 @@ import {
 import { estimateMessages, estimateText, serializeMessage } from "../compaction/tokens.ts";
 import { parseStoredMessagePayload } from "../session/payload.ts";
 import type { SessionRepository } from "../session/repository.ts";
-import type { SessionRecord } from "../session/types.ts";
+import { isSessionError, type SessionRecord } from "../session/types.ts";
 import { emptyMemoryDoc, normalizeMemoryDoc, parseDistillOutput } from "./doc.ts";
 
 /**
@@ -97,6 +97,8 @@ export async function distillMemory(options: DistillMemoryOptions): Promise<Dist
 
   const row = await sessions.getUserMemory(userId);
   const current = row?.content ?? emptyMemoryDoc();
+  // CAS 基线：蒸馏期间被手工 PUT/DELETE 修改时放弃写回，不覆盖、不复活。
+  let expectedContent = row?.content ?? "";
   // 换了源会话从头蒸
   const cursor = row?.sourceSessionId === sessionId ? row.throughMessageSeq : 0;
 
@@ -149,12 +151,15 @@ export async function distillMemory(options: DistillMemoryOptions): Promise<Dist
   let unitsProcessed = 0;
   let sawUpdate = false;
 
-  const flushUnit = () =>
-    sessions.putUserMemory(userId, {
+  const flushUnit = async () => {
+    await sessions.putUserMemory(userId, {
       content: currentDoc,
       sourceSessionId: sessionId,
       throughMessageSeq: through,
+      expectedContent,
     });
+    expectedContent = currentDoc;
+  };
 
   // 一个输入单元（常规批或分片）→ 模型 → 校验并更新 currentDoc（unchanged
   // 时 currentDoc 不变）；校验失败抛错，外层 catch 转 error、不推游标。
@@ -240,6 +245,10 @@ export async function distillMemory(options: DistillMemoryOptions): Promise<Dist
       await flushUnit();
     }
   } catch (error) {
+    // 手工编辑/删除在蒸馏中途落地：放弃本批结果（游标不推，正文不动）。
+    if (isSessionError(error, "conflict")) {
+      return { status: "skipped", reason: "user_memory 被并发修改，本次蒸馏结果已丢弃" };
+    }
     return { status: "error", reason: error instanceof Error ? error.message : String(error) };
   }
 

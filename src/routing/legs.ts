@@ -39,6 +39,8 @@ export interface ComputePlanLegsOptions {
   transitThresholdM?: number;
   /** 写入每条 leg 的 buffer_seconds；缺省 300。 */
   bufferSeconds?: number;
+  /** 取消信号（客户端断连/shutdown）透传给算路器；省略则不可取消。 */
+  signal?: AbortSignal;
 }
 
 function skippedLeg(
@@ -102,7 +104,7 @@ export async function computePlanLegs(
     try {
       const routed = await router.route(
         { origin: pointOf(fromEvent), destination: pointOf(toEvent), mode },
-        undefined,
+        options.signal,
       );
       return {
         from_event_id: from.event_id,
