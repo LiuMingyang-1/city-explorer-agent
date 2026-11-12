@@ -35,6 +35,8 @@ export const ADDED_EVENT_COLUMNS: ReadonlyArray<{ name: string; definition: stri
   { name: "amap_poi_id", definition: "amap_poi_id TEXT DEFAULT NULL" },
   { name: "valid_from", definition: "valid_from TEXT DEFAULT NULL" },
   { name: "valid_to", definition: "valid_to TEXT DEFAULT NULL" },
+  { name: "time_note", definition: "time_note TEXT DEFAULT NULL" },
+  { name: "time_status", definition: "time_status TEXT NOT NULL DEFAULT 'unknown' CHECK(time_status IN ('complete','partial','unknown','conflicting'))" },
   { name: "schedule_json", definition: "schedule_json TEXT DEFAULT NULL CHECK(schedule_json IS NULL OR json_valid(schedule_json))" },
   { name: "status", definition: "status TEXT NOT NULL DEFAULT 'unknown' CHECK(status IN ('active','paused','cancelled','ended','unknown'))" },
   { name: "source_published_at", definition: "source_published_at TEXT DEFAULT NULL" },

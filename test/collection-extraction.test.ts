@@ -33,9 +33,9 @@ test("malformed or truncated JSON is retried once; credentials in exceptions are
   assert.deepEqual(failed.issues, ["INVALID_EXTRACTION_SCHEMA"]);
 });
 
-test("models cannot assign coordinates, source authority, or extra publication fields", async () => {
+test("models cannot assign source authority or extra publication fields", async () => {
   const { facts, document, asOf } = extractionFixture();
-  for (const extra of [{ latitude: 34.2 }, { authority: "publisher" }, { approved: true }]) {
+  for (const extra of [{ authority: "publisher" }, { approved: true }]) {
     const result = await extractActivities(document, { asOf, structured: { activities: [{ ...facts, ...extra }] } });
     assert.deepEqual(result.issues, ["INVALID_EXTRACTION_SCHEMA"]);
   }
@@ -44,7 +44,6 @@ test("models cannot assign coordinates, source authority, or extra publication f
 const negatives: [string, (facts: ActivityFacts, document: ExtractionDocument) => void, string][] = [
   ["cancelled activity", (f, d) => { f.status = "cancelled"; d.text += "活动已取消"; }, "NOT_ACTIVE"],
   ["recap", f => { f.status = "past"; }, "NOT_ACTIVE"],
-  ["conflicting sources", f => { f.conflicts = ["场馆日期冲突"]; }, "UNRESOLVED_CONFLICT"],
   ["invalid calendar", f => { f.start_at = "2026-02-30T10:00"; }, "INVALID_SLOT"],
   ["reversed window", f => { f.end_at = "2026-11-14T09:00"; }, "INVALID_SLOT"],
   ["wrong city", f => { f.city = null; }, "CITY_NOT_CONFIRMED"],

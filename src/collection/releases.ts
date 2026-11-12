@@ -91,7 +91,7 @@ export async function publishRelease(rootPath: string, input: PreparedCollection
     sidecar.batch_id = options.batchId;
     try {
       ensureEventsSchema(db); db.exec("PRAGMA journal_mode=DELETE");
-      const columns = ["id", "title", "description", "category", "venue_name", "address", "latitude", "longitude", "start_at", "end_at", "suggested_duration_minutes", "budget_min", "budget_max", "currency", "budget_note", "guide_url", "thumbnail_url", "image_urls", "record_type", "city", "amap_poi_id", "valid_from", "valid_to", "schedule_json", "status", "source_published_at", "source_updated_at", "fetched_at", "updated_at"] as const;
+      const columns = ["id", "title", "description", "category", "venue_name", "address", "latitude", "longitude", "start_at", "end_at", "suggested_duration_minutes", "budget_min", "budget_max", "currency", "budget_note", "guide_url", "thumbnail_url", "image_urls", "record_type", "city", "amap_poi_id", "valid_from", "valid_to", "schedule_json", "time_note", "time_status", "status", "source_published_at", "source_updated_at", "fetched_at", "updated_at"] as const;
       const insert = db.prepare(`INSERT INTO events (${columns.join(",")}) VALUES (${columns.map(() => "?").join(",")}) ON CONFLICT(id) DO UPDATE SET ${columns.filter(c => c !== "id").map(c => `${c}=excluded.${c}`).join(",")}`);
       db.exec("BEGIN IMMEDIATE");
       try {
@@ -110,7 +110,7 @@ export async function publishRelease(rootPath: string, input: PreparedCollection
             }
             if (!assessFreshness(event, incoming, options.asOf).includeInDiscovery) { discarded.push({ event_id: event.id, reason: "UNCHANGED_SOURCE_NEEDS_REVERIFICATION" }); continue; }
           }
-          insert.run(...columns.map(c => c === "image_urls" ? JSON.stringify(event[c]) : c === "schedule_json" ? event.schedule_json ? JSON.stringify(event.schedule_json) : null : event[c] ?? (c === "record_type" ? "activity" : c === "city" ? "西安市" : c === "status" ? "unknown" : null)));
+          insert.run(...columns.map(c => c === "image_urls" ? JSON.stringify(event[c]) : c === "schedule_json" ? event.schedule_json ? JSON.stringify(event.schedule_json) : null : event[c] ?? (c === "record_type" ? "activity" : c === "city" ? "西安市" : c === "time_status" ? "unknown" : c === "status" ? "unknown" : null)));
           written++;
           sidecar.events[event.id] = { freshness: incoming, provenance, window: { start_at: event.start_at, end_at: event.end_at, record_type: event.record_type, schedule_json: event.schedule_json } };
         }

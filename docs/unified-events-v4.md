@@ -1,5 +1,7 @@
 # 活动与景点共表 v4：实现与验收
 
+> 2026-11-13更新：新增时间备注字段及OCR、高德模型工具流程，当前规范见[时间备注与模型高德工具采集](collection-time-notes-and-tools.md)，实际提示词以src/collection/extraction.ts为准。
+
 日期：2026-11-12；独立分支feat/xian-nightly-events。未合并主分支、未推送、未修改正式数据库。
 
 ## 范围

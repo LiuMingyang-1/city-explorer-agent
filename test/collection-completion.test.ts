@@ -46,7 +46,7 @@ test("month/day model output is normalized locally with an auditable publication
   assert.equal(completeFacts(facts, document, asOf).confirmed_end_date, "2026-11-29");
 });
 
-test("an invalid date gets one bounded semantic repair", async () => {
+test("an invalid date becomes a note without an extra paid semantic retry", async () => {
   const { facts, document, asOf } = extractionFixture(); let calls = 0;
   const result = await extractActivities(document, { asOf, invoke: async (system) => {
     calls++;
@@ -54,7 +54,8 @@ test("an invalid date gets one bounded semantic repair", async () => {
     assert(system.includes("INVALID_END_DATE"));
     return JSON.stringify({ activities: [facts] });
   } });
-  assert.equal(calls, 2); assert.equal(result.activities[0].check.valid, true);
+  assert.equal(calls, 1); assert.equal(result.activities[0].check.valid, true);
+  assert.match(result.activities[0].facts.time_note!, /2026-99-99/);
 });
 
 test("recaps, cancellations and expired dates remain rejected after completion", () => {

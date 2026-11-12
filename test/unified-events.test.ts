@@ -63,7 +63,7 @@ test("unified SQL differentiates activity classifications and scenic A levels; m
   const db = new DatabaseSync(":memory:");
   try {
     ensureEventsSchema(db); ensureEventsSchema(db);
-    assert.equal(db.prepare("PRAGMA table_info(events)").all().length, 29);
+    assert.equal(db.prepare("PRAGMA table_info(events)").all().length, 31);
     const insert = db.prepare("INSERT INTO events(id,title,description,category,venue_name,address,record_type) VALUES(?,?,?,?,?,?,?)");
     insert.run("a", "景区", "介绍", "5A", "景区", "西安市地址", "attraction");
     assert.throws(() => insert.run("b", "景区", "介绍", "展览", "景区", "西安市地址", "attraction"));

@@ -6,6 +6,7 @@ export { CATEGORIES } from "../data/categories.ts";
 export interface RealEvent {
   id: string; title: string; description: string; category: CollectionCategory;
   record_type?: "activity" | "attraction"; city?: string; amap_poi_id?: string | null; valid_from?: string | null; valid_to?: string | null; schedule_json?: Schedule | null; status?: "active" | "paused" | "cancelled" | "ended" | "unknown"; source_published_at?: string | null; source_updated_at?: string | null; fetched_at?: string; updated_at?: string;
+  time_note?: string | null; time_status?: "complete" | "partial" | "unknown" | "conflicting";
   venue_name: string; address: string; latitude: number; longitude: number;
   start_at: string | null; end_at: string | null; suggested_duration_minutes: number | null;
   budget_min: number | null; budget_max: number | null; currency: "CNY";

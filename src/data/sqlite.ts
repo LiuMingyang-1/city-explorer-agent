@@ -20,6 +20,7 @@ const SEARCH_LIMIT = 100;
 const EARTH_RADIUS_KM = 6371;
 
 type EventRow = {
+  time_note?: string | null; time_status?: "complete" | "partial" | "unknown" | "conflicting";
   record_type?: "activity" | "attraction"; city?: string; amap_poi_id?: string | null; valid_from?: string | null; valid_to?: string | null; schedule_json?: string | null; status?: string; source_published_at?: string | null; source_updated_at?: string | null; fetched_at?: string | null; updated_at?: string | null;
   id: string;
   title: string;
@@ -57,6 +58,7 @@ function toEvent(row: EventRow): Event {
   return {
     ...(row.record_type === "attraction" || row.schedule_json || row.valid_from || row.valid_to || row.fetched_at || row.status && row.status !== "unknown" ? {
       recordType: row.record_type ?? "activity", coordinateSystem: "GCJ-02" as const, city: row.city, amapPoiId: row.amap_poi_id,
+      timeNote: row.time_note ?? null, timeStatus: row.time_status ?? "unknown",
       validFrom: row.valid_from ?? null, validTo: row.valid_to ?? null, schedule: parseSchedule(row.schedule_json), status: row.status,
       sourcePublishedAt: row.source_published_at ?? null, sourceUpdatedAt: row.source_updated_at ?? null, fetchedAt: row.fetched_at ?? null, updatedAt: row.updated_at ?? null,
     } : {}),

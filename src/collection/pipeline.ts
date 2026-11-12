@@ -27,6 +27,8 @@ export interface ProcessingOptions {
   corroborate?: (facts: ActivityFacts, original: ExtractionDocument) => Promise<ExtractionDocument | null>;
   modelBudget?: number; eventLimit?: number;
   requirePrimary?: boolean;
+  /** Local OCR returns only image text; failures stay observable, never invented. */
+  ocr?: (document: ExtractionDocument) => Promise<{text: string; errors?: string[]}>;
 }
 const canonical = (value: string) => value.normalize("NFKC").replace(/\s+/g, "");
 
@@ -36,7 +38,7 @@ const canonical = (value: string) => value.normalize("NFKC").replace(/\s+/g, "")
 export async function processCollection(input: readonly PipelineDocument[], options: ProcessingOptions) {
   if (!isCalendarDate(options.baseDate) || !Number.isInteger(options.modelBudget ?? 10) || (options.modelBudget ?? 10) < 0 || (options.modelBudget ?? 10) > 10
     || !Number.isInteger(options.eventLimit ?? 10) || (options.eventLimit ?? 10) < 1 || (options.eventLimit ?? 10) > 10) throw new Error("INVALID_PROCESSING_OPTIONS");
-  const metrics = { documents: input.length, model_calls: 0, primary_lookups: 0, location_lookups: 0 };
+  const metrics = { documents: input.length, model_calls: 0, primary_lookups: 0, location_lookups: 0, ocr_errors: [] as string[] };
   const clock = options.now ?? (() => options.asOf);
   const rejected: { source_url: string; reasons: string[] }[] = [];
   const located: LocatedActivity[] = [];
@@ -46,7 +48,15 @@ export async function processCollection(input: readonly PipelineDocument[], opti
     metrics.model_calls++;
     return options.invoke!(...args);
   } : undefined;
-  for (const candidate of input) {
+  for (const original of input) {
+    const candidate = { ...original, document: { ...original.document } };
+    if (options.ocr && candidate.document.image_urls.length) {
+      try {
+        const result = await options.ocr(candidate.document);
+        metrics.ocr_errors.push(...(result.errors ?? []));
+        candidate.document.text = (candidate.document.text.slice(0, 15000) + "\n\n【图片OCR，可能存在识别错误】\n" + result.text.slice(0, 14000)).slice(0, 30000);
+      } catch { metrics.ocr_errors.push("OCR_FAILED"); }
+    }
     if (located.length >= (options.eventLimit ?? 10)) break;
     const result = await extractActivities(candidate.document, { asOf: clock(), structured: candidate.structured, invoke });
     if (result.issues.length) { rejected.push({ source_url: candidate.document.url, reasons: result.issues }); continue; }
@@ -76,7 +86,12 @@ export async function processCollection(input: readonly PipelineDocument[], opti
       }
       metrics.location_lookups++;
       let location: GeoResult;
-      try { location = await options.geocoder.resolve(locationQueryForFacts(facts)); }
+      try {
+        if (options.invoke?.locationFor) {
+          const selected = options.invoke.locationFor(doc.url, facts);
+          location = selected ? {ok:true,location:selected,cached:false} : {ok:false,reason:"MODEL_LOCATION_NOT_BOUND"};
+        } else location = await options.geocoder.resolve(locationQueryForFacts(facts));
+      }
       catch { location = { ok: false, reason: "LOCATION_LOOKUP_FAILED" }; }
       if (!location.ok) { rejected.push({ source_url: candidate.document.url, reasons: [location.reason] }); continue; }
       located.push({ facts, document: doc, location: location.location,

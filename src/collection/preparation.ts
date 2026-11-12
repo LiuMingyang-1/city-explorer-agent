@@ -82,6 +82,7 @@ export function prepareCollection(items: readonly LocatedActivity[], options: { 
       evidence };
     const event = { id, record_type: facts.record_type ?? "activity", city: "西安市", amap_poi_id: location.poi_id,
       valid_from: facts.valid_from ?? facts.confirmed_start_date, valid_to: facts.valid_to ?? facts.confirmed_end_date,
+      time_note: facts.time_note ?? null, time_status: facts.time_status ?? "unknown",
       schedule_json: facts.schedule_json ?? null, status: facts.status === "past" ? "ended" as const : facts.status,
       source_published_at: document.published_at, source_updated_at: document.updated_at ?? null, fetched_at: document.fetched_at, updated_at: item.processed_at ?? options.asOf,
       title: facts.title, description: facts.description, category: facts.category, venue_name: facts.venue_name,
@@ -98,7 +99,7 @@ export function prepareCollection(items: readonly LocatedActivity[], options: { 
     prepared.documents = documents;
     prepared.dataset.events.push(event); prepared.dataset.provenance.push(provenance);
     prepared.witnesses[id] = structuredClone({ ...item, processed_at: item.processed_at ?? options.asOf });
-    prepared.metadata[id] = { recordType: facts.record_type ?? "activity", firstSeenAt: item.first_seen_at, lastVerifiedAt: options.asOf, sourcePublishedAt: document.published_at,
+    prepared.metadata[id] = { timeStatus: facts.time_status, recordType: facts.record_type ?? "activity", firstSeenAt: item.first_seen_at, lastVerifiedAt: options.asOf, sourcePublishedAt: document.published_at,
       confirmedEndDate: facts.confirmed_end_date, status: facts.status === "unknown" ? "unknown" : "active", sourceUpdatedAt: document.updated_at ?? null, confirmedStartDate: facts.confirmed_start_date,
       availability: facts.confirmed_start_date && facts.confirmed_start_date > new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Shanghai" }).format(Date.parse(options.asOf)) ? "upcoming" : facts.confirmed_end_date ? "within_period" : /常设展|常设陈列|长期开放|长期陈列/.test(document.text) ? "permanent" : "unknown",
       dateBasis: facts.confirmed_end_date && inferredEndDate(document, options.asOf) === facts.confirmed_end_date ? "recent-publication-inference" : facts.confirmed_end_date ? "explicit" : "unknown" };

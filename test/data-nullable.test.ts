@@ -10,7 +10,7 @@ import {validateItinerary} from "../src/itinerary/validation.ts";
 import {makeEvent,eventsOf,DAY} from "./validation-fixtures.ts";
 const insert=`INSERT INTO events(id,title,description,category,venue_name,address,latitude,longitude,start_at,end_at,suggested_duration_minutes) VALUES ('e','t','d','展览','v','西安市',34.2,108.9,NULL,NULL,NULL)`;
 test("fresh events schema permits paired nullable coordinates and retains legacy columns and unified metadata",()=>{
- const db=new DatabaseSync(":memory:");try{ensureEventsSchema(db);db.exec(insert);const cols=db.prepare("PRAGMA table_info(events)").all();assert.equal(cols.length,29);for(const k of ["start_at","end_at","suggested_duration_minutes"])assert.equal(cols.find(c=>c.name===k)!.notnull,0);assert.throws(()=>db.exec("UPDATE events SET latitude=NULL"));db.exec("UPDATE events SET latitude=NULL,longitude=NULL");for(const k of ["latitude","longitude","start_at","end_at","suggested_duration_minutes"])assert.equal(cols.find(c=>c.name===k)!.dflt_value,"NULL");}finally{db.close();}
+ const db=new DatabaseSync(":memory:");try{ensureEventsSchema(db);db.exec(insert);const cols=db.prepare("PRAGMA table_info(events)").all();assert.equal(cols.length,31);for(const k of ["start_at","end_at","suggested_duration_minutes"])assert.equal(cols.find(c=>c.name===k)!.notnull,0);assert.throws(()=>db.exec("UPDATE events SET latitude=NULL"));db.exec("UPDATE events SET latitude=NULL,longitude=NULL");for(const k of ["latitude","longitude","start_at","end_at","suggested_duration_minutes"])assert.equal(cols.find(c=>c.name===k)!.dflt_value,"NULL");}finally{db.close();}
 });
 test("legacy NOT NULL migration preserves rows, extra columns, index, trigger and inbound references",()=>{
  const db=new DatabaseSync(":memory:");try{

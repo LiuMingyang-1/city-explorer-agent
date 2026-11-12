@@ -38,6 +38,7 @@ export function createPilotApi(options:ApiOptions) {
    const body=provider==="qovia"?{query,since,until,platforms:["xiaohongshu","wechat","weibo","douyin"],types:["original","repost"],match:["title","content"],page:1,limit:20}:{query,count:options.searchResultCount??20,need_content:true};
    return post(provider,"search",query,body,provider==="qovia"?20000:15000);
   },
+  chat(model:string,messages:unknown[],tools:unknown[],final=false){return post("deepseek","extract","activity-analysis-tools",{model,messages,tools,tool_choice:final?"none":"auto",...(final?{response_format:{type:"json_object"}}:{}),thinking:{type:"disabled"},temperature:0,max_tokens:6000},60000);},
   extract(model:string,system:string,input:unknown){return post("deepseek","extract","activity-fields",{model,messages:[{role:"system",content:system},{role:"user",content:JSON.stringify(input)}],response_format:{type:"json_object"},thinking:{type:"disabled"},temperature:0,max_tokens:6000},60000);}
  };
 }

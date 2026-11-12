@@ -1,5 +1,7 @@
 # DeepSeek活动与景点提取提示词 v4
 
+> 2026-11-13更新：新增时间备注字段及OCR、高德模型工具流程，当前规范见[时间备注与模型高德工具采集](collection-time-notes-and-tools.md)，实际提示词以src/collection/extraction.ts为准。
+
 下文直接从当前代码导出，模型deepseek-flash。用户消息另含当前时间、首次发布/编辑时间、来源链接、正文及JSON Schema。系统提示和结构均用于实际调用，不是待实施草稿。
 
 ```text

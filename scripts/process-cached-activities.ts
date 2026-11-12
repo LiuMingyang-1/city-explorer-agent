@@ -2,7 +2,9 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { resolve, relative, isAbsolute, join } from "node:path";
 import { collectionCredentials, geocodingKey } from "../src/collection/config.ts";
 import { cachedXhsDocuments } from "../src/collection/cached-input.ts";
-import { createDeepSeekExtractor, processCollection } from "../src/collection/pipeline.ts";
+import { processCollection } from "../src/collection/pipeline.ts";
+import { createToolAnalysisExtractor, createAmapSearch } from "../src/collection/analysis-model.ts";
+import { createLocalOcr } from "../src/collection/ocr.ts";
 import { createGeocoder } from "../src/collection/geocoding.ts";
 import { redact } from "../src/collection/pilot-api.ts";
 import { inspectRelease, publishRelease } from "../src/collection/releases.ts";
@@ -36,13 +38,14 @@ async function main() {
   const credentials = collectionCredentials(), mapKey = geocodingKey();
   const prior = publishRoot && existsSync(join(publishRoot, "CURRENT")) ? inspectRelease(publishRoot) : undefined;
   mkdirSync(destination);
-  let attempts = 0;
+  let attempts = 0, ocrCount = 0;
   const save = (name: string, data: unknown) => writeFileSync(join(destination, name), JSON.stringify(redact(data, [credentials.deepseekKey, mapKey]), null, 2) + "\n");
   const record = (attempt: Attempt) => save(`api-${++attempts}.json`, attempt);
   const asOf = new Date().toISOString();
   const result = await processCollection(selected.map(document => ({ document })), { asOf, baseDate: date, now: () => new Date().toISOString(),
     identities: prior?.sidecar.identities, modelBudget: 10, eventLimit: 10,
-    invoke: createDeepSeekExtractor({ deepseekKey: credentials.deepseekKey, model: credentials.extractionModel, record, extractLimit: 10, searchLimit: 0 }),
+    invoke: createToolAnalysisExtractor({ deepseekKey: credentials.deepseekKey, model: credentials.extractionModel, record, extractLimit: 50, searchLimit: 0, map: createAmapSearch({key:mapKey,requestLimit:40}) }),
+    ocr: createLocalOcr({python:resolve(".local-data/tools/mediacrawler-venv/Scripts/python.exe"),record:(url,result)=>save(`ocr-${++ocrCount}.json`,{url,...result})}),
     geocoder: createGeocoder({ key: mapKey, now: () => new Date().toISOString(), requestLimit: 10, shareUrls }),
   });
   save("dataset.json", result.prepared.dataset); save("rejected.json", result.rejected);

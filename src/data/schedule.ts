@@ -59,10 +59,11 @@ export function parseSchedule(value: string | Schedule | null | undefined): Sche
 }
 const validateSchedule = new Ajv2020({ allErrors: true }).compile(scheduleSchema);
 const shift = (date: string, days: number) => new Date(Date.parse(date + "T12:00:00Z") + days * 86400000).toISOString().slice(0, 10);
-export function availabilityOnDate(input: { recordType?: "activity" | "attraction"; validFrom?: string | null; validTo?: string | null; schedule?: Schedule | null; startAt?: string | null; endAt?: string | null }, date: string): { state: "open" | "closed" | "unknown"; windows: AvailableWindow[] } {
+export function availabilityOnDate(input: { timeStatus?: string; recordType?: "activity" | "attraction"; validFrom?: string | null; validTo?: string | null; schedule?: Schedule | null; startAt?: string | null; endAt?: string | null }, date: string): { state: "open" | "closed" | "unknown"; windows: AvailableWindow[] } {
   if (!isCalendarDate(date)) return { state: "unknown", windows: [] };
   const schedule = input.schedule;
   const outside = !!(input.validFrom && date < input.validFrom || input.validTo && date > input.validTo);
+  if (input.timeStatus === "conflicting" || input.timeStatus === "unknown") return {state: outside && input.recordType !== "attraction" ? "closed" : "unknown", windows: []};
   if (schedule?.exceptions?.some(e => e.date === date && e.closed)) return { state: "closed", windows: [] };
   if (!schedule) {
     if (input.startAt && input.endAt) return input.startAt.slice(0, 10) <= date && input.endAt.slice(0, 10) >= date

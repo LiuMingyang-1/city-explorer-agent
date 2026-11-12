@@ -1,6 +1,7 @@
 import type { Schedule } from "../data/schedule.ts";
 import { isCalendarDate } from "../itinerary/constraints.ts";
 export interface NightlyMetadata {
+  timeStatus?: "complete" | "partial" | "unknown" | "conflicting";
   recordType?: "activity" | "attraction";
   firstSeenAt: string;
   lastVerifiedAt: string | null;
@@ -28,10 +29,11 @@ export function assessFreshness(event: {start_at: string | null; end_at: string 
  if(event.start_at!==null&&!Number.isFinite(start)||event.end_at!==null&&!Number.isFinite(end)||Number.isFinite(start)&&Number.isFinite(end)&&end<=start)return no("invalid_schedule");
  if(Number.isFinite(end)&&end<=now)return no("expired");
  if(!Number.isFinite(verified)||verified>now||now-verified>(meta.recordType === "attraction" ? 30*86400000 : 36*3600000))return no("verification_stale");
- if(meta.recordType!=="attraction"&&meta.confirmedEndDate===null&&event.end_at===null){
+ if(meta.timeStatus===undefined&&meta.recordType!=="attraction"&&meta.confirmedEndDate===null&&event.end_at===null){
   if(now-first>7*86400000)return no("unknown_end_retention_expired");
   if(meta.sourcePublishedAt!==null){const published=Date.parse(meta.sourcePublishedAt);if(!Number.isFinite(published)||published>now)return no("invalid_publication_time");if(now-published>30*86400000)return no("old_source_without_end_date");}
  }
+ if(meta.timeStatus && meta.timeStatus!=="complete")return {includeInDiscovery:true,allowPlanning:false,reason:"time_"+meta.timeStatus};
  if(event.schedule_json && event.schedule_json.mode!=="unknown")return {includeInDiscovery:true,allowPlanning:true,reason:"verified_schedule_rules"};
  if(event.start_at===null||event.end_at===null)return {includeInDiscovery:true,allowPlanning:false,reason:"schedule_unknown"};
  return {includeInDiscovery:true,allowPlanning:true,reason:"verified_schedule"};

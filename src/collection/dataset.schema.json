@@ -401,6 +401,21 @@
           },
           "updated_at": {
             "type": "string"
+          },
+          "time_note": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 10000
+          },
+          "time_status": {
+            "enum": [
+              "complete",
+              "partial",
+              "unknown",
+              "conflicting"
+            ]
           }
         },
         "required": [

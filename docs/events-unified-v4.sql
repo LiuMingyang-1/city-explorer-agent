@@ -16,6 +16,8 @@ CREATE TABLE IF NOT EXISTS events (
   amap_poi_id TEXT DEFAULT NULL,
   valid_from TEXT DEFAULT NULL,
   valid_to TEXT DEFAULT NULL,
+  time_note TEXT DEFAULT NULL,
+  time_status TEXT NOT NULL DEFAULT 'unknown' CHECK(time_status IN ('complete','partial','unknown','conflicting')),
   schedule_json TEXT DEFAULT NULL CHECK(schedule_json IS NULL OR json_valid(schedule_json)),
   status TEXT NOT NULL DEFAULT 'unknown' CHECK(status IN ('active','paused','cancelled','ended','unknown')),
   source_published_at TEXT DEFAULT NULL,

@@ -46,11 +46,11 @@ test("guide_url retains the original social or web source without adding an even
     assert.deepEqual(result.rejected, []);
     assert.equal(result.prepared.dataset.events[0].guide_url, source);
     assert.equal(result.prepared.dataset.provenance[0].source_url, source);
-    assert.equal(Object.keys(result.prepared.dataset.events[0]).length, 29);
+    assert.equal(Object.keys(result.prepared.dataset.events[0]).length, 31);
   }
 });
 
-test("recent unknown-end candidates are retained provisionally, old ones are rejected", async () => {
+test("unknown-end candidates are retained even with an older source", async () => {
   const { item, asOf } = await locatedFixture();
   item.facts.start_at = item.facts.end_at = item.facts.confirmed_end_date = item.facts.confirmed_start_date = null;
   item.facts.status = "unknown";
@@ -58,7 +58,7 @@ test("recent unknown-end candidates are retained provisionally, old ones are rej
   assert.deepEqual(result.rejected, []);
   assert.equal(Object.values(result.prepared.metadata)[0].status, "unknown");
   item.document.published_at = "2026-11-01T01:00:00Z";
-  assert(checkFacts(item.facts, item.document, asOf).issues.includes("VALIDITY_UNKNOWN"));
+  assert.equal(checkFacts(item.facts, item.document, asOf).valid,true);
 });
 
 test("AMap address wins for a unique named venue, while ambiguous branches and wrong city remain rejected", async () => {
