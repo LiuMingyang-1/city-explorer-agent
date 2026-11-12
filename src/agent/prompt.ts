@@ -5,6 +5,12 @@ export interface SystemPromptOptions {
    * 既挂工具又挂这段说明）；缺省/false 输出字字不变。
    */
   canDelegate?: boolean;
+  /**
+   * true 时把「目前没有路线计算工具」准则替换为 estimate_travel 使用准则
+   * （装配层在挂载该工具——即存在可用算路器/高德 key——时置位）；
+   * 缺省/false 保留原段落，输出字字不变。
+   */
+  canEstimateTravel?: boolean;
 }
 
 const DELEGATE_SECTION = [
@@ -19,6 +25,21 @@ const DELEGATE_SECTION = [
   "  suggestedDurationMinutes、budgetMin/budgetMax 等）；核对时间窗不冲突后择优或合并站点，",
   "  按统一输出契约返回最终行程 JSON。",
   "- 子任务失败或超时时，改用 search_events 自行完成规划。",
+];
+
+/** 无算路器时的旧准则（缺省段落，保持既有输出逐字不变）。 */
+const NO_TRAVEL_SECTION = [
+  "- 不要编造交通路线或精确通勤耗时（如“打车约20分钟”）；目前没有路线计算工具，",
+  "  相邻两站留出合理缓冲即可，必要时在 summary 里说明交通时间未计入。",
+];
+
+/** 挂了 estimate_travel 时的算路准则：真实耗时核实 + 失败降级口径。 */
+const TRAVEL_SECTION = [
+  "- 相邻两站的真实通勤用 estimate_travel 核实：传两站的 event_id",
+  "  （mode=walking/transit 可省略，系统按直线距离自动选择），",
+  "  返回 {duration_seconds, distance_meters, mode}。",
+  "  排期把通勤时长计入站间空隙：下一站 arrive_at 不要早于上一站 leave_at + 通勤时间；",
+  "  工具返回错误时按无算路处理：留合理缓冲，别编造精确耗时。",
 ];
 
 /**
@@ -40,8 +61,7 @@ export function buildSystemPrompt(currentDate: string, options?: SystemPromptOpt
     "- 参考 suggestedDurationMinutes 决定停留时长；固定场次活动按场次起止安排。",
     "- 活动费用见 budgetMin/budgetMax：每人预计花费，单位分（100 分 = 1 元）；0 是免费，null 是费用未知（不等于免费）。",
     "  行程 JSON 不含费用字段；用户关心花费时可在 summary 或 reason 里按此口径简要说明。",
-    "- 不要编造交通路线或精确通勤耗时（如“打车约20分钟”）；目前没有路线计算工具，",
-    "  相邻两站留出合理缓冲即可，必要时在 summary 里说明交通时间未计入。",
+    ...(options?.canEstimateTravel ? TRAVEL_SECTION : NO_TRAVEL_SECTION),
     ...(options?.canDelegate ? DELEGATE_SECTION : []),
     "",
     "用户位置（系统消息可能带“用户当前位置”节）：",

@@ -60,6 +60,23 @@ export interface ExplorerConfig {
    * 可省略，编排层按同值缺省。
    */
   subagentTimeoutMs?: number;
+  /**
+   * 高德 Web 服务 REST key（EXPLORER_AMAP_KEY）；缺省/空白 → undefined，
+   * 站间算路全链路降级（不挂 estimate_travel 工具、legs 全记 skipped），
+   * 不阻塞规划。手工构造的 config 可省略。
+   */
+  amapKey?: string;
+  /**
+   * 公交算路接口的必填 city 参数（EXPLORER_AMAP_TRANSIT_CITY；城市名或
+   * citycode，如 "西安"/"029"）。缺省 → 公交请求不带 city（多半报错降级），
+   * 部署时按演示城市配置。手工构造的 config 可省略。
+   */
+  amapTransitCity?: string;
+  /**
+   * 站间直线距离阈值（米，EXPLORER_ROUTE_TRANSIT_THRESHOLD_M；缺省 3000）：
+   * ≤ 阈值选 walking 算路，否则 transit。手工构造的 config 可省略。
+   */
+  routeTransitThresholdM?: number;
 }
 
 /** 读取 EXPLORER_* 环境配置并做基本检查；不发起模型请求。 */
@@ -117,6 +134,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ExplorerConfig
     memoryMinUserMessages: positiveInteger(env, "EXPLORER_MEMORY_MIN_USER_MESSAGES", 3),
     subagentMaxConcurrent: positiveInteger(env, "EXPLORER_SUBAGENT_MAX_CONCURRENT", 8),
     subagentTimeoutMs: positiveInteger(env, "EXPLORER_SUBAGENT_TIMEOUT_MS", 120_000),
+    amapKey: env.EXPLORER_AMAP_KEY?.trim() || undefined,
+    amapTransitCity: env.EXPLORER_AMAP_TRANSIT_CITY?.trim() || undefined,
+    routeTransitThresholdM: positiveInteger(
+      env,
+      "EXPLORER_ROUTE_TRANSIT_THRESHOLD_M",
+      3000,
+    ),
   };
 }
 
