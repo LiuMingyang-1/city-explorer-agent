@@ -8,6 +8,7 @@
     "node": ">=22.19.0"
   },
   "scripts": {
+    "collect": "node scripts/collect.ts",
     "dev": "node --env-file-if-exists=.env src/cli/main.ts",
     "start": "node --env-file-if-exists=.env src/cli/main.ts",
     "dev:web": "node --env-file-if-exists=.env src/web/main.ts",
