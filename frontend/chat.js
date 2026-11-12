@@ -1,14 +1,17 @@
 'use strict';
 let ready=true;
-async function apiJSON(url,{method='GET',body,timeout=10000}={}){
+let activeChatRequest;
+window.addEventListener('wander:reset',()=>{activeChatRequest?.abort();activeChatRequest=null;});
+async function apiJSON(url,{method='GET',body,timeout=10000,signal}={}){
  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),timeout);
+ const abort=()=>controller.abort();if(signal?.aborted)abort();signal?.addEventListener('abort',abort,{once:true});
  try{
   const response=await fetch(url,{method,body,credentials:'same-origin',signal:controller.signal,
    headers:{Accept:'application/json',...(body?{'Content-Type':'application/json'}:{})}});
   const data=await response.json().catch(()=>null);
   if(!response.ok)throw new Error(data&&typeof data.error==='string'&&data.error?data.error:'HTTP '+response.status);
   return data;
- }finally{clearTimeout(timer);}
+ }finally{clearTimeout(timer);signal?.removeEventListener('abort',abort);}
 }
 function scrollMessages(){const list=$('messages');list.scrollTo({top:list.scrollHeight,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}
 function makeMessage(role){
@@ -54,7 +57,7 @@ function drawRoute(points){
  if(routeLayer){map.removeLayer(routeLayer);routeLayer=null;}
  if(!points||!points.length)return;
  const dots=points.map((point,index)=>L.circleMarker([point.lat,point.lng],{radius:6,color:'#b87552',weight:2,fillColor:'#f7f8f3',fillOpacity:.95})
-  .bindTooltip(index+1+'. '+point.title));
+  .bindTooltip(locationLabel(index+1+'. '+point.title)));
  if(points.length<2){routeLayer=L.layerGroup(dots).addTo(map);map.flyTo([points[0].lat,points[0].lng],14,{duration:.9});return;}
  const line=L.polyline(points.map(p=>[p.lat,p.lng]),{color:'#b87552',weight:3,opacity:.8,dashArray:'5 9'});
  line.bindTooltip('游玩顺序示意 · 非导航路线',{sticky:true});
@@ -63,6 +66,7 @@ function drawRoute(points){
  map.fitBounds(line.getBounds(),{paddingTopLeft:innerWidth>700?[card.right+45,110]:[30,100],paddingBottomRight:innerWidth>700?[100,90]:[45,card.height+45],maxZoom:14,animate:true});
 }
 function appendItinerary(itinerary,events){
+ state.latestPlan={itinerary,events};
  const {message,bubble}=makeMessage('assistant');
  bubble.classList.add('itinerary');
  if(itinerary.date){const date=document.createElement('p');date.className='itinerary-date';date.textContent=itinerary.date;bubble.append(date);}
@@ -94,6 +98,9 @@ function showSendError(text,detail){
  bubble.append(note,retry);scrollMessages();
 }
 async function deliver(text){
+ const generation=window.WanderHistory?.generation();
+ const isCurrent=()=>!window.WanderHistory||generation===window.WanderHistory.generation();
+ const request=new AbortController();activeChatRequest=request;
  state.busy=true;updateSendButton();
  const pending=document.createElement('div');pending.className='message assistant';
  pending.innerHTML='<span class="message-label">漫游正在整理灵感</span><div class="bubble typing" aria-label="正在回复">···</div>';
@@ -103,22 +110,25 @@ async function deliver(text){
   const loc=state.location,body={message:text};
   if(loc&&Number.isFinite(loc.lat)&&Number.isFinite(loc.lng))body.location={lat:loc.lat,lng:loc.lng};
   if(typeof state.sessionId==='string'&&state.sessionId)body.session_id=state.sessionId;
-  const data=await apiJSON('/api/chat',{method:'POST',body:JSON.stringify(body),timeout:210000});
+  const data=await apiJSON('/api/chat',{method:'POST',body:JSON.stringify(body),timeout:210000,signal:request.signal});
+  if(!isCurrent())return;
   pending.remove();
   if(data&&typeof data.session_id==='string'&&data.session_id)state.sessionId=data.session_id;
   if(data&&data.kind==='itinerary'&&data.itinerary&&typeof data.itinerary==='object')appendItinerary(data.itinerary,data.events);
   else if(data&&data.kind==='clarification'&&typeof data.question==='string'&&data.question)appendMessage('assistant',data.question);
   else appendMessage('assistant','收到了意料之外的回复，再告诉我一次你的想法吧。');
  }catch(error){
+  if(!isCurrent())return;
   pending.remove();
   showSendError(text,error&&error.name==='AbortError'?'请求超时':(error&&error.message)||'网络异常');
  }finally{
-  clearTimeout(slow);state.busy=false;updateSendButton();$('message-input').focus({preventScroll:true});
+  clearTimeout(slow);pending.remove();
+  if(isCurrent()){activeChatRequest=null;state.busy=false;updateSendButton();window.WanderHistory?.capture();$('message-input').focus({preventScroll:true});}
  }
 }
 async function sendMessage(text){
  text=String(text).trim();if(!text||!ready||state.busy)return;
- appendMessage('user',text);$('message-input').value='';
+ window.WanderHistory?.setExpanded(false);appendMessage('user',text);$('message-input').value='';window.WanderHistory?.capture();
  await deliver(text);
 }
 window.sendMessage=sendMessage;
