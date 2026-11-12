@@ -17,6 +17,7 @@ import type { StreamFn } from "@earendil-works/pi-agent-core";
 import { createPersistentPlanner } from "../agent/session.ts";
 import type {
   PersistentPlannerOptions,
+  PlannerProgress,
   PlannerPromptOptions,
   PlannerTurn,
 } from "../agent/session.ts";
@@ -166,6 +167,21 @@ interface SendHandle {
   cancelled: boolean;
 }
 
+/**
+ * send 的可选参数。signal/location/sessionId 与 ChatService 契约一致；
+ * onSession/onProgress 是流式端点（POST /api/chat/stream）的观察回调——
+ * 事件契约见 ./sse.ts，types.ts 由 plans-contract 工作流维护故不并入。
+ */
+export interface SendOptions {
+  signal?: AbortSignal;
+  location?: ChatLocation;
+  sessionId?: string;
+  /** 会话确定（planner 就绪、sessionId 可知）即回调一次；SSE meta 据此发出。 */
+  onSession?: (sessionId: string) => void;
+  /** 规划阶段进度回调（轮内可多次）；SSE progress 事件据此转发。 */
+  onProgress?: (progress: PlannerProgress) => void;
+}
+
 /** 客户端中止信号对应的异常；优先复用 signal.reason。 */
 function abortError(signal: AbortSignal | undefined): Error {
   const reason = signal?.reason;
@@ -292,7 +308,7 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
     handle: SendHandle,
     userId: string,
     message: string,
-    options?: { signal?: AbortSignal; location?: ChatLocation; sessionId?: string },
+    options?: SendOptions,
   ): Promise<ChatResult> {
     const signal = options?.signal;
     let planner: ChatPlanner | undefined;
@@ -308,6 +324,15 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
           : { title: conversationTitle(message) },
       );
       handle.planner = planner;
+      // 会话已确定（模型轮尚未启动）：流式端点据此先发 meta 事件。
+      const readySessionId = planner.sessionId ?? options?.sessionId;
+      if (readySessionId !== undefined && readySessionId !== "") {
+        try {
+          options?.onSession?.(readySessionId);
+        } catch {
+          // 观察回调抛错不中断本轮。
+        }
+      }
       // openPlanner 期间可能已被 shutdown/abort 标记：不再启动模型轮。
       if (handle.cancelled || signal?.aborted) throw abortError(signal);
       const onAbort = () => {
@@ -319,7 +344,10 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
       try {
         // abort 时 prompt 自行 settle；location 只进 prompt options（持久层
         // 会沿用到本会话后续请求，见 PlannerPromptOptions.location）。
-        turn = await planner.prompt(message, { location: options?.location });
+        turn = await planner.prompt(message, {
+          location: options?.location,
+          ...(options?.onProgress ? { onProgress: options.onProgress } : {}),
+        });
       } catch (error) {
         // 中止引起的 prompt 异常也归为 AbortError，不伪装成内部错误。
         if (handle.cancelled || signal?.aborted) throw abortError(signal);
@@ -398,7 +426,7 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
     async send(
       userId: string,
       message: string,
-      options?: { signal?: AbortSignal; location?: ChatLocation; sessionId?: string },
+      options?: SendOptions,
     ): Promise<ChatResult> {
       // 同步段：拒新请求 + 注册在途句柄，都先于第一个 await（防 shutdown 竞争）。
       assertOpen();

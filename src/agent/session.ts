@@ -11,6 +11,7 @@ import type { ValidationIssue, ValidationResult } from "../itinerary/validation.
 import type { SessionRepository } from "../session/repository.ts";
 import {
   DEFAULT_MAX_SUBAGENT_DEPTH,
+  DELEGATE_TASK_TOOL,
   createDelegateTaskTool,
   getDefaultSubagentSemaphore,
 } from "./delegate.ts";
@@ -26,6 +27,7 @@ import {
   parsePlannerResponse,
   PlannerResponseError,
 } from "./response.ts";
+import { SEARCH_EVENTS_TOOL } from "./tools.ts";
 
 /** 一轮规划的结果：新行程 / 追问 / 失败（当前行程不变）。 */
 export type PlannerTurn =
@@ -35,6 +37,25 @@ export type PlannerTurn =
 
 /** PlannerTurn 的失败分支；abortedTurn 与错误路径返回。 */
 export type PlannerErrorTurn = Extract<PlannerTurn, { kind: "error" }>;
+
+/**
+ * 流式端点（POST /api/chat/stream）的 progress 阶段枚举，对应
+ * docs/agent-impl-contracts.md §4：由 Agent 工具执行事件与校验时机推导——
+ * search_events → searching_events、delegate_task → exploring_plans、
+ * 行程校验/纠正 → validating_schedule、legs 算路 → routing（预留）。
+ */
+export type PlannerProgressStage =
+  | "searching_events"
+  | "exploring_plans"
+  | "routing"
+  | "validating_schedule";
+
+/** 一次阶段进度上报；plan_ids 为该阶段关联的方案标号（无关联方案为空）。 */
+export interface PlannerProgress {
+  stage: PlannerProgressStage;
+  message: string;
+  plan_ids: string[];
+}
 
 /**
  * 取消/关闭信号下统一的 error turn：abort(reason) 的字符串原因透传给
@@ -65,6 +86,11 @@ export interface PlannerPromptOptions {
    * 内存路径（performTurn）不处理。
    */
   location?: { lat: number; lng: number };
+  /**
+   * 阶段进度回调（流式端点用）：本轮内同步触发、可多次；相同 stage+plan_ids
+   * 的连续上报去重。回调抛错被吞掉，不影响本轮规划。
+   */
+  onProgress?: (progress: PlannerProgress) => void;
 }
 
 /** 手动压缩的结果：applied=写入了新检查点并切换上下文。 */
@@ -127,6 +153,33 @@ function errorText(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+/** 各阶段的对外文案；exploring_plans 按已派发方案动态拼。 */
+function progressMessage(stage: PlannerProgressStage, planIds: string[]): string {
+  switch (stage) {
+    case "searching_events":
+      return "正在检索活动";
+    case "exploring_plans": {
+      const names = planIds.map((id) => `方案 ${id}`);
+      return names.length > 1
+        ? `正在并行探路${names.join(" 与")}`
+        : `正在探路${names[0] ?? "候选方案"}`;
+    }
+    case "routing":
+      return "正在获取站间道路路线";
+    case "validating_schedule":
+      return "正在校验路线时间";
+  }
+}
+
+/** 一轮内的进度上报状态；仅 performTurn 挂接了 onProgress 时存在。 */
+interface TurnProgress {
+  sink: (progress: PlannerProgress) => void;
+  /** 上一次已上报的 stage:plan_ids 键——连续重复上报不打扰观察者。 */
+  lastKey?: string;
+  /** 本轮已派发的 delegate_task 按序标号 A、B…，作 plan_ids 用。 */
+  delegatePlanIds: string[];
+}
+
 /**
  * 规划会话：包着 Pi Agent，代 CLI 做"自然语言进 → 行程 JSON 出"。
  * 无 runtime 时是纯内存会话（退出即结束）；挂上 PersistentRuntime 后
@@ -148,6 +201,8 @@ export class PlannerSession {
   private readonly validate: NonNullable<PlannerSessionOptions["validate"]>;
   private readonly maxCorrections: number;
   private readonly unsubscribeTrace: () => void;
+  /** 本轮进度上报；performTurn 入口按 onProgress 挂接、出口清空。 */
+  private progress?: TurnProgress;
 
   constructor(options: PlannerSessionOptions) {
     this.options = options;
@@ -157,6 +212,7 @@ export class PlannerSession {
     this.unsubscribeTrace = options.agent.subscribe((event) => {
       if (event.type === "tool_execution_start") {
         pending.set(event.toolCallId, { toolName: event.toolName, args: event.args });
+        this.noteToolProgress(event.toolName);
       } else if (event.type === "tool_execution_end") {
         const start = pending.get(event.toolCallId);
         pending.delete(event.toolCallId);
@@ -207,7 +263,7 @@ export class PlannerSession {
   /** 送一轮自然语言给 Agent，返回 PlannerTurn。 */
   async prompt(text: string, options: PlannerPromptOptions = {}): Promise<PlannerTurn> {
     if (this.runtime) return this.runtime.prompt(text, options);
-    return this.performTurn(text);
+    return this.performTurn(text, { onProgress: options.onProgress });
   }
 
   /** 手动压缩会话上下文（仅持久模式；内存模式明确报错）。 */
@@ -248,9 +304,57 @@ export class PlannerSession {
    */
   async performTurn(
     text: string,
-    control?: { signal?: AbortSignal },
+    control?: { signal?: AbortSignal; onProgress?: (progress: PlannerProgress) => void },
   ): Promise<PlannerTurn> {
     const signal = control?.signal;
+    this.progress = control?.onProgress
+      ? { sink: control.onProgress, delegatePlanIds: [] }
+      : undefined;
+    try {
+      return await this.runCorrectionLoop(text, signal);
+    } finally {
+      this.progress = undefined;
+    }
+  }
+
+  /** 工具执行事件 → 阶段进度（契约 §4）；未挂接 onProgress 时为空转。 */
+  private noteToolProgress(toolName: string): void {
+    if (toolName === SEARCH_EVENTS_TOOL) {
+      this.emitProgress("searching_events");
+    } else if (toolName === DELEGATE_TASK_TOOL && this.progress) {
+      // 每个并行子任务按派发序记一个方案标号（A、B…）；plan_ids 即全集。
+      const n = this.progress.delegatePlanIds.length;
+      this.progress.delegatePlanIds.push(
+        n < 26 ? String.fromCharCode(65 + n) : `P${n + 1}`,
+      );
+      this.emitProgress("exploring_plans");
+    }
+  }
+
+  /**
+   * 上报一次阶段进度：searching_events 尚无方案可关联，其余阶段带本轮
+   * 已派发的 delegate 方案标号；与上次相同的连续上报去重。
+   */
+  private emitProgress(stage: PlannerProgressStage): void {
+    const progress = this.progress;
+    if (!progress) return;
+    const planIds =
+      stage === "searching_events" ? [] : [...progress.delegatePlanIds];
+    const key = `${stage}:${planIds.join(",")}`;
+    if (key === progress.lastKey) return;
+    progress.lastKey = key;
+    try {
+      progress.sink({ stage, message: progressMessage(stage, planIds), plan_ids: planIds });
+    } catch {
+      // 进度回调是观察者：抛错不拖垮本轮规划。
+    }
+  }
+
+  /** performTurn 的纠正循环本体（进度挂接/复位由外壳负责）。 */
+  private async runCorrectionLoop(
+    text: string,
+    signal: AbortSignal | undefined,
+  ): Promise<PlannerTurn> {
     let outgoing = text;
     let lastError = "没有得到可用回复";
     for (let attempt = 0; attempt <= this.maxCorrections; attempt++) {
@@ -272,6 +376,8 @@ export class PlannerSession {
         // 验证的异步边界之后重新确认取消：中止的轮次不再校验、提交或纠正。
         const cancelled = signal ? abortedTurn(signal) : undefined;
         if (cancelled) return cancelled;
+        // 校验/纠正即 validating_schedule 阶段（纠正轮会再次走到这里）。
+        this.emitProgress("validating_schedule");
         const result = this.validate(parsed.candidate, effective, events);
         if (result.ok && result.itinerary) {
           // 提交是最后一个可拦截点：validate 与 commit 之间仍可能被取消。
