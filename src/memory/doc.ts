@@ -13,15 +13,18 @@ export function emptyMemoryDoc(): string {
   return MEMORY_SECTIONS.map((name) => `## ${name}\n`).join("\n");
 }
 
+interface DocSections {
+  /** 固定小节目名 → 正文（同名重复出现时首段保留、后续内容并入）。 */
+  fixed: Map<string, string>;
+  /** 固定小节之外的多余小节（出现顺序保持）。 */
+  extras: Array<{ name: string; body: string }>;
+}
+
 /**
- * 修剪模型输出为合法文档：剥掉首个 `## ` 之前的杂言、按固定顺序重排
- * 三个小节（缺的补空标题、多余小节附在最后）、总长按行截到 maxChars。
- * 全文无 `## ` 视为坏到无法修复 → undefined。
+ * 把 markdown 按 `## ` 标题切成小节：固定小节目的同名重复并内容，其余收进
+ * extras；含蒸馏包裹分隔符的行整行剥掉（防止污染后续蒸馏请求的包裹结构）。
  */
-export function normalizeMemoryDoc(raw: string, maxChars: number): string | undefined {
-  const firstHeading = /^## /m.exec(raw);
-  if (!firstHeading) return undefined;
-  const start = firstHeading.index;
+function splitDocSections(text: string): DocSections {
   const fixed = new Map<string, string>();
   const extras: Array<{ name: string; body: string }> = [];
   let current: { name: string; lines: string[] } | undefined;
@@ -38,7 +41,7 @@ export function normalizeMemoryDoc(raw: string, maxChars: number): string | unde
     }
     current = undefined;
   };
-  for (const line of raw.slice(start).split("\n")) {
+  for (const line of text.split("\n")) {
     // 模型把蒸馏分隔符写进文档会污染后续蒸馏请求的包裹结构：整行剥掉。
     if (line.includes("</memory>") || line.includes("</conversation>")) continue;
     const heading = /^##\s+(.+?)\s*$/.exec(line);
@@ -50,12 +53,90 @@ export function normalizeMemoryDoc(raw: string, maxChars: number): string | unde
     }
   }
   flush();
-  const sections = MEMORY_SECTIONS.map((name) =>
-    `## ${name}\n${fixed.get(name) ?? ""}`.trimEnd(),
+  return { fixed, extras };
+}
+
+/** 固定三节 + extras 按约定顺序拼装成整篇文档。 */
+function assembleDoc(
+  bodies: Array<{ name: string; lines: string[] }>,
+  extras: Array<{ name: string; body: string }>,
+): string {
+  const sections = bodies.map((section) =>
+    `## ${section.name}\n${section.lines.join("\n")}`.trimEnd(),
   );
-  for (const extra of extras) sections.push(`## ${extra.name}\n${extra.body}`.trimEnd());
-  const doc = `${sections.join("\n\n")}\n`;
-  return doc.length > maxChars ? truncateLines(doc, maxChars) : doc;
+  for (const extra of extras) {
+    sections.push(`## ${extra.name}\n${extra.body}`.trimEnd());
+  }
+  return `${sections.join("\n\n")}\n`;
+}
+
+/**
+ * 结构保全压缩：逐轮缩减正文最长的小节——多行先丢尾行、单行按码点截断——
+ * 直到整篇 ≤ maxChars。三个固定小节的标题始终保留，重要的小节内容
+ * （过敏约束、足迹等短正文）不被静默截掉。
+ */
+function fitWithinBudget(
+  fixed: Map<string, string>,
+  maxChars: number,
+): string | undefined {
+  const bodies = MEMORY_SECTIONS.map((name) => {
+    const body = (fixed.get(name) ?? "").trimEnd();
+    return { name, lines: body === "" ? [] : body.split("\n") };
+  });
+  let doc = assembleDoc(bodies, []);
+  let guard = 0;
+  while (doc.length > maxChars && bodies.some((section) => section.lines.length > 0)) {
+    if (++guard > 100_000) return undefined;
+    const longest = bodies.reduce((a, b) =>
+      b.lines.join("\n").length > a.lines.join("\n").length ? b : a,
+    );
+    if (longest.lines.length > 1) {
+      longest.lines.pop();
+    } else {
+      const points = [...(longest.lines[0] ?? "")];
+      const keep = points.length - (doc.length - maxChars);
+      longest.lines = keep <= 0 ? [] : [points.slice(0, keep).join("")];
+    }
+    doc = assembleDoc(bodies, []);
+  }
+  return doc.length <= maxChars ? doc : undefined;
+}
+
+/**
+ * 修剪模型输出为合法文档：剥掉首个 `## ` 之前的杂言、按固定顺序重排
+ * 三个小节（缺的从 currentDoc 继承内容——空补会抹除旧节记忆，故不补空）、
+ * 多余小节附在最后。
+ * 校验契约：至少含一个固定小节，否则视为垃圾输出 → undefined。
+ * 超过 maxChars 时先丢弃多余小节，仍超则结构保全压缩（fitWithinBudget），
+ * 不再静默截尾整篇文档。
+ */
+export function normalizeMemoryDoc(
+  raw: string,
+  maxChars: number,
+  currentDoc = "",
+): string | undefined {
+  const firstHeading = /^## /m.exec(raw);
+  if (!firstHeading) return undefined;
+  const { fixed, extras } = splitDocSections(raw.slice(firstHeading.index));
+  const hasFixed = [...fixed.keys()].some((name) =>
+    (MEMORY_SECTIONS as readonly string[]).includes(name),
+  );
+  if (!hasFixed) return undefined;
+  if (currentDoc !== "") {
+    const prior = splitDocSections(currentDoc).fixed;
+    for (const name of MEMORY_SECTIONS) {
+      if (!fixed.has(name) && prior.has(name)) fixed.set(name, prior.get(name)!);
+    }
+  }
+  const bodies = MEMORY_SECTIONS.map((name) => {
+    const body = (fixed.get(name) ?? "").trimEnd();
+    return { name, lines: body === "" ? [] : body.split("\n") };
+  });
+  const doc = assembleDoc(bodies, extras);
+  if (doc.length <= maxChars) return doc;
+  const fixedOnly = assembleDoc(bodies, []);
+  if (fixedOnly.length <= maxChars) return fixedOnly;
+  return fitWithinBudget(fixed, maxChars);
 }
 
 /**

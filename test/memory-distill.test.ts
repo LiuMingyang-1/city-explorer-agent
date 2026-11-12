@@ -153,6 +153,7 @@ test("新消息超 maxRecords → 只喂最早一批，下轮从游标接续", a
     userId: user.userId,
     sessionId: main.sessionId,
     maxRecords: 4,
+    maxBatches: 1,
   });
   assert.equal(first.status, "updated");
   assert.equal(first.throughMessageSeq, 4);
@@ -293,4 +294,169 @@ test("error/skipped 不推游标：恢复后从同一游起重蒸", async (t) =>
   });
   assert.equal(outcome.status, "updated");
   assert.equal(outcome.throughMessageSeq, 4);
+});
+
+test("超长蒸馏输出：结构保全压缩，固定小节与重要内容不丢", async (t) => {
+  const { sessions, user, main, writer, agent, faux } = await makeDistill(t);
+  const original = "## 用户\n常驻西安\n\n## 偏好\n对花生过敏\n\n## 足迹\n2026-11-10 看展\n";
+  await sessions.putUserMemory(user.userId, {
+    content: original,
+    sourceSessionId: main.sessionId,
+    throughMessageSeq: 0,
+  });
+  await seedMessages(sessions, writer, user.userId, main.sessionId, [
+    "我住在西安",
+    "喜欢展览",
+    "周末有空",
+  ]);
+  faux.setResponses([
+    fauxAssistantMessage(
+      `## 用户\n${"甲".repeat(3990)}\n\n## 偏好\n对花生过敏\n\n## 足迹\n2026-11-10 看展\n`,
+    ),
+  ]);
+  const outcome = await distillMemory({
+    agent,
+    sessions,
+    userId: user.userId,
+    sessionId: main.sessionId,
+  });
+  assert.equal(outcome.status, "updated");
+  assert.equal(outcome.throughMessageSeq, 3);
+  const memory = await sessions.getUserMemory(user.userId);
+  assert.ok(memory);
+  // 三个固定小节标题与重要内容（过敏约束、足迹）全部保留，不静默截尾。
+  assert.match(memory.content, /## 用户\n/);
+  assert.match(memory.content, /## 偏好\n对花生过敏/);
+  assert.match(memory.content, /## 足迹\n2026-11-10 看展/);
+  assert.ok(memory.content.length <= 4_000);
+});
+
+test("无固定小节的垃圾输出 → error，原文与游标不被覆盖", async (t) => {
+  const { sessions, user, main, writer, agent, faux } = await makeDistill(t);
+  const original = "## 用户\n常驻西安\n\n## 偏好\n对花生过敏\n\n## 足迹\n2026-11-10 看展\n";
+  await sessions.putUserMemory(user.userId, {
+    content: original,
+    sourceSessionId: main.sessionId,
+    throughMessageSeq: 0,
+  });
+  await seedMessages(sessions, writer, user.userId, main.sessionId, [
+    "我住在西安",
+    "喜欢展览",
+    "周末有空",
+  ]);
+  faux.setResponses([fauxAssistantMessage("## 错误\n服务暂时不可用")]);
+  const outcome = await distillMemory({
+    agent,
+    sessions,
+    userId: user.userId,
+    sessionId: main.sessionId,
+  });
+  assert.equal(outcome.status, "error");
+  const memory = await sessions.getUserMemory(user.userId);
+  assert.equal(memory?.content, original);
+  assert.equal(memory?.throughMessageSeq, 0);
+});
+
+test("缺失固定小节的输出从既有文档继承，不抹除旧节", async (t) => {
+  const { sessions, user, main, writer, agent, faux } = await makeDistill(t);
+  const original = "## 用户\n常驻西安\n\n## 偏好\n对花生过敏\n\n## 足迹\n2026-11-10 看展\n";
+  await sessions.putUserMemory(user.userId, {
+    content: original,
+    sourceSessionId: main.sessionId,
+    throughMessageSeq: 0,
+  });
+  await seedMessages(sessions, writer, user.userId, main.sessionId, [
+    "搬到东京了",
+    "还是喜欢展览",
+    "周末有空",
+  ]);
+  faux.setResponses([fauxAssistantMessage("## 用户\n常驻东京\n\n## 偏好\n对花生过敏\n")]);
+  const outcome = await distillMemory({
+    agent,
+    sessions,
+    userId: user.userId,
+    sessionId: main.sessionId,
+  });
+  assert.equal(outcome.status, "updated");
+  const memory = await sessions.getUserMemory(user.userId);
+  assert.ok(memory);
+  assert.match(memory.content, /## 用户\n常驻东京/);
+  assert.match(memory.content, /## 偏好\n对花生过敏/);
+  // 模型省略的足迹小节从既有文档继承，不被补空抹除。
+  assert.match(memory.content, /## 足迹\n2026-11-10 看展/);
+});
+
+test("单条超长消息：分片送完才推进游标，可恢复前进不阻断", async (t) => {
+  const { sessions, user, main, writer, agent, faux } = await makeDistill(t);
+  await seedMessages(sessions, writer, user.userId, main.sessionId, [
+    "长".repeat(20_000),
+    "b",
+    "c",
+  ]);
+  const doc = "## 用户\n常驻西安\n\n## 偏好\n对花生过敏\n\n## 足迹\n2026-11-10 看展\n";
+  faux.setResponses([
+    fauxAssistantMessage(doc),
+    fauxAssistantMessage(doc),
+    fauxAssistantMessage(doc),
+    fauxAssistantMessage(doc),
+    fauxAssistantMessage(doc),
+  ]);
+  const outcome = await distillMemory({
+    agent,
+    sessions,
+    userId: user.userId,
+    sessionId: main.sessionId,
+  });
+  assert.equal(outcome.status, "updated");
+  // 游标越过全部 3 条：超长记录分片全部进模型，b/c 正常进入后续批。
+  assert.equal(outcome.throughMessageSeq, 3);
+  assert.ok(faux.state.callCount >= 2, "超长记录应分片成多次模型调用");
+  const memory = await sessions.getUserMemory(user.userId);
+  assert.ok(memory);
+  assert.equal(memory.throughMessageSeq, 3);
+});
+
+test("累计超限：序列化总长严格 ≤ 上限，分多批逐批推进游标", async (t) => {
+  const { sessions, user, main, writer, agent, faux } = await makeDistill(t);
+  await seedMessages(sessions, writer, user.userId, main.sessionId, [
+    "a".repeat(7_000),
+    "b".repeat(7_000),
+    "c",
+  ]);
+  const doc = "## 用户\nu\n\n## 偏好\np\n\n## 足迹\nf\n";
+  faux.setResponses([fauxAssistantMessage(doc), fauxAssistantMessage(doc)]);
+  const outcome = await distillMemory({
+    agent,
+    sessions,
+    userId: user.userId,
+    sessionId: main.sessionId,
+  });
+  assert.equal(outcome.status, "updated");
+  assert.equal(outcome.throughMessageSeq, 3);
+  assert.equal(faux.state.callCount, 2, "7000+7000+3 → 两批");
+});
+
+test("分片数超硬上限的超长消息：明示跳过（审计行进文档）且不阻断", async (t) => {
+  const { sessions, user, main, writer, agent, faux } = await makeDistill(t);
+  await seedMessages(sessions, writer, user.userId, main.sessionId, [
+    "x".repeat(140_000),
+    "b",
+    "c",
+  ]);
+  faux.setResponses([
+    fauxAssistantMessage("## 用户\nu\n\n## 偏好\np\n\n## 足迹\nf\n"),
+  ]);
+  const outcome = await distillMemory({
+    agent,
+    sessions,
+    userId: user.userId,
+    sessionId: main.sessionId,
+  });
+  assert.equal(outcome.status, "updated");
+  assert.equal(outcome.throughMessageSeq, 3);
+  assert.equal(faux.state.callCount, 1, "超长记录明示跳过，b/c 正常蒸馏");
+  const memory = await sessions.getUserMemory(user.userId);
+  assert.ok(memory);
+  assert.match(memory.content, /## 蒸馏记录/);
+  assert.match(memory.content, /seq=1/);
 });
