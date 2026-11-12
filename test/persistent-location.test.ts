@@ -9,7 +9,7 @@ import type { SessionRepository } from "../src/session/repository.ts";
 import { createSqliteSessionRepository } from "../src/session/sqlite.ts";
 import { createChatService } from "../src/web/service.ts";
 import type { ManagedChatService } from "../src/web/service.ts";
-import { BASE, CONFIG, makePersistent, makeRepo, makeStreamFn } from "./e2e-fixture.ts";
+import { BASE, CONFIG, isDistillRequest, makePersistent, makeRepo, makeStreamFn } from "./e2e-fixture.ts";
 import { messageRecords } from "./persistent-fixture.ts";
 import { fakeClock, userMessage } from "./session-fixture.ts";
 
@@ -99,10 +99,14 @@ async function openLocationService(
   const { streamFn: scripted } = makeStreamFn(faux);
   const seen: (string | null | undefined)[] = [];
   const streamFn: StreamFn = (model, context, options) => {
-    const system = context.messages.find((m) => m.role === "system") as
-      | SystemMessage
-      | undefined;
-    seen.push(system?.sections?.["location_context"] ?? null);
+    // 会话收尾的蒸馏旁路请求同样经过 streamFn：system 是蒸馏提示词、
+    // 不带 location_context，且不算一轮会话请求，不计入 seen。
+    if (!isDistillRequest(context)) {
+      const system = context.messages.find((m) => m.role === "system") as
+        | SystemMessage
+        | undefined;
+      seen.push(system?.sections?.["location_context"] ?? null);
+    }
     return scripted(model, context, options);
   };
   const service = createChatService({

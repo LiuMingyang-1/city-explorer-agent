@@ -45,7 +45,7 @@ test("schema is idempotent and persists across reopen on a file database", async
   );
 });
 
-test("ensureSessionSchema creates all four tables and can run twice", (t) => {
+test("ensureSessionSchema creates all five tables and can run twice", (t) => {
   const db = new DatabaseSync(":memory:");
   t.after(() => db.close());
   ensureSessionSchema(db);
@@ -55,7 +55,7 @@ test("ensureSessionSchema creates all four tables and can run twice", (t) => {
     .all() as Array<{ name: string }>;
   assert.deepEqual(
     tables.map((row) => row.name),
-    ["runs", "session_records", "sessions", "users"],
+    ["runs", "session_records", "sessions", "user_memory", "users"],
   );
 });
 

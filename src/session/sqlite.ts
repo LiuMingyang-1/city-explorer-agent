@@ -3,6 +3,7 @@ import { openSessionDb, type SessionDbContext } from "./impl/context.ts";
 import * as accounts from "./impl/sessions.ts";
 import * as records from "./impl/records.ts";
 import * as runs from "./impl/runs.ts";
+import * as memory from "./impl/memory.ts";
 
 export { SESSION_SCHEMA_DDL, ensureSessionSchema } from "./schema.ts";
 
@@ -77,6 +78,10 @@ export function createSqliteSessionRepository(
       runs.finishRun(ctx, writer, userId, runId, outcome),
     requestCancelRun: async (writer, userId, runId) =>
       runs.requestCancelRun(ctx, writer, userId, runId),
+
+    // user_memory
+    getUserMemory: async (userId) => memory.getUserMemory(ctx, userId),
+    putUserMemory: async (userId, input) => memory.putUserMemory(ctx, userId, input),
 
     close: () => ctx.db.close(),
   };

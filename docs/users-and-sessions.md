@@ -36,6 +36,7 @@
 
 ```text
 users
+  ├─ user_memory         （每用户一行：长期记忆文档 + 蒸馏游标）
   └─ main_session_id ─→ sessions            （每用户恰好一个 kind=main）
                            ├─ session_records （统一追加日志：message | compaction）
                            ├─ sessions        （kind=child，parent_session_id 递归成树）
@@ -49,6 +50,10 @@ events（既有活动表）：本方案不改动。
   原始消息**永不因压缩被删除**。
 - `runs` 记录"哪次运行、在哪个会话、为谁、由谁派出、结果如何"，是异步
   子任务与投递机制的数据基础；消息可关联到产生它的 run。
+- `user_memory` 保存跨会话蒸馏的用户长期记忆文档与蒸馏游标
+  （`src/memory/`）：运行时 reload 把文档注入 system 的
+  `memory_context` 节（main/child 同规则），main 会话 close 时
+  机会性触发蒸馏写回并推进游标。
 
 所有时间字段为 UTC ISO-8601 文本（`created_at` 等）；所有 ID 为服务端生成的
 不透明字符串（建议 UUID），不使用昵称、序号当标识。
@@ -359,7 +364,8 @@ first_kept 不小于上一条有效检查点的边界。**每条检查点都按�
 
 **本期（任务 02–04 + 评审修复）实现：**
 
-- `node:sqlite` 持久仓库：users/sessions/session_records/runs 四表、
+- `node:sqlite` 持久仓库：users/sessions/session_records/runs/user_memory
+  五表（user_memory 存跨会话蒸馏的长期记忆文档与游标）、
   幂等建表、全方法 userId 归属校验、唯一主会话、并发初始化、
   单写者租约（owner+epoch+expiry、过期抢占、不可复活）、消息去重
   与冲突、孤立 toolResult 拒绝、run 状态机与终态保护。
@@ -370,7 +376,8 @@ first_kept 不小于上一条有效检查点的边界。**每条检查点都按�
 - Planner/CLI 接入与持久运行时：恢复（死 run 标记、中断批次补全、
   检查点投影、main 指针 / child 候选）、message_end 逐条落库、
   prepareRequest 压缩钩子、plan 标注、请求级幂等重放、
-  规划状态 system section 注入、close/cancel 语义、
+  规划状态 system section 注入、长期记忆 `memory_context` 注入与
+  main 会话 close 机会蒸馏、close/cancel 语义、
   离线（faux provider）集成测试。
 
 **数据支持但本期不实现（不假装已实现）：**
