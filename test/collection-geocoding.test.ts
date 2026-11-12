@@ -9,6 +9,22 @@ const query = { venue_name: "文化展厅", address: "西安市雁塔区文化�
 const poi = { id: "B_OFFLINE_TEST", name: "文化展厅", cityname: "西安市", adcode: "610113", adname: "雁塔区", address: "文化路1号", location: "108.95,34.23" };
 const answer = (pois: unknown[]) => ({ status: "1", count: String(pois.length), pois });
 
+test("mall parking-zone names are not normalized into duplicate mall POIs", async () => {
+  const result = await createGeocoder({ key: "test", now: () => now, fetch: async () => Response.json(answer([
+    { ...poi, id: "mall", name: "西安荟聚" },
+    { ...poi, id: "parking-b01", name: "西安荟聚B01区" },
+    { ...poi, id: "parking-b11", name: "西安荟聚B11区" },
+  ])) }).resolve({ venue_name: "西安荟聚", address: null });
+  assert.equal(result.ok, true); if (result.ok) assert.equal(result.location.poi_id, "mall");
+});
+
+test("an exact official name outranks a different POI carrying the same alias", async () => {
+  const result = await createGeocoder({ key: "test", now: () => now, fetch: async () => Response.json(answer([
+    { ...poi, id: "main" }, { ...poi, id: "alias", name: "文化展厅服务点", alias: ["文化展厅"] },
+  ])) }).resolve(query);
+  assert.equal(result.ok, true); if (result.ok) assert.equal(result.location.poi_id, "main");
+});
+
 test("POI resolution restricts city, binds branch/address and preserves longitude-first GCJ coordinates", async () => {
   const service = createGeocoder({ key: "private-map-key", now: () => now, fetch: async (value, options) => {
     const url = new URL(String(value));

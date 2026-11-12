@@ -28,15 +28,18 @@ export function venueSearchLabel(value: string): string {
     .replace(/\s*[一二三四五六七八九十0-9]+号门(?:前|外|内|入口|出口)?$/, "").trim();
 }
 const venueName = (value: string) => norm(venueSearchLabel(value)).replace(/馆区$/, "馆");
-function parts(value: string) {
-  const text = venueSearchLabel(value), match = /^(.*?)\(([^()]+)\)$/.exec(text);
+function parts(value: string, stripInterior = true) {
+  const text = stripInterior ? venueSearchLabel(value) : value.normalize("NFKC"), match = /^(.*?)\(([^()]+)\)$/.exec(text);
   return { base: match?.[1] ?? text, branch: match?.[2] ?? "" };
 }
 const branchName = (value: string) => norm(value).replace(/西安市?|店|广场/g, "");
 export function matchesVenue(query: string, candidate: string): boolean {
-  if (venueName(query) === venueName(candidate)) return true;
-  const a = parts(query), b = parts(candidate);
-  if (venueName(a.base) !== venueName(b.base)) return false;
+  // Clean internal location text from the request, never collapse distinct POI
+  // names such as a mall's B01 parking zone into the mall itself.
+  const candidateName = (name: string) => norm(name).replace(/馆区$/, "馆");
+  if (venueName(query) === candidateName(candidate)) return true;
+  const a = parts(query), b = parts(candidate, false);
+  if (venueName(a.base) !== candidateName(b.base)) return false;
   const x = branchName(a.branch), y = branchName(b.branch);
   // Reordered city/branch labels are allowed; a different branch is not.
   return x === y || x.length >= 4 && [...x].sort().join("") === [...y].sort().join("");
@@ -127,10 +130,19 @@ export function createGeocoder(options: GeocoderOptions) {
         const pool = new Map<string, any>();
         const collect = (rows: any[]) => { for (const row of rows) if (row && typeof row.id === "string") pool.set(row.id, row); };
         collect(data.pois);
-        const select = () => [...pool.values()].filter((poi: any) => xian(poi)
-          && [poi.name, ...(typeof poi.alias === "string" ? [poi.alias] : Array.isArray(poi.alias) ? poi.alias : [])].some(name => typeof name === "string" && matchesVenue(query.venue_name, name))
-          && typeof poi.id === "string" && !!poi.id && typeof poi.address === "string" && !!poi.address.trim()
-          && typeof poi.adname === "string" && !!poi.adname);
+        const select = () => {
+          const scored = [...pool.values()].filter((poi: any) => xian(poi)
+            && typeof poi.id === "string" && !!poi.id && typeof poi.name === "string" && typeof poi.address === "string" && !!poi.address.trim()
+            && typeof poi.adname === "string" && !!poi.adname).map((poi: any) => {
+              const exact = norm(poi.name).replace(/馆区$/, "馆") === venueName(query.venue_name);
+              const aliases = typeof poi.alias === "string" ? [poi.alias] : Array.isArray(poi.alias) ? poi.alias : [];
+              const score = exact ? 100 : matchesVenue(query.venue_name, poi.name) ? 90
+                : aliases.some((name: unknown) => typeof name === "string" && matchesVenue(query.venue_name, name)) ? 70 : 0;
+              return { poi, score };
+            });
+          const best = Math.max(0, ...scored.map(row => row.score));
+          return scored.filter(row => best > 0 && row.score === best).map(row => row.poi);
+        };
         let matches = select();
         for (const keyword of alternateKeywords(query.venue_name)) {
           if (matches.length) break;
