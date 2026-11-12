@@ -72,7 +72,7 @@ test("missing times and duration are permitted with explicit activity validity; 
 test("source trust is separate from model correctness and invalid clocks fail safely", () => {
   const { facts, document, asOf } = extractionFixture(); document.authority = "unverified";
   const result = checkFacts(facts, document, asOf);
-  assert.equal(result.valid, true); assert.equal(result.needs_primary_source, true);
+  assert.equal(result.valid, true); assert.equal(result.needs_primary_source, false);
   assert(checkFacts(facts, document, "bad clock").issues.includes("INVALID_CLOCK"));
 });
 
@@ -84,6 +84,12 @@ test("numeric evidence matches complete numbers and malformed model times cannot
   assert(checked.issues.includes("PRICE_NOT_SUPPORTED:budget_min")); assert(checked.issues.includes("DURATION_NOT_SUPPORTED"));
   facts.start_at = "2026-11-14T[invalid";
   assert(checkFacts(facts, document, asOf).issues.includes("INVALID_SLOT"));
+});
+
+test("unknown status is missing information, not a factual assertion requiring an invented quote", () => {
+  const { facts, document, asOf } = extractionFixture(); facts.status = "unknown"; delete facts.evidence.status;
+  const report = checkFacts(facts, document, asOf);
+  assert(report.issues.includes("NOT_ACTIVE")); assert(!report.issues.includes("EVIDENCE_MISSING:status"));
 });
 
 test("explicit same-year range supports its ending date without guessing a publication year", () => {

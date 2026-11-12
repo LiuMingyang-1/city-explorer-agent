@@ -19,7 +19,7 @@ test("offline pipeline turns trusted facts plus a bound mocked map response into
 test("unverified posts never consume map requests or become published facts without corroboration", async () => {
   const { facts, document, asOf } = extractionFixture(); document.authority = "unverified";
   let maps = 0;
-  const result = await processCollection([{ document, structured: { activities: [facts] } }], { asOf, baseDate: "2026-11-12", geocoder: { resolve: async () => { maps++; return { ok: false, reason: "unexpected" }; } } });
+  const result = await processCollection([{ document, structured: { activities: [facts] } }], { asOf, baseDate: "2026-11-12", requirePrimary: true, geocoder: { resolve: async () => { maps++; return { ok: false, reason: "unexpected" }; } } });
   assert.equal(maps, 0); assert.equal(result.prepared.dataset.events.length, 0);
   assert(result.rejected.some(r => r.reasons.includes("PRIMARY_SOURCE_REQUIRED")));
 });
@@ -28,7 +28,7 @@ test("primary corroboration is bounded and field conflicts cause rejection", asy
   const { facts, document, asOf } = extractionFixture(); document.authority = "unverified";
   let lookups = 0, maps = 0;
   const result = await processCollection([{ document, structured: { activities: [facts] } }], {
-    asOf, baseDate: "2026-11-12", corroborate: async () => { lookups++; return { ...document, authority: "publisher" }; },
+    asOf, baseDate: "2026-11-12", requirePrimary: true, corroborate: async () => { lookups++; return { ...document, authority: "publisher" }; },
     invoke: async () => JSON.stringify({ activities: [{ ...facts, venue_name: "错误场馆" }] }),
     geocoder: { resolve: async () => { maps++; return { ok: false, reason: "unexpected" }; } },
   });
@@ -69,7 +69,7 @@ test("live clocks advance across primary-source and map IO without treating new 
   const original = { ...item.document, authority: "unverified" as const };
   let current = asOf;
   const result = await processCollection([{ document: original, structured: { activities: [item.facts] } }], {
-    asOf, baseDate: "2026-11-12", now: () => current,
+    asOf, baseDate: "2026-11-12", requirePrimary: true, now: () => current,
     corroborate: async () => { current = "2026-11-12T03:01:00Z"; return { ...item.document, fetched_at: current }; },
     invoke: async () => { current = "2026-11-12T03:02:00Z"; return JSON.stringify({ activities: [item.facts] }); },
     geocoder: { resolve: async () => { current = "2026-11-12T03:03:00Z"; return { ok: true, location: { ...item.location, verified_at: current }, cached: false }; } },
@@ -83,7 +83,7 @@ test("missing activity validity may be completed from fresh primary facts, never
   partial.start_at = partial.end_at = null; partial.confirmed_end_date = null;
   partial.suggested_duration_minutes = null;
   const result = await processCollection([{ document: { ...item.document, authority: "unverified" }, structured: { activities: [partial] } }], {
-    asOf, baseDate: "2026-11-12", corroborate: async () => item.document,
+    asOf, baseDate: "2026-11-12", requirePrimary: true, corroborate: async () => item.document,
     invoke: async () => JSON.stringify({ activities: [item.facts] }),
     geocoder: { resolve: async () => ({ ok: true, location: item.location, cached: false }) },
   });

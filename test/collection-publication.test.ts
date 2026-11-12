@@ -20,9 +20,9 @@ async function fixture() {
   return { item, asOf, prepared };
 }
 
-test("preparation discards unverified sources and coordinates not bound to the exact venue query", async () => {
+test("preparation accepts original posts but rejects coordinates not bound to the exact venue query", async () => {
   const { item, asOf } = await locatedFixture(); item.document.authority = "unverified";
-  assert(prepareCollection([item], { asOf, baseDate: "2026-11-12" }).rejected[0].reasons.includes("PRIMARY_SOURCE_REQUIRED"));
+  assert.equal(prepareCollection([item], { asOf, baseDate: "2026-11-12" }).prepared.dataset.provenance[0].source_kind, "unverified");
   item.document.authority = "publisher"; item.location.longitude += .01;
   assert(prepareCollection([item], { asOf, baseDate: "2026-11-12" }).rejected[0].reasons.includes("LOCATION_NOT_VERIFIED_OR_NOT_BOUND"));
 });

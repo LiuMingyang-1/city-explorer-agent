@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { checkFacts } from "./extraction.ts";
+import { checkFacts, inferredEndDate } from "./extraction.ts";
 import type { ActivityFacts, ExtractionDocument } from "./extraction.ts";
 import { gcj02ToWgs84, CONVERSION_VERSION } from "./coordinates.ts";
 import { venueRequestKey } from "./geocoding.ts";
@@ -30,7 +30,7 @@ export function locationQueryForFacts(facts: ActivityFacts): VenueQuery {
 }
 
 /** The model has no access to this step. Recheck facts, source policy and map binding
- * before assigning an ID. Unknown source authority always requires primary corroboration.
+ * before assigning an ID. Original posts are valid sources; map evidence independently confirms the city.
  */
 export function prepareCollection(items: readonly LocatedActivity[], options: { asOf: string; baseDate: string; identities?: readonly SlotIdentity[] }) {
   if (!isCalendarDate(options.baseDate)) throw new Error("INVALID_BASE_DATE");
@@ -41,7 +41,7 @@ export function prepareCollection(items: readonly LocatedActivity[], options: { 
   for (const item of items) {
     const { facts, document, location } = item;
     if (facts.confirmed_start_date !== null && facts.confirmed_start_date >= horizon) { rejected.push({ source_event_key: item.source_event_key, reasons: ["OUTSIDE_BATCH"] }); continue; }
-    const checked = checkFacts(facts, document, options.asOf);
+    const checked = checkFacts(facts, document, options.asOf, true);
     if (!checked.valid || checked.needs_primary_source) {
       rejected.push({ source_event_key: item.source_event_key, reasons: [...checked.issues, ...(checked.needs_primary_source ? ["PRIMARY_SOURCE_REQUIRED"] : [])] }); continue;
     }
@@ -70,7 +70,7 @@ export function prepareCollection(items: readonly LocatedActivity[], options: { 
     const provenance: EventProvenance = { event_id: id, source_url: document.url, source_event_key: item.source_event_key,
       venue_key: identity.entry.venue_key, slot_key: identity.entry.slot_key, schedule_type: facts.schedule_type,
       source_kind: document.authority as EventProvenance["source_kind"], verified_at: options.asOf, city: "西安市",
-      city_evidence: { source_url: document.url, quote: facts.evidence.city },
+      city_evidence: { source_url: location.source_url, quote: location.address },
       coordinates: { system: "WGS-84", source_url: location.source_url, method: "geocoding", input_system: "GCJ-02", conversion: location.conversion },
       duration_basis: facts.suggested_duration_minutes === null ? "unknown" : "source", duration_note: facts.suggested_duration_minutes === null ? "来源未提供建议时长" : facts.evidence.suggested_duration_minutes,
       evidence };
@@ -89,7 +89,9 @@ export function prepareCollection(items: readonly LocatedActivity[], options: { 
     prepared.dataset.events.push(event); prepared.dataset.provenance.push(provenance);
     prepared.witnesses[id] = structuredClone(item);
     prepared.metadata[id] = { firstSeenAt: item.first_seen_at, lastVerifiedAt: options.asOf, sourcePublishedAt: document.published_at,
-      confirmedEndDate: facts.confirmed_end_date, status: "active" };
+      confirmedEndDate: facts.confirmed_end_date, status: "active", sourceUpdatedAt: document.updated_at ?? null, confirmedStartDate: facts.confirmed_start_date,
+      availability: facts.confirmed_start_date && facts.confirmed_start_date > new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Shanghai" }).format(Date.parse(options.asOf)) ? "upcoming" : facts.confirmed_end_date ? "within_period" : /常设展|常设陈列|长期开放|长期陈列/.test(document.text) ? "permanent" : "unknown",
+      dateBasis: facts.confirmed_end_date && inferredEndDate(document, options.asOf) === facts.confirmed_end_date ? "recent-publication-inference" : facts.confirmed_end_date ? "explicit" : "unknown" };
   }
   return { prepared, rejected };
 }

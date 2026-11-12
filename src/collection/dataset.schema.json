@@ -179,7 +179,8 @@
             "enum": [
               "publisher",
               "ticketing",
-              "organizer_social"
+              "organizer_social",
+              "unverified"
             ]
           },
           "verified_at": {

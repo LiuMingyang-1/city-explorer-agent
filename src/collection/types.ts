@@ -20,7 +20,7 @@ export interface FieldEvidence {
 }
 export interface EventProvenance {
   event_id: string; source_url: string; source_event_key: string; venue_key: string;
-  schedule_type: "window" | "fixed" | "unknown"; source_kind: "publisher" | "ticketing" | "organizer_social";
+  schedule_type: "window" | "fixed" | "unknown"; source_kind: "publisher" | "ticketing" | "organizer_social" | "unverified";
   /** Immutable slot key registered at discovery; independent of corrected start time. */
   slot_key: string;
   verified_at: string; city: "西安市"; city_evidence: {source_url: string; quote: string};

@@ -5,6 +5,10 @@ export interface NightlyMetadata {
   sourcePublishedAt: string | null;
   confirmedEndDate: string | null;
   status: "active" | "unknown" | "cancelled";
+  dateBasis?: "explicit" | "recent-publication-inference" | "unknown";
+  sourceUpdatedAt?: string | null;
+  availability?: "upcoming" | "within_period" | "permanent" | "unknown";
+  confirmedStartDate?: string | null;
 }
 export interface FreshnessDecision { includeInDiscovery: boolean; allowPlanning: boolean; reason: string; }
 /** Metadata is kept in a private sidecar, not additional events columns.

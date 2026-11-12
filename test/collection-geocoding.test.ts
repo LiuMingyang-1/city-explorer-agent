@@ -59,6 +59,15 @@ test("cache reuses verified venues, expires at 30 days and invalidates on addres
   await service.resolve({ ...query, address: "西安市雁塔区另一条路2号" }); assert.equal(calls, 3);
 });
 
+test("floor suffixes and guanqu spelling preserve branch matching without requiring identical punctuation", async () => {
+  const service = createGeocoder({ key: "test", now: () => now, fetch: async () => Response.json(answer([
+    { ...poi, name: "陕西省文化馆曲江馆区" },
+  ])) });
+  assert.equal((await service.resolve({ venue_name: "陕西省文化馆（曲江馆五楼展厅）", address: null })).ok, true);
+  const other = await service.resolve({ venue_name: "陕西省文化馆（长安馆五楼展厅）", address: null });
+  assert.deepEqual(other, { ok: false, reason: "NO_EXACT_POI_MATCH" });
+});
+
 test("request failures, API denial, oversized responses and exhausted budgets fail closed without key leakage", async () => {
   for (const fetcher of [
     async () => { throw new Error("private-map-key"); },
@@ -74,11 +83,33 @@ test("request failures, API denial, oversized responses and exhausted budgets fa
   assert.deepEqual(await createGeocoder({ key: "test", now: () => now, requestLimit: 0 }).resolve(query), { ok: false, reason: "MAP_BUDGET_EXHAUSTED" });
 });
 
-test("truncated POI pages and unconfirmed large-site entrances are not published", async () => {
-  const partial = await createGeocoder({ key: "test", now: () => now, fetch: async () => Response.json({ ...answer([poi]), count: "20" }) }).resolve(query);
-  assert.deepEqual(partial, { ok: false, reason: "POI_RESULT_TRUNCATED" });
+test("unique exact venue survives fuzzy count; large sites still require entrance", async () => {
+  const partial = await createGeocoder({ key: "test", now: () => now, fetch: async () => Response.json({ ...answer([poi]), count: "20" }) }).resolve({ ...query, address: null });
+  assert.equal(partial.ok, true);
   const entrance = await createGeocoder({ key: "test", now: () => now, fetch: async () => Response.json(answer([poi])) }).resolve({ ...query, require_entrance: true });
   assert.deepEqual(entrance, { ok: false, reason: "ENTRANCE_NOT_CONFIRMED" });
+});
+
+test("truncated fuzzy search requires exact name/address plus agreeing precise geocode", async () => {
+  for (const location of ["108.95,34.23", "109.4,34.9"]) {
+    let calls = 0;
+    const result = await createGeocoder({ key: "test", now: () => now, fetch: async () => Response.json(++calls === 1
+      ? { ...answer([poi]), count: "552" }
+      : { status: "1", geocodes: [{ city: "西安市", adcode: "610113", district: "雁塔区", formatted_address: query.address, level: "门牌号", location }] }) }).resolve(query);
+    assert.equal(result.ok, location === "108.95,34.23"); assert.equal(calls, 2);
+    if (result.ok) assert(result.location.address_confirmation);
+    else assert.equal(result.reason, "POI_GEOCODE_CONFLICT");
+  }
+});
+
+test("multiple address points require exactly one to agree with the already name-bound POI", async () => {
+  for (const locations of [["108.95,34.23", "108.93,34.24"], ["108.95,34.23", "108.9501,34.2301"]]) {
+    let calls = 0;
+    const result = await createGeocoder({ key: "test", now: () => now, fetch: async () => Response.json(++calls === 1
+      ? { ...answer([poi]), count: "552" }
+      : { status: "1", geocodes: locations.map(location => ({ city: "西安市", adcode: "610113", formatted_address: query.address, level: "门址", location })) }) }).resolve(query);
+    assert.equal(result.ok, locations[1] === "108.93,34.24");
+  }
 });
 
 test("conversion matches upstream published vectors and round-trips five Xi'an numerical points", () => {

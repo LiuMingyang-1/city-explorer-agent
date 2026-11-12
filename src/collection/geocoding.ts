@@ -8,6 +8,7 @@ export interface VerifiedLocation {
   adcode: string; district: string; latitude: number; longitude: number;
   input_system: "GCJ-02"; system: "WGS-84"; original: Coordinate;
   conversion: string; source_url: string; verified_at: string; method: "poi" | "geocoding";
+  address_confirmation?: { address: string; level: string; original: Coordinate };
 }
 export type GeoResult = { ok: true; location: VerifiedLocation; cached: boolean } | { ok: false; reason: string };
 export interface GeocoderOptions {
@@ -15,10 +16,14 @@ export interface GeocoderOptions {
   cache?: Map<string, VerifiedLocation>; requestLimit?: number;
 }
 const norm = (value: string) => value.normalize("NFKC").replace(/[\s（）()，,]/g, "");
+// Keep branch identity; remove only a floor/exhibition-room suffix and punctuation.
+const venueName = (value: string) => norm(value).replace(/[一二三四五六七八九十百0-9]+楼(?:展厅|展馆)?$/, "").replace(/馆区$/, "馆");
 const districts = ["新城区", "碑林区", "莲湖区", "灞桥区", "未央区", "雁塔区", "阎良区", "临潼区", "长安区", "高陵区", "鄠邑区", "蓝田县", "周至县"];
 const cityAddress = (address: string) => districts.reduce((s, d) => s.replaceAll(d, ""), norm(address).replaceAll("陕西省", "").replaceAll("西安市", "").replaceAll("曲江新区", ""));
 function sameAddress(request: string, actual: string): boolean {
   const a = cityAddress(request), b = cityAddress(actual);
+  const requestedDoor = /\d+(?:-\d+)?号/.exec(a)?.[0];
+  if (requestedDoor && /\d+(?:-\d+)?号/.exec(b)?.[0] !== requestedDoor) return false;
   return a.length >= 5 && b.length >= 5 && (a.includes(b) || b.includes(a));
 }
 function xian(row: Record<string, unknown>): boolean {
@@ -75,16 +80,18 @@ export function createGeocoder(options: GeocoderOptions) {
         return { ok: true, location: structuredClone(cached), cached: true };
       }
       try {
-        const data = await request("/v3/place/text", { keywords: query.venue_name, city: "西安", citylimit: "true", extensions: "all", offset: "10", page: "1" });
+        const data = await request("/v3/place/text", { keywords: venueName(query.venue_name), city: "西安", citylimit: "true", extensions: "all", offset: "25", page: "1", children: "0" });
         if (!Array.isArray(data.pois)) return { ok: false, reason: "MAP_INVALID_POI_RESPONSE" };
         if (!/^\d+$/.test(String(data.count))) return { ok: false, reason: "MAP_INVALID_POI_RESPONSE" };
-        if (Number(data.count) > data.pois.length) return { ok: false, reason: "POI_RESULT_TRUNCATED" };
-        const matches = data.pois.filter((poi: any) => poi && xian(poi) && norm(String(poi.name)) === norm(query.venue_name)
+        const truncated = Number(data.count) > data.pois.length;
+        // Fuzzy count includes unrelated amenities; exact venue candidates are matched below.
+        const matches = data.pois.filter((poi: any) => poi && xian(poi) && venueName(String(poi.name)) === venueName(query.venue_name)
           && typeof poi.id === "string" && !!poi.id && typeof poi.address === "string" && poi.address.length >= 5
           && typeof poi.adname === "string" && !!poi.adname && (!query.address || sameAddress(query.address, poi.address))
           && (!query.address || !districts.some(d => query.address!.includes(d) && poi.adname !== d)));
         if (matches.length > 1) return { ok: false, reason: "AMBIGUOUS_POI" };
         let row: Record<string, any>, point: Coordinate | null, method: VerifiedLocation["method"], address: string, source: string;
+        let confirmation: VerifiedLocation["address_confirmation"];
         if (matches.length === 1) {
           row = matches[0];
           point = coordinate(row.entr_location || row.location);
@@ -94,6 +101,20 @@ export function createGeocoder(options: GeocoderOptions) {
           }
           if (query.require_entrance && !row.entr_location) return { ok: false, reason: "ENTRANCE_NOT_CONFIRMED" };
           address = `西安市${row.adname}${row.address}`; method = "poi"; source = "https://restapi.amap.com/v3/place/text";
+          if (truncated && query.address && /\d+号/.test(norm(query.address))) {
+            // A fuzzy result count includes amenities and unrelated venues. For an
+            // address-bound exact name match, independently resolve the printed door
+            // number and require it to agree with the POI, rather than choosing rank 1.
+            const check = await request("/v3/geocode/geo", { address: query.address!, city: "西安" });
+            const candidates = (Array.isArray(check.geocodes) ? check.geocodes : []).filter((g: any) => g && coordinate(g.location) && xian(g)
+              && ["门牌号", "单元号", "门址"].includes(g.level) && typeof g.formatted_address === "string" && sameAddress(query.address!, g.formatted_address));
+            const agreeing = candidates.filter((g: any) => { const p = coordinate(g.location)!;
+              return point && Math.hypot((point.lat - p.lat) * 111320, (point.lng - p.lng) * 111320 * Math.cos(point.lat * Math.PI / 180)) <= 500;
+            });
+            if (agreeing.length !== 1) return { ok: false, reason: agreeing.length > 1 ? "POI_ADDRESS_UNCONFIRMED" : candidates.length ? "POI_GEOCODE_CONFLICT" : "POI_ADDRESS_UNCONFIRMED" };
+            const geo = agreeing[0], geoPoint = coordinate(geo.location)!;
+            confirmation = { address: geo.formatted_address, level: geo.level, original: geoPoint };
+          }
         } else {
           if (data.pois.length) return { ok: false, reason: "NO_EXACT_POI_MATCH" };
           if (!query.address || !/\d+号/.test(norm(query.address))) return { ok: false, reason: "PRECISE_ADDRESS_REQUIRED" };
@@ -109,7 +130,8 @@ export function createGeocoder(options: GeocoderOptions) {
         const converted = gcj02ToWgs84(point);
         const location: VerifiedLocation = { request_key: key, venue_name: query.venue_name, address, poi_id: method === "poi" ? row.id : null,
           adcode: String(row.adcode), district: String(row.adname ?? row.district), latitude: converted.lat, longitude: converted.lng,
-          input_system: "GCJ-02", system: "WGS-84", original: point, conversion: CONVERSION_VERSION, source_url: source, verified_at: now, method };
+          input_system: "GCJ-02", system: "WGS-84", original: point, conversion: CONVERSION_VERSION, source_url: source, verified_at: now, method,
+          ...(confirmation ? { address_confirmation: confirmation } : {}) };
         cache.set(key, structuredClone(location));
         return { ok: true, location, cached: false };
       } catch (error) {

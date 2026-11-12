@@ -26,6 +26,7 @@ export interface ProcessingOptions {
   /** Collector-owned, bounded primary-source lookup. A model cannot mark its own source trusted. */
   corroborate?: (facts: ActivityFacts, original: ExtractionDocument) => Promise<ExtractionDocument | null>;
   modelBudget?: number; eventLimit?: number;
+  requirePrimary?: boolean;
 }
 const canonical = (value: string) => value.normalize("NFKC").replace(/\s+/g, "");
 
@@ -50,6 +51,9 @@ export async function processCollection(input: readonly PipelineDocument[], opti
     const result = await extractActivities(candidate.document, { asOf: clock(), structured: candidate.structured, invoke });
     if (result.issues.length) { rejected.push({ source_url: candidate.document.url, reasons: result.issues }); continue; }
     for (const extracted of result.activities) {
+      extracted.check.needs_primary_source = !!options.requirePrimary && candidate.document.authority === "unverified";
+      extracted.check.issues = extracted.check.issues.filter(code => !["CITY_NOT_CONFIRMED", "EVIDENCE_MISSING:city"].includes(code));
+      extracted.check.valid = extracted.check.issues.length === 0;
       if (located.length >= (options.eventLimit ?? 10)) break;
       const fillable = new Set(["VALIDITY_UNKNOWN", "CITY_NOT_CONFIRMED", "FULL_TEXT_REQUIRED", ...(extracted.facts.status === "unknown" ? ["NOT_ACTIVE"] : [])]);
       const canCorroborateMissing = extracted.check.needs_primary_source && !!options.corroborate && extracted.check.issues.every(code => fillable.has(code));
