@@ -40,10 +40,23 @@ const EVENT: EventView = {
 };
 
 const RESULT: ChatResult = {
-  kind: "itinerary",
+  kind: "plans",
   session_id: "sess_1",
-  itinerary: ITINERARY,
+  mode: "single",
+  active_plan: "A",
+  plans: [
+    {
+      plan_id: "A",
+      label: "A",
+      title: ITINERARY.summary,
+      itinerary: ITINERARY,
+      legs: [],
+      validation: { status: "passed", scope: "inter_stop", issues: [] },
+      warnings: [],
+    },
+  ],
   events: [EVENT],
+  coordinate_system: "GCJ-02",
 };
 
 const PROGRESS_SEARCH: ChatProgress = {

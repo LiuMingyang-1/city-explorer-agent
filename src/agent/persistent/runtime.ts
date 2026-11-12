@@ -31,13 +31,18 @@ import type {
   PlannerTurn,
   ValidatedPlanCommit,
 } from "../session.ts";
-import { runtimeSystemMessage, type LocationContext } from "./context.ts";
+import {
+  runtimeSystemMessage,
+  type LocationContext,
+  type SelectionContext,
+} from "./context.ts";
 import { RawHistory } from "./history.ts";
 import { LeaseGuard } from "./lease.ts";
 import {
   errorText,
   findRunByRequestId,
   latestCandidatePlan,
+  latestProducedTurn,
   replayedTurn,
   requestInputLocation,
   requestInputText,
@@ -225,6 +230,16 @@ export class PersistentRuntime implements PlannerRuntime {
    * 每次 reload 重读（含另一实例在 close 时蒸馏的新版）。
    */
   private memoryText: string | undefined;
+  /**
+   * 会话最近一轮产出的 PlannerTurn（reload 时从最新 completed run 恢复）；
+   * 仅用于判定本轮透传的 active_plan 是否有意义（最近一轮须为 comparison）。
+   */
+  private latestTurn: PlannerTurn | undefined;
+  /**
+   * 本轮请求附带的界面选择（选中方案/点选活动）：渲染进 system section，
+   * 不落 raw、不进消息表、不随 run 持久化；runPrompt 收尾时清除。
+   */
+  private selectionContext: SelectionContext | undefined;
   private readonly history = new RawHistory();
   private checkpoint: Checkpoint | undefined;
   private readonly baseline: UsageBaseline = createUsageBaseline();
@@ -389,6 +404,9 @@ export class PersistentRuntime implements PlannerRuntime {
     //    分配，与墙上时间无关）；本轮透传的新位置在 reload 之后由
     //    runPrompt 覆盖，并随新 run 的 input 落库。
     this.locationContext = await this.persistedLocation(runs);
+    //    最近一轮产出的 turn：runPrompt 据此判定本轮透传的 active_plan
+    //    是否有意义（仅最近一轮为 comparison 时注入界面选择 section）。
+    this.latestTurn = latestProducedTurn(runs);
     // 7) 用户长期记忆：用户级读不需要写者凭证；读失败与其他恢复读一致，
     //    原样抛出结束本轮恢复。
     this.memoryText = (await this.repo.getUserMemory(this.userId))?.content;
@@ -412,6 +430,7 @@ export class PersistentRuntime implements PlannerRuntime {
         this.sessionKind === "child" ? "candidate" : "confirmed",
         this.locationContext,
         this.memoryText,
+        this.selectionContext,
       ),
     );
     this.agent.state.messages = messages;
@@ -557,6 +576,21 @@ export class PersistentRuntime implements PlannerRuntime {
           this.locationContext = { lat, lng, anchor: await this.anchorFor(lat, lng) };
           this.applyContext();
         }
+        // 界面选择上下文（本轮注入、轮末清除）：active_plan 只在会话最近
+        // 一轮产出过 comparison 时有意义；referencedEvent 由调用方查库
+        // 解析后透传（查无/查库失败时已置 undefined）。必须在建 run 前
+        // 渲染：performTurn 的首个模型请求就要带上新 section。
+        const selection: SelectionContext = {};
+        if (options.activePlan !== undefined && this.latestTurn?.kind === "comparison") {
+          selection.activePlan = options.activePlan;
+        }
+        if (options.referencedEvent !== undefined) {
+          selection.referencedEvent = options.referencedEvent;
+        }
+        if (selection.activePlan !== undefined || selection.referencedEvent !== undefined) {
+          this.selectionContext = selection;
+          this.applyContext();
+        }
         const run = await this.guard.guarded((w) =>
           this.repo.createRun(w, this.userId, {
             sessionId: this.sessionIdValue,
@@ -564,6 +598,8 @@ export class PersistentRuntime implements PlannerRuntime {
               text,
               requestId: options.requestId ?? null,
               location: options.location ?? null,
+              activePlan: options.activePlan ?? null,
+              referencedEvent: options.referencedEvent ?? null,
             },
             parentRunId: this.parentRunId,
             replyToSessionId: this.replyToSessionId,
@@ -622,6 +658,11 @@ export class PersistentRuntime implements PlannerRuntime {
           this.activeRunId = undefined;
           this.pendingDedupeKey = undefined;
           this.onActiveTurnChange?.(undefined);
+          // 界面选择只注入本轮：清除并重建 system，下一轮不带残留。
+          if (this.selectionContext !== undefined) {
+            this.selectionContext = undefined;
+            this.applyContext();
+          }
         }
       });
     } catch (error) {

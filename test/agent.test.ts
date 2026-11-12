@@ -164,6 +164,60 @@ test("parsePlannerResponse parses clarify and itinerary envelopes", () => {
   }
 });
 
+test("parsePlannerResponse parses comparison envelope：A/B 双方案 + 共享 constraints", () => {
+  const parsed = parsePlannerResponse(
+    '{"type":"comparison","constraints":{"date":"2026-11-14","availableStart":"09:00"},' +
+      '"plans":[' +
+      '{"label":"A","title":"城墙经典","itinerary":{"date":"2026-11-14","summary":"a","stops":[]}},' +
+      '{"label":"B","title":"博物馆深度","itinerary":{"date":"2026-11-14","summary":"b","stops":[]}}' +
+      "]}",
+  );
+  assert.equal(parsed.type, "comparison");
+  if (parsed.type !== "comparison") return;
+  assert.equal(parsed.constraints.date, "2026-11-14");
+  assert.equal(parsed.constraints.availableStart, "09:00");
+  assert.equal(parsed.plans.length, 2);
+  assert.deepEqual(
+    parsed.plans.map((p) => [p.label, p.title]),
+    [
+      ["A", "城墙经典"],
+      ["B", "博物馆深度"],
+    ],
+  );
+  assert.deepEqual(parsed.plans[1].candidate, {
+    date: "2026-11-14",
+    summary: "b",
+    stops: [],
+  });
+});
+
+test("parsePlannerResponse rejects malformed comparison envelopes（plans 数组/label/title）", () => {
+  const base =
+    '{"type":"comparison","constraints":{"date":"2026-11-14"},"plans":__PLANS__}';
+  for (const plans of [
+    "[]", // 空数组
+    '[{"label":"A","title":"a","itinerary":{}}]', // 只有一条
+    '[{"label":"A","title":"a","itinerary":{}},{"label":"B","title":"b","itinerary":{}},{"label":"A","title":"c","itinerary":{}}]', // 三条
+    '[{"label":"A","title":"a","itinerary":{}},{"label":"A","title":"b","itinerary":{}}]', // label 重复
+    '[{"label":"C","title":"a","itinerary":{}},{"label":"B","title":"b","itinerary":{}}]', // label 非 A/B
+    '[{"label":"A","title":" ","itinerary":{}},{"label":"B","title":"b","itinerary":{}}]', // title 空白
+    '[{"label":"A","itinerary":{}},{"label":"B","title":"b","itinerary":{}}]', // 缺 title
+    '[{"label":"A","title":"a"},{"label":"B","title":"b","itinerary":{}}]', // 缺 itinerary
+    '["x",{"label":"B","title":"b","itinerary":{}}]', // 元素非对象
+  ]) {
+    assert.throws(
+      () => parsePlannerResponse(base.replace("__PLANS__", plans)),
+      PlannerResponseError,
+      plans,
+    );
+  }
+  // comparison 缺 constraints / constraints 不合法同样被拒。
+  assert.throws(
+    () => parsePlannerResponse('{"type":"comparison","plans":[{"label":"A","title":"a","itinerary":{}},{"label":"B","title":"b","itinerary":{}}]}'),
+    PlannerResponseError,
+  );
+});
+
 test("parseConstraints keeps null as explicit clear but rejects unreal values", () => {
   const ok = parsePlannerResponse(
     '{"type":"itinerary","constraints":{"date":"2026-11-14","availableStart":null},"itinerary":{"date":"2026-11-14","summary":"s","stops":[]}}',

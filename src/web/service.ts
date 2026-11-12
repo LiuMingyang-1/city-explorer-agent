@@ -25,6 +25,9 @@ import type { ExplorerConfig } from "../config.ts";
 import type { EventRepository } from "../data/repository.ts";
 import type { Event } from "../data/types.ts";
 import type { Itinerary } from "../itinerary/types.ts";
+import { createAmapRouter } from "../routing/amap.ts";
+import { computePlanLegs } from "../routing/legs.ts";
+import type { RouteComputer } from "../routing/types.ts";
 import type { SessionRepository } from "../session/repository.ts";
 import { isSessionError, type Run } from "../session/types.ts";
 import { ChatClientError } from "./types.ts";
@@ -37,6 +40,7 @@ import type {
   EventsQuery,
   EventsResult,
   EventView,
+  Plan,
   UserMemoryView,
 } from "./types.ts";
 
@@ -149,6 +153,9 @@ function runTurn(run: Run): PlannerTurn | undefined {
     const turn = (JSON.parse(run.result) as { turn?: PlannerTurn }).turn;
     if (!turn || typeof turn !== "object") return undefined;
     if (turn.kind === "itinerary" && turn.itinerary) return turn;
+    if (turn.kind === "comparison" && Array.isArray(turn.plans) && turn.plans.length > 0) {
+      return turn;
+    }
     if (turn.kind === "clarification" && typeof turn.question === "string") return turn;
     if (turn.kind === "error" && typeof turn.message === "string") return turn;
     return undefined;
@@ -157,11 +164,39 @@ function runTurn(run: Run): PlannerTurn | undefined {
   }
 }
 
-/** 一轮结果里用户可见的 assistant 文本：追问原文，或行程摘要。 */
+/** 一轮结果里用户可见的 assistant 文本：追问原文、行程摘要或方案标题串。 */
 function assistantText(turn: PlannerTurn): string | undefined {
   if (turn.kind === "clarification") return turn.question;
   if (turn.kind === "itinerary") return turn.itinerary.summary;
+  if (turn.kind === "comparison") {
+    return turn.plans.map((p) => `方案 ${p.label}：${p.title}`).join("；");
+  }
   return undefined;
+}
+
+/** 校验通过的 plan → 线上 Plan 视图；legs 缺省 []（无算路器时全组降级）。 */
+function planView(
+  label: "A" | "B",
+  title: string,
+  itinerary: Itinerary,
+  legs: Plan["legs"] = [],
+): Plan {
+  return {
+    plan_id: label,
+    label,
+    title,
+    itinerary,
+    legs,
+    validation: { status: "passed", scope: "inter_stop", issues: [] },
+    warnings: [],
+  };
+}
+
+/** turn.warning 收进响应顶层 warnings；无警告时省略该键。 */
+function topWarnings(turn: PlannerTurn): { warnings?: string[] } {
+  return turn.kind !== "error" && turn.warning !== undefined
+    ? { warnings: [turn.warning] }
+    : {};
 }
 
 /** send 的在途句柄：planner 就绪前即可被 shutdown/signal 标记取消。 */
@@ -179,6 +214,10 @@ export interface SendOptions {
   signal?: AbortSignal;
   location?: ChatLocation;
   sessionId?: string;
+  /** 前端滑块选中方案；仅最近一轮为 comparison 时注入 prompt，否则忽略。 */
+  activePlan?: string;
+  /** 地图气泡点选的活动 id；查库解析后注入 prompt，查无忽略。 */
+  referencedEventId?: string;
   /** 会话确定（planner 就绪、sessionId 可知）即回调一次；SSE meta 据此发出。 */
   onSession?: (sessionId: string) => void;
   /** 规划阶段进度回调（轮内可多次）；SSE progress 事件据此转发。 */
@@ -216,6 +255,10 @@ function abortError(signal: AbortSignal | undefined): Error {
 export function createChatService(options: WebChatServiceOptions): ManagedChatService {
   const { config, repository, sessions } = options;
   const factory = options.createPlanner ?? createPersistentPlanner;
+  // 高德算路器：未配置 EXPLORER_AMAP_KEY 时为 null，legs 全组 skipped 降级。
+  const router: RouteComputer | null = config.amapKey
+    ? createAmapRouter({ key: config.amapKey, city: config.amapTransitCity })
+    : null;
 
   /** 所有未 settle 的 send/history work promise。 */
   const inflight = new Set<Promise<unknown>>();
@@ -302,19 +345,99 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
     return work;
   }
 
-  /** 行程各站 event_id → EventView，按 stops 顺序、去重、缺库记录跳过。 */
-  async function eventViews(itinerary: Itinerary): Promise<EventView[]> {
+  /** 各行程 stops 的 event_id → Event 映射（EventView 与 legs 算路共用一次查询）。 */
+  async function planEvents(...itineraries: Itinerary[]): Promise<Map<string, Event>> {
     const ids: string[] = [];
-    for (const stop of itinerary.stops) {
-      if (!ids.includes(stop.event_id)) ids.push(stop.event_id);
+    for (const itinerary of itineraries) {
+      for (const stop of itinerary.stops) {
+        if (!ids.includes(stop.event_id)) ids.push(stop.event_id);
+      }
     }
-    const events = await repository.getByIds(ids);
+    return repository.getByIds(ids);
+  }
+
+  /** eventsById → 按 ids 顺序的 EventView 列表；缺库记录跳过。 */
+  function toEventViews(eventsById: ReadonlyMap<string, Event>, ids: string[]): EventView[] {
     const views: EventView[] = [];
     for (const id of ids) {
-      const event = events.get(id);
+      const event = eventsById.get(id);
       if (event) views.push(toEventView(event));
     }
     return views;
+  }
+
+  /** 各行程 stops 的 event_id → EventView，按出现顺序、去重、缺库记录跳过。 */
+  async function eventViews(...itineraries: Itinerary[]): Promise<EventView[]> {
+    const events = await planEvents(...itineraries);
+    const ids: string[] = [];
+    for (const itinerary of itineraries) {
+      for (const stop of itinerary.stops) {
+        if (!ids.includes(stop.event_id)) ids.push(stop.event_id);
+      }
+    }
+    return toEventViews(events, ids);
+  }
+
+  /**
+   * 一组行程 → plans + events 响应装配：复用一次 getByIds，逐 plan 并行
+   * 计算真实站间道路 legs（高德；无 router 时全组 skipped 降级，绝不阻塞
+   * 响应）。配置了算路器且存在站间段时先报 routing 阶段进度。
+   */
+  async function assemblePlans(
+    items: { label: "A" | "B"; title: string; itinerary: Itinerary }[],
+    onProgress?: (progress: PlannerProgress) => void,
+  ): Promise<{ plans: Plan[]; events: EventView[] }> {
+    const eventsById = await planEvents(...items.map((i) => i.itinerary));
+    const hasLegs = items.some((i) => i.itinerary.stops.length >= 2);
+    if (router && hasLegs) {
+      try {
+        onProgress?.({
+          stage: "routing",
+          message: "正在获取站间道路路线",
+          plan_ids: items.map((i) => i.label),
+        });
+      } catch {
+        // 观察回调抛错不中断本轮。
+      }
+    }
+    const plans = await Promise.all(
+      items.map(async (item) =>
+        planView(
+          item.label,
+          item.title,
+          item.itinerary,
+          await computePlanLegs(item.itinerary.stops, eventsById, {
+            router,
+            transitThresholdM: config.routeTransitThresholdM,
+          }),
+        ),
+      ),
+    );
+    const ids: string[] = [];
+    for (const item of items) {
+      for (const stop of item.itinerary.stops) {
+        if (!ids.includes(stop.event_id)) ids.push(stop.event_id);
+      }
+    }
+    return { plans, events: toEventViews(eventsById, ids) };
+  }
+
+  /**
+   * referenced_event_id → 注入用的点选活动描述：查库取标题/场馆；
+   * 查无此 id 或查询失败 → undefined（点选是弱上下文，不该让请求失败）。
+   */
+  async function resolveReferencedEvent(
+    eventId: string | undefined,
+  ): Promise<PlannerPromptOptions["referencedEvent"]> {
+    if (eventId === undefined) return undefined;
+    try {
+      const event = (await repository.getByIds([eventId])).get(eventId);
+      return event
+        ? { eventId: event.id, title: event.title, venueName: event.venueName }
+        : undefined;
+    } catch {
+      return undefined;
+    }
   }
 
   async function runSend(
@@ -355,12 +478,16 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
       signal?.addEventListener("abort", onAbort, { once: true });
       let turn: PlannerTurn;
       try {
-        // abort 时 prompt 自行 settle；location 只进 prompt options（持久层
-        // 会沿用到本会话后续请求，见 PlannerPromptOptions.location）。
-        turn = await planner.prompt(message, {
-          location: options?.location,
-          ...(options?.onProgress ? { onProgress: options.onProgress } : {}),
-        });
+        // abort 时 prompt 自行 settle；location/activePlan/referencedEvent
+        // 只进 prompt options（持久层注入 system section，见
+        // PlannerPromptOptions）。未定义的键不写入，保持 options 稀疏。
+        const promptOptions: PlannerPromptOptions = {};
+        if (options?.location !== undefined) promptOptions.location = options.location;
+        if (options?.activePlan !== undefined) promptOptions.activePlan = options.activePlan;
+        const referenced = await resolveReferencedEvent(options?.referencedEventId);
+        if (referenced !== undefined) promptOptions.referencedEvent = referenced;
+        if (options?.onProgress !== undefined) promptOptions.onProgress = options.onProgress;
+        turn = await planner.prompt(message, promptOptions);
       } catch (error) {
         // 中止引起的 prompt 异常也归为 AbortError，不伪装成内部错误。
         if (handle.cancelled || signal?.aborted) throw abortError(signal);
@@ -385,11 +512,36 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
       if (turn.kind === "clarification") {
         return { kind: "clarification", session_id: sessionId, question: turn.question };
       }
+      if (turn.kind === "comparison") {
+        // 双方案：首个 plan 是已提交指针的 active 方案。
+        const { plans, events } = await assemblePlans(
+          turn.plans.map((p) => ({ label: p.label, title: p.title, itinerary: p.itinerary })),
+          options?.onProgress,
+        );
+        return {
+          kind: "plans",
+          session_id: sessionId,
+          mode: "comparison",
+          active_plan: turn.plans[0].label,
+          plans,
+          events,
+          coordinate_system: "GCJ-02",
+          ...topWarnings(turn),
+        };
+      }
+      const { plans, events } = await assemblePlans(
+        [{ label: "A", title: turn.itinerary.summary, itinerary: turn.itinerary }],
+        options?.onProgress,
+      );
       return {
-        kind: "itinerary",
+        kind: "plans",
         session_id: sessionId,
-        itinerary: turn.itinerary,
-        events: await eventViews(turn.itinerary),
+        mode: "single",
+        active_plan: "A",
+        plans,
+        events,
+        coordinate_system: "GCJ-02",
+        ...topWarnings(turn),
       };
     } catch (error) {
       if (handle.cancelled || signal?.aborted) throw abortError(signal);
@@ -413,12 +565,16 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
     // 产生当前行程的那个 run：其 assistant 文本由独立行程卡片替代，不进 messages。
     const producingRunId = current?.record.runId ?? undefined;
     const messages: ChatMessage[] = [];
+    // 会话最近一轮产出（列表升序，最后定义的 turn 即最新一轮）：
+    // 为 comparison 时 history 额外还原 plans/mode/active_plan。
+    let latestTurn: PlannerTurn | undefined;
     for (const run of runs) {
       // 只看 completed：中断/失败/排队中的 run 对用户不可见，连同输入一起忽略。
       if (run.status !== "completed") continue;
       const text = runInputText(run);
       const turn = runTurn(run);
       if (text === undefined && turn === undefined) continue; // 非对话 run
+      if (turn !== undefined) latestTurn = turn;
       if (text !== undefined) messages.push({ role: "user", text });
       // 一轮内的工具消息、模型纠错文本不还原——只有终态 turn 可见。
       if (turn !== undefined && run.runId !== producingRunId) {
@@ -430,7 +586,27 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
       messages,
       itinerary: current?.plan.itinerary ?? null,
     };
-    if (current) history.events = await eventViews(current.plan.itinerary);
+    // 最近一个产出方案的轮（itinerary 或 comparison）还原 plans 视图：
+    // 前端统一按 plans 渲染（含 legs 轨迹），itinerary 保持向后兼容。
+    if (latestTurn?.kind === "comparison") {
+      const { plans, events } = await assemblePlans(
+        latestTurn.plans.map((p) => ({ label: p.label, title: p.title, itinerary: p.itinerary })),
+      );
+      history.plans = plans;
+      history.mode = "comparison";
+      history.active_plan = latestTurn.plans[0].label;
+      history.events = events;
+    } else if (latestTurn?.kind === "itinerary") {
+      const { plans, events } = await assemblePlans([
+        { label: "A", title: latestTurn.itinerary.summary, itinerary: latestTurn.itinerary },
+      ]);
+      history.plans = plans;
+      history.mode = "single";
+      history.active_plan = "A";
+      history.events = events;
+    } else if (current) {
+      history.events = await eventViews(current.plan.itinerary);
+    }
     return history;
   }
 

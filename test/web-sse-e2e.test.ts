@@ -124,12 +124,12 @@ test("stream 全链路：meta → searching_events → validating_schedule → r
   const result = frames[3].data as {
     kind: string;
     session_id: string;
-    itinerary: { stops: { event_id: string }[] };
+    plans: { itinerary: { stops: { event_id: string }[] } }[];
     events: { event_id: string }[];
   };
-  assert.equal(result.kind, "itinerary");
+  assert.equal(result.kind, "plans");
   assert.equal(result.session_id, meta.session_id);
-  assert.equal(result.itinerary.stops[0].event_id, ev.id);
+  assert.equal(result.plans[0].itinerary.stops[0].event_id, ev.id);
   assert.equal(result.events[0].event_id, ev.id);
 });
 

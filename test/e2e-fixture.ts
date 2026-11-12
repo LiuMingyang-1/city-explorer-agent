@@ -41,6 +41,14 @@ export function envelope(
   return JSON.stringify({ type: "itinerary", constraints, itinerary });
 }
 
+/** A/B 双方案 envelope：plans 为 [{label,title,itinerary}]，顺序即 active 在前。 */
+export function comparisonEnvelope(
+  plans: { label: "A" | "B"; title: string; itinerary: unknown }[],
+  constraints: Record<string, unknown> = { date: BASE },
+): string {
+  return JSON.stringify({ type: "comparison", constraints, plans });
+}
+
 export async function makeRepo(t: TestContext): Promise<EventRepository> {
   const dir = mkdtempSync(join(tmpdir(), "explorer-e2e-"));
   t.after(() => rmSync(dir, { recursive: true, force: true }));

@@ -7,6 +7,7 @@ const CONFIRMED_PLAN_SECTION = "confirmed_itinerary";
 const CANDIDATE_PLAN_SECTION = "candidate_itinerary";
 const LOCATION_SECTION = "location_context";
 const MEMORY_SECTION = "memory_context";
+const SELECTION_SECTION = "selection_context";
 /** 注入 system 的记忆文档上限（字符）：防外部写入的超大文档静默吃上下文。 */
 const MEMORY_INJECT_MAX_CHARS = 4_000;
 
@@ -19,6 +20,18 @@ export interface LocationContext {
   lng: number;
   /** 语义锚点（如"距「某场馆」约 N 公里"）；无就近场馆或解析失败时缺省。 */
   anchor?: string;
+}
+
+/**
+ * 本轮请求附带的用户界面状态（仅本轮注入，不持久化）：
+ * activePlan 仅在最近一轮产出过 comparison 时才有意义；referencedEvent
+ * 是地图气泡点选活动、经服务端查库解析后的描述。
+ */
+export interface SelectionContext {
+  /** 前端滑块当前选中的 plan label（"A"/"B"）。 */
+  activePlan?: string;
+  /** 地图点选活动（标题/场馆由调用方查库解析）。 */
+  referencedEvent?: { eventId: string; title: string; venueName: string };
 }
 
 function confirmedSectionText(plan: ValidatedPlan): string {
@@ -61,12 +74,30 @@ function memorySectionText(content: string): string {
 }
 
 /**
- * 当前权威 system 消息：基础提示 + 规划状态/用户位置/长期记忆 section；永不进 raw。
+ * 界面选择 section：只呈现本轮 UI 状态（选中方案/点选活动）；怎么使用
+ * 写在 prompt.ts 的系统提示里。本轮有效，不随请求持久化。
+ */
+function selectionSectionText(selection: SelectionContext): string {
+  const lines = ["## 用户当前界面选择（本轮请求附带的界面状态，背景信息非硬约束）"];
+  if (selection.activePlan !== undefined) {
+    lines.push(`- 用户当前选中的方案：${selection.activePlan}`);
+  }
+  if (selection.referencedEvent !== undefined) {
+    const e = selection.referencedEvent;
+    lines.push(`- 用户从地图点选的活动：「${e.title}」（场馆：${e.venueName}；event_id：${e.eventId}）`);
+  }
+  return lines.join("\n");
+}
+
+/**
+ * 当前权威 system 消息：基础提示 + 规划状态/用户位置/长期记忆/界面选择
+ * section；永不进 raw。
  * 恢复与 plan 提交后重建一次，使之后的每个模型请求都携带最新规划状态，
  * 而不是指望压缩摘要记住它。main 注入已确认指针状态，child 注入候选
  * （明确标注候选身份，绝不冒充 main 的正式行程）。位置与长期记忆同会话
  * 类型无关，main/child 注入同一份（无已存位置/记忆行时对应参数为
- * undefined → 无该节）。
+ * undefined → 无该节）。界面选择只在注入它的那一轮生效（参数为
+ * undefined → 无该节），不持久化。
  */
 export function runtimeSystemMessage(
   base: SystemMessage | undefined,
@@ -74,6 +105,7 @@ export function runtimeSystemMessage(
   kind: InjectedPlanKind = "confirmed",
   location?: LocationContext,
   memory?: string,
+  selection?: SelectionContext,
 ): AgentMessage {
   const baseSystem = base ?? ({ role: "system", content: "", timestamp: 0 } as SystemMessage);
   const sections: Record<string, string | null> = { ...(baseSystem.sections ?? {}) };
@@ -84,5 +116,6 @@ export function runtimeSystemMessage(
   }
   sections[LOCATION_SECTION] = location ? locationSectionText(location) : null;
   sections[MEMORY_SECTION] = memory ? memorySectionText(memory) : null;
+  sections[SELECTION_SECTION] = selection ? selectionSectionText(selection) : null;
   return { ...baseSystem, sections } as AgentMessage;
 }

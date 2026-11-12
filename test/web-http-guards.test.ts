@@ -12,19 +12,27 @@ import { createChatHandler } from "../src/web/http.ts";
 import type { WebChatOptions } from "../src/web/http.ts";
 import type { ChatLocation, ChatResult, ChatService } from "../src/web/types.ts";
 
-type SendOptions = { signal?: AbortSignal; location?: ChatLocation; sessionId?: string };
+type SendOptions = {
+  signal?: AbortSignal;
+  location?: ChatLocation;
+  sessionId?: string;
+  activePlan?: string;
+  referencedEventId?: string;
+};
 
 /** 可注入 service：记录 send 调用；本文件只关心"有没有被调到、拿到什么"。 */
 function fakeService(
   send?: (userId: string, message: string, options?: SendOptions) => Promise<ChatResult>,
-): ChatService & { sendCalls: { userId: string; message: string }[] } {
+): ChatService & {
+  sendCalls: { userId: string; message: string; options?: SendOptions }[];
+} {
   const svc = {
-    sendCalls: [] as { userId: string; message: string }[],
+    sendCalls: [] as { userId: string; message: string; options?: SendOptions }[],
     async history() {
       return { messages: [] };
     },
     async send(userId: string, message: string, options?: SendOptions): Promise<ChatResult> {
-      svc.sendCalls.push({ userId, message });
+      svc.sendCalls.push({ userId, message, options });
       return (
         send?.(userId, message, options) ?? {
           kind: "clarification",
@@ -113,7 +121,7 @@ const expect400 = async (reply: Promise<Reply>, svc: { sendCalls: unknown[] }) =
   assert.equal(svc.sendCalls.length, 0);
 };
 
-test("严格 {message,location?,session_id?}：多余字段（userId/messages 等越权字段）一律 400 且不调 service", async () => {
+test("严格 {message,location?,session_id?,active_plan?,referenced_event_id?}：多余字段（userId/messages 等越权字段）一律 400 且不调 service", async () => {
   const svc = fakeService();
   const { base, close } = await start(svc);
   try {
@@ -135,6 +143,45 @@ test("严格 {message,location?,session_id?}：多余字段（userId/messages �
     await expect400(post(base, { location: { lat: 1, lng: 2 } }), svc);
     // 只有 session_id 没有 message 也拒。
     await expect400(post(base, { session_id: "conv_1" }), svc);
+    // 只有 active_plan/referenced_event_id 没有 message 也拒。
+    await expect400(post(base, { active_plan: "B" }), svc);
+    await expect400(post(base, { referenced_event_id: "evt_1" }), svc);
+  } finally {
+    await close();
+  }
+});
+
+test("active_plan/referenced_event_id：非字符串/空白/超长 400；合法值透传 service.send options", async () => {
+  const svc = fakeService();
+  const { base, close } = await start(svc);
+  try {
+    for (const active_plan of [123, null, true, {}, [], "", "   ", "x".repeat(129)]) {
+      await expect400(post(base, { message: "hi", active_plan }), svc);
+    }
+    for (const referenced_event_id of [123, null, true, {}, [], "", "  ", "y".repeat(129)]) {
+      await expect400(post(base, { message: "hi", referenced_event_id }), svc);
+    }
+    // 合法值放行且透传：snake_case → camelCase options。
+    const ok = await post(base, {
+      message: "hi",
+      active_plan: "B",
+      referenced_event_id: "evt_9",
+      session_id: "conv_1",
+      location: { lat: 1, lng: 2 },
+    });
+    assert.equal(ok.status, 200);
+    assert.equal(svc.sendCalls.length, 1);
+    const opts = svc.sendCalls[0].options;
+    assert.equal(opts?.sessionId, "conv_1");
+    assert.deepEqual(opts?.location, { lat: 1, lng: 2 });
+    assert.equal(opts?.activePlan, "B");
+    assert.equal(opts?.referencedEventId, "evt_9");
+    assert.ok(opts?.signal instanceof AbortSignal);
+    // 未携带时 options 不含对应键。
+    const minimal = await post(base, { message: "hi" });
+    assert.equal(minimal.status, 200);
+    assert.equal(svc.sendCalls[1].options?.activePlan, undefined);
+    assert.equal(svc.sendCalls[1].options?.referencedEventId, undefined);
   } finally {
     await close();
   }

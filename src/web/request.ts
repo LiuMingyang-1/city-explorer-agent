@@ -105,31 +105,56 @@ export async function readRequestBody(
 /** session_id 的统一长度上限（body 与 query 校验共用）。 */
 export const MAX_SESSION_ID_CHARS = 128;
 
+/** active_plan / referenced_event_id 的统一长度上限。 */
+export const MAX_REF_CHARS = 128;
+
 /**
- * session_id 值校验：必须是 string 且 trim 后 1..128 字符；返回 trim 后的
+ * 短文本值校验：必须是 string 且 trim 后 1..maxChars 字符；返回 trim 后的
  * 合法值，不合法返回 undefined（调用方转 400，不回显输入）。
  */
-function validSessionId(value: unknown): string | undefined {
+function validShortString(value: unknown, maxChars: number): string | undefined {
   if (typeof value !== "string") return undefined;
   const trimmed = value.trim();
-  return trimmed.length >= 1 && trimmed.length <= MAX_SESSION_ID_CHARS ? trimmed : undefined;
+  return trimmed.length >= 1 && trimmed.length <= maxChars ? trimmed : undefined;
 }
+
+/** session_id 值校验（1..128 字符，语义见 MAX_SESSION_ID_CHARS）。 */
+function validSessionId(value: unknown): string | undefined {
+  return validShortString(value, MAX_SESSION_ID_CHARS);
+}
+
+const CHAT_SEND_KEYS = new Set([
+  "message",
+  "location",
+  "session_id",
+  "active_plan",
+  "referenced_event_id",
+]);
 
 /**
  * 严格解析 POST /api/chat 请求体：必须是 JSON 对象，键只允许 message
- * （必填）、location（可选）与 session_id（可选）——其他任何字段
- * （userId、messages、itinerary 等）都直接拒绝，防止客户端越权指定身份
- * 或伪造历史。message 按 trim 后 1..maxChars 字校验；location 若给出
- * 必须是恰好 {lat,lng} 的对象：均为有限 number，lat∈[-90,90]、
- * lng∈[-180,180]，多出的键同样拒绝（只传坐标、不带地名等其他信息）。
- * session_id 若给出必须是非空白 string（trim 后 1..128 字符）。
- * 返回 {message,location?,session_id?} 即通过（message 已 trim）；
- * 返回 {error} 即 400 原因（通用、不回显输入）。
+ * （必填）、location、session_id、active_plan、referenced_event_id
+ * （均可选）——其他任何字段（userId、messages、itinerary 等）都直接
+ * 拒绝，防止客户端越权指定身份或伪造历史。message 按 trim 后
+ * 1..maxChars 字校验；location 若给出必须是恰好 {lat,lng} 的对象：
+ * 均为有限 number，lat∈[-90,90]、lng∈[-180,180]，多出的键同样拒绝
+ * （只传坐标、不带地名等其他信息）。session_id / active_plan /
+ * referenced_event_id 若给出必须是非空白 string（trim 后 1..128 字符）。
+ * 返回 {message,location?,session_id?,active_plan?,referenced_event_id?}
+ * 即通过（message 已 trim）；返回 {error} 即 400 原因（通用、不回显输入）。
  */
 export function parseChatSend(
   body: Buffer,
   maxChars: number,
-): { message: string; location?: ChatLocation; session_id?: string } | ChatErrorResponse {
+):
+  | {
+      message: string;
+      location?: ChatLocation;
+      session_id?: string;
+      active_plan?: string;
+      referenced_event_id?: string;
+    }
+  | ChatErrorResponse {
   let data: unknown;
   try {
     data = JSON.parse(body.toString("utf8"));
@@ -140,13 +165,10 @@ export function parseChatSend(
     return { error: "request body must be a JSON object" };
   }
   const keys = Object.keys(data);
-  if (
-    !keys.includes("message") ||
-    !keys.every((k) => k === "message" || k === "location" || k === "session_id")
-  ) {
+  if (!keys.includes("message") || !keys.every((k) => CHAT_SEND_KEYS.has(k))) {
     return {
       error:
-        'request body must contain only "message" (string), optional "location" and "session_id"',
+        'request body must contain only "message" (string), optional "location", "session_id", "active_plan" and "referenced_event_id"',
     };
   }
   const message = (data as { message?: unknown }).message;
@@ -162,12 +184,30 @@ export function parseChatSend(
   if (rawSessionId !== undefined && sessionId === undefined) {
     return { error: `session_id must be a string of 1..${MAX_SESSION_ID_CHARS} characters` };
   }
-  const rawLocation = (data as { location?: unknown }).location;
-  if (rawLocation === undefined) {
-    return sessionId === undefined
-      ? { message: trimmed }
-      : { message: trimmed, session_id: sessionId };
+  const rawActivePlan = (data as { active_plan?: unknown }).active_plan;
+  const activePlan =
+    rawActivePlan === undefined ? undefined : validShortString(rawActivePlan, MAX_REF_CHARS);
+  if (rawActivePlan !== undefined && activePlan === undefined) {
+    return { error: `active_plan must be a string of 1..${MAX_REF_CHARS} characters` };
   }
+  const rawEventId = (data as { referenced_event_id?: unknown }).referenced_event_id;
+  const referencedEventId =
+    rawEventId === undefined ? undefined : validShortString(rawEventId, MAX_REF_CHARS);
+  if (rawEventId !== undefined && referencedEventId === undefined) {
+    return { error: `referenced_event_id must be a string of 1..${MAX_REF_CHARS} characters` };
+  }
+  const rawLocation = (data as { location?: unknown }).location;
+  const parsed: {
+    message: string;
+    location?: ChatLocation;
+    session_id?: string;
+    active_plan?: string;
+    referenced_event_id?: string;
+  } = { message: trimmed };
+  if (sessionId !== undefined) parsed.session_id = sessionId;
+  if (activePlan !== undefined) parsed.active_plan = activePlan;
+  if (referencedEventId !== undefined) parsed.referenced_event_id = referencedEventId;
+  if (rawLocation === undefined) return parsed;
   if (typeof rawLocation !== "object" || rawLocation === null || Array.isArray(rawLocation)) {
     return { error: "location must be an object {lat,lng}" };
   }
@@ -188,9 +228,8 @@ export function parseChatSend(
   ) {
     return { error: "location lat must be in [-90,90] and lng in [-180,180]" };
   }
-  return sessionId === undefined
-    ? { message: trimmed, location: { lat, lng } }
-    : { message: trimmed, location: { lat, lng }, session_id: sessionId };
+  parsed.location = { lat, lng };
+  return parsed;
 }
 
 /**
@@ -356,12 +395,25 @@ function isEventViewList(value: unknown): boolean {
   return Array.isArray(value) && value.every(isEventView);
 }
 
+/** Plan 元素的最小判别：plan_id 字符串 + itinerary 对象 + legs 数组。 */
+function isPlanView(value: unknown): boolean {
+  if (typeof value !== "object" || value === null) return false;
+  const p = value as { plan_id?: unknown; itinerary?: unknown; legs?: unknown };
+  return (
+    typeof p.plan_id === "string" &&
+    typeof p.itinerary === "object" &&
+    p.itinerary !== null &&
+    Array.isArray(p.legs)
+  );
+}
+
 /** service.history 返回值的最小形状判别；畸形按服务端错误处理。 */
 export function isChatHistory(value: unknown): value is ChatHistory {
   if (typeof value !== "object" || value === null) return false;
-  const v = value as { messages?: unknown; events?: unknown };
+  const v = value as { messages?: unknown; events?: unknown; plans?: unknown };
   if (!Array.isArray(v.messages)) return false;
-  return v.events === undefined || isEventViewList(v.events);
+  if (v.events !== undefined && !isEventViewList(v.events)) return false;
+  return v.plans === undefined || (Array.isArray(v.plans) && v.plans.every(isPlanView));
 }
 
 /** service.send 返回值的形状判别；契约外形状按服务端错误处理而非透传。 */
@@ -372,10 +424,22 @@ export function isChatResult(value: unknown): value is ChatResult {
   if (v.kind === "clarification") {
     return typeof (value as { question?: unknown }).question === "string";
   }
-  if (v.kind === "itinerary") {
-    const it = value as { itinerary?: unknown; events?: unknown };
+  if (v.kind === "plans") {
+    const p = value as {
+      mode?: unknown;
+      active_plan?: unknown;
+      plans?: unknown;
+      events?: unknown;
+      coordinate_system?: unknown;
+    };
     return (
-      typeof it.itinerary === "object" && it.itinerary !== null && isEventViewList(it.events)
+      (p.mode === "single" || p.mode === "comparison") &&
+      typeof p.active_plan === "string" &&
+      Array.isArray(p.plans) &&
+      p.plans.length >= 1 &&
+      p.plans.every(isPlanView) &&
+      isEventViewList(p.events) &&
+      p.coordinate_system === "GCJ-02"
     );
   }
   return false;
