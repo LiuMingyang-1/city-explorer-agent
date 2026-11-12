@@ -11,6 +11,7 @@ import {
   seedMessages,
   toolResultMessage,
   userMessage,
+  validPlan,
 } from "./session-fixture.ts";
 
 /**
@@ -34,9 +35,10 @@ test("新 user 消息不足门槛 → skipped，无模型调用、不写库", as
     sessions,
     userId: user.userId,
     sessionId: main.sessionId,
+    minNewUserMessages: 3,
   });
   assert.equal(outcome.status, "skipped");
-  assert.match(outcome.reason ?? "", /未达门槛/);
+  assert.match(outcome.reason ?? "", /未达保底门槛/);
   assert.equal(outcome.throughMessageSeq, undefined);
   assert.equal(faux.state.callCount, 0);
   assert.equal(await sessions.getUserMemory(user.userId), undefined);
@@ -68,6 +70,7 @@ test("成功蒸馏：content 落库、through = 该批最后一条 message_seq",
     sessions,
     userId: user.userId,
     sessionId: main.sessionId,
+    minNewUserMessages: 3,
   });
   assert.equal(outcome.status, "updated");
   const memory = await sessions.getUserMemory(user.userId);
@@ -102,6 +105,7 @@ test("UNCHANGED → content 不变、游标照推", async (t) => {
     sessions,
     userId: user.userId,
     sessionId: main.sessionId,
+    minNewUserMessages: 3,
   });
   assert.equal(first.status, "updated");
   const before = await sessions.getUserMemory(user.userId);
@@ -118,6 +122,7 @@ test("UNCHANGED → content 不变、游标照推", async (t) => {
     sessions,
     userId: user.userId,
     sessionId: main.sessionId,
+    minNewUserMessages: 3,
   });
   assert.equal(second.status, "unchanged");
   const after = await sessions.getUserMemory(user.userId);
@@ -152,6 +157,7 @@ test("新消息超 maxRecords → 只喂最早一批，下轮从游标接续", a
     sessions,
     userId: user.userId,
     sessionId: main.sessionId,
+    minNewUserMessages: 3,
     maxRecords: 4,
     maxBatches: 1,
   });
@@ -193,6 +199,7 @@ test("模型输出垃圾（无小节/空）→ error、不写库不推游标", a
     sessions,
     userId: user.userId,
     sessionId: main.sessionId,
+    minNewUserMessages: 3,
   });
   assert.equal(garbage.status, "error");
   assert.equal(await sessions.getUserMemory(user.userId), undefined);
@@ -205,6 +212,7 @@ test("模型输出垃圾（无小节/空）→ error、不写库不推游标", a
     sessions,
     userId: user.userId,
     sessionId: main.sessionId,
+    minNewUserMessages: 3,
   });
   assert.equal(empty.status, "error");
   assert.equal(faux.state.callCount, callsBefore + 2, "空输出应真的触发一次质量重试");
@@ -229,6 +237,7 @@ test("row.sourceSessionId 与传入 sessionId 不同 → 游标重置从头蒸",
     sessions,
     userId: user.userId,
     sessionId: main.sessionId,
+    minNewUserMessages: 3,
   });
   assert.equal(first.status, "updated");
   assert.equal(first.throughMessageSeq, 8);
@@ -248,6 +257,7 @@ test("row.sourceSessionId 与传入 sessionId 不同 → 游标重置从头蒸",
     sessions,
     userId: user.userId,
     sessionId: child.sessionId,
+    minNewUserMessages: 3,
   });
   assert.equal(second.status, "updated");
   assert.equal(second.throughMessageSeq, 3);
@@ -264,6 +274,7 @@ test("maxRecords ≤ 0 → 空批直接 skipped，无模型调用、不写库", 
     sessions,
     userId: user.userId,
     sessionId: main.sessionId,
+    minNewUserMessages: 3,
     maxRecords: 0,
   });
   assert.equal(outcome.status, "skipped");
@@ -281,6 +292,7 @@ test("error/skipped 不推游标：恢复后从同一游起重蒸", async (t) =>
     sessions,
     userId: user.userId,
     sessionId: main.sessionId,
+    minNewUserMessages: 3,
   });
   assert.equal(skipped.status, "skipped");
   // 补一条跨门槛后从头蒸，through 覆盖全部 4 条
@@ -291,6 +303,7 @@ test("error/skipped 不推游标：恢复后从同一游起重蒸", async (t) =>
     sessions,
     userId: user.userId,
     sessionId: main.sessionId,
+    minNewUserMessages: 3,
   });
   assert.equal(outcome.status, "updated");
   assert.equal(outcome.throughMessageSeq, 4);
@@ -320,6 +333,7 @@ test("超长蒸馏输出 → error，原文与游标保持不变", async (t) => 
     sessions,
     userId: user.userId,
     sessionId: main.sessionId,
+    minNewUserMessages: 3,
   });
   assert.equal(outcome.status, "error");
   assert.equal(outcome.throughMessageSeq, undefined);
@@ -347,6 +361,7 @@ test("无固定小节的垃圾输出 → error，原文与游标不被覆盖", a
     sessions,
     userId: user.userId,
     sessionId: main.sessionId,
+    minNewUserMessages: 3,
   });
   assert.equal(outcome.status, "error");
   const memory = await sessions.getUserMemory(user.userId);
@@ -373,6 +388,7 @@ test("缺失固定小节的输出从既有文档继承，不抹除旧节", async
     sessions,
     userId: user.userId,
     sessionId: main.sessionId,
+    minNewUserMessages: 3,
   });
   assert.equal(outcome.status, "updated");
   const memory = await sessions.getUserMemory(user.userId);
@@ -403,6 +419,8 @@ test("单条超长消息：分片送完才推进游标，可恢复前进不阻�
     sessions,
     userId: user.userId,
     sessionId: main.sessionId,
+    minNewUserMessages: 3,
+    maxInputChars: 8_000,
   });
   assert.equal(outcome.status, "updated");
   // 游标越过全部 3 条：超长记录分片全部进模型，b/c 正常进入后续批。
@@ -427,14 +445,18 @@ test("累计超限：序列化总长严格 ≤ 上限，分多批逐批推进游
     sessions,
     userId: user.userId,
     sessionId: main.sessionId,
+    minNewUserMessages: 3,
+    maxInputChars: 8_000,
   });
   assert.equal(outcome.status, "updated");
   assert.equal(outcome.throughMessageSeq, 3);
   assert.equal(faux.state.callCount, 2, "7000+7000+3 → 两批");
 });
 
-test("分片数超硬上限的超长消息：明示跳过（审计行进文档）且不阻断", async (t) => {
+test("分片数超硬上限的超长消息：明示跳过（打运维日志）且不阻断", async (t) => {
   const { sessions, user, main, writer, agent, faux } = await makeDistill(t);
+  const warnings: string[] = [];
+  t.mock.method(console, "warn", (msg: unknown) => warnings.push(String(msg)));
   await seedMessages(sessions, writer, user.userId, main.sessionId, [
     "x".repeat(140_000),
     "b",
@@ -448,51 +470,73 @@ test("分片数超硬上限的超长消息：明示跳过（审计行进文档�
     sessions,
     userId: user.userId,
     sessionId: main.sessionId,
+    minNewUserMessages: 3,
+    maxInputChars: 8_000,
   });
   assert.equal(outcome.status, "updated");
   assert.equal(outcome.throughMessageSeq, 3);
   assert.equal(faux.state.callCount, 1, "超长记录明示跳过，b/c 正常蒸馏");
   const memory = await sessions.getUserMemory(user.userId);
   assert.ok(memory);
-  assert.match(memory.content, /## 蒸馏记录/);
-  assert.match(memory.content, /seq=1/);
+  assert.doesNotMatch(memory.content, /蒸馏记录/, "跳过事件不再写进记忆文档");
+  assert.ok(
+    warnings.some((w) => w.includes("seq=1")),
+    "跳过事件应打 console.warn 运维日志",
+  );
 });
 
-test("蒸馏审计跨调用持久：后续蒸馏不抹除既有审计行", async (t) => {
+test("出新方案即触发蒸馏：1 条 user 消息 + plan 标注记录，不受保底门槛限制", async (t) => {
   const { sessions, user, main, writer, agent, faux } = await makeDistill(t);
-  // 第一次：分片上限 1 → 首条 17k 消息明示跳过，审计行入库。
-  await seedMessages(sessions, writer, user.userId, main.sessionId, [
-    "甲".repeat(17_000),
-    "b",
-    "c",
+  await seedMessages(sessions, writer, user.userId, main.sessionId, ["我想看展"]);
+  const planRecord = await sessions.appendMessage(writer, user.userId, main.sessionId, {
+    payload: { message: assistantMessage('{"type":"itinerary"}') },
+  });
+  await sessions.commitValidatedPlan(
+    writer,
+    user.userId,
+    main.sessionId,
+    planRecord.recordId,
+    validPlan(),
+  );
+  faux.setResponses([
+    fauxAssistantMessage("## 用户\nu\n\n## 偏好\np\n\n## 足迹\nf\n"),
   ]);
-  const doc = "## 用户\nu\n\n## 偏好\np\n\n## 足迹\nf\n";
-  faux.setResponses([fauxAssistantMessage(doc)]);
-  const first = await distillMemory({
+  const outcome = await distillMemory({
     agent,
     sessions,
     userId: user.userId,
     sessionId: main.sessionId,
-    maxRecordShards: 1,
   });
-  assert.equal(first.status, "updated");
-  assert.equal(first.throughMessageSeq, 3);
-  const before = await sessions.getUserMemory(user.userId);
-  assert.ok(before);
-  assert.match(before.content, /## 蒸馏记录\n- 蒸馏跳过 seq=1/);
+  assert.equal(outcome.status, "updated");
+  assert.equal(outcome.throughMessageSeq, 2);
+  assert.equal(faux.state.callCount, 1, "游标后有 plan 标注即触发，不管消息数");
+});
 
-  // 第二次：模型返回普通三节文档——审计行不得被抹掉。
-  await seedMessages(sessions, writer, user.userId, main.sessionId, ["d", "e", "f"]);
-  faux.setResponses([fauxAssistantMessage(doc)]);
-  const second = await distillMemory({
+test("存量文档残留的蒸馏记录节：模型照抄也被 normalize 丢弃，不再延续", async (t) => {
+  const { sessions, user, main, writer, agent, faux } = await makeDistill(t);
+  await sessions.putUserMemory(user.userId, {
+    content:
+      "## 用户\n常驻西安\n\n## 偏好\n喜欢展览\n\n## 足迹\nf\n\n## 蒸馏记录\n- 蒸馏跳过 seq=9\n",
+    sourceSessionId: main.sessionId,
+    throughMessageSeq: 0,
+  });
+  await seedMessages(sessions, writer, user.userId, main.sessionId, ["a", "b", "c"]);
+  // 残留节随文档原文进 <memory> 输入，模型可能照抄——normalize 丢弃同名节。
+  faux.setResponses([
+    fauxAssistantMessage(
+      "## 用户\n常驻西安\n\n## 偏好\n喜欢展览\n\n## 足迹\nf\n\n## 蒸馏记录\n- 蒸馏跳过 seq=9\n",
+    ),
+  ]);
+  const outcome = await distillMemory({
     agent,
     sessions,
     userId: user.userId,
     sessionId: main.sessionId,
+    minNewUserMessages: 3,
   });
-  assert.equal(second.status, "updated");
-  assert.equal(second.throughMessageSeq, 6);
-  const after = await sessions.getUserMemory(user.userId);
-  assert.ok(after);
-  assert.match(after.content, /## 蒸馏记录\n- 蒸馏跳过 seq=1/);
+  assert.equal(outcome.status, "updated");
+  const memory = await sessions.getUserMemory(user.userId);
+  assert.ok(memory);
+  assert.doesNotMatch(memory.content, /蒸馏记录/, "审计节机制已移除，残留节不得延续");
+  assert.match(memory.content, /## 足迹\nf\n$/);
 });

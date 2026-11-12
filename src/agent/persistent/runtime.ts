@@ -62,7 +62,22 @@ export interface PersistentRuntimeOptions {
    * 缺省或抛错都降级为无锚点，绝不影响本轮。
    */
   resolveLocationAnchor?: (lat: number, lng: number) => Promise<string | undefined>;
+  /** close 机会蒸馏的单请求输入上限（字符）；缺省走 distill.ts 的默认。 */
+  memoryInputChars?: number;
+  /** close 机会蒸馏的硬超时（毫秒）；缺省 90_000。 */
+  memoryDistillTimeoutMs?: number;
+  /**
+   * close 机会蒸馏后台执行：不阻塞 close（web send 的响应路径）。同用户
+   * 并发触发由进程内标记去重；已有在途直接跳过，积压游标由后续触发追平。
+   * 缺省 false（同步）——进程即将退出的调用方（CLI）应同步蒸完。
+   */
+  detachDistill?: boolean;
 }
+
+/** close 机会蒸馏的默认硬超时：须覆盖单次较大输入请求的时延。 */
+const DEFAULT_DISTILL_TIMEOUT_MS = 90_000;
+/** 进程内在途蒸馏：同一 userId 已在蒸时新触发直接跳过（不堆积）。 */
+const distillingUsers = new Set<string>();
 
 /**
  * 持久化运行时：把 PlannerSession 的内存纠正循环接到 SQLite 会话仓库上。
@@ -89,6 +104,9 @@ export class PersistentRuntime implements PlannerRuntime {
   private readonly owner: string;
   private readonly compaction: CompactionOptions;
   private readonly resolveLocationAnchor?: PersistentRuntimeOptions["resolveLocationAnchor"];
+  private readonly memoryInputChars?: number;
+  private readonly memoryDistillTimeoutMs: number;
+  private readonly detachDistill: boolean;
   private readonly guard: LeaseGuard;
 
   private sessionIdValue = "";
@@ -154,6 +172,10 @@ export class PersistentRuntime implements PlannerRuntime {
     this.owner = options.leaseOwner ?? `planner-${process.pid}-${randomUUID().slice(0, 8)}`;
     this.compaction = options.compaction;
     this.resolveLocationAnchor = options.resolveLocationAnchor;
+    this.memoryInputChars = options.memoryInputChars;
+    this.memoryDistillTimeoutMs =
+      options.memoryDistillTimeoutMs ?? DEFAULT_DISTILL_TIMEOUT_MS;
+    this.detachDistill = options.detachDistill ?? false;
     const ttlMs = options.leaseTtlMs ?? 30_000;
     this.guard = new LeaseGuard({
       repo: options.sessions,
@@ -685,24 +707,32 @@ export class PersistentRuntime implements PlannerRuntime {
       this.prevPrepareRequest = undefined;
       // 收尾机会蒸馏：仅 main 会话、租约闩锁未置位时触发（闩锁 = 写路径已
       // 坏，蒸馏写库同样不会成功）。走 agent.streamFunction 旁路一次性请求，
-      // 不依赖已退订的事件钩子；超时兜底不让 close 无限挂起。整个调用吞掉
-      // 所有异常——蒸馏是机会行为，绝不破坏 close 路径。返回的 outcome 无
+      // 不依赖已退订的事件钩子；超时兜底不让蒸馏无限挂起。整个调用吞掉所
+      // 有异常——蒸馏是机会行为，绝不破坏 close 路径。返回的 outcome 无
       // 需处理：updated/unchanged 已写库推游标，skipped 未达门槛，error
-      // 留给下次 close 重试。注意本调用位于 web send 的响应路径上
-      // （src/web/service.ts 的 send finally 里 await planner.close()）：
-      // 阈值命中时该次响应被蒸馏推迟，游标积压追平期每次 send 都会触发；
-      // 挪出响应路径（独立 worker / 后台任务）列为后续优化项。
+      // 留给下次触发重试。detachDistill 时后台执行——本调用位于 web send
+      // 的响应路径上（service.ts 的 send finally 里 await planner.close()），
+      // 阈值命中不再推迟响应；同用户在途蒸馏去重，跳过的触发由后续 close
+      // 追平游标。
       if (this.sessionKind === "main" && this.sessionIdValue !== "" && !this.guard.failure) {
-        try {
-          await distillMemory({
+        const distill = () =>
+          distillMemory({
             agent: this.agent,
             sessions: this.repo,
             userId: this.userId,
             sessionId: this.sessionIdValue,
-            signal: AbortSignal.timeout(30_000),
+            maxInputChars: this.memoryInputChars,
+            signal: AbortSignal.timeout(this.memoryDistillTimeoutMs),
+          }).catch(() => {
+            // 机会行为：任何蒸馏失败都不影响会话关闭。
           });
-        } catch {
-          // 机会行为：任何蒸馏失败都不影响会话关闭。
+        if (this.detachDistill) {
+          if (!distillingUsers.has(this.userId)) {
+            distillingUsers.add(this.userId);
+            void distill().finally(() => distillingUsers.delete(this.userId));
+          }
+        } else {
+          await distill();
         }
       }
       await this.guard.release();

@@ -28,6 +28,16 @@ export interface ExplorerConfig {
    * 仅本地 CLI 演示用途，不是 Web 认证；后端接入时由调用方传认证后的 userId。
    */
   userId?: string;
+  /**
+   * 蒸馏单请求输入总长上限（字符，EXPLORER_MEMORY_INPUT_CHARS；缺省 64_000，
+   * 模型窗口折算更小者生效）。手工构造的 config 可省略，蒸馏层有同值缺省。
+   */
+  memoryInputChars?: number;
+  /**
+   * close 机会蒸馏的硬超时（毫秒，EXPLORER_MEMORY_DISTILL_TIMEOUT_MS；
+   * 缺省 90_000）。手工构造的 config 可省略，运行时按同值缺省。
+   */
+  memoryDistillTimeoutMs?: number;
 }
 
 /** 读取 EXPLORER_* 环境配置并做基本检查；不发起模型请求。 */
@@ -75,6 +85,12 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ExplorerConfig
     dbPath: resolve(env.EXPLORER_DB_PATH?.trim() || "data/events.db"),
     sessionDbPath: resolve(env.EXPLORER_SESSION_DB_PATH?.trim() || "data/sessions.db"),
     userId: env.EXPLORER_USER_ID?.trim() || "local",
+    memoryInputChars: positiveInteger(env, "EXPLORER_MEMORY_INPUT_CHARS", 64_000),
+    memoryDistillTimeoutMs: positiveInteger(
+      env,
+      "EXPLORER_MEMORY_DISTILL_TIMEOUT_MS",
+      90_000,
+    ),
   };
 }
 

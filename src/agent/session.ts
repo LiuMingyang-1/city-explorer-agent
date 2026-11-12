@@ -374,6 +374,11 @@ export interface PersistentPlannerOptions extends ExplorerAgentOptions {
    * 缺省实现查活动库最近场馆，30km 内才提供锚点。
    */
   locationAnchor?: (lat: number, lng: number) => Promise<string | undefined>;
+  /**
+   * close 机会蒸馏后台执行（不阻塞 close/响应路径）；缺省 false（同步，
+   * 进程即将退出的调用方如 CLI 应同步蒸完）。web 服务传 true。
+   */
+  detachDistill?: boolean;
 }
 
 /**
@@ -430,6 +435,9 @@ export async function createPersistentPlanner(
     resolveLocationAnchor:
       options.locationAnchor ??
       ((lat, lng) => defaultLocationAnchor(options.repository, lat, lng)),
+    memoryInputChars: options.config.memoryInputChars,
+    memoryDistillTimeoutMs: options.config.memoryDistillTimeoutMs,
+    detachDistill: options.detachDistill,
   });
   session.runtime = runtime;
   await runtime.open();

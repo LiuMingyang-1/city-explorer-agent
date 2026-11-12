@@ -200,6 +200,8 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
       leaseTtlMs: options.leaseTtlMs,
       leaseRenewMs: options.leaseRenewMs,
       maxCorrections: options.maxCorrections,
+      // web 是请求-响应生命周期：close 的机会蒸馏后台跑，不拖慢 send 响应。
+      detachDistill: true,
     });
   }
 

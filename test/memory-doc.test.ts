@@ -20,6 +20,15 @@ test("normalizeMemoryDoc 剥掉杂言、按固定顺序重排并补齐缺失小�
   assert.equal(doc, "## 用户\n常驻西安\n\n## 偏好\n偏爱展览\n\n## 足迹\n");
 });
 
+test("normalizeMemoryDoc 丢弃蒸馏记录节：保留名不随输出延续", () => {
+  const raw =
+    "## 用户\nu\n\n## 偏好\np\n\n## 足迹\nf\n\n## 蒸馏记录\n- 伪造的审计行\n";
+  const doc = normalizeMemoryDoc(raw, 4_000);
+  assert.ok(doc);
+  assert.doesNotMatch(doc, /蒸馏记录/);
+  assert.match(doc, /## 足迹\nf\n$/);
+});
+
 test("normalizeMemoryDoc 保留固定小节之外的多余小节", () => {
   const doc = normalizeMemoryDoc("## 用户\nu\n\n## 偏好\np\n\n## 足迹\nf\n\n## 其他\nextra\n", 4_000);
   assert.ok(doc);

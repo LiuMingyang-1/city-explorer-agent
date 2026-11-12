@@ -166,6 +166,8 @@ export interface PersistentFixtureOptions {
   compaction?: PersistentPlannerOptions["compaction"];
   /** 位置锚点解析 stub；缺省走 createPersistentPlanner 的真实 repository 实现。 */
   locationAnchor?: PersistentPlannerOptions["locationAnchor"];
+  /** close 机会蒸馏后台执行；透传 PersistentPlannerOptions。 */
+  detachDistill?: boolean;
   /** 缺省固定摘要；要自己排摘要响应时用 makeStreamFn 另行构造 streamFn。 */
   streamFn?: StreamFn;
 }
@@ -199,6 +201,7 @@ export async function makePersistent(
     maxCorrections: options.maxCorrections,
     compaction: options.compaction,
     locationAnchor: options.locationAnchor,
+    detachDistill: options.detachDistill,
     streamFn,
     currentDate: BASE,
   });

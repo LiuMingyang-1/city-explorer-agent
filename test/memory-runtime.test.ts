@@ -14,7 +14,8 @@ import { makeUser, mustAcquire, openMemoryRepo } from "./session-fixture.ts";
 /**
  * 长期记忆接入持久运行时：reload 把 user_memory.content 渲染进 system 的
  * memory_context 节（main/child 同规则、不落库）；main 会话 close 时机会
- * 蒸馏（≥3 条新 user 消息门槛），失败吞掉不破坏收尾。
+ * 蒸馏（游标后有新方案即触发，否则 ≥10 条新 user 消息保底），失败吞掉
+ * 不破坏收尾。
  * 蒸馏请求与会话回复走同一个 streamFn，按 <memory> 标记分流到独立队列。
  */
 
@@ -98,19 +99,29 @@ test("memory_context 注入按行截到 ≤4000 字符：超大文档不整块�
   assert.ok(long.startsWith(doc) && long[doc.length] === "\n");
 });
 
-test("≥3 条新 user 消息：close 触发蒸馏，文档落库、游标推进、重开注入", async (t) => {
+test("攒够保底消息（≥10 条）：close 触发蒸馏，文档落库、游标推进、重开注入", async (t) => {
   const sessions = openMemoryRepo(t);
   const main = createFauxCore({});
-  main.setResponses([clarify(), clarify(), clarify()]);
+  main.setResponses(Array.from({ length: 10 }, clarify));
   const distill = createFauxCore({});
   distill.setResponses([fauxAssistantMessage(distilledDoc())]);
   const { session } = await makePersistent(t, [], {
     sessions,
     streamFn: routeDistill(main, distill),
   });
-  await session.prompt("我住在西安，周末喜欢看展");
-  await session.prompt("偏好下午出门，不喜欢早起");
-  await session.prompt("好的就按这个来");
+  for (const text of [
+    "我住在西安，周末喜欢看展",
+    "偏好下午出门，不喜欢早起",
+    "好的就按这个来",
+    "再看一个",
+    "换个思路",
+    "有没有书店",
+    "下午再去",
+    "别太贵",
+    "走路少一点",
+    "就这样",
+  ])
+    await session.prompt(text);
   assert.equal(distill.state.callCount, 0, "close 前不应触发蒸馏");
 
   await session.close();
@@ -131,7 +142,38 @@ test("≥3 条新 user 消息：close 触发蒸馏，文档落库、游标推进
   assert.match(memorySection(reopened.session) ?? "", /常驻西安/);
 });
 
-test("新 user 消息不足 3 条：close 不蒸馏、不留 memory 行", async (t) => {
+/** 轮询等待条件成立（后台蒸馏等异步收尾的断言用）。 */
+async function waitFor(cond: () => boolean | Promise<boolean>, ms = 2_000): Promise<void> {
+  const deadline = Date.now() + ms;
+  while (!(await cond())) {
+    assert.ok(Date.now() < deadline, "等待后台操作超时");
+    await new Promise((r) => setTimeout(r, 5));
+  }
+}
+
+test("detachDistill：close 立即 resolve，蒸馏后台完成落库", async (t) => {
+  const sessions = openMemoryRepo(t);
+  const main = createFauxCore({});
+  main.setResponses(Array.from({ length: 10 }, clarify));
+  const distill = createFauxCore({});
+  distill.setResponses([fauxAssistantMessage(distilledDoc())]);
+  const { session } = await makePersistent(t, [], {
+    sessions,
+    streamFn: routeDistill(main, distill),
+    detachDistill: true,
+  });
+  for (const text of ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"])
+    await session.prompt(text);
+  await session.close();
+  await assertLeaseFree(sessions, "u-test", session.sessionId as string);
+  // close 不等待蒸馏：后台蒸馏稍后完成并写库。
+  await waitFor(() => distill.state.callCount === 1);
+  await waitFor(async () => (await sessions.getUserMemory("u-test")) !== undefined);
+  const memory = await sessions.getUserMemory("u-test");
+  assert.match(memory?.content ?? "", /常驻西安/);
+});
+
+test("无新方案且新 user 消息不足保底：close 不蒸馏、不留 memory 行", async (t) => {
   const sessions = openMemoryRepo(t);
   const main = createFauxCore({});
   main.setResponses([clarify(), clarify()]);
@@ -151,13 +193,13 @@ test("新 user 消息不足 3 条：close 不蒸馏、不留 memory 行", async 
 test("蒸馏模型请求失败：close 照常 resolve、租约释放、不留 memory 行", async (t) => {
   const sessions = openMemoryRepo(t);
   const main = createFauxCore({});
-  main.setResponses([clarify(), clarify(), clarify()]);
+  main.setResponses(Array.from({ length: 10 }, clarify));
   const streamFn: StreamFn = (model, context, options) => {
     if (isDistillRequest(context)) throw new Error("蒸馏模型不可用");
     return main.streamSimple(model, context, options);
   };
   const { session } = await makePersistent(t, [], { sessions, streamFn });
-  for (const text of ["甲", "乙", "丙"]) await session.prompt(text);
+  for (let i = 0; i < 10; i++) await session.prompt(`消息${i}`);
   await assert.doesNotReject(session.close());
   assert.equal(await sessions.getUserMemory("u-test"), undefined);
   await assertLeaseFree(sessions, "u-test", session.sessionId as string);
@@ -173,14 +215,14 @@ test("蒸馏写库抛错被吞掉：close 照常 resolve、租约释放", async 
     putUserMemory: () => Promise.reject(new Error("user_memory 写入故障")),
   };
   const main = createFauxCore({});
-  main.setResponses([clarify(), clarify(), clarify()]);
+  main.setResponses(Array.from({ length: 10 }, clarify));
   const distill = createFauxCore({});
   distill.setResponses([fauxAssistantMessage(distilledDoc())]);
   const { session } = await makePersistent(t, [], {
     sessions,
     streamFn: routeDistill(main, distill),
   });
-  for (const text of ["甲", "乙", "丙"]) await session.prompt(text);
+  for (let i = 0; i < 10; i++) await session.prompt(`消息${i}`);
   await assert.doesNotReject(session.close());
   assert.equal(distill.state.callCount, 1, "蒸馏确已走到模型调用");
   await assertLeaseFree(sessions, "u-test", session.sessionId as string);
@@ -201,7 +243,7 @@ test("child 会话：memory_context 注入同规则生效，close 不触发蒸�
     throughMessageSeq: 0,
   });
   const main = createFauxCore({});
-  main.setResponses([clarify(), clarify(), clarify()]);
+  main.setResponses(Array.from({ length: 10 }, clarify));
   const distill = createFauxCore({});
   distill.setResponses([fauxAssistantMessage(distilledDoc())]);
   const { session } = await makePersistent(t, [], {
@@ -212,7 +254,7 @@ test("child 会话：memory_context 注入同规则生效，close 不触发蒸�
   });
   // 长期记忆注入与会话类型无关：child 的 system 同样带 memory_context。
   assert.match(memorySection(session) ?? "", /常驻西安/);
-  for (const text of ["甲", "乙", "丙"]) await session.prompt(text);
+  for (let i = 0; i < 10; i++) await session.prompt(`消息${i}`);
   await session.close();
   assert.equal(distill.state.callCount, 0, "child close 不得触发蒸馏");
   const memory = await sessions.getUserMemory("u-child");

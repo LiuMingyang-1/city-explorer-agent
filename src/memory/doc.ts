@@ -5,6 +5,8 @@
 
 /** 固定小节（顺序即文档结构；蒸馏提示词与此一致）。 */
 export const MEMORY_SECTIONS = ["用户", "偏好", "足迹"] as const;
+/** 保留小节目：历史上是写库侧审计节（已移除）；normalize 丢弃同名节防复活。 */
+export const AUDIT_SECTION_NAME = "蒸馏记录";
 /** 模型输出此字面量（去空白/换行后比较，大小写不敏感）= 无需更新。 */
 export const UNCHANGED = "UNCHANGED";
 
@@ -36,7 +38,9 @@ function splitDocSections(text: string): DocSections {
       // 同名固定小节重复出现：保留首段，其后片段内容并入首段而非丢弃。
       if (prior === undefined) fixed.set(current.name, body);
       else if (body !== "") fixed.set(current.name, `${prior}\n${body}`);
-    } else {
+    } else if (current.name !== AUDIT_SECTION_NAME) {
+      // 「蒸馏记录」是保留名：模型输出或既有文档 extras 里的同名节一律
+      // 丢弃，防止历史审计节复活进新文档。
       extras.push({ name: current.name, body });
     }
     current = undefined;
