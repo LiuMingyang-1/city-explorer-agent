@@ -120,22 +120,26 @@ export function createSqliteEventRepository(dbPath: string): EventRepository {
       const { near, radiusKm } = input;
       if (near) {
         // 距离是查询派生值：SQL 只做原条件过滤（不排序），取出后在 JS 侧
-        // 算球面距离，按需按 radiusKm 过滤，升序后截断到 SEARCH_LIMIT。
+        // 算球面距离。radiusKm 过滤与升序排序都用未取整的原始距离——
+        // 先取整会放宽半径边界、并列值还会丢掉真实次序；输出的
+        // distanceKm 才保留两位小数。截断到 SEARCH_LIMIT 在排序后。
         const rows = db
           .prepare(`SELECT * FROM events ${where}`)
           .all(...params) as EventRow[];
         let events = rows.map((row) => ({
-          ...toEvent(row),
-          distanceKm:
-            Math.round(
-              haversineKm(near.lat, near.lng, row.latitude, row.longitude) * 100,
-            ) / 100,
+          event: toEvent(row),
+          distance: haversineKm(near.lat, near.lng, row.latitude, row.longitude),
         }));
         if (radiusKm != null) {
-          events = events.filter((e) => e.distanceKm <= radiusKm);
+          events = events.filter((e) => e.distance <= radiusKm);
         }
-        events.sort((a, b) => a.distanceKm - b.distanceKm);
-        return Promise.resolve(events.slice(0, SEARCH_LIMIT));
+        events.sort((a, b) => a.distance - b.distance);
+        return Promise.resolve(
+          events.slice(0, SEARCH_LIMIT).map(({ event, distance }) => ({
+            ...event,
+            distanceKm: Math.round(distance * 100) / 100,
+          })),
+        );
       }
       // 无 near 时单独传的 radiusKm 被忽略，维持原排序与上限。
       const rows = db
