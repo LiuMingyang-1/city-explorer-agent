@@ -1,0 +1,239 @@
+{
+  "schema_version": "2.0",
+  "session_id": "sess_mock_001",
+  "messages": [
+    {
+      "role": "user",
+      "text": "周六下午想轻松逛逛，给我两种方向"
+    },
+    {
+      "role": "assistant",
+      "text": "为你准备了 Mock 曲江和城南两条候选路线。"
+    }
+  ],
+  "current_result": {
+    "schema_version": "2.0",
+    "request_id": "req_mock_new",
+    "session_id": "sess_mock_001",
+    "kind": "plans",
+    "revision": 1,
+    "mode": "comparison",
+    "active_plan": "plan_mock_a",
+    "coordinate_system": "WGS84",
+    "plans": [
+      {
+        "plan_id": "plan_mock_a",
+        "label": "A",
+        "title": "Mock 曲江看展阅读线",
+        "itinerary": {
+          "date": "2026-11-14",
+          "summary": "Mock 曲江看展阅读线；活动与道路均为虚构 Mock。",
+          "stops": [
+            {
+              "event_id": "mock_evt_a1",
+              "arrive_at": "14:00",
+              "leave_at": "15:00",
+              "reason": "符合下午慢逛需求。"
+            },
+            {
+              "event_id": "mock_evt_a2",
+              "arrive_at": "15:20",
+              "leave_at": "16:20",
+              "reason": "安排在同一片区，减少折返。"
+            }
+          ]
+        },
+        "legs": [
+          {
+            "from_event_id": "mock_evt_a1",
+            "to_event_id": "mock_evt_a2",
+            "mode": "walking",
+            "status": "ok",
+            "provider": "mock",
+            "duration_seconds": 720,
+            "distance_meters": 860,
+            "buffer_seconds": 300,
+            "geometry": {
+              "type": "LineString",
+              "coordinates": [
+                [
+                  108.964,
+                  34.254
+                ],
+                [
+                  108.965,
+                  34.254
+                ],
+                [
+                  108.965,
+                  34.257
+                ],
+                [
+                  108.969,
+                  34.257
+                ]
+              ]
+            },
+            "error_code": null
+          }
+        ],
+        "validation": {
+          "status": "passed",
+          "scope": "inter_stop",
+          "issues": []
+        },
+        "warnings": []
+      },
+      {
+        "plan_id": "plan_mock_b",
+        "label": "B",
+        "title": "Mock 城南艺术市集线",
+        "itinerary": {
+          "date": "2026-11-14",
+          "summary": "Mock 城南艺术市集线；活动与道路均为虚构 Mock。",
+          "stops": [
+            {
+              "event_id": "mock_evt_b1",
+              "arrive_at": "14:00",
+              "leave_at": "15:00",
+              "reason": "符合下午慢逛需求。"
+            },
+            {
+              "event_id": "mock_evt_b2",
+              "arrive_at": "15:20",
+              "leave_at": "16:20",
+              "reason": "安排在同一片区，减少折返。"
+            }
+          ]
+        },
+        "legs": [
+          {
+            "from_event_id": "mock_evt_b1",
+            "to_event_id": "mock_evt_b2",
+            "mode": "walking",
+            "status": "ok",
+            "provider": "mock",
+            "duration_seconds": 720,
+            "distance_meters": 860,
+            "buffer_seconds": 300,
+            "geometry": {
+              "type": "LineString",
+              "coordinates": [
+                [
+                  108.94,
+                  34.249
+                ],
+                [
+                  108.942,
+                  34.249
+                ],
+                [
+                  108.942,
+                  34.252
+                ],
+                [
+                  108.946,
+                  34.252
+                ]
+              ]
+            },
+            "error_code": null
+          }
+        ],
+        "validation": {
+          "status": "passed",
+          "scope": "inter_stop",
+          "issues": []
+        },
+        "warnings": []
+      }
+    ],
+    "events": [
+      {
+        "title": "Mock 光影展",
+        "description": "虚构联调活动，非真实活动。",
+        "category": "展览",
+        "venue_name": "Mock 曲江展厅",
+        "address": "西安市 Mock 场馆地址（虚构）",
+        "latitude": 34.254,
+        "longitude": 108.964,
+        "start_at": "2026-11-14T10:00",
+        "end_at": "2026-11-14T18:00",
+        "suggested_duration_minutes": 60,
+        "budget_min": 5000,
+        "budget_max": 8000,
+        "currency": "CNY",
+        "budget_note": null,
+        "guide_url": "https://example.com/mock/a1",
+        "thumbnail_url": "https://example.com/mock/a1.jpg",
+        "image_urls": [
+          "https://example.com/mock/a1.jpg"
+        ],
+        "event_id": "mock_evt_a1"
+      },
+      {
+        "title": "Mock 阅读分享",
+        "description": "虚构联调活动，非真实活动。",
+        "category": "书店活动",
+        "venue_name": "Mock 曲江书屋",
+        "address": "西安市 Mock 场馆地址（虚构）",
+        "latitude": 34.257,
+        "longitude": 108.969,
+        "start_at": "2026-11-14T10:00",
+        "end_at": "2026-11-14T18:00",
+        "suggested_duration_minutes": 60,
+        "budget_min": 0,
+        "budget_max": 0,
+        "currency": "CNY",
+        "budget_note": null,
+        "guide_url": "https://example.com/mock/a2",
+        "thumbnail_url": null,
+        "image_urls": [],
+        "event_id": "mock_evt_a2"
+      },
+      {
+        "title": "Mock 城南小展",
+        "description": "虚构联调活动，非真实活动。",
+        "category": "展览",
+        "venue_name": "Mock 城南艺术空间",
+        "address": "西安市 Mock 场馆地址（虚构）",
+        "latitude": 34.249,
+        "longitude": 108.94,
+        "start_at": "2026-11-14T10:00",
+        "end_at": "2026-11-14T18:00",
+        "suggested_duration_minutes": 60,
+        "budget_min": 0,
+        "budget_max": 0,
+        "currency": "CNY",
+        "budget_note": null,
+        "guide_url": "https://example.com/mock/b1",
+        "thumbnail_url": null,
+        "image_urls": [],
+        "event_id": "mock_evt_b1"
+      },
+      {
+        "title": "Mock 周末市集",
+        "description": "虚构联调活动，非真实活动。",
+        "category": "市集",
+        "venue_name": "Mock 城南广场",
+        "address": "西安市 Mock 场馆地址（虚构）",
+        "latitude": 34.252,
+        "longitude": 108.946,
+        "start_at": "2026-11-14T10:00",
+        "end_at": "2026-11-14T18:00",
+        "suggested_duration_minutes": 60,
+        "budget_min": null,
+        "budget_max": null,
+        "currency": "CNY",
+        "budget_note": null,
+        "guide_url": "https://example.com/mock/b2",
+        "thumbnail_url": null,
+        "image_urls": [],
+        "event_id": "mock_evt_b2"
+      }
+    ],
+    "warnings": [
+      "虚构联调数据，轨迹不是导航结果；不含当前位置至首站通勤。"
+    ]
+  }
+}

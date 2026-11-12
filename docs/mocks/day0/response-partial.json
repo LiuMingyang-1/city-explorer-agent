@@ -1,0 +1,105 @@
+{
+  "schema_version": "2.0",
+  "request_id": "req_mock_partial",
+  "session_id": "sess_mock_001",
+  "kind": "plans",
+  "revision": 3,
+  "mode": "single",
+  "active_plan": "plan_mock_b",
+  "coordinate_system": "WGS84",
+  "plans": [
+    {
+      "plan_id": "plan_mock_b",
+      "label": "B",
+      "title": "Mock 城南艺术市集线",
+      "itinerary": {
+        "date": "2026-11-14",
+        "summary": "Mock 城南艺术市集线；活动与道路均为虚构 Mock。",
+        "stops": [
+          {
+            "event_id": "mock_evt_b1",
+            "arrive_at": "14:00",
+            "leave_at": "15:00",
+            "reason": "符合下午慢逛需求。"
+          },
+          {
+            "event_id": "mock_evt_b2",
+            "arrive_at": "15:20",
+            "leave_at": "16:20",
+            "reason": "安排在同一片区，减少折返。"
+          }
+        ]
+      },
+      "legs": [
+        {
+          "from_event_id": "mock_evt_b1",
+          "to_event_id": "mock_evt_b2",
+          "mode": "walking",
+          "status": "unavailable",
+          "provider": "mock",
+          "duration_seconds": null,
+          "distance_meters": null,
+          "buffer_seconds": 300,
+          "geometry": null,
+          "error_code": "ROUTE_TIMEOUT"
+        }
+      ],
+      "validation": {
+        "status": "partial",
+        "scope": "inter_stop",
+        "issues": [
+          "ROUTE_TIMEOUT"
+        ]
+      },
+      "warnings": [
+        "站间通勤未完成校验，时间仅为草案。"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "title": "Mock 城南小展",
+      "description": "虚构联调活动，非真实活动。",
+      "category": "展览",
+      "venue_name": "Mock 城南艺术空间",
+      "address": "西安市 Mock 场馆地址（虚构）",
+      "latitude": 34.249,
+      "longitude": 108.94,
+      "start_at": "2026-11-14T10:00",
+      "end_at": "2026-11-14T18:00",
+      "suggested_duration_minutes": 60,
+      "budget_min": 0,
+      "budget_max": 0,
+      "currency": "CNY",
+      "budget_note": null,
+      "guide_url": "https://example.com/mock/b1",
+      "thumbnail_url": null,
+      "image_urls": [],
+      "event_id": "mock_evt_b1"
+    },
+    {
+      "title": "Mock 周末市集",
+      "description": "虚构联调活动，非真实活动。",
+      "category": "市集",
+      "venue_name": "Mock 城南广场",
+      "address": "西安市 Mock 场馆地址（虚构）",
+      "latitude": 34.252,
+      "longitude": 108.946,
+      "start_at": "2026-11-14T10:00",
+      "end_at": "2026-11-14T18:00",
+      "suggested_duration_minutes": 60,
+      "budget_min": null,
+      "budget_max": null,
+      "currency": "CNY",
+      "budget_note": null,
+      "guide_url": "https://example.com/mock/b2",
+      "thumbnail_url": null,
+      "image_urls": [],
+      "event_id": "mock_evt_b2"
+    }
+  ],
+  "warnings": [
+    "虚构联调数据，轨迹不是导航结果；不含当前位置至首站通勤。",
+    "Mock 路线查询超时；仅展示站点和顺序示意。"
+  ]
+}

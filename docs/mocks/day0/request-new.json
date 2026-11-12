@@ -1,0 +1,10 @@
+{
+  "schema_version": "2.0",
+  "request_id": "req_mock_new",
+  "message": "周六下午想轻松逛逛，给我两种方向",
+  "location": {
+    "lat": 34.254,
+    "lng": 108.964,
+    "coordinate_system": "WGS84"
+  }
+}

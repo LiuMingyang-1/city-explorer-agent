@@ -1,0 +1,9 @@
+{
+  "schema_version": "2.0",
+  "request_id": "req_mock_modify_b",
+  "session_id": "sess_mock_001",
+  "message": "就选 B，保留这两站；再帮我看看这个活动",
+  "base_revision": 1,
+  "active_plan": "plan_mock_b",
+  "referenced_event_id": "mock_evt_b2"
+}

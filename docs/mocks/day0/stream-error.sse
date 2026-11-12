@@ -1,0 +1,9 @@
+event: meta
+data: {"schema_version":"2.0","request_id":"req_mock_failure","session_id":"sess_mock_001"}
+
+event: progress
+data: {"request_id":"req_mock_failure","stage":"searching_events","message":"正在检索活动","plan_ids":[]}
+
+event: error
+data: {"schema_version":"2.0","request_id":"req_mock_failure","session_id":"sess_mock_001","error":{"code":"PLANNING_FAILED","message":"本次未能生成可用方案，请重试。","retryable":true}}
+
