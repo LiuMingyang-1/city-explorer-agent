@@ -149,6 +149,8 @@ export function createChatHandler(
         signal: controller.signal,
         location: parsed.location,
         sessionId: parsed.session_id,
+        activePlan: parsed.active_plan,
+        referencedEventId: parsed.referenced_event_id,
       });
       if (!isChatResult(result)) throw new Error("service.send returned invalid shape");
       sendJson(req, res, 200, result);

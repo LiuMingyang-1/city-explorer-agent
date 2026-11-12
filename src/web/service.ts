@@ -34,6 +34,7 @@ import type {
   ChatResult,
   ChatService,
   EventView,
+  Plan,
 } from "./types.ts";
 
 /**
@@ -145,6 +146,9 @@ function runTurn(run: Run): PlannerTurn | undefined {
     const turn = (JSON.parse(run.result) as { turn?: PlannerTurn }).turn;
     if (!turn || typeof turn !== "object") return undefined;
     if (turn.kind === "itinerary" && turn.itinerary) return turn;
+    if (turn.kind === "comparison" && Array.isArray(turn.plans) && turn.plans.length > 0) {
+      return turn;
+    }
     if (turn.kind === "clarification" && typeof turn.question === "string") return turn;
     if (turn.kind === "error" && typeof turn.message === "string") return turn;
     return undefined;
@@ -153,11 +157,34 @@ function runTurn(run: Run): PlannerTurn | undefined {
   }
 }
 
-/** 一轮结果里用户可见的 assistant 文本：追问原文，或行程摘要。 */
+/** 一轮结果里用户可见的 assistant 文本：追问原文、行程摘要或方案标题串。 */
 function assistantText(turn: PlannerTurn): string | undefined {
   if (turn.kind === "clarification") return turn.question;
   if (turn.kind === "itinerary") return turn.itinerary.summary;
+  if (turn.kind === "comparison") {
+    return turn.plans.map((p) => `方案 ${p.label}：${p.title}`).join("；");
+  }
   return undefined;
+}
+
+/** 校验通过的 plan → 线上 Plan 视图：legs 本期恒 []（由高德算路工作流填充）。 */
+function planView(label: "A" | "B", title: string, itinerary: Itinerary): Plan {
+  return {
+    plan_id: label,
+    label,
+    title,
+    itinerary,
+    legs: [],
+    validation: { status: "passed", scope: "inter_stop", issues: [] },
+    warnings: [],
+  };
+}
+
+/** turn.warning 收进响应顶层 warnings；无警告时省略该键。 */
+function topWarnings(turn: PlannerTurn): { warnings?: string[] } {
+  return turn.kind !== "error" && turn.warning !== undefined
+    ? { warnings: [turn.warning] }
+    : {};
 }
 
 /** send 的在途句柄：planner 就绪前即可被 shutdown/signal 标记取消。 */
@@ -273,11 +300,13 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
     return work;
   }
 
-  /** 行程各站 event_id → EventView，按 stops 顺序、去重、缺库记录跳过。 */
-  async function eventViews(itinerary: Itinerary): Promise<EventView[]> {
+  /** 各行程 stops 的 event_id → EventView，按出现顺序、去重、缺库记录跳过。 */
+  async function eventViews(...itineraries: Itinerary[]): Promise<EventView[]> {
     const ids: string[] = [];
-    for (const stop of itinerary.stops) {
-      if (!ids.includes(stop.event_id)) ids.push(stop.event_id);
+    for (const itinerary of itineraries) {
+      for (const stop of itinerary.stops) {
+        if (!ids.includes(stop.event_id)) ids.push(stop.event_id);
+      }
     }
     const events = await repository.getByIds(ids);
     const views: EventView[] = [];
@@ -288,11 +317,35 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
     return views;
   }
 
+  /**
+   * referenced_event_id → 注入用的点选活动描述：查库取标题/场馆；
+   * 查无此 id 或查询失败 → undefined（点选是弱上下文，不该让请求失败）。
+   */
+  async function resolveReferencedEvent(
+    eventId: string | undefined,
+  ): Promise<PlannerPromptOptions["referencedEvent"]> {
+    if (eventId === undefined) return undefined;
+    try {
+      const event = (await repository.getByIds([eventId])).get(eventId);
+      return event
+        ? { eventId: event.id, title: event.title, venueName: event.venueName }
+        : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
   async function runSend(
     handle: SendHandle,
     userId: string,
     message: string,
-    options?: { signal?: AbortSignal; location?: ChatLocation; sessionId?: string },
+    options?: {
+      signal?: AbortSignal;
+      location?: ChatLocation;
+      sessionId?: string;
+      activePlan?: string;
+      referencedEventId?: string;
+    },
   ): Promise<ChatResult> {
     const signal = options?.signal;
     let planner: ChatPlanner | undefined;
@@ -317,9 +370,15 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
       signal?.addEventListener("abort", onAbort, { once: true });
       let turn: PlannerTurn;
       try {
-        // abort 时 prompt 自行 settle；location 只进 prompt options（持久层
-        // 会沿用到本会话后续请求，见 PlannerPromptOptions.location）。
-        turn = await planner.prompt(message, { location: options?.location });
+        // abort 时 prompt 自行 settle；location/activePlan/referencedEvent
+        // 只进 prompt options（持久层注入 system section，见
+        // PlannerPromptOptions）。未定义的键不写入，保持 options 稀疏。
+        const promptOptions: PlannerPromptOptions = {};
+        if (options?.location !== undefined) promptOptions.location = options.location;
+        if (options?.activePlan !== undefined) promptOptions.activePlan = options.activePlan;
+        const referenced = await resolveReferencedEvent(options?.referencedEventId);
+        if (referenced !== undefined) promptOptions.referencedEvent = referenced;
+        turn = await planner.prompt(message, promptOptions);
       } catch (error) {
         // 中止引起的 prompt 异常也归为 AbortError，不伪装成内部错误。
         if (handle.cancelled || signal?.aborted) throw abortError(signal);
@@ -344,11 +403,28 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
       if (turn.kind === "clarification") {
         return { kind: "clarification", session_id: sessionId, question: turn.question };
       }
+      if (turn.kind === "comparison") {
+        // 双方案：首个 plan 是已提交指针的 active 方案。
+        return {
+          kind: "plans",
+          session_id: sessionId,
+          mode: "comparison",
+          active_plan: turn.plans[0].label,
+          plans: turn.plans.map((p) => planView(p.label, p.title, p.itinerary)),
+          events: await eventViews(...turn.plans.map((p) => p.itinerary)),
+          coordinate_system: "GCJ-02",
+          ...topWarnings(turn),
+        };
+      }
       return {
-        kind: "itinerary",
+        kind: "plans",
         session_id: sessionId,
-        itinerary: turn.itinerary,
+        mode: "single",
+        active_plan: "A",
+        plans: [planView("A", turn.itinerary.summary, turn.itinerary)],
         events: await eventViews(turn.itinerary),
+        coordinate_system: "GCJ-02",
+        ...topWarnings(turn),
       };
     } catch (error) {
       if (handle.cancelled || signal?.aborted) throw abortError(signal);
@@ -372,12 +448,16 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
     // 产生当前行程的那个 run：其 assistant 文本由独立行程卡片替代，不进 messages。
     const producingRunId = current?.record.runId ?? undefined;
     const messages: ChatMessage[] = [];
+    // 会话最近一轮产出（列表升序，最后定义的 turn 即最新一轮）：
+    // 为 comparison 时 history 额外还原 plans/mode/active_plan。
+    let latestTurn: PlannerTurn | undefined;
     for (const run of runs) {
       // 只看 completed：中断/失败/排队中的 run 对用户不可见，连同输入一起忽略。
       if (run.status !== "completed") continue;
       const text = runInputText(run);
       const turn = runTurn(run);
       if (text === undefined && turn === undefined) continue; // 非对话 run
+      if (turn !== undefined) latestTurn = turn;
       if (text !== undefined) messages.push({ role: "user", text });
       // 一轮内的工具消息、模型纠错文本不还原——只有终态 turn 可见。
       if (turn !== undefined && run.runId !== producingRunId) {
@@ -389,7 +469,16 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
       messages,
       itinerary: current?.plan.itinerary ?? null,
     };
-    if (current) history.events = await eventViews(current.plan.itinerary);
+    if (latestTurn?.kind === "comparison") {
+      // 双方案轮：events 为全部 plan 引用活动的去重并集（含 committed
+      // 首个 plan），itinerary 仍是指针上的当前生效行程，向后兼容。
+      history.plans = latestTurn.plans.map((p) => planView(p.label, p.title, p.itinerary));
+      history.mode = "comparison";
+      history.active_plan = latestTurn.plans[0].label;
+      history.events = await eventViews(...latestTurn.plans.map((p) => p.itinerary));
+    } else if (current) {
+      history.events = await eventViews(current.plan.itinerary);
+    }
     return history;
   }
 
@@ -398,7 +487,13 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
     async send(
       userId: string,
       message: string,
-      options?: { signal?: AbortSignal; location?: ChatLocation; sessionId?: string },
+      options?: {
+        signal?: AbortSignal;
+        location?: ChatLocation;
+        sessionId?: string;
+        activePlan?: string;
+        referencedEventId?: string;
+      },
     ): Promise<ChatResult> {
       // 同步段：拒新请求 + 注册在途句柄，都先于第一个 await（防 shutdown 竞争）。
       assertOpen();

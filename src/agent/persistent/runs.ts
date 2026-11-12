@@ -107,6 +107,14 @@ function parseStoredTurn(result: string | null): PlannerTurn | undefined {
     const turn = (JSON.parse(result) as { turn?: PlannerTurn }).turn;
     if (!turn || typeof turn !== "object") return undefined;
     if (turn.kind === "itinerary" && turn.itinerary && turn.constraints) return turn;
+    if (
+      turn.kind === "comparison" &&
+      Array.isArray(turn.plans) &&
+      turn.plans.length > 0 &&
+      turn.constraints
+    ) {
+      return turn;
+    }
     if (turn.kind === "clarification" && typeof turn.question === "string") return turn;
     if (turn.kind === "error" && typeof turn.message === "string") return turn;
     return undefined;
@@ -116,8 +124,24 @@ function parseStoredTurn(result: string | null): PlannerTurn | undefined {
 }
 
 /**
+ * 会话最近一轮产出的 PlannerTurn：倒序找首个 completed 且 result 可解析
+ * 为 turn 的 run（run 列表按 (created_at, run_id) 升序传入）；全部失败/
+ * 无对话 run → undefined。用于"最近一轮是否为 comparison"等消费判定。
+ */
+export function latestProducedTurn(runs: Run[]): PlannerTurn | undefined {
+  for (let i = runs.length - 1; i >= 0; i--) {
+    const run = runs[i];
+    if (run.status !== "completed") continue;
+    const turn = parseStoredTurn(run.result);
+    if (turn !== undefined) return turn;
+  }
+  return undefined;
+}
+
+/**
  * child 会话的"最新候选规划"：本 session 最近一次 completed 且结果为
- * itinerary 的 run 所记录的 turn（生效约束 + 行程）。child 不设正式指针，
+ * itinerary/comparison 的 run 所记录的 turn（生效约束 + 行程；
+ * comparison 取首个 plan）。child 不设正式指针，
  * 候选就是它的工作规划状态；failed/cancelled/追问轮与无法解析的
  * result 一律跳过，不覆盖更早的成功候选。
  * 新旧次序以该 run 已落库消息的最大 message_seq 判定（单调递增，真实
@@ -132,10 +156,17 @@ export function latestCandidatePlan(
   runs.forEach((run, index) => {
     if (run.status !== "completed") return;
     const turn = parseStoredTurn(run.result);
-    if (turn?.kind !== "itinerary") return;
+    // comparison 轮的候选取首个（active）plan——与 main 指针的提交语义一致。
+    const plan =
+      turn?.kind === "itinerary"
+        ? { constraints: turn.constraints, itinerary: turn.itinerary }
+        : turn?.kind === "comparison" && turn.plans[0] !== undefined
+          ? { constraints: turn.constraints, itinerary: turn.plans[0].itinerary }
+          : undefined;
+    if (plan === undefined) return;
     const seq = seqByRun.get(run.runId) ?? -1;
     if (best === undefined || seq > best.seq || (seq === best.seq && index > best.index)) {
-      best = { seq, index, plan: { constraints: turn.constraints, itinerary: turn.itinerary } };
+      best = { seq, index, plan };
     }
   });
   return best?.plan;

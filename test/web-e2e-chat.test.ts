@@ -93,10 +93,18 @@ test("空页面只发 cookie 不建行；首条 POST 懒建对话并回传 sessi
     withCookie(uid),
   );
   assert.equal(r2.status, 200);
-  const it2 = r2.json() as Extract<ChatResult, { kind: "itinerary" }>;
-  assert.equal(it2.kind, "itinerary");
+  const it2 = r2.json() as Extract<ChatResult, { kind: "plans" }>;
+  assert.equal(it2.kind, "plans");
+  assert.equal(it2.mode, "single");
+  assert.equal(it2.active_plan, "A");
+  assert.equal(it2.coordinate_system, "GCJ-02");
   assert.equal(it2.session_id, sid);
-  assert.deepEqual(it2.itinerary, planA);
+  assert.equal(it2.plans.length, 1);
+  assert.equal(it2.plans[0].label, "A");
+  assert.deepEqual(it2.plans[0].itinerary, planA);
+  // legs 本期恒空（由高德算路工作流填充）；校验视图恒 passed。
+  assert.deepEqual(it2.plans[0].legs, []);
+  assert.equal(it2.plans[0].validation.status, "passed");
   assert.deepEqual(
     it2.events.map((e) => e.event_id),
     [ev1.id],
@@ -115,10 +123,12 @@ test("空页面只发 cookie 不建行；首条 POST 懒建对话并回传 sessi
     { message: "听完讲座再去", session_id: sid },
     withCookie(uid),
   );
-  const it3 = r3.json() as Extract<ChatResult, { kind: "itinerary" }>;
-  assert.equal(it3.kind, "itinerary");
+  const it3 = r3.json() as Extract<ChatResult, { kind: "plans" }>;
+  assert.equal(it3.kind, "plans");
+  assert.equal(it3.mode, "single");
   assert.equal(it3.session_id, sid);
-  assert.deepEqual(it3.itinerary, planB);
+  assert.equal(it3.plans.length, 1);
+  assert.deepEqual(it3.plans[0].itinerary, planB);
   assert.deepEqual(
     it3.events.map((e) => e.event_id),
     [ev1.id, talk.id],

@@ -27,9 +27,27 @@ import {
   PlannerResponseError,
 } from "./response.ts";
 
-/** 一轮规划的结果：新行程 / 追问 / 失败（当前行程不变）。 */
+/** comparison 轮里一个校验通过的方案：label 恰为 "A"/"B"，首个即 active 方案。 */
+export interface ComparisonPlan {
+  label: "A" | "B";
+  title: string;
+  itinerary: Itinerary;
+}
+
+/**
+ * 一轮规划的结果：新行程 / 双方案比选 / 追问 / 失败（当前行程不变）。
+ * comparison 仅在两个 plan 都过校验时产生（active=首个 plan，其 itinerary
+ * 同时提交 current_itinerary 指针）；只过一个时在 performTurn 内降级为
+ * itinerary 单方案并附 warning。
+ */
 export type PlannerTurn =
   | { kind: "itinerary"; itinerary: Itinerary; constraints: PlanningConstraints; warning?: string }
+  | {
+      kind: "comparison";
+      plans: ComparisonPlan[];
+      constraints: PlanningConstraints;
+      warning?: string;
+    }
   | { kind: "clarification"; question: string; warning?: string }
   | { kind: "error"; message: string; code?: string };
 
@@ -65,6 +83,26 @@ export interface PlannerPromptOptions {
    * 内存路径（performTurn）不处理。
    */
   location?: { lat: number; lng: number };
+  /**
+   * 本轮用户界面选中方案（web 端滑块状态，"A"/"B"）：仅当会话最近一轮
+   * 产出过 comparison 时，持久运行时注入 selection_context system
+   * section（本轮有效、不持久化）；否则忽略。内存路径不处理。
+   */
+  activePlan?: string;
+  /**
+   * 本轮用户从地图点选的活动（web 端查库解析出标题/场馆后透传；
+   * 查无此 id 时下传 undefined——点选是弱上下文，不该让请求失败）：
+   * 持久运行时注入 selection_context system section（本轮有效）。
+   * 内存路径不处理。
+   */
+  referencedEvent?: ReferencedEvent;
+}
+
+/** referenced_event_id 查库解析后的点选活动描述：注入 prompt 上下文用。 */
+export interface ReferencedEvent {
+  eventId: string;
+  title: string;
+  venueName: string;
 }
 
 /** 手动压缩的结果：applied=写入了新检查点并切换上下文。 */
@@ -268,32 +306,71 @@ export class PlannerSession {
         }
         // 补丁合并到已确认约束：纠正回复漏带字段不会放宽已确认的限制。
         const effective = mergeConstraints(this.confirmed, parsed.constraints);
-        const events = await this.options.repository.getByIds(extractEventIds(parsed.candidate));
+        const eventIds =
+          parsed.type === "comparison"
+            ? [...new Set(parsed.plans.flatMap((p) => extractEventIds(p.candidate)))]
+            : extractEventIds(parsed.candidate);
+        const events = await this.options.repository.getByIds(eventIds);
         // 验证的异步边界之后重新确认取消：中止的轮次不再校验、提交或纠正。
         const cancelled = signal ? abortedTurn(signal) : undefined;
         if (cancelled) return cancelled;
-        const result = this.validate(parsed.candidate, effective, events);
-        if (result.ok && result.itinerary) {
-          // 提交是最后一个可拦截点：validate 与 commit 之间仍可能被取消。
-          const blocked = signal ? abortedTurn(signal) : undefined;
-          if (blocked) return blocked;
-          if (this.options.onValidatedPlan) {
-            try {
-              await this.options.onValidatedPlan({
-                message: reply.message as AgentMessage,
-                constraints: effective,
-                itinerary: result.itinerary,
-              });
-            } catch (error) {
-              // 数据库失败不是模型格式错误：结束本轮，旧行程保留。
+        if (parsed.type === "comparison") {
+          // 双方案：逐 plan 独立校验。双过 → comparison 轮（首个 plan 提交
+          // 指针）；单过 → 降级为 single 附 warning；双不过 → 按 plan 标注
+          // 错误回喂纠正。
+          const evaluated = parsed.plans.map((plan) => ({
+            plan,
+            result: this.validate(plan.candidate, effective, events),
+          }));
+          const passing = evaluated.filter((e) => e.result.ok && e.result.itinerary !== undefined);
+          if (passing.length > 0) {
+            const committed = passing.length === evaluated.length ? evaluated[0] : passing[0];
+            const failure = await this.commitValidated(
+              reply.message as AgentMessage,
+              effective,
+              committed.result.itinerary as Itinerary,
+              signal,
+            );
+            if (failure) return failure;
+            if (passing.length === evaluated.length) {
               return {
-                kind: "error",
-                message: `行程校验通过但写入会话库失败：${errorText(error)}`,
+                kind: "comparison",
+                plans: evaluated.map((e) => ({
+                  label: e.plan.label,
+                  title: e.plan.title,
+                  itinerary: e.result.itinerary as Itinerary,
+                })),
+                constraints: effective,
               };
             }
+            const loser = evaluated.find((e) => e !== committed) as (typeof evaluated)[number];
+            return {
+              kind: "itinerary",
+              itinerary: committed.result.itinerary as Itinerary,
+              constraints: effective,
+              warning: `方案 ${loser.plan.label} 未通过校验，已按方案 ${committed.plan.label} 单方案返回`,
+            };
           }
-          this.current = result.itinerary;
-          this.confirmed = effective;
+          lastError = `双方案均未通过校验：${evaluated
+            .map((e) => `方案 ${e.plan.label}：${e.result.issues.map((i) => i.message).join("；") || "未知问题"}`)
+            .join("；")}`;
+          outgoing =
+            `用户的原始要求："${text}"\n` +
+            "上一版双方案均未通过校验：\n" +
+            evaluated.map((e) => `方案 ${e.plan.label}：\n${issuesText(e.result.issues)}`).join("\n") +
+            `\n当前生效约束：${JSON.stringify(effective)}\n` +
+            '请按原始要求和生效约束修正：重新输出完整的 comparison JSON（plans 恒 2 条、label 恰为 "A"/"B"、共享同一 constraints），或改回 itinerary 单方案形态。';
+          continue;
+        }
+        const result = this.validate(parsed.candidate, effective, events);
+        if (result.ok && result.itinerary) {
+          const failure = await this.commitValidated(
+            reply.message as AgentMessage,
+            effective,
+            result.itinerary,
+            signal,
+          );
+          if (failure) return failure;
           return { kind: "itinerary", itinerary: result.itinerary, constraints: effective };
         }
         lastError = `行程未通过校验：${result.issues.map((i) => i.message).join("；") || "未知问题"}`;
@@ -314,6 +391,36 @@ export class PlannerSession {
       }
     }
     return { kind: "error", message: lastError };
+  }
+
+  /**
+   * 校验通过后的统一提交路径：取消检查（最后一个可拦截点）→ 落库钩子 →
+   * 更新内存指针。返回 undefined 表示提交完成；error turn 表示应结束本轮
+   * （旧行程/旧约束保留）。
+   */
+  private async commitValidated(
+    message: AgentMessage,
+    constraints: PlanningConstraints,
+    itinerary: Itinerary,
+    signal?: AbortSignal,
+  ): Promise<PlannerErrorTurn | undefined> {
+    // 提交是最后一个可拦截点：validate 与 commit 之间仍可能被取消。
+    const blocked = signal ? abortedTurn(signal) : undefined;
+    if (blocked) return blocked;
+    if (this.options.onValidatedPlan) {
+      try {
+        await this.options.onValidatedPlan({ message, constraints, itinerary });
+      } catch (error) {
+        // 数据库失败不是模型格式错误：结束本轮，旧行程保留。
+        return {
+          kind: "error",
+          message: `行程校验通过但写入会话库失败：${errorText(error)}`,
+        };
+      }
+    }
+    this.current = itinerary;
+    this.confirmed = constraints;
+    return undefined;
   }
 
   /** 单轮请求：prompt() 不 reject 模型错误，改查 state/末条消息。 */

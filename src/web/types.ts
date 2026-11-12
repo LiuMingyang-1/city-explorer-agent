@@ -47,10 +47,16 @@ export interface EventView {
 /** GET /api/chat/history 的响应体。 */
 export interface ChatHistory {
   messages: ChatMessage[];
-  /** 当前生效行程；尚未形成行程时省略或为 null。 */
+  /** 当前生效行程（committed plan 的 itinerary）；尚未形成行程时省略或为 null。 */
   itinerary?: Itinerary | null;
-  /** itinerary 各站 event_id 对应的活动详情，供卡片与地图渲染。 */
+  /** itinerary 各站（最近一轮为 comparison 时是全部 plan）event_id 对应的活动详情。 */
   events?: EventView[];
+  /** 最近一轮 run 产出为 comparison 时还原的方案列表（含当前生效/备选）。 */
+  plans?: Plan[];
+  /** 最近一轮输出形态；plans 存在时为 "comparison"。 */
+  mode?: "single" | "comparison";
+  /** 当前生效 plan_id（committed plan 的 label）。 */
+  active_plan?: string;
 }
 
 /** 用户当前位置坐标（GPS/选点），只含坐标不含地名。 */
@@ -60,22 +66,74 @@ export interface ChatLocation {
 }
 
 /**
- * POST /api/chat 接受的请求体形：`{ "message": "…" }`，可附带 location 与
- * session_id。message 必填，按 trim 后长度计须为 1..1000 字；location 可选，
- * 是前端当前选点/GPS 的经纬度（只传坐标不传地名）；session_id 可选，是本页
- * 已建对话的 id——带它继续同一对话，不带则懒建一条新对话。不接受 userId、
- * messages 等任何其他字段——身份只来自服务端签发的 cookie，历史只存服务端。
+ * POST /api/chat 接受的请求体形：`{ "message": "…" }`，可附带 location、
+ * session_id、active_plan 与 referenced_event_id。message 必填，按 trim 后
+ * 长度计须为 1..1000 字；location 可选，是前端当前选点/GPS 的经纬度（只传
+ * 坐标不传地名）；session_id 可选，是本页已建对话的 id——带它继续同一
+ * 对话，不带则懒建一条新对话；active_plan 可选，是前端滑块当前选中的
+ * plan_id（"A"/"B"），仅最近一轮产出过 comparison 时有意义；referenced_
+ * event_id 可选，是地图气泡点选的活动 id（服务端查库取标题/场馆注入
+ * prompt，查无则忽略）。不接受 userId、messages 等任何其他字段——身份
+ * 只来自服务端签发的 cookie，历史只存服务端。
  */
 export interface ChatSendRequest {
   message: string;
   location?: ChatLocation;
   session_id?: string;
+  active_plan?: string;
+  referenced_event_id?: string;
 }
 
-/** POST /api/chat 成功（200）的响应体：要么追问，要么新行程；session_id 回传本轮对话。 */
+/**
+ * 相邻两站间的道路段（stops-1 条），由服务端在模型输出校验通过后经
+ * 高德算路工作流计算填充——模型不输出 legs；本期一律返回 []。
+ */
+export interface PlanLeg {
+  from_event_id: string;
+  to_event_id: string;
+  mode: "walking" | "transit";
+  status: "ok" | "error" | "skipped";
+  provider: "amap" | "none";
+  duration_seconds: number | null;
+  distance_meters: number | null;
+  buffer_seconds: number;
+  /** GeoJSON LineString，[lng,lat] GCJ-02；算路失败/未算时为 null。 */
+  geometry: { type: "LineString"; coordinates: [number, number][] } | null;
+  error_code: string | null;
+}
+
+/** 单个候选方案（单方案恒 label "A"）。 */
+export interface Plan {
+  /** 与 label 同值："A" 或 "B"；single 恒 "A"。 */
+  plan_id: string;
+  label: "A" | "B";
+  /** 方案一句话标题（single 取 itinerary.summary）。 */
+  title: string;
+  itinerary: Itinerary;
+  legs: PlanLeg[];
+  validation: { status: "passed" | "issues"; scope: "inter_stop"; issues: unknown[] };
+  warnings: string[];
+}
+
+/**
+ * POST /api/chat 成功（200）的响应体：要么追问，要么方案列表；
+ * session_id 回传本轮对话。kind:"plans" 统一承载单/双方案：
+ * mode "single" 时 plans 恰 1 条（label "A"）；"comparison" 时 2 条，
+ * active_plan 为当前生效 plan_id（首个=committed plan）。
+ */
 export type ChatResult =
   | { kind: "clarification"; session_id: string; question: string }
-  | { kind: "itinerary"; session_id: string; itinerary: Itinerary; events: EventView[] };
+  | {
+      kind: "plans";
+      session_id: string;
+      mode: "single" | "comparison";
+      active_plan: string;
+      plans: Plan[];
+      /** 全部 plan 引用活动的去重并集。 */
+      events: EventView[];
+      coordinate_system: "GCJ-02";
+      warnings?: string[];
+    };
 
 /** 所有非 2xx 响应的统一错误体形。 */
 export interface ChatErrorResponse {
@@ -113,18 +171,26 @@ export interface ChatService {
    */
   history(userId: string, sessionId?: string): Promise<ChatHistory>;
   /**
-   * 处理一条用户消息，返回追问或新行程（含本轮 session_id）。
+   * 处理一条用户消息，返回追问或方案列表（含本轮 session_id）。
    * options.sessionId 缺省时为该用户懒建一条新对话（标题取首条消息
    * 前 30 个码点）；给定时校验归属与 active（同上 404/409 分类）。
    * options.signal 在 HTTP 客户端断连（响应未正常完成就关闭）时触发 abort；
    * 实现方可把它传给下游取消规划等耗时工作，也可直接忽略。正常完成的
-   * 响应保证不触发 abort。options.location 是本轮前端附带的位置（可选）。
-   * ChatClientError 由 HTTP 层映射为 404/409；其余异常（模型/数据/内部）
-   * 统一映射为 500，异常细节不外泄。
+   * 响应保证不触发 abort。options.location 是本轮前端附带的位置（可选）；
+   * options.activePlan 是前端滑块选中方案（可选，仅最近一轮为 comparison
+   * 时注入 prompt）；options.referencedEventId 是地图点选活动 id（可选，
+   * 查库解析标题/场馆注入，查无忽略）。ChatClientError 由 HTTP 层映射为
+   * 404/409；其余异常（模型/数据/内部）统一映射为 500，异常细节不外泄。
    */
   send(
     userId: string,
     message: string,
-    options?: { signal?: AbortSignal; location?: ChatLocation; sessionId?: string },
+    options?: {
+      signal?: AbortSignal;
+      location?: ChatLocation;
+      sessionId?: string;
+      activePlan?: string;
+      referencedEventId?: string;
+    },
   ): Promise<ChatResult>;
 }

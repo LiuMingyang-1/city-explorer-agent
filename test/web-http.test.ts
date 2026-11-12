@@ -41,7 +41,13 @@ const EVENT: EventView = {
   image_urls: [],
 };
 
-type SendOptions = { signal?: AbortSignal; location?: ChatLocation; sessionId?: string };
+type SendOptions = {
+  signal?: AbortSignal;
+  location?: ChatLocation;
+  sessionId?: string;
+  activePlan?: string;
+  referencedEventId?: string;
+};
 type SendCall = { userId: string; message: string; options?: SendOptions };
 type HistoryCall = { userId: string; sessionId?: string };
 
@@ -248,15 +254,35 @@ test("POST /api/chat：合法 location 随 options 透传给 service；不带则
   }
 });
 
-test("POST /api/chat：itinerary 结果与 history 的 itinerary/events 原样透传", async () => {
+test("POST /api/chat：plans 结果与 history 的 plans/itinerary/events 原样透传", async () => {
+  const PLAN = {
+    plan_id: "A",
+    label: "A" as const,
+    title: "下午看展",
+    itinerary: ITINERARY,
+    legs: [],
+    validation: { status: "passed" as const, scope: "inter_stop" as const, issues: [] },
+    warnings: [],
+  };
   const svc = fakeService({
     async send() {
-      return { kind: "itinerary", session_id: "sess_9", itinerary: ITINERARY, events: [EVENT] };
+      return {
+        kind: "plans",
+        session_id: "sess_9",
+        mode: "single",
+        active_plan: "A",
+        plans: [PLAN],
+        events: [EVENT],
+        coordinate_system: "GCJ-02",
+      };
     },
     async history() {
       return {
         messages: [{ role: "user", text: "hi" }],
         itinerary: ITINERARY,
+        plans: [PLAN],
+        mode: "comparison",
+        active_plan: "B",
         events: [EVENT],
       };
     },
@@ -265,14 +291,20 @@ test("POST /api/chat：itinerary 结果与 history 的 itinerary/events 原样�
   try {
     const send = await post(base, { message: "安排一下" });
     assert.deepEqual(send.json(), {
-      kind: "itinerary",
+      kind: "plans",
       session_id: "sess_9",
-      itinerary: ITINERARY,
+      mode: "single",
+      active_plan: "A",
+      plans: [PLAN],
       events: [EVENT],
+      coordinate_system: "GCJ-02",
     });
     const history = await call(base, "/api/chat/history");
     const data = history.json() as ChatHistory;
     assert.deepEqual(data.itinerary, ITINERARY);
+    assert.deepEqual(data.plans, [PLAN]);
+    assert.equal(data.mode, "comparison");
+    assert.equal(data.active_plan, "B");
     assert.deepEqual(data.events, [EVENT]);
   } finally {
     await close();
