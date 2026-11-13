@@ -10,11 +10,12 @@ export function redact(value:unknown,secrets:string[]):unknown {
 export interface ApiOptions {qoviaKey?:string;deepseekKey:string;fetch?:typeof fetch;record:(attempt:Attempt)=>void;searchLimit?:number;extractLimit?:number;searchResultCount?:number;}
 export function createPilotApi(options:ApiOptions) {
  if(options.searchResultCount!==undefined&&(!Number.isInteger(options.searchResultCount)||options.searchResultCount<1||options.searchResultCount>20))throw new PilotApiError("INVALID_SEARCH_RESULT_COUNT");
- let searches=0,extractions=0;
+ let searches=0,extractions=0,terminalFailure:string|null=null;
  const post=async(provider:Attempt["provider"],operation:Attempt["operation"],query:string,body:unknown,timeout:number):Promise<any>=>{
   if(provider==="qovia")throw new PilotApiError("QOVIA_DISABLED");
   if(operation==="search"){if(searches>=(options.searchLimit??10))throw new PilotApiError("SEARCH_BUDGET_EXHAUSTED");searches++;}
   else {if(extractions>=(options.extractLimit??5))throw new PilotApiError("EXTRACTION_BUDGET_EXHAUSTED");extractions++;}
+  if(terminalFailure)throw new PilotApiError(terminalFailure);
   const endpoint=operation==="search"?"https://api.deepseek.com/v1/tools/search":"https://api.deepseek.com/chat/completions";
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeout),start=performance.now();
   let status:number|null=null,bytes=0,raw:unknown=null,code="OK";
@@ -28,7 +29,7 @@ export function createPilotApi(options:ApiOptions) {
    try{raw=JSON.parse(text);}catch{if(r.ok)throw new PilotApiError("INVALID_JSON");raw={non_json_response:true};}
    if(!r.ok)throw new PilotApiError(status===401||status===403?"AUTH_FAILED":status===402?"INSUFFICIENT_BALANCE":status===429?"RATE_LIMITED":`HTTP_${status}`);
    return raw;
-  }catch(e){code=e instanceof PilotApiError?e.code:controller.signal.aborted?"TIMEOUT":"NETWORK_ERROR";throw new PilotApiError(code);}
+  }catch(e){code=e instanceof PilotApiError?e.code:controller.signal.aborted?"TIMEOUT":"NETWORK_ERROR";if(code==="INSUFFICIENT_BALANCE"||code==="AUTH_FAILED")terminalFailure=code;throw new PilotApiError(code);}
   finally {clearTimeout(timer);options.record(redact({provider,operation,query,elapsed_ms:Math.round(performance.now()-start),http_status:status,code,bytes,response:raw},[options.deepseekKey,...(options.qoviaKey?[options.qoviaKey]:[])]) as Attempt);}
  };
  return {

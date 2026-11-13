@@ -23,7 +23,7 @@ def main():
     sys.stdin.reconfigure(encoding="utf-8")
     sys.stdout.reconfigure(encoding="utf-8")
     urls = json.loads(sys.stdin.read(65536))
-    if not isinstance(urls, list) or len(urls) > 10:
+    if not isinstance(urls, list) or len(urls) > 20:
         raise ValueError("INVALID_IMAGE_INPUT")
     started = time.monotonic()
     engine = RapidOCR(intra_op_num_threads=1, inter_op_num_threads=1)

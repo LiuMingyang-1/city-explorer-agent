@@ -2,10 +2,11 @@ import type {CollectionRunConfig} from "./run-config.ts";
 import type {ExtractionDocument} from "./extraction.ts";
 
 export interface CollectedSource {engine:string;keyword:string;title:string;document:ExtractionDocument;}
-export interface EngineContext {directory:string;now:()=>string;}
+export interface EngineContext {directory:string;now:()=>string;deadline?:number;}
 export interface CollectionEngineAdapter {
   /** Total documents supported per run, not a claim of guaranteed results. */
   maxLimit:number;
+  maxQueryLimit?:number;
   search(request:{keyword:string;limit:number},context:EngineContext):Promise<{sources:CollectedSource[];warnings:string[]}>;
 }
 export type CollectionEngineRegistry=ReadonlyMap<string,CollectionEngineAdapter>;
@@ -20,7 +21,9 @@ export function buildCollectionPlan(config:CollectionRunConfig,registry:Collecti
     if(engine.limit<words.length)throw new Error("COLLECTION_LIMIT_BELOW_KEYWORD_COUNT");
     let remaining=engine.limit;
     for(let i=0;i<words.length&&remaining;i++){
-      const limit=Math.ceil(remaining/(words.length-i));jobs.push({engine:engine.name,keyword:words[i],limit});remaining-=limit;
+      const limit=Math.ceil(remaining/(words.length-i));
+      if(adapter.maxQueryLimit!==undefined&&limit>adapter.maxQueryLimit)throw new Error("COLLECTION_QUERY_LIMIT_EXCEEDED");
+      jobs.push({engine:engine.name,keyword:words[i],limit});remaining-=limit;
     }
   }
   return {city:config.city,jobs,requested_documents:jobs.reduce((n,j)=>n+j.limit,0),processing:config.processing};
@@ -34,13 +37,18 @@ export async function collectSources(config:CollectionRunConfig,registry:Collect
   const sources:CollectedSource[]=[],seen=new Set<string>(),duplicates:{engine:string;url:string}[]=[];
   const coverage:{engine:string;keyword:string;requested:number;retained:number;status:"success"|"partial"|"failed";warnings:string[];elapsed_ms:number}[]=[];
   for(const [index,job]of plan.jobs.entries()){
+    if(context.deadline!==undefined&&Date.now()>=context.deadline){coverage.push({engine:job.engine,keyword:job.keyword,requested:job.limit,retained:0,status:"failed",warnings:["RUN_DEADLINE_REACHED"],elapsed_ms:0});continue;}
     const start=Date.now();
     try{
       const result=await registry.get(job.engine)!.search(job,{...context,directory:`${context.directory}/${job.engine}-${index+1}`});
       let retained=0;
       for(const source of result.sources.slice(0,job.limit)){
-        if(seen.has(source.document.url)){duplicates.push({engine:job.engine,url:source.document.url});continue;}
-        seen.add(source.document.url);sources.push({...source,engine:job.engine,keyword:job.keyword});retained++;
+        // One official directory may describe multiple seed targets. Deduplicate
+        // documents per target, not globally, when the task supplies target context.
+        const seed=config.targets?.[job.keyword]?.seed_id;
+        const key=seed?JSON.stringify([seed,source.document.url]):source.document.url;
+        if(seen.has(key)){duplicates.push({engine:job.engine,url:source.document.url});continue;}
+        seen.add(key);sources.push({...source,engine:job.engine,keyword:job.keyword});retained++;
       }
       const warnings=[...result.warnings];if(retained<job.limit)warnings.push("INSUFFICIENT_UNIQUE_RESULTS");
       coverage.push({engine:job.engine,keyword:job.keyword,requested:job.limit,retained,status:warnings.length?"partial":"success",warnings,elapsed_ms:Date.now()-start});

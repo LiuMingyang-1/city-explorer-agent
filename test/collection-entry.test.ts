@@ -21,6 +21,13 @@ test("list-based config applies defaults without mutating input and gives five r
   assert.deepEqual(original,copy);assert.equal(plan.requested_documents,10);assert.deepEqual(plan.jobs.map(j=>j.limit),[5,5]);
   assert.equal(config.processing.attraction_duplicate_meters,10);assert.equal(config.processing.enabled,true);
 });
+test("XHS supports twenty per run as four five-document queries, never one twenty-document query",()=>{
+  const engine=createXhsSourceAdapter({workspace:process.cwd(),python:"unused"});
+  const config=parseCollectionRunConfig({...base(),engines:[{name:"xiaohongshu",limit:20,keywords:["西安展览","西安市集","西安亲子","西安新公园"]}]});
+  assert.deepEqual(buildCollectionPlan(config,new Map([["xiaohongshu",engine]])).jobs.map(j=>j.limit),[5,5,5,5]);
+  const wrong=parseCollectionRunConfig({...base(),engines:[{name:"xiaohongshu",limit:20}]});
+  assert.throws(()=>buildCollectionPlan(wrong,new Map([["xiaohongshu",engine]])),/COLLECTION_QUERY_LIMIT_EXCEEDED/);
+});
 
 test("per-engine keywords override common keywords and limits apply across all queries",()=>{
   const config=parseCollectionRunConfig({...base(),engines:[{name:"deepseek",limit:5,keywords:["西安公园","西安展览"]}]});

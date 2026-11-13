@@ -5,6 +5,13 @@ import type {Attempt} from "../src/collection/pilot-api.ts";
 import {documentsFrom,checkCandidate} from "../src/collection/pilot-extract.ts";
 import {latencySummary} from "../scripts/collect-pilot.ts";
 const keys={qoviaKey:"qovia-fixture-credential-123",deepseekKey:"deepseek-fixture-credential-123"};
+test("insufficient balance stops subsequent model requests without repeating paid HTTP calls",async()=>{
+ let calls=0;const records:Attempt[]=[];
+ const api=createPilotApi({...keys,extractLimit:10,record:a=>records.push(a),fetch:async()=>{calls++;return Response.json({error:{message:"not enough balance"}},{status:402});}});
+ await assert.rejects(api.extract("deepseek-flash","json",{}),/INSUFFICIENT_BALANCE/);
+ await assert.rejects(api.extract("deepseek-flash","json",{}),/INSUFFICIENT_BALANCE/);
+ assert.equal(calls,1);assert.equal(records.length,1);assert.equal(records[0].http_status,402);
+});
 
 test("web sample uses an explicit result cap and rejects invalid caps before any network call",async()=>{
  let sent=0;

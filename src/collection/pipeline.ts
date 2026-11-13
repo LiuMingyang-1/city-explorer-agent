@@ -7,6 +7,7 @@ import type { SlotIdentity } from "./identity.ts";
 import { createPilotApi } from "./pilot-api.ts";
 import type { ApiOptions } from "./pilot-api.ts";
 import { isCalendarDate } from "../itinerary/constraints.ts";
+import type { CollectionTarget } from "./run-config.ts";
 
 export function createDeepSeekExtractor(options: ApiOptions & { model?: string }): Extractor {
   const api = createPilotApi(options);
@@ -19,6 +20,7 @@ export function createDeepSeekExtractor(options: ApiOptions & { model?: string }
 
 export interface PipelineDocument { document: ExtractionDocument; structured?: unknown; }
 export interface ProcessingOptions {
+  target?:CollectionTarget;
   asOf: string; baseDate: string; invoke?: Extractor; identities?: readonly SlotIdentity[];
   /** Live clock is evaluated after awaited IO; fixed asOf is for deterministic replay. */
   now?: () => string;
@@ -59,9 +61,12 @@ export async function processCollection(input: readonly PipelineDocument[], opti
       } catch { metrics.ocr_errors.push("OCR_FAILED"); }
     }
     if (located.length >= (options.eventLimit ?? 10)) break;
-    const result = await extractActivities(candidate.document, { asOf: clock(), structured: candidate.structured, invoke });
+    const result = await extractActivities(candidate.document, { asOf: clock(), structured: candidate.structured, invoke,target:options.target });
     if (result.issues.length) { rejected.push({ source_url: candidate.document.url, reasons: result.issues }); continue; }
     for (const extracted of result.activities) {
+      if(options.target && (extracted.facts.record_type!=="attraction"||extracted.facts.target_match!==true||extracted.facts.visitable!==true)){
+        rejected.push({source_url:candidate.document.url,reasons:[extracted.facts.record_type!=="attraction"?"TARGET_RECORD_TYPE_MISMATCH":extracted.facts.target_match!==true?"TARGET_NOT_CONFIRMED":"TARGET_NOT_VISITABLE"]});continue;
+      }
       extracted.check.needs_primary_source = !!options.requirePrimary && candidate.document.authority === "unverified";
       extracted.check.issues = extracted.check.issues.filter(code => !["CITY_NOT_CONFIRMED", "EVIDENCE_MISSING:city"].includes(code));
       extracted.check.valid = extracted.check.issues.length === 0;

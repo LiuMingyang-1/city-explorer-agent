@@ -19,7 +19,7 @@ import { isCalendarDate } from "../itinerary/constraints.ts";
 import { deduplicateAttractions } from "./attraction-dedup.ts";
 import type { AttractionDuplicate } from "./attraction-dedup.ts";
 
-interface Sidecar { schema_version: "xian-release/2"; batch_id: string; identities: SlotIdentity[]; attraction_duplicates?: AttractionDuplicate[]; events: Record<string, {
+export interface Sidecar { schema_version: "xian-release/2"; batch_id: string; identities: SlotIdentity[]; attraction_duplicates?: AttractionDuplicate[]; events: Record<string, {
   freshness: NightlyMetadata; provenance: EventProvenance; window: { start_at: string | null; end_at: string | null; record_type?: "activity" | "attraction"; schedule_json?: import("../data/schedule.ts").Schedule | null };
   status_evidence?: { source_url: string; quote: string; verified_at: string };
 }>; }
@@ -50,8 +50,9 @@ export function inspectRelease(root: string) {
  * for diagnosis. There is no seed, destructive replace, or background scheduling here.
  */
 export interface CancellationNotice { event_id: string; source_event_key: string; document: ExtractionDocument; quote: string; }
-export async function publishRelease(rootPath: string, input: PreparedCollection, options: { batchId: string; asOf: string; beforeSwitch?: () => void; cancellations?: readonly CancellationNotice[]; attractionDuplicateMeters?: number }) {
-  const root = resolve(rootPath);
+export interface PublicationOptions {batchId:string;asOf:string;beforeSwitch?:()=>void;cancellations?:readonly CancellationNotice[];attractionDuplicateMeters?:number;}
+/** Shared validation for both the legacy snapshot publisher and the canonical database. */
+export function validatePublication(input:PreparedCollection,options:PublicationOptions){
   if (!validBatch(options.batchId)) throw new Error("INVALID_BATCH_ID");
   if (!isCalendarDate(options.asOf.slice(0, 10)) || !/^\d{4}-\d{2}-\d{2}T.*Z$/.test(options.asOf) || !Number.isFinite(Date.parse(options.asOf))) throw new Error("INVALID_PUBLICATION_CLOCK");
   if (input.dataset.events.length) {
@@ -72,31 +73,13 @@ export async function publishRelease(rootPath: string, input: PreparedCollection
     if (provenance.source_url !== expected.source_url || provenance.source_kind !== expected.source_kind
       || JSON.stringify(provenance.evidence) !== JSON.stringify(expected.evidence)) throw new Error("PUBLICATION_WITNESS_MISMATCH");
   }
-  mkdirSync(join(root, "releases"), { recursive: true });
-  const lock = join(root, "publication.lock");
-  let handle: number;
-  try { handle = openSync(lock, "wx"); } catch { throw new Error("PUBLICATION_LOCKED"); }
-  let pointerTemp: string | undefined;
-  let written = 0;
-  const discarded: { event_id: string; reason: string }[] = [];
-  try {
-    const previous = existsSync(join(root, "CURRENT")) ? inspectRelease(root) : undefined;
-    const destination = join(root, "releases", options.batchId);
-    mkdirSync(destination); // Reusing a batch name never overwrites immutable data.
-    const database = join(destination, "events.db");
-    if (previous) {
-      const source = new DatabaseSync(previous.database, { readOnly: true });
-      try { await backup(source, database); } finally { source.close(); }
-    }
-    const db = new DatabaseSync(database);
-    const sidecar: Sidecar = previous ? structuredClone(previous.sidecar) : { schema_version: "xian-release/2", batch_id: options.batchId, identities: [], events: {} };
-    sidecar.batch_id = options.batchId;
-    try {
-      ensureEventsSchema(db); db.exec("PRAGMA journal_mode=DELETE");
+}
+/** Mutates the caller's SQLite transaction and metadata. The caller owns commit/rollback. */
+export function applyPublication(db:DatabaseSync,sidecar:Sidecar,input:PreparedCollection,options:PublicationOptions){
+  let written=0;const discarded:{event_id:string;reason:string}[]=[];
+  sidecar.batch_id=options.batchId;
       const columns = ["id", "title", "description", "category", "venue_name", "address", "latitude", "longitude", "start_at", "end_at", "suggested_duration_minutes", "budget_min", "budget_max", "currency", "budget_note", "guide_url", "thumbnail_url", "image_urls", "record_type", "city", "amap_poi_id", "valid_from", "valid_to", "schedule_json", "time_note", "time_status", "status", "source_published_at", "source_updated_at", "fetched_at", "updated_at"] as const;
       const insert = db.prepare(`INSERT INTO events (${columns.join(",")}) VALUES (${columns.map(() => "?").join(",")}) ON CONFLICT(id) DO UPDATE SET ${columns.filter(c => c !== "id").map(c => `${c}=excluded.${c}`).join(",")}`);
-      db.exec("BEGIN IMMEDIATE");
-      try {
         const inserted = new Set<string>();
         for (const event of input.dataset.events) {
           const incoming = structuredClone(input.metadata[event.id]);
@@ -148,8 +131,39 @@ export async function publishRelease(rootPath: string, input: PreparedCollection
           .map(d=>({...d,kept_id:replacements.get(d.kept_id) ?? d.kept_id}));
         sidecar.attraction_duplicates = [...new Map(audit.map(d=>[JSON.stringify([d.removed_id,d.kept_id]),d])).values()];
         if (!written && !dedup.duplicates.length && !options.cancellations?.length) throw new Error("NO_ELIGIBLE_UPDATES");
+  return {written,discarded,sidecar};
+}
+
+export async function publishRelease(rootPath: string, input: PreparedCollection, options: { batchId: string; asOf: string; beforeSwitch?: () => void; cancellations?: readonly CancellationNotice[]; attractionDuplicateMeters?: number }) {
+  const root = resolve(rootPath);
+  validatePublication(input,options);
+  mkdirSync(join(root, "releases"), { recursive: true });
+  const lock = join(root, "publication.lock");
+  let handle: number;
+  try { handle = openSync(lock, "wx"); } catch { throw new Error("PUBLICATION_LOCKED"); }
+  let pointerTemp: string | undefined;
+  let written = 0;
+  const discarded: { event_id: string; reason: string }[] = [];
+  try {
+    const previous = existsSync(join(root, "CURRENT")) ? inspectRelease(root) : undefined;
+    const destination = join(root, "releases", options.batchId);
+    mkdirSync(destination); // Reusing a batch name never overwrites immutable data.
+    const database = join(destination, "events.db");
+    if (previous) {
+      const source = new DatabaseSync(previous.database, { readOnly: true });
+      try { await backup(source, database); } finally { source.close(); }
+    }
+    const db = new DatabaseSync(database);
+    const sidecar: Sidecar = previous ? structuredClone(previous.sidecar) : { schema_version: "xian-release/2", batch_id: options.batchId, identities: [], events: {} };
+    sidecar.batch_id = options.batchId;
+    try {
+      ensureEventsSchema(db); db.exec("PRAGMA journal_mode=DELETE");
+      db.exec("BEGIN IMMEDIATE");
+      try {
+        const update=applyPublication(db,sidecar,input,options);
+        written=update.written;discarded.push(...update.discarded);
         db.exec("COMMIT");
-      } catch (error) { db.exec("ROLLBACK"); throw error; }
+      } catch(error){db.exec("ROLLBACK");throw error;}
       if (db.prepare("PRAGMA integrity_check").get()!.integrity_check !== "ok") throw new Error("DATABASE_INTEGRITY_FAILED");
     } finally { db.close(); }
     writeFileSync(join(destination, "provenance.json"), JSON.stringify(sidecar, null, 2) + "\n", { flag: "wx" });

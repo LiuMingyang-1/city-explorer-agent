@@ -24,6 +24,16 @@ class CollectorBoundaryTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "INVALID_SAMPLE_LIMIT"):
                 runner.bounded_items(response, limit)
 
+    def test_five_unique_details_and_final_page_is_not_discarded(self):
+        selected = set()
+        page = {"items": [{"id": str(i)} for i in range(10)] + [{"model_type": "rec_query"}], "has_more": False}
+        a, count = runner.select_xhs_page(page, 5, selected)
+        self.assertEqual(len(a["items"]), 5)
+        self.assertEqual(count, 11)
+        self.assertTrue(a["has_more"])
+        self.assertEqual(len(selected), 5)
+        self.assertEqual(len(page["items"]), 11)
+
     def test_output_path_cannot_escape_private_workspace(self):
         self.assertEqual(runner.private_path(str(ROOT / ".local-data/runs/sample")), ROOT / ".local-data/runs/sample")
         for path in [ROOT / "docs/raw.json", ROOT / ".local-data/../leak.json", ROOT.parent / "outside.json"]:

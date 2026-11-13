@@ -1,9 +1,11 @@
 node_modules/
 .env
 data/*.db
+!data/events.db
 data/*.db-journal
 data/*.db-wal
 data/*.db-shm
+data/*.db.*.lock
 dist/
 coverage/
 .DS_Store

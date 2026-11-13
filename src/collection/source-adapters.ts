@@ -38,14 +38,16 @@ async function exportsIn(directory:string):Promise<string[]>{
 }
 export function createXhsSourceAdapter(options:{python:string;workspace:string;launch?:(executable:string,args:string[])=>Promise<unknown>}):CollectionEngineAdapter {
   const run=promisify(execFile);
-  return {maxLimit:5,async search(request,context){
+  return {maxLimit:20,maxQueryLimit:5,async search(request,context){
+    if(!Number.isInteger(request.limit)||request.limit<1||request.limit>5)throw new Error("COLLECTION_QUERY_LIMIT_EXCEEDED");
     // MediaCrawler creates the destination with exist_ok=False. Only create its
     // parent here; an existing destination must never be silently reused.
     await mkdir(dirname(context.directory),{recursive:true});
     try{
-      const args=[resolve(options.workspace,"scripts/mediacrawler-local.py"),"--platform","xhs","--keyword",request.keyword,"--limit",String(request.limit),"--timeout","120","--output",resolve(context.directory)];
+      const timeout=120;
+      const args=[resolve(options.workspace,"scripts/mediacrawler-local.py"),"--platform","xhs","--keyword",request.keyword,"--limit",String(request.limit),"--timeout",String(timeout),"--output",resolve(context.directory)];
       if(options.launch)await options.launch(options.python,args);
-      else await run(options.python,args,{cwd:options.workspace,windowsHide:true,timeout:140000,maxBuffer:2*1024*1024});
+      else await run(options.python,args,{cwd:options.workspace,windowsHide:true,timeout:(timeout+30)*1000,maxBuffer:2*1024*1024});
     }catch(error){const code=(error as any)?.code;throw new Error(code===3?"XHS_LOGIN_REQUIRED":code===4?"XHS_TIMEOUT":"XHS_SEARCH_FAILED");}
     const files=await exportsIn(context.directory);if(!files.length)throw new Error("XHS_EXPORT_MISSING");
     const sources:CollectedSource[]=[],warnings:string[]=[];

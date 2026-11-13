@@ -1,0 +1,163 @@
+{
+  "schema_version": "xian-scheduled-collection/design-1",
+  "status": "design_not_connected_to_runtime",
+  "profile_id": "xian-nightly-discovery",
+  "city": "西安市",
+  "keyword_city": "西安",
+  "timezone": "Asia/Shanghai",
+  "keyword_library": "configs/collection.keyword-library.json",
+  "schedule": {
+    "enabled": false,
+    "backend": "windows_task_scheduler",
+    "task_name": "CityExplorerNightlyDiscovery",
+    "poll_minutes": 5,
+    "at": "23:30",
+    "weekdays": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "search_anchor_day_offset": 1,
+    "max_runs_per_day": 1,
+    "missed_run": "once_within_window",
+    "catch_up_window_minutes": 120,
+    "overlap": "skip",
+    "max_run_minutes": 30
+  },
+  "rotation": {
+    "state_file": ".local-data/xian/scheduled/state.json",
+    "group_selection": "round_robin",
+    "template_selection": "round_robin",
+    "area_group_selection": "round_robin",
+    "area_selection": "round_robin",
+    "advance_on": "query_completed_including_empty",
+    "failed_query": "resume_same_plan"
+  },
+  "engines": [
+    {
+      "name": "xiaohongshu",
+      "enabled": true,
+      "search_method": "keyword_library",
+      "limit": 5,
+      "keyword_rules": {
+        "strategy": "weekday_groups",
+        "queries_per_run": 1,
+        "results_per_query": 5,
+        "weekday_groups": {
+          "1": [
+            "xhs_exhibitions"
+          ],
+          "2": [
+            "xhs_markets"
+          ],
+          "3": [
+            "xhs_new_places"
+          ],
+          "4": [
+            "xhs_performances"
+          ],
+          "5": [
+            "xhs_weekend"
+          ],
+          "6": [
+            "xhs_family"
+          ],
+          "7": [
+            "xhs_new_venues"
+          ]
+        },
+        "scope": "city",
+        "contextual": {
+          "enabled": true,
+          "every_n_runs": 4,
+          "max_queries_per_run": 1,
+          "replacement": "replace_regular_query",
+          "priority": [
+            "holiday",
+            "seasonal"
+          ],
+          "seasonal_group": "xhs_seasonal",
+          "holiday_group": "xhs_holiday"
+        }
+      }
+    },
+    {
+      "name": "deepseek",
+      "enabled": true,
+      "search_method": "keyword_library",
+      "limit": 10,
+      "keyword_rules": {
+        "strategy": "slots",
+        "results_per_query": 2,
+        "slots": [
+          {
+            "id": "events_citywide",
+            "groups": [
+              "deepseek_exhibitions",
+              "deepseek_markets",
+              "deepseek_performances",
+              "deepseek_culture",
+              "deepseek_family"
+            ],
+            "queries_per_run": 3,
+            "scope": "city"
+          },
+          {
+            "id": "places_regional",
+            "groups": [
+              "deepseek_new_places",
+              "deepseek_new_venues"
+            ],
+            "queries_per_run": 2,
+            "scope": "rotating_area"
+          }
+        ],
+        "contextual": {
+          "enabled": true,
+          "every_n_runs": 2,
+          "max_queries_per_run": 1,
+          "replacement": "round_robin_within_matching_slot",
+          "priority": [
+            "holiday",
+            "seasonal"
+          ],
+          "seasonal_group": "deepseek_seasonal",
+          "seasonal_slot": "places_regional",
+          "holiday_group": "deepseek_holiday",
+          "holiday_slot": "events_citywide"
+        }
+      }
+    }
+  ],
+  "collection_defaults": {
+    "output_dir": ".local-data/xian/scheduled/runs",
+    "publish_root": ".local-data/xian/scheduled/release",
+    "processing": {
+      "enabled": true,
+      "ocr": true,
+      "attraction_duplicate_meters": 10
+    },
+    "budgets": {
+      "model_requests": 80,
+      "map_requests": 60,
+      "level_searches": 10
+    }
+  },
+  "execution": {
+    "max_attempts_per_query": 2,
+    "retry_backoff_seconds": 60,
+    "retry_only": [
+      "network_error",
+      "timeout",
+      "rate_limited"
+    ],
+    "on_login_required": "skip_engine_and_report",
+    "on_insufficient_results": "report_without_changing_keyword",
+    "checkpoint": true
+  },
+  "note": "历史设计稿，不用于运行。已实现的v1配置见configs/collection.scheduled.json；查询级续跑等未接通字段以README.collection.md说明为准。"
+}

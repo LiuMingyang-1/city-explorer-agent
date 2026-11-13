@@ -11,6 +11,12 @@ test("valid publication contract includes stats and does not mutate inputs",()=>
  const {dataset,options}=collectionFixture(),before=JSON.stringify(dataset);const report=validateDataset(dataset,options);
  assert.equal(report.valid,true,JSON.stringify(report.issues));assert.equal(report.stats.slots,1);assert.equal(report.stats.projects,1);assert.equal(report.stats.venues,1);assert.equal(JSON.stringify(dataset),before);
 });
+test("real flight simulation exhibits and fictional literary characters are not synthetic records",()=>{
+ for(const description of ["航空科技馆设有模拟飞行体验和飞机模型展项", "展览介绍小说中的虚构人物与艺术形象", "Example gallery presents an actual aircraft collection"]){
+  const {dataset,options}=collectionFixture();dataset.events[0].description=description;
+  const report=validateDataset(dataset,options);assert.equal(report.valid,true,JSON.stringify(report.issues));
+ }
+});
 const invalid:[string,(d:RealDataset)=>void,string][]=[
  ["empty dataset",d=>{d.events=[];d.provenance=[];},"SCHEMA_INVALID"],
  ["fake calendar day",d=>{d.events[0].start_at="2026-02-30T10:00";},"INVALID_SLOT"],

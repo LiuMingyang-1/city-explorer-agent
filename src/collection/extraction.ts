@@ -8,6 +8,7 @@ import { scheduleSchema, scheduleProblems } from "../data/schedule.ts";
 import type { Schedule } from "../data/schedule.ts";
 import { softenTime } from "./time-policy.ts";
 import { normalizeActivityTime } from "./time-normalization.ts";
+import type { CollectionTarget } from "./run-config.ts";
 
 /** Source authority is assigned by the collector's source policy, never by a model. */
 export interface ExtractionDocument {
@@ -22,6 +23,7 @@ export interface ExtractionDocument {
 }
 
 export interface ActivityFacts {
+  target_match?: boolean; visitable?: boolean;
   title: string;
   /** A faithful summary; no character-for-character source match is required. */
   description: string;
@@ -51,6 +53,7 @@ const nullableText = { type: ["string", "null"], minLength: 1, maxLength: 1000 }
 const positiveMinutes = { type: ["integer", "null"], minimum: 1, maximum: 1440 };
 const money = { type: ["integer", "null"], minimum: 0, maximum: 100_000_000 };
 const properties = {
+  target_match:{type:"boolean"},visitable:{type:"boolean"},
   time_note: { type: ["string", "null"], maxLength: 10000 }, time_status: { enum: ["complete", "partial", "unknown", "conflicting"] },
   amap_poi_id: nullableText, latitude: {type:["number","null"]}, longitude: {type:["number","null"]},
   record_type: { enum: ["activity", "attraction"] }, valid_from: nullableText, valid_to: nullableText, schedule_json: scheduleSchema,
@@ -63,7 +66,7 @@ const properties = {
   confirmed_end_date: nullableText, confirmed_start_date: nullableText, schedule_type: { enum: ["window", "fixed", "unknown"] },
   status: { enum: ["active", "paused", "cancelled", "past", "unknown"] },
   conflicts: { type: "array", maxItems: 10, items: { type: "string", minLength: 1, maxLength: 300 } },
-  evidence: { type: "object", maxProperties: 20, additionalProperties: { type: "string", minLength: 1, maxLength: 400 } },
+  evidence: { type: "object", maxProperties: 20, properties:{scenic_level_source:{type:"string",minLength:1,maxLength:8192}}, additionalProperties: { type: "string", minLength: 1, maxLength: 400 } },
 };
 export const extractionSchema = { type: "object", additionalProperties: false, required: ["activities"], properties: {
   activities: { type: "array", maxItems: 3, items: { type: "object", additionalProperties: false, required: ["title", "description", "category", "venue_name", "address", "city", "suggested_duration_minutes", "budget_min", "budget_max", "budget_note", "status", "conflicts"], properties } },
@@ -78,6 +81,7 @@ activity的category从活动分类枚举选择；attraction只选1A/2A/3A/4A/5A/
 title和description可忠实概括。venue_name保留场馆主体和分馆身份，内部楼层、入口可在简介或schedule_json.note保留。地点归属不确定时city=null，交给高德确认。
 新版时间字段为valid_from/valid_to（YYYY-MM-DD）和schedule_json。valid表示展期/规则有效日期，不是连续开放时间。长期景点可以没有日期；未知不等于全天开放。
 schedule_json记录Asia/Shanghai时区：mode=weekly表示每周开放，weekdays的1为周一、7为周日；mode=dates记录具体日期场次；always_open仅限明确全天开放；未知填null或unknown。每个window用start/end的HH:mm，缺少钟点填null，不补午夜。多个日期分别列出，午休拆为两个window。跨午夜用end_day_offset=1，正常为0；明确停止入场时填last_entry。
+停止售票不等于停止入场：只有明确写停止入场/入园/入馆才填last_entry，否则把售票截止保留在time_note。exceptions只能记来源明确提供的特殊日期，不能把每周闭馆日或“法定节假日除外”展开成当前某天的示例，不生成春节等节日的示例日期；未明确年份的临时安排保留原文备注。子馆不能仅因位于景区/校园内就继承父场所开放时间；归属不清时备注并用partial或unknown。
 冬夏季等开放规则有生效期时，在对应weekly规则上写valid_from/valid_to，不能把冬季时间用到生效前，也不能把季节规则的到期当成景点永久关闭。长期景点自身valid_from/valid_to可为空，临时活动展期与季节规则分别保存。exceptions只记录正文明确列出的特殊日期，不枚举常规周一，不猜法定节假日。不要逐日展开整个展期，周规则交给本地计算。
 不需要输出旧版start_at/end_at/confirmed_start_date/confirmed_end_date/schedule_type；程序负责兼容旧数据。年份可结合近期首次发布时间和正文推定，不能仅凭旧帖编辑时间补年，不能把发帖时间当活动开始。
 费用为每人人民币分，未知null，免费为0；建议停留分钟数可合理估计，说明是估计。不添加tags、参与方式、预约字段；预约和提前到场要求可写简介/备注。
@@ -138,10 +142,10 @@ export function checkFacts(facts: ActivityFacts, doc: ExtractionDocument, asOf: 
 
 export interface CheckedActivity { facts: ActivityFacts; document_sha256: string; check: FactsCheck; }
 export interface ExtractionResult { route: "structured" | "model"; activities: CheckedActivity[]; issues: string[]; model_calls: number; }
-export type Extractor = ((system: string, input: { text: string; source_url: string; schema: typeof extractionSchema; current_time?: string; timezone?: string; published_at?: string | null; updated_at?: string | null; search_city?: string }) => Promise<string>) & { locationFor?: (url: string, facts: ActivityFacts) => import("./geocoding.ts").VerifiedLocation | null };
+export type Extractor = ((system: string, input: { text: string; source_url: string; schema: typeof extractionSchema; current_time?: string; timezone?: string; published_at?: string | null; updated_at?: string | null; search_city?: string; target?:CollectionTarget }) => Promise<string>) & { locationFor?: (url: string, facts: ActivityFacts) => import("./geocoding.ts").VerifiedLocation | null };
 
 /** Structural retries are bounded; fact failures are never repaired by inventing values. */
-export async function extractActivities(doc: ExtractionDocument, options: { asOf: string; structured?: unknown; invoke?: Extractor }): Promise<ExtractionResult> {
+export async function extractActivities(doc: ExtractionDocument, options: { asOf: string; structured?: unknown; invoke?: Extractor; target?:CollectionTarget }): Promise<ExtractionResult> {
   const route = options.structured === undefined ? "model" : "structured";
   const result: ExtractionResult = { route, activities: [], issues: [], model_calls: 0 };
   if (!doc.text.trim() || doc.text.length > 30000 || !publicUrl(doc.url)) return { ...result, issues: ["INVALID_DOCUMENT"] };
@@ -152,7 +156,8 @@ export async function extractActivities(doc: ExtractionDocument, options: { asOf
       if (!options.invoke) return { ...result, issues: ["MODEL_REQUIRED"] };
       result.model_calls++;
       try {
-        const text = await options.invoke(FACT_EXTRACTION_PROMPT + repairFeedback, { text: doc.text, source_url: doc.url, schema: extractionSchema, current_time: options.asOf, timezone: "Asia/Shanghai", published_at: doc.published_at, updated_at: doc.updated_at ?? null, search_city: "西安市" });
+        const targetRule=options.target ? "\n本次为景点初始化，target是采集任务约束，只提取该name/aliases对应的长期游览主体，record_type必须为attraction。逐条明确返回target_match和visitable布尔值。不是目标、仅顺带提及、未开放在建项目、纯办公/宿舍或无游览用途时不要提取。创新港校园可以作为游览主体，但不推断校外访客可自由进入；访问限制写简介。不可用无关学校/附近景区替代。" : "";
+        const text = await options.invoke(FACT_EXTRACTION_PROMPT + targetRule + repairFeedback, { text: doc.text, source_url: doc.url, schema: extractionSchema, current_time: options.asOf, timezone: "Asia/Shanghai", published_at: doc.published_at, updated_at: doc.updated_at ?? null, search_city: "西安市", ...(options.target?{target:options.target}:{}) });
         raw = text.length <= 64000 ? JSON.parse(text) : null;
       } catch { raw = null; }
     }

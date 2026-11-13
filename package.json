@@ -18,7 +18,8 @@
     "typecheck": "tsc --noEmit",
     "test": "node --test \"test/**/*.test.ts\"",
     "check": "npm run typecheck && npm test",
-    "check:frontend": "node --check frontend/app.js && node --check frontend/places.js && node --check frontend/chat.js && node --check scripts/frontend-dev.mjs"
+    "check:frontend": "node --check frontend/app.js && node --check frontend/places.js && node --check frontend/chat.js && node --check scripts/frontend-dev.mjs",
+    "collect:task": "node scripts/collect-task.ts"
   },
   "dependencies": {
     "@earendil-works/pi-agent-core": "1.4.0",

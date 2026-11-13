@@ -44,7 +44,8 @@ export function validateDataset(value:unknown,options:ValidationOptions):Validat
   const p=provenance.get(e.id);if(!p){issue("MISSING_PROVENANCE",e.id);continue;}
   projects.add(p.source_event_key);venues.add(p.venue_key);
   for(const [key,text] of Object.entries(e))if(typeof text==="string"&&text.trim().length===0)issue("BLANK_FIELD",e.id,key);
-  if(/模拟|虚构|mock|fixture|example/i.test([e.title,e.description,e.venue_name,e.address].join(" ")))issue("SYNTHETIC_CONTENT",e.id);
+  // Flight simulation is a real exhibit, not a marker of synthetic source data.
+  if(/模拟数据|虚构(?:数据|活动|景点|场馆)|合成测试|仅供测试|非真实(?:活动|景点)|\b(?:mock|fixture|synthetic)\b|\bexample\s+(?:data|event|record|attraction)\b/i.test([e.title,e.description,e.venue_name,e.address].join(" ")))issue("SYNTHETIC_CONTENT",e.id);
   const start=e.start_at===null?NaN:localTime(e.start_at),end=e.end_at===null?NaN:localTime(e.end_at);
   if(e.start_at!==null&&!Number.isFinite(start)||e.end_at!==null&&!Number.isFinite(end)||Number.isFinite(start)&&Number.isFinite(end)&&(end<=start||end-start>86400000))issue("INVALID_SLOT",e.id);
   for(const code of scheduleProblems(e.schedule_json))issue(code,e.id);

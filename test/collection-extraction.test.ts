@@ -4,6 +4,14 @@ import { checkFacts, extractActivities } from "../src/collection/extraction.ts";
 import type { ActivityFacts, ExtractionDocument } from "../src/collection/extraction.ts";
 
 import { extractionFixture } from "./collection-downstream-fixture.ts";
+test("long scenic reference URLs use URL limits instead of the short evidence-note limit",async()=>{
+ const {facts,document,asOf}=extractionFixture();
+ const value={...facts,record_type:"attraction",category:"等级未知",evidence:{scenic_level_source:"https://www.shidicn.com/reference?path="+"x".repeat(650)}};
+ const result=await extractActivities(document,{asOf,structured:{activities:[value]}});
+ assert.deepEqual(result.issues,[]);assert.equal(result.activities[0].check.valid,true,JSON.stringify(result.activities[0].check));
+ value.evidence.scenic_level_source="x".repeat(8193);
+ assert((await extractActivities(document,{asOf,structured:{activities:[value]}})).issues.includes("INVALID_EXTRACTION_SCHEMA"));
+});
 
 test("structured facts bypass the model but undergo the same field evidence checks", async () => {
   const { facts, document, asOf } = extractionFixture(); let calls = 0;

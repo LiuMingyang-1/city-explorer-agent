@@ -68,6 +68,25 @@ def bound_response(platform, response, limit):
     return {**response, key: response[key][:limit]}, count
 
 
+def select_xhs_page(response, remaining, selected_ids):
+    """Apply the total unique-detail quota across pages, before any detail IO."""
+    if not 1 <= remaining <= 5:
+        raise ValueError("INVALID_SAMPLE_LIMIT")
+    if not isinstance(response, dict) or not isinstance(response.get("items"), list):
+        raise ValueError("UNRECOGNIZED_SEARCH_RESPONSE")
+    unique = []
+    for item in response["items"]:
+        if not isinstance(item, dict) or item.get("model_type") in ("rec_query", "hot_query"):
+            continue
+        note_id = item.get("id")
+        if isinstance(note_id, str) and note_id and note_id not in selected_ids:
+            unique.append(item)
+            selected_ids.add(note_id)
+            if len(unique) == remaining:
+                break
+    return {**response, "items": unique, "has_more": bool(unique) or bool(response.get("has_more"))}, len(response["items"])
+
+
 async def main() -> int:
     started = time.perf_counter()
     parser = argparse.ArgumentParser(description=__doc__)
@@ -166,7 +185,10 @@ async def main() -> int:
     config.ENABLE_IP_PROXY = False
     config.COOKIES = ""
     config.MAX_CONCURRENCY_NUM = 1
-    config.CRAWLER_MAX_NOTES_COUNT = args.limit
+    # Upstream requests a fixed 20-item page. Only up to 5 unique details are
+    # selected; the task-level four-keyword plan provides 20 requested notes.
+    crawl_page_budget = 20
+    config.CRAWLER_MAX_NOTES_COUNT = crawl_page_budget
     config.SAVE_DATA_OPTION = "jsonl"
     config.CRAWLER_MAX_SLEEP_SEC = 3
     import main as crawler
@@ -204,7 +226,8 @@ async def main() -> int:
         client_class.pong = observed_pong
         crawler.CrawlerFactory.CRAWLERS[args.platform].search = skip_search
 
-    metrics = {"search_calls": 0, "returned_items": 0, "search_errors": 0}
+    metrics = {"search_calls": 0, "returned_items": 0, "search_errors": 0, "selected_items": 0}
+    selected_ids = set()
     sort = "upstream_default"
     if not args.verify_login:
         config.SORT_TYPE = "time_descending"
@@ -225,7 +248,11 @@ async def main() -> int:
             core.filter_search_result_card = lambda cards: original_filter(cards)[:args.limit]
 
         async def bounded_search(client, *positional, **kwargs):
-            if metrics["search_calls"] >= 1:
+            search_budget = 1
+            remaining = args.limit - metrics["selected_items"]
+            if args.platform == "xhs" and (remaining <= 0 or metrics["search_calls"] >= search_budget):
+                return {"items": [], "has_more": False}
+            if metrics["search_calls"] >= search_budget:
                 raise RuntimeError("SAMPLE_SEARCH_LIMIT")
             metrics["search_calls"] += 1
             if args.platform == "dy":
@@ -240,8 +267,10 @@ async def main() -> int:
                 kwargs["page_size"] = args.limit
             try:
                 response = await original_search(client, *positional, **kwargs)
-                response, count = bound_response(args.platform, response, args.limit)
+                response, count = select_xhs_page(response, remaining, selected_ids) if args.platform == "xhs" else bound_response(args.platform, response, args.limit)
                 metrics["returned_items"] += count
+                if args.platform == "xhs":
+                    metrics["selected_items"] += len(response["items"])
                 return response
             except Exception:
                 metrics["search_errors"] += 1
@@ -260,7 +289,7 @@ async def main() -> int:
                 "--headless", "true", "--get_comment", "false",
                 "--get_sub_comment", "false", "--get_media", "false",
                 "--save_data_option", "jsonl", "--save_data_path", str(destination or ROOT / ".local-data/tools/login-checks"),
-                "--crawler_max_notes_count", str(args.limit), "--max_concurrency_num", "1"]
+                "--crawler_max_notes_count", str(crawl_page_budget), "--max_concurrency_num", "1"]
     try:
         await asyncio.wait_for(crawler.main(), args.timeout)
     finally:
