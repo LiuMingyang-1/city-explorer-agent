@@ -114,7 +114,7 @@
    if(activityMarkers.length)native.remove(activityMarkers.map(item=>item.marker));
    activityMarkers=prepared.map(({group,position})=>{
     const content=window.WanderActivities.pin(group);content.addEventListener('click',()=>open(group));
-    const marker=new window.AMap.Marker({position,content,anchor:'center',title:group.events[0]?.title||group.name,zIndex:450});return {marker,group,content,position,visible:false};
+    const marker=new window.AMap.Marker({position,content,anchor:'center',title:group.events[0]?.title||group.name,zIndex:450});return {marker,group,content,position};
    });updatePlaces();
   }catch{ /* A feed failure must not tear down the basemap. */ }
  }

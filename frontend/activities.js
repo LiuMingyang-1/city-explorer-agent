@@ -1,7 +1,7 @@
 'use strict';
 // Read-only event feed. Demo data comes from the repository's seed templates.
 (() => {
- let feed=[],planEvents=[],groups=[],leafletLayer,renderEpoch=0,openEpoch=0,returnFocus,feedEpoch=0,feedRequest,viewportTimer,lastViewportKey;
+ let feed=[],planEvents=[],groups=[],leafletLayer,renderEpoch=0,openEpoch=0,returnFocus,feedEpoch=0,feedRequest,viewportTimer,lastViewportKey,feedMissing=false;
  const text=(tag,cls,value)=>{const n=document.createElement(tag);n.className=cls;n.textContent=String(value??'');return n;};
  const valid=e=>e&&typeof e.event_id==='string'&&typeof e.title==='string'&&typeof e.latitude==='number'&&typeof e.longitude==='number'&&Number.isFinite(e.latitude)&&Number.isFinite(e.longitude)&&Math.abs(e.latitude)<=90&&Math.abs(e.longitude)<=180;
  function present(event){
@@ -115,14 +115,15 @@
     if(view?.bbox?.length===4){const query=new URLSearchParams({bbox:view.bbox.map(v=>v.toFixed(4)).join(','),limit:'200'});endpoint+=(endpoint.includes('?')?'&':'?')+query;}
    }
    let response=await fetch(endpoint,{credentials:'same-origin',signal:request.signal});
-   if(!configured&&response.status===404)response=await fetch('/data/demo-events.json',{credentials:'same-origin',signal:request.signal});
+   if(!configured&&response.status===404){feedMissing=true;response=await fetch('/data/demo-events.json',{credentials:'same-origin',signal:request.signal});}
+   else feedMissing=false;
    if(!response.ok)throw new Error('Feed unavailable');const data=await response.json();if(epoch!==feedEpoch||!Array.isArray(data.events))return;
    feed=data.events.filter(valid).map(e=>({...e,coordinate_system:data.coordinate_system||'GCJ-02',is_demo:Boolean(data.is_demo||e.is_demo||/模拟数据，非真实活动/.test(e.description||''))}));refresh();
   }catch{ /* Keep the current viewport's usable data when the feed is temporarily unavailable. */ }
  }
  function viewportChanged(){
   if(!window.WanderAMap?.ready)renderMap();
-  const configured=window.WANDER_CONFIG?.eventsEndpoint;if(configured&&!configured.startsWith('/api/events'))return;
+  const configured=window.WANDER_CONFIG?.eventsEndpoint;if(feedMissing||configured&&!configured.startsWith('/api/events'))return;
   const view=window.WanderAMap?.getViewport?.();if(!view?.bbox)return;
   const key=view.bbox.map(v=>v.toFixed(4)).join(',');if(key===lastViewportKey)return;lastViewportKey=key;
   clearTimeout(viewportTimer);viewportTimer=setTimeout(()=>load({viewport:true}),250);
