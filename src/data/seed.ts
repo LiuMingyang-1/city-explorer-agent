@@ -15,6 +15,18 @@ import type { Event } from "./types.ts";
 
 export const SEED_DAYS = 7;
 
+/** 采集交付库的标记表：存在即说明库内是真实采集数据而非 mock（见 src/collection/database.ts）。 */
+const COLLECTION_MARKER_TABLE = "_collection_metadata";
+
+/** 已打开的库是否带采集交付标记；seed 入口据此拒绝覆盖真实数据。 */
+export function hasCollectionMarker(db: DatabaseSync): boolean {
+  return (
+    db
+      .prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?")
+      .get(COLLECTION_MARKER_TABLE) !== undefined
+  );
+}
+
 function parseDay(day: string): Date {
   const [y, m, d] = day.split("-").map(Number);
   return new Date(y, m - 1, d);
