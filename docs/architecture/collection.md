@@ -6,7 +6,9 @@
 
 合并原有资料与高德补充后的实际缺项，见[黄金数据分类清单](../status/attraction-golden-classification-20261113.md)，逐条机器数据见[分类JSON](../status/attraction-golden-classification-20261113.json)。此前[高德覆盖清单](../status/amap-attraction-review-20261113.md)的237条并不是实际不合格总数：暂无评级、原有已填写等级、附加消费未知都不单独判失败。景点默认评级已统一为暂无评级，库内175条旧占位值已迁移，70条已有A级保留。本文后续历史实例和批次统计不代表最新覆盖率。
 
-DeepSeek充值后的首批修复已执行，见[时间与现有资料修复报告](../status/attraction-time-repair-20261113.md)：58条高德时间逐条重处理，4条季节区间端点错误已修复。之后按用户最新Demo口径继续完成[补图与默认规则](../status/demo-attraction-completion-20261113.md)：18条景点补47张图片，245条都有图；53条空预算默认每人20元（2000分），已有0元免费和明确价格保留；百跃羊乳文化景区默认每天09:00–17:00。默认值明确标为项目估算，不宣称已获官方确认。当前时间状态complete=208、partial=33、conflicting=4。
+DeepSeek充值后的首批修复已执行，见[时间与现有资料修复报告](../status/attraction-time-repair-20261113.md)：58条高德时间逐条重处理，4条季节区间端点错误已修复。之后按用户最新Demo口径完成[补图与默认规则](../status/demo-attraction-completion-20261113.md)：18条景点补47张图片，245条都有图；53条空预算默认每人20元（2000分），已有0元免费和明确价格保留；百跃羊乳文化景区默认每天09:00–17:00。默认值明确标为项目估算，不宣称已获官方确认。
+
+最后4条时间争议已按用户授权选用更可信的一套，见[时间选择结果](../status/attraction-time-resolutions-20261113.md)与[来源及依据](../data/attraction-time-resolutions-20261113.json)。目前complete=209、partial=36、conflicting=0；partial均有备注并按用户规则保留。三组同核心名称记录具体字段不同，全部保留；丝路欢乐世界也保留，城市明确为咸阳市。最新Demo口径检查未解决项为0，不把该结果解释为默认值、历史官网基准都已获现场实时确认。
 
 部分时间只要time_note非空即可保留并交由主Agent结合备注规划，不独立判失败。15条高德附近定位已接受；4条原暂停、6条未确认正常开放及1条明确内部专用，共11条在time_note写不开放并设status=paused，实际检索排除。不要把“尚未确认开放”解释为已证实永久停业。
 

@@ -2,8 +2,8 @@
   "schema_version": "city-explorer-database-delivery/1",
   "created_at": "2026-11-13T09:23:49.977Z",
   "database": "data/events.db",
-  "sha256": "c3a4e686ae6ea749bb08133b167456cba9ed71c61b6f2df64a89f0db851fdcac",
-  "bytes": 5812224,
+  "sha256": "2b57b042235a4691207f0792ddb429e6bbcc30c3351b380345bb8b3b1a54869a",
+  "bytes": 5877760,
   "database_id": "5f58de0a-9f15-417b-a64a-4388aa2906d5",
   "records": 265,
   "record_types": {
@@ -61,7 +61,7 @@
       "ids_unchanged": true,
       "integrity": "ok",
       "coordinate_duplicates": 0,
-      "sha256": "c3a4e686ae6ea749bb08133b167456cba9ed71c61b6f2df64a89f0db851fdcac"
+      "sha256": "2b57b042235a4691207f0792ddb429e6bbcc30c3351b380345bb8b3b1a54869a"
     }
   },
   "administrative_city_correction": {
@@ -237,6 +237,23 @@
         }
       ],
       "sha256": "c3a4e686ae6ea749bb08133b167456cba9ed71c61b6f2df64a89f0db851fdcac"
-    }
+    },
+    "superseded_by_time_resolution": "curated-time-resolutions-20261113"
+  },
+  "latest_time_resolution": {
+    "batch_id": "curated-time-resolutions-20261113",
+    "records": 4,
+    "sources": "docs/data/attraction-time-resolutions-20261113.json"
+  },
+  "quality_audit": {
+    "checked_at": "2026-11-13T11:15:50.826Z",
+    "database_sha256": "2b57b042235a4691207f0792ddb429e6bbcc30c3351b380345bb8b3b1a54869a",
+    "attractions": 245,
+    "known_A_level": 70,
+    "default_grade": 175,
+    "with_images": 245,
+    "default_budget": 53,
+    "unavailable": 11,
+    "unresolved_check_items": 0
   }
 }

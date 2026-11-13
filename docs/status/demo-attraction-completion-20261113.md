@@ -1,5 +1,7 @@
 # Demo景点规则、图片与最终缺项
 
+> 本文件为较早批次记录。四条时间争议已在后续按可信来源选定；最新结果见[时间选择报告](attraction-time-resolutions-20261113.md)及[当前检查清单](attraction-golden-classification-20261113.md)。
+
 已写入唯一数据库data/events.db；接受15个高德附近定位点。补18个景点、47张图片，图片来源见[图片清单](../data/baidu-attraction-images-20261113.json)。图片只保存URL，原信息源guide_url不改动。
 
 - 空预算恢复为每人20元：53条，数据库按分存2000；原有免费0元和明确价格保留。

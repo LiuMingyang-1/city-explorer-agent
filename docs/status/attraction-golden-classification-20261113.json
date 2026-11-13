@@ -1,13 +1,14 @@
 {
   "stats": {
-    "checked_at": "2026-11-13T10:57:27.593Z",
-    "database_sha256": "c3a4e686ae6ea749bb08133b167456cba9ed71c61b6f2df64a89f0db851fdcac",
+    "checked_at": "2026-11-13T11:15:50.826Z",
+    "database_sha256": "2b57b042235a4691207f0792ddb429e6bbcc30c3351b380345bb8b3b1a54869a",
     "attractions": 245,
     "known_A_level": 70,
     "default_grade": 175,
     "with_images": 245,
     "default_budget": 53,
-    "unavailable": 11
+    "unavailable": 11,
+    "unresolved_check_items": 0
   },
   "groups": [
     {
@@ -38,38 +39,9 @@
       "key": "conflicting_hours",
       "title": "仍未消除的时间冲突",
       "kind": "需处理",
-      "count": 4,
-      "meaning": "这4条仍是conflicting，不把矛盾悄悄改成完整；其中不开放的记录已排除规划。历史地址已按高德处理，本项只列时间问题。",
-      "items": [
-        {
-          "id": "xa_a318fb61dba3626bdf92c722029d0d0b",
-          "title": "西安市云之翼航空博物馆",
-          "detail": "【仍在候选中，精确时间需处理】常规开放时间9:00-17:00（全年无休）；另有资料称开放至18:00，节假日延时安排未给出具体日期，未纳入规则。；常规闭馆时间存在9:00-17:00与9:00-18:00两种说法；时间冲突，待确认：{\"timezone\":\"Asia/Shanghai\",\"mode\":\"weekly\",\"weekly\":[{\"weekdays\":[1,2,3,4,5,6,7],\"windows\":[{\"start\":\"09:00\",\"end\":\"17:00\",\"end_day_offset\":0,\"last_entry\":null}],\"valid_from\":null,\"valid_to\":null}],\"note\":\"正文称全年无休，常规开放9:00-17:00；暑期、国庆等假期曾延长至19:00-20:00，具体日期未列明\"}",
-          "category": "暂无评级",
-          "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E4%BA%91%E4%B9%8B%E7%BF%BC%E8%88%AA%E7%A9%BA%E5%8D%9A%E7%89%A9%E9%A6%86?bst=1790310087.faa7aed8c0001bc8#1"
-        },
-        {
-          "id": "xa_ef6e8642555e8bf5aca90895c572c8bf",
-          "title": "西安市古陶瓷博物馆",
-          "detail": "【仍在候选中，精确时间需处理】正文开放时间8:00-17:00；外部参观指南称9:30-17:00、周二闭馆。两套规则不一致，未强行采用，开放规则留空。；开放时间存在冲突：正文称8:00-17:00，另有参观指南称9:30开馆、17:00闭馆且周二闭馆",
-          "category": "暂无评级",
-          "source_url": "https://www.baike.com/wikiid/8214465667367258295?enter_type=blue_link&source=collection&from_doc_title=%E8%A5%BF%E5%AE%89%E5%B8%82%E5%A2%83%E5%86%85%E7%9A%84%E5%8D%9A%E7%89%A9%E9%A6%86&from_doc_id=7336010493439705140&from_version_id=7545248589925367848#1"
-        },
-        {
-          "id": "xa_776ed7f97a5914518fc327442a5ce952",
-          "title": "西安市吉兆春皮肤医药博物馆",
-          "detail": "【仍在候选中，精确时间需处理】正文：周一至周五9:00-17:00，周六周日闭馆；其他资料：除每周五及法定节假日外每天9:00-17:00。开放日冲突，未强行选定，仅保留钟点9:00-17:00。；开放日冲突：正文称周一至周五开放、周六周日闭馆；其他资料称除每周五及法定节假日外每天开放；时间冲突，待确认：{\"timezone\":\"Asia/Shanghai\",\"mode\":\"unknown\",\"note\":\"开放日存在冲突，需预约确认\"}",
-          "category": "暂无评级",
-          "source_url": "https://www.jizhaochun.com/h-col-118.html"
-        },
-        {
-          "id": "xa_0d04b281d7ef3d2cd834f99bc2544e4d",
-          "title": "西安高陵场畔农耕文化生态观光产业园",
-          "detail": "【仍在候选中，精确时间需处理】正文称营业时间9:00-19:30、民俗小吃街9:30-18:30、兑票9:00-17:00；搜索资料另载春冬季09:00-17:00、夏秋季09:00-21:00，存在冲突，未强行采用某一套",
-          "category": "3A",
-          "source_url": "https://www.autohome.com.cn/ask/17810084.html"
-        }
-      ]
+      "count": 0,
+      "meaning": "用户已授权按可信来源选择一套，已选定的规则不再算未解决冲突；其他说法作为历史备注保留。",
+      "items": []
     },
     {
       "key": "missing_hours",
@@ -213,7 +185,7 @@
       "key": "partial_notes_accepted",
       "title": "部分时间已有备注",
       "kind": "正常保留",
-      "count": 33,
+      "count": 36,
       "meaning": "按用户要求有备注即可，不独立判不合格。",
       "items": [
         {
@@ -348,6 +320,27 @@
           "detail": "原文仅显示“今天已休园 明天 09:00–17:00 营业”，未给出具体日期与每周开放规则，休园日不明",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/bianque-memorial-hall-10557688?curr=USD&locale=zh-TW#1"
+        },
+        {
+          "id": "xa_a318fb61dba3626bdf92c722029d0d0b",
+          "title": "西安市云之翼航空博物馆",
+          "detail": "已选用：每日08:30–17:30。\n选择依据：馆方较新的公告直接给出了延时前的常规基准，优先于百科和其他汇总资料中的09:00–17:00或18:00。该基准用于当前Demo，不把历史公告核对日期当作2026年新营业公告。\n来源：馆方2025-09-26国庆延时公告所述常规基准 https://xasyzyhkbwg.com/h-nr.html?g=6\n历史参考（本次不采用）：旧百科09:00–17:00、其他资料18:00闭馆不再采用。2025年国庆临时延至20:00及暑期延时不沿用为常规；节假日以馆方届时公告为准。",
+          "category": "暂无评级",
+          "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E4%BA%91%E4%B9%8B%E7%BF%BC%E8%88%AA%E7%A9%BA%E5%8D%9A%E7%89%A9%E9%A6%86?bst=1790310087.faa7aed8c0001bc8#1"
+        },
+        {
+          "id": "xa_ef6e8642555e8bf5aca90895c572c8bf",
+          "title": "西安市古陶瓷博物馆",
+          "detail": "已选用：每日08:00–17:00。\n选择依据：采用文物局2024年公开名单的开放钟点，优先于旧试运行表及第三方参观指南；该名单未列闭馆日，Demo暂按每日生成常规窗口，未声称全年无休已获核实。\n来源：西安市文物局：西安市博物馆信息（2024-05-29） https://wwj.xa.gov.cn/xxgk/wbxx/62d8ba0ef8fd1c4c210ae016.html\n历史参考（本次不采用）：旧资料09:30开馆、周二和春节闭馆不再作为当前规则。原地址差异已按高德处理，继续保留高德地址；出发前可确认闭馆日。",
+          "category": "暂无评级",
+          "source_url": "https://www.baike.com/wikiid/8214465667367258295?enter_type=blue_link&source=collection&from_doc_title=%E8%A5%BF%E5%AE%89%E5%B8%82%E5%A2%83%E5%86%85%E7%9A%84%E5%8D%9A%E7%89%A9%E9%A6%86&from_doc_id=7336010493439705140&from_version_id=7545248589925367848#1"
+        },
+        {
+          "id": "xa_776ed7f97a5914518fc327442a5ce952",
+          "title": "西安市吉兆春皮肤医药博物馆",
+          "detail": "已选用：周一至周四、周六及周日09:00–17:00。\n选择依据：直接可读的馆方公示牌清楚给出周五及法定节假日闭馆，政府开放信息也支持此说法，优先于此前正文摘要的周一至周五。\n来源：博物馆公示牌照片 https://22936271.s21i.faiusr.com/95/ABUIABBfGAAg3dnmwAYompDKmQMwgAo4qg0\n历史参考（本次不采用）：此前周一至周五开放、周末闭馆的摘要不再采用。免费预约参观；法定节假日闭馆保留为备注，未凭空生成具体节假日日期。",
+          "category": "暂无评级",
+          "source_url": "https://www.jizhaochun.com/h-col-118.html"
         },
         {
           "id": "xa_dae9be3b7b614175ff1c20aff524a290",
@@ -942,9 +935,9 @@
     {
       "key": "scope",
       "title": "行政范围说明",
-      "kind": "范围事项",
+      "kind": "正常保留",
       "count": 1,
-      "meaning": "丝路欢乐世界行政城市按高德为咸阳市，作为既有西安周边目标保留；严格只收西安市时需从目标范围排除，这不是地址字段填写错误。",
+      "meaning": "用户已明确保留丝路欢乐世界，只须将城市注明咸阳市；这不是未解决问题，不再要求排除或确认。",
       "items": [
         {
           "id": "xa_733d2f7c03ebb9582b895feba9923180",
@@ -957,30 +950,38 @@
     },
     {
       "key": "possible_duplicates",
-      "title": "相同核心名称的近邻记录",
-      "kind": "疑似重复，未自动合并",
+      "title": "同核心名称、具体字段不同的记录",
+      "kind": "正常保留",
       "count": 3,
-      "meaning": "坐标10米去重已通过；这里补查同名或别名。高德可能给出不同入口/子场馆，保留真实定位，需判断合并还是改名区分，避免主Agent重复安排。",
+      "meaning": "按用户要求，三组记录具体字段不同则各自保留，不再判为疑似重复问题，也不自动合并。",
       "items": [
         {
           "id": "xa_fd4167e9ce151793748c81f06c957a46、xa_dc8b7cd27a4f4e1a5f14ceb27a687dac",
           "title": "易俗社文化旅游景区",
-          "detail": "易俗社文化旅游景区；高德西安易俗社（B001D041LV） / 易俗社文化旅游景区（易俗社文化街区）；高德易俗社文化街区（B0L0L59EIJ）",
+          "detail": "不同字段：venue_name、address、latitude、longitude、category、schedule_json、description、budget_max、image_urls；易俗社文化旅游景区；高德西安易俗社（B001D041LV） / 易俗社文化旅游景区（易俗社文化街区）；高德易俗社文化街区（B0L0L59EIJ）",
           "source_url": "https://www.dahepiao.com/jingqulvyou1/20250218504395.html"
         },
         {
           "id": "xa_43b9671b755aa54768932e6ed0de0952、xa_0e640ef487a572df84f13686f40c8a72",
           "title": "杨虎城将军止园别墅",
-          "detail": "杨虎城将军止园别墅（西安事变纪念馆旧址）；高德杨虎城将军纪念馆（B0L0XAKHZV） / 杨虎城将军止园别墅（西安事变纪念馆）；高德杨虎城别墅（B0FFGNTYMM）",
+          "detail": "不同字段：venue_name、latitude、longitude、schedule_json、description、image_urls；杨虎城将军止园别墅（西安事变纪念馆旧址）；高德杨虎城将军纪念馆（B0L0XAKHZV） / 杨虎城将军止园别墅（西安事变纪念馆）；高德杨虎城别墅（B0FFGNTYMM）",
           "source_url": "https://mp.weixin.qq.com/s/aDcoM7X0tnptxMAwyde_YA"
         },
         {
           "id": "xa_0d04b281d7ef3d2cd834f99bc2544e4d、xa_4a77b7f01a27b0854cf07370d24da01c",
           "title": "高陵场畔农耕文化生态观光产业园",
-          "detail": "西安高陵场畔农耕文化生态观光产业园；高德高陵场畔农耕文化博物院（B0FFG1YUKQ） / 高陵场畔农耕文化生态观光产业园；高德高陵场畔农耕文化生态观光产业园（B0HDA7ZD8P）",
+          "detail": "不同字段：venue_name、address、latitude、longitude、category、schedule_json、description、image_urls；西安高陵场畔农耕文化生态观光产业园；高德高陵场畔农耕文化博物院（B0FFG1YUKQ） / 高陵场畔农耕文化生态观光产业园；高德高陵场畔农耕文化生态观光产业园（B0HDA7ZD8P）",
           "source_url": "https://www.autohome.com.cn/ask/17810084.html"
         }
       ]
+    },
+    {
+      "key": "identical_duplicates",
+      "title": "同核心名称且具体字段完全一致",
+      "kind": "需处理",
+      "count": 0,
+      "meaning": "只有字段一致的重复记录才继续列为问题。",
+      "items": []
     },
     {
       "key": "default_grade",
