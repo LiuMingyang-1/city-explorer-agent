@@ -7,7 +7,7 @@ test("AMap supplement preserves activities, journals changes and rolls back on f
   const root=`.local-data/amap-supplement-test-${randomUUID()}`,path=root+"/events.db";mkdirSync(root,{recursive:true});
   try{
     const {item,asOf}=await locatedFixture();await initializeCollectionDatabase(path);
-    const attraction=structuredClone(item);attraction.facts.record_type="attraction";attraction.facts.category="等级未知";attraction.source_event_key="attraction";
+    const attraction=structuredClone(item);attraction.facts.record_type="attraction";attraction.facts.category="暂无评级";attraction.source_event_key="attraction";
     const p=prepareCollection([item,attraction],{asOf,baseDate:"2026-11-12"});assert.equal(p.prepared.dataset.events.length,2);
     writeCollectionDatabase(path,p.prepared,{batchId:"seed",asOf});
     const db=new DatabaseSync(path,{readOnly:true});const rows=db.prepare("SELECT * FROM events ORDER BY id").all();db.close();

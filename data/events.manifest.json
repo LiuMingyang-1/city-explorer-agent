@@ -2,7 +2,7 @@
   "schema_version": "city-explorer-database-delivery/1",
   "created_at": "2026-11-13T09:23:49.977Z",
   "database": "data/events.db",
-  "sha256": "10b050b5e705fff2efdb987ac4caaeacb24b1cfaae39d9e8275e3ee5b407a8df",
+  "sha256": "89e67802e2de8d6140f10d1dbb0003c417e34a7eb8cbbf440ef31b0357402a1e",
   "bytes": 4677632,
   "database_id": "5f58de0a-9f15-417b-a64a-4388aa2906d5",
   "records": 265,
@@ -62,7 +62,7 @@
       "ids_unchanged": true,
       "integrity": "ok",
       "coordinate_duplicates": 0,
-      "sha256": "10b050b5e705fff2efdb987ac4caaeacb24b1cfaae39d9e8275e3ee5b407a8df"
+      "sha256": "89e67802e2de8d6140f10d1dbb0003c417e34a7eb8cbbf440ef31b0357402a1e"
     }
   },
   "administrative_city_correction": {
@@ -70,5 +70,11 @@
     "city": "咸阳市",
     "source": "AMap",
     "reason": "高德优先，原西安周边目标保留待复核"
+  },
+  "scenic_level_default": {
+    "value": "暂无评级",
+    "renamed_rows": 175,
+    "known_A_level_rows": 70,
+    "activity_rows_unchanged": true
   }
 }

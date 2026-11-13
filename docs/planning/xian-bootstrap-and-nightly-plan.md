@@ -16,9 +16,9 @@
 
 ## 2. 数据库交付契约
 
-继续使用现有events表：29个业务字段，暂保留start_at/end_at兼容列后共31列，不另建景点业务表。景点和活动用record_type区分，景点category为1A—5A或等级未知，活动使用活动分类。
+继续使用现有events表：29个业务字段，暂保留start_at/end_at兼容列后共31列，不另建景点业务表。景点和活动用record_type区分，景点category为1A—5A或暂无评级，活动使用活动分类。
 
-经纬度均为高德GCJ-02；正式保留记录必须与真实地图工具结果绑定。guide_url始终保存帖子或网页原来源，不替换成等级补查网址。时间能结构化就写valid_from/valid_to/schedule_json，不能规范的内容保留time_note和time_status。等级未知、时间缺失不直接导致丢弃主体。
+经纬度均为高德GCJ-02；正式保留记录必须与真实地图工具结果绑定。guide_url始终保存帖子或网页原来源，不替换成等级补查网址。时间能结构化就写valid_from/valid_to/schedule_json，不能规范的内容保留time_note和time_status。暂无评级、时间缺失不直接导致丢弃主体。
 
 同事依托这份表结构和查询语义开发。尤其注意：unknown/conflicting时间不能当成全天开放；有些partial记录仅部分日期或时段可确认。开发者彩蛋不增加events字段，标记只存在于采集清单，展示文案以后按需要处理。
 
@@ -92,7 +92,7 @@
 
 先用独立任务清单和运行记录保存seed_id、状态、尝试次数、下次重试时间、关联来源、关联event_id和拒绝原因；这些信息不塞进events业务字段。当前规模可先用本地进度文件和单实例锁，不扩成复杂任务平台。
 
-状态区分pending、running、accepted、merged、not_found、deferred、retryable_failed。等级未知或时间不完整但对象已有效保留，应算accepted，不应永远反复搜索；已合并目标记录实际保留的event_id。
+状态区分pending、running、accepted、merged、not_found、deferred、retryable_failed。暂无评级或时间不完整但对象已有效保留，应算accepted，不应永远反复搜索；已合并目标记录实际保留的event_id。
 
 网络错误和平台临时失败有限重试；明确不在西安、主体不符或在建不开放记录原因，进入deferred，不能无限补搜。同一时刻只允许一个写库任务；上次未结束时本次跳过或排队，避免定时任务重叠。
 

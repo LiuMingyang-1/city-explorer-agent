@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { Ajv2020 } from "ajv/dist/2020.js";
-import { CATEGORIES, SCENIC_LEVELS, COLLECTION_CATEGORIES } from "../data/categories.ts";
+import { CATEGORIES, SCENIC_LEVELS, COLLECTION_CATEGORIES,normalizeScenicLevel } from "../data/categories.ts";
 import type { CollectionCategory } from "../data/categories.ts";
 import { isCalendarDate } from "../itinerary/constraints.ts";
 import { publicUrl } from "./validate.ts";
@@ -77,8 +77,8 @@ export const FACT_EXTRACTION_PROMPT = `你是西安市活动与景点资料提�
 高德数据具有最高字段解释权：调用amap_search选择正确POI后，地址、GCJ-02坐标、场馆名称采用高德；景点A级采用明确的keytag/atag（不是rating用户评分），图片和景点开放时间优先高德。高德未返回的字段不编造、不把缺失当否定。不得选择停车场/售票处/父校园代替具体景点。临时活动的日期、场次仍以活动资料为依据，不能用场馆营业时间替换。程序会再次强制执行高德字段优先规则。
 有明确活动或景点主体时保留可提取内容；仅有泛泛标题、图片里才有信息而正文无具体主体时才返回空数组。不要为填字段编造事实。
 record_type：临时展览、市集、演出等为activity；景区、博物馆、历史街区等长期游览地点为attraction。同一景点与其临时活动可分别提取。
-activity的category从活动分类枚举选择；attraction只选1A/2A/3A/4A/5A/等级未知。A级等级必须资料明确，不用高德4.6分等用户评分换算，不凭知名度猜测。
-景点原资料没有明确A级时，可以调用search_scenic_level补查，使用景点正式全名（必要时先用高德确认）。优先文旅部门名单、公告及景区官网，核对具体对象、分景点和最新有效等级；子景点不能直接继承整个景区等级，撤销、拟评定不当作已评定。找不到可靠明确依据、结果矛盾或接口失败则category=等级未知，不因此丢弃景点。活动不需要查询A级。外部搜索仅用于补查等级，不覆盖原文时间、价格、标题等字段。使用搜索结果填写等级时，在evidence.scenic_level_source写该工具返回的真实网址，并可在evidence.scenic_level说明判断依据；不得虚构来源。
+activity的category从活动分类枚举选择；attraction只选1A/2A/3A/4A/5A/暂无评级。A级等级必须资料明确，不用高德4.6分等用户评分换算，不凭知名度猜测。
+景点原资料没有明确A级时，可以调用search_scenic_level补查，使用景点正式全名（必要时先用高德确认）。优先文旅部门名单、公告及景区官网，核对具体对象、分景点和最新有效等级；子景点不能直接继承整个景区等级，撤销、拟评定不当作已评定。找不到可靠明确依据、结果矛盾或接口失败则category=暂无评级，不因此丢弃景点。活动不需要查询A级。外部搜索仅用于补查等级，不覆盖原文时间、价格、标题等字段。使用搜索结果填写等级时，在evidence.scenic_level_source写该工具返回的真实网址，并可在evidence.scenic_level说明判断依据；不得虚构来源。
 title和description可忠实概括。venue_name保留场馆主体和分馆身份，内部楼层、入口可在简介或schedule_json.note保留。地点归属不确定时city=null，交给高德确认。
 新版时间字段为valid_from/valid_to（YYYY-MM-DD）和schedule_json。valid表示展期/规则有效日期，不是连续开放时间。长期景点可以没有日期；未知不等于全天开放。
 schedule_json记录Asia/Shanghai时区：mode=weekly表示每周开放，weekdays的1为周一、7为周日；mode=dates记录具体日期场次；always_open仅限明确全天开放；未知填null或unknown。每个window用start/end的HH:mm，缺少钟点填null，不补午夜。多个日期分别列出，午休拆为两个window。跨午夜用end_day_offset=1，正常为0；明确停止入场时填last_entry。
@@ -167,6 +167,7 @@ export async function extractActivities(doc: ExtractionDocument, options: { asOf
     if (raw && typeof raw === "object" && Array.isArray((raw as any).activities)) {
       for (const activity of (raw as any).activities) {
         if (!activity || typeof activity !== "object") continue;
+        if(activity.record_type==="attraction")activity.category=normalizeScenicLevel(activity.category);
         softenTime(activity, doc.text);
         activity.start_at ??= null; activity.end_at ??= null;
         activity.confirmed_start_date ??= activity.valid_from ?? null;

@@ -141,7 +141,7 @@ test("live date override is rejected so historical fixtures cannot run accidenta
 });
 test("target is a task input; model must explicitly confirm attraction identity and visitability",async()=>{
   const {item,asOf}=await locatedFixture(),target={seed_id:"test",name:item.facts.venue_name,aliases:[],area_hint:"雁塔区"};
-  const facts={...item.facts,record_type:"attraction" as const,category:"等级未知" as const};let received=false;
+  const facts={...item.facts,record_type:"attraction" as const,category:"暂无评级" as const};let received=false;
   const invoke:Extractor=async(system,input)=>{assert.deepEqual(input.target,target);assert(system.includes("target_match"));received=true;return JSON.stringify({activities:[{...facts,target_match:true,visitable:true}]});};
   const extracted=await extractActivities(item.document,{asOf,invoke,target});assert(received);assert.equal(extracted.activities[0].facts.target_match,true);
   for(const flags of [{},{target_match:false,visitable:true},{target_match:true,visitable:false}]){
@@ -150,7 +150,7 @@ test("target is a task input; model must explicitly confirm attraction identity 
 });
 test("target-approved offline candidate reaches actual SQLite without adding task fields to events",async()=>{
   const {item,asOf}=await locatedFixture(),root=`.local-data/task-db-${randomUUID()}`;
-  try{item.facts={...item.facts,record_type:"attraction",category:"等级未知",target_match:true,visitable:true};
+  try{item.facts={...item.facts,record_type:"attraction",category:"暂无评级",target_match:true,visitable:true};
     const p=await processCollection([{document:item.document,structured:{activities:[item.facts]}}],{asOf,baseDate:friday,target:{seed_id:"test",name:item.facts.venue_name,aliases:[],area_hint:"雁塔区"},geocoder:{resolve:async()=>({ok:true,location:item.location,cached:false})}});
     assert.equal(p.prepared.dataset.events.length,1,JSON.stringify(p.rejected));await publishRelease(root,p.prepared,{batchId:"offline",asOf});
     const db=new DatabaseSync(inspectRelease(root).database,{readOnly:true});try{assert.equal(db.prepare("SELECT count(*) n FROM events").get()!.n,1);assert.equal(db.prepare("PRAGMA table_info(events)").all().length,31);assert.equal(db.prepare("PRAGMA integrity_check").get()!.integrity_check,"ok");}finally{db.close();}

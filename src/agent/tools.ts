@@ -13,7 +13,7 @@ const searchEventsParameters = Type.Object({
   ),
   category: Type.Optional(
     Type.String({
-      description: "活动类型如展览/市集/演出；recordType=attraction时为景点等级，如5A/4A/等级未知。",
+      description: "活动类型如展览/市集/演出；recordType=attraction时为景点等级，如5A/4A/暂无评级。",
     }),
   ),
   keyword: Type.Optional(

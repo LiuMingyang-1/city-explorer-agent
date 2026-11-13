@@ -6,6 +6,7 @@ import {amapDetails,amapGrade,subjectProblem,simpleAmapHours,captureAmapAuthorit
 import type {AmapHours,AmapAuthoritySnapshot} from "./amap-authority.ts";
 import {parseSchedule,availabilityOnDate} from "../data/schedule.ts";
 import type {Sidecar} from "./releases.ts";
+import {normalizeScenicLevel} from "../data/categories.ts";
 
 type Row=Record<string,any>;
 export interface SupplementInput {
@@ -28,6 +29,7 @@ export function planAmapSupplement(input:SupplementInput):SupplementPlan {
   const today=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Shanghai"}).format(new Date(input.asOf));
   for(const before of input.baseline.rows.filter(r=>r.record_type==="attraction")){
     const after=structuredClone(before),issues:string[]=[],notes:string[]=[];
+    after.category=normalizeScenicLevel(after.category);
     const poi=index.get(input.repairs?.[before.amap_poi_id]??before.amap_poi_id);
     let authority:AmapAuthoritySnapshot|undefined;
     const d=poi?amapDetails(poi,input.asOf):undefined;

@@ -36,7 +36,7 @@ test("invalid schedules and dates fall back to original time notes without losin
 
 test("time conflicts retain an attraction but do not expose guessed planning windows", async () => {
   const {facts,document,asOf} = extractionFixture();
-  const result=await extractActivities(document,{asOf,structured:{activities:[{...facts,record_type:"attraction",category:"等级未知",conflicts:["开放时间08:00或08:30不一致"]}]}});
+  const result=await extractActivities(document,{asOf,structured:{activities:[{...facts,record_type:"attraction",category:"暂无评级",conflicts:["开放时间08:00或08:30不一致"]}]}});
   const f=result.activities[0].facts;
   assert.equal(result.activities[0].check.valid,true);
   assert.equal(f.time_status,"conflicting");assert.equal(f.start_at,null);

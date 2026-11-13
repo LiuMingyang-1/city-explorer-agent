@@ -6,6 +6,11 @@ export const CATEGORIES = [
 
 export type EventCategory = typeof CATEGORIES[number];
 
-export const SCENIC_LEVELS = ["1A", "2A", "3A", "4A", "5A", "等级未知"] as const;
+export const DEFAULT_SCENIC_LEVEL = "暂无评级" as const;
+export const SCENIC_LEVELS = ["1A", "2A", "3A", "4A", "5A", DEFAULT_SCENIC_LEVEL] as const;
+/** Read old extractor/cache output without keeping the retired label in new rows. */
+export function normalizeScenicLevel(value:unknown):unknown {
+  return value==null||value===""||value==="等级未知"?DEFAULT_SCENIC_LEVEL:value;
+}
 export const COLLECTION_CATEGORIES = [...CATEGORIES, ...SCENIC_LEVELS] as const;
 export type CollectionCategory = typeof COLLECTION_CATEGORIES[number];
