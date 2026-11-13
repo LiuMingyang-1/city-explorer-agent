@@ -87,3 +87,34 @@ test('viewport activity requests include GCJ bounds and late responses cannot ov
  pending[0]!.finish(new Response(JSON.stringify({is_demo:true,events:[{...e,event_id:'old-view',title:'旧视野活动'}]})));await older;
  assert.equal(h.groups()[0].events[0].event_id,'new-view');
 });
+
+test('a confirmed 404 on the default feed stops viewport probing but keeps demo bubbles',async()=>{
+ const h=await activitySetup(),urls:string[]=[];
+ h.context.fetch=async(url:string)=>{urls.push(url);return url.startsWith('/api/events')?new Response(null,{status:404}):new Response(JSON.stringify(sample))};
+ await h.activities.reload();assert.deepEqual(urls,['/api/events','/data/demo-events.json']);assert.equal(h.groups().length,24);
+ let bbox=[108.9,34.2,109,34.3];h.context.window.WanderAMap.getViewport=()=>({bbox});
+ h.run("window.dispatchEvent(new Event('wander:viewport'))");await new Promise(resolve=>setImmediate(resolve));
+ bbox=[109.1,34.3,109.2,34.4];h.run("window.dispatchEvent(new Event('wander:viewport'))");await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(urls.length,2,'a remembered 404 must not re-probe the feed or refetch demo data on viewport changes');
+});
+
+test('an explicitly configured /api/events endpoint is not negatively cached after a 404',async()=>{
+ const h=setup({api:true});h.context.window.WANDER_CONFIG={mockDelay:0,eventsEndpoint:'/api/events'};
+ h.context.window.WanderAMap={ready:true,clearRoutes(){},async setActivities(){},getViewport:()=>({bbox:[108.9,34.2,109,34.3]})};
+ const urls:string[]=[];h.context.fetch=async(url:string)=>{urls.push(url);return new Response(null,{status:404})};
+ vm.runInContext(source,h.context);await h.context.window.WanderActivities.reload();
+ h.run("window.dispatchEvent(new Event('wander:viewport'))");await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(urls.length,3);assert(urls[2]!.startsWith('/api/events?bbox='),'configured endpoint keeps viewport probing after a 404');
+});
+
+test('a later successful feed response clears the remembered 404 and resumes viewport probing',async()=>{
+ const h=await activitySetup(),urls:string[]=[];
+ h.context.fetch=async(url:string)=>{urls.push(url);return url.startsWith('/api/events')?new Response(null,{status:404}):new Response(JSON.stringify(sample))};
+ await h.activities.reload();assert.equal(urls.length,2);
+ h.context.window.WanderAMap.getViewport=()=>({bbox:[108.9,34.2,109,34.3]});
+ h.run("window.dispatchEvent(new Event('wander:viewport'))");await new Promise(resolve=>setImmediate(resolve));assert.equal(urls.length,2);
+ h.context.fetch=async(url:string)=>{urls.push(url);return new Response(JSON.stringify({events:[sample.events[0]]}))};
+ await h.activities.reload();assert.equal(urls.length,3);
+ h.run("window.dispatchEvent(new Event('wander:viewport'))");await new Promise(resolve=>setImmediate(resolve));
+ assert(urls[3]!.startsWith('/api/events?bbox='),'a successful response resumes viewport probing');
+});
