@@ -95,7 +95,8 @@ export async function processCollection(input: readonly PipelineDocument[], opti
       try {
         if (options.invoke?.locationFor) {
           const selected = options.invoke.locationFor(doc.url, facts);
-          location = selected ? {ok:true,location:selected,cached:false} : {ok:false,reason:"MODEL_LOCATION_NOT_BOUND"};
+          const failed = selected ? [] : (options.invoke as { locationFailuresFor?: (url: string) => readonly string[] }).locationFailuresFor?.(doc.url) ?? [];
+          location = selected ? {ok:true,location:selected,cached:false} : {ok:false,reason:failed.length ? "LOCATION_LOOKUP_FAILED" : "MODEL_LOCATION_NOT_BOUND"};
         } else location = await options.geocoder.resolve(locationQueryForFacts(facts));
       }
       catch { location = { ok: false, reason: "LOCATION_LOOKUP_FAILED" }; }

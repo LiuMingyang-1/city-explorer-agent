@@ -63,7 +63,8 @@ export async function runCollection(config: ReturnType<typeof parseCollectionRun
           try{const receipt=writeCollectionDatabase(canonical!,result.prepared,{batchId,asOf:now(),attractionDuplicateMeters:config.processing.attraction_duplicate_meters});receipts.push(receipt);save(`write-${index+1}.json`,receipt);}
           catch(error){publicationError=collectionError(error);}
         }
-        const processingError=result.rejected.some(r=>r.reasons.some(c=>["INVALID_EXTRACTION_SCHEMA","MODEL_REQUIRED"].includes(c)))?"EXTRACTION_FAILED":null;
+        const processingError=result.rejected.some(r=>r.reasons.some(c=>["INVALID_EXTRACTION_SCHEMA","MODEL_REQUIRED"].includes(c)))?"EXTRACTION_FAILED"
+          :result.rejected.some(r=>r.reasons.includes("LOCATION_LOOKUP_FAILED"))?"LOCATION_LOOKUP_FAILED":null;
         processing.push({index:index+1,engine:source.engine,url:source.document.url,target:config.targets?.[source.keyword]?.seed_id,accepted_before_cross_source_dedup:result.prepared.dataset.events.length,rejected:result.rejected,deduplicated:result.deduplicated,ocr_errors:result.metrics.ocr_errors,publication_error:publicationError,processing_error:processingError});
       }catch(error){processing.push({index:index+1,engine:source.engine,url:source.document.url,error:collectionError(error)});}
       save("processing.json",processing);console.log(JSON.stringify({stage:"processed",index:index+1,total:collected.sources.length,...processing.at(-1)}));

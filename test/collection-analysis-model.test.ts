@@ -104,6 +104,38 @@ test("the last tool round forces final JSON so an unmatched venue still produces
   assert.equal(await model("system",{text:document.text,source_url:document.url,schema:{} as any}),'{"activities":[]}');assert.equal(calls,2);
 });
 
+test("unresolved map tool failures surface as execution failures, empty results stay a model rejection",async()=>{
+  const {facts,document,asOf}=extractionFixture();
+  const run=async(map:{search(keywords:string):Promise<any[]>})=>{
+    let calls=0;
+    const model=createToolAnalysisExtractor({deepseekKey:"test",record:()=>{},now:()=>asOf,map,fetch:async()=>{
+      if(calls++===0)return Response.json({choices:[{finish_reason:"tool_calls",message:{tool_calls:[{id:"c",function:{name:"amap_search",arguments:'{"keywords":"西安荟聚"}'}}]}}]});
+      return Response.json({choices:[{finish_reason:"stop",message:{content:JSON.stringify({activities:[{...facts,amap_poi_id:null,latitude:null,longitude:null}]})}}]});
+    }});
+    const result=await processCollection([{document}],{asOf,baseDate:"2026-11-12",invoke:model,geocoder:{resolve:async()=>{throw new Error("mechanical matching must not run");}}});
+    return {model,result};
+  };
+  const failed=await run({search:async()=>{throw new Error("MAP_RATE_LIMITED");}});
+  assert.equal(failed.result.prepared.dataset.events.length,0);
+  assert.deepEqual(failed.model.locationFailuresFor!(document.url),["MAP_RATE_LIMITED"]);
+  assert(failed.result.rejected.some(r=>r.reasons.includes("LOCATION_LOOKUP_FAILED")),JSON.stringify(failed.result.rejected));
+  const empty=await run({search:async()=>[]});
+  assert.deepEqual(empty.model.locationFailuresFor!(document.url),[]);
+  assert(empty.result.rejected.some(r=>r.reasons.includes("MODEL_LOCATION_NOT_BOUND")),JSON.stringify(empty.result.rejected));
+});
+
+test("a map retry that later binds still publishes despite an earlier recorded failure",async()=>{
+  const {facts,document,asOf}=extractionFixture();let calls=0,searches=0;
+  const selected={id:"mall",name:"西安荟聚",address:"西安市雁塔区西部大道",adcode:"610113",district:"雁塔区",latitude:34.17116,longitude:108.900077};
+  const model=createToolAnalysisExtractor({deepseekKey:"test",record:()=>{},now:()=>asOf,map:{search:async()=>{if(searches++===0)throw new Error("MAP_RATE_LIMITED");return[selected];}},fetch:async()=>{
+    if(calls++<2)return Response.json({choices:[{finish_reason:"tool_calls",message:{tool_calls:[{id:`c${calls}`,function:{name:"amap_search",arguments:JSON.stringify({keywords:`尝试${calls}`})}}]}}]});
+    return Response.json({choices:[{finish_reason:"stop",message:{content:JSON.stringify({activities:[{...facts,venue_name:"西安荟聚·雁南中厅",address:selected.address,amap_poi_id:selected.id,latitude:selected.latitude,longitude:selected.longitude}]})}}]});
+  }});
+  const result=await processCollection([{document}],{asOf,baseDate:"2026-11-12",invoke:model,geocoder:{resolve:async()=>{throw new Error("mechanical matching must not run");}}});
+  assert.equal(result.prepared.dataset.events.length,1,JSON.stringify(result.rejected));
+  assert.deepEqual(model.locationFailuresFor!(document.url),["MAP_RATE_LIMITED"]);
+});
+
 test("conflicting exhibition dates are kept in notes instead of selecting an arbitrary end date",async()=>{
   const {facts,document,asOf}=extractionFixture();
   const result=await extractActivities(document,{asOf,structured:{activities:[{...facts,valid_from:"2026-11-14",valid_to:"2026-12-13",conflicts:["展期结束日：正文12月13日，海报12月6日"]}]}});
