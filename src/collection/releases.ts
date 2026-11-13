@@ -18,10 +18,13 @@ import { publicUrl } from "./validate.ts";
 import { isCalendarDate } from "../itinerary/constraints.ts";
 import { deduplicateAttractions } from "./attraction-dedup.ts";
 import type { AttractionDuplicate } from "./attraction-dedup.ts";
+import {captureAmapAuthority,mergeAmapAuthority} from "./amap-authority.ts";
+import type {AmapAuthoritySnapshot} from "./amap-authority.ts";
 
 export interface Sidecar { schema_version: "xian-release/2"; batch_id: string; identities: SlotIdentity[]; attraction_duplicates?: AttractionDuplicate[]; events: Record<string, {
   freshness: NightlyMetadata; provenance: EventProvenance; window: { start_at: string | null; end_at: string | null; record_type?: "activity" | "attraction"; schedule_json?: import("../data/schedule.ts").Schedule | null };
   status_evidence?: { source_url: string; quote: string; verified_at: string };
+  amap_authority?: AmapAuthoritySnapshot;
 }>; }
 const checksum = (path: string) => createHash("sha256").update(readFileSync(path)).digest("hex");
 const validBatch = (value: string) => /^[A-Za-z0-9_-]{1,80}$/.test(value);
@@ -81,7 +84,8 @@ export function applyPublication(db:DatabaseSync,sidecar:Sidecar,input:PreparedC
       const columns = ["id", "title", "description", "category", "venue_name", "address", "latitude", "longitude", "start_at", "end_at", "suggested_duration_minutes", "budget_min", "budget_max", "currency", "budget_note", "guide_url", "thumbnail_url", "image_urls", "record_type", "city", "amap_poi_id", "valid_from", "valid_to", "schedule_json", "time_note", "time_status", "status", "source_published_at", "source_updated_at", "fetched_at", "updated_at"] as const;
       const insert = db.prepare(`INSERT INTO events (${columns.join(",")}) VALUES (${columns.map(() => "?").join(",")}) ON CONFLICT(id) DO UPDATE SET ${columns.filter(c => c !== "id").map(c => `${c}=excluded.${c}`).join(",")}`);
         const inserted = new Set<string>();
-        for (const event of input.dataset.events) {
+        for (const sourceEvent of input.dataset.events) {
+          const event=structuredClone(sourceEvent);
           const incoming = structuredClone(input.metadata[event.id]);
           const old = sidecar.events[event.id];
           const provenance = structuredClone(input.dataset.provenance.find(p => p.event_id === event.id)!);
@@ -96,10 +100,15 @@ export function applyPublication(db:DatabaseSync,sidecar:Sidecar,input:PreparedC
             }
             if (!assessFreshness(event, incoming, options.asOf).includeInDiscovery) { discarded.push({ event_id: event.id, reason: "UNCHANGED_SOURCE_NEEDS_REVERIFICATION" }); continue; }
           }
+          const priorAuthority=Object.values(sidecar.events).map(row=>row.amap_authority)
+            .filter(row=>row?.poi_id===event.amap_poi_id&&row?.record_type===event.record_type)
+            .sort((a,b)=>Date.parse(b!.checked_at)-Date.parse(a!.checked_at))[0];
+          const amap_authority=mergeAmapAuthority(event,priorAuthority,captureAmapAuthority(event,input.witnesses[event.id].location));
+          if(amap_authority){incoming.timeStatus=event.time_status;incoming.confirmedStartDate=event.valid_from??null;incoming.confirmedEndDate=event.valid_to??null;}
           insert.run(...columns.map(c => c === "image_urls" ? JSON.stringify(event[c]) : c === "schedule_json" ? event.schedule_json ? JSON.stringify(event.schedule_json) : null : event[c] ?? (c === "record_type" ? "activity" : c === "city" ? "西安市" : c === "time_status" ? "unknown" : c === "status" ? "unknown" : null)));
           written++;
           inserted.add(event.id);
-          sidecar.events[event.id] = { freshness: incoming, provenance, window: { start_at: event.start_at, end_at: event.end_at, record_type: event.record_type, schedule_json: event.schedule_json } };
+          sidecar.events[event.id] = { freshness: incoming, provenance, window: { start_at: event.start_at, end_at: event.end_at, record_type: event.record_type, schedule_json: event.schedule_json }, ...(amap_authority?{amap_authority}:{}) };
         }
         for (const notice of options.cancellations ?? []) {
           const row = sidecar.events[notice.event_id];

@@ -1,9 +1,9 @@
 {
   "schema_version": "city-explorer-database-delivery/1",
-  "created_at": "2026-11-13T04:38:35.808Z",
+  "created_at": "2026-11-13T09:23:49.977Z",
   "database": "data/events.db",
-  "sha256": "99c3aedae1608fbdca532828edea658d4eef7791852805de78cf597361a223f3",
-  "bytes": 2023424,
+  "sha256": "10b050b5e705fff2efdb987ac4caaeacb24b1cfaae39d9e8275e3ee5b407a8df",
+  "bytes": 4677632,
   "database_id": "5f58de0a-9f15-417b-a64a-4388aa2906d5",
   "records": 265,
   "record_types": {
@@ -33,6 +33,42 @@
     "Some opening hours are partial, unknown or conflicting; consult time_status and time_note.",
     "A complete time_status is an extraction result, not a guarantee of current venue hours.",
     "The latest Xiaohongshu test reported login required; platform login is local and not shipped.",
-    "The Windows scheduled trigger is disabled and has not been installed."
-  ]
+    "The Windows scheduled trigger is disabled and has not been installed.",
+    "AMap supplement: 237 attractions require review; see docs/status/amap-attraction-review-20261113.md.",
+    "DeepSeek balance exhausted during complex opening-hours normalization; unprocessed source text is preserved."
+  ],
+  "amap_supplement": {
+    "checked_at": "2026-11-13T09:29:41.052Z",
+    "attractions": 245,
+    "golden": 8,
+    "pending": 237,
+    "issues": {
+      "A级": 220,
+      "费用": 60,
+      "开放状态": 10,
+      "可规划时间": 4,
+      "开放时间": 19,
+      "时间规范": 80,
+      "地点待确认": 15,
+      "图片": 18,
+      "城市范围": 1,
+      "参观资格": 1
+    },
+    "changed": 230,
+    "verification": {
+      "applied": true,
+      "records": 265,
+      "activities_unchanged": true,
+      "ids_unchanged": true,
+      "integrity": "ok",
+      "coordinate_duplicates": 0,
+      "sha256": "10b050b5e705fff2efdb987ac4caaeacb24b1cfaae39d9e8275e3ee5b407a8df"
+    }
+  },
+  "administrative_city_correction": {
+    "title": "丝路欢乐世界",
+    "city": "咸阳市",
+    "source": "AMap",
+    "reason": "高德优先，原西安周边目标保留待复核"
+  }
 }

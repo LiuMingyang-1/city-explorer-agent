@@ -1,6 +1,29 @@
 # 西安活动与景点数据采集系统
 
-更新日期：2026-11-13。本文是本分支采集模块自己的说明书，供负责数据采集、数据库和主 Agent 的同学共同使用。根目录原 README 仍保留；涉及本采集链路时，以本文和实际代码为准。开发分支为 `feat/xian-nightly-events`，不合并主分支。
+更新日期：2026-11-13。本文是采集模块自己的说明书，供负责数据采集、数据库和主 Agent 的同学共同使用。根目录原 README 仍保留；涉及本采集链路时，以本文和实际代码为准。本次高德补全在独立分支 `feat/amap-attraction-supplement` 实现，不合并主分支。
+
+### 本次更新：高德优先与黄金数据复核
+
+当前245条景点的补全结果和每条缺项，见[高德补全与待核对清单](../status/amap-attraction-review-20261113.md)，可处理的完整记录见[JSON清单](../status/amap-attraction-review-20261113.json)。统计以该清单和data/events.manifest.json为准，本文后续历史实例和批次统计不代表补全后的最新覆盖率。
+
+1. **同一个实体、同一个字段，高德优先。** 已选择并绑定的高德地点，其地址、场馆名、GCJ-02经纬度优先于正文、OCR和模型填写；模型不能自行制造高德证据。高德缺失某字段不等于其他来源错误，旧值保留并在复核清单标注依据不足。
+2. **先确认实体再补字段。** 停车场、游客中心、住宅区、村委会等不能冒充景点本体；博物馆绑定父校园/商业楼等时须确认具体馆址。一次性补全中的这类记录保留原行并列出问题，不把父地点照片和营业时间套到馆内。
+3. **A级、评分、费用各有含义。** business.keytag/atag明确标注的1A—5A用于category；business.rating是用户评分，不能转换为A级；cost是人均消费参考，不自动填为门票，避免把永兴坊人均消费误记为入场费。高德未给A级时保留已有等级，未知默认仍是“等级未知”，清单注明尚未确认，不推断未评级或不适用。
+4. **景点时间和活动时间分开。** 景点主体开放时间以高德为主；临时演出/展览的开始结束日期不会被场馆营业时间覆盖。简单且完整的每周表达本地规范，季节、节假日、分设施等复杂表达交给模型单独理解；对JSON结构、钟点、例外日期再校验。失败时保留高德原文、time_status=unknown，不生成假时间。名称明确“暂停开放”时status=paused，即使详情仍返回营业时间也不恢复active。
+5. **图片与信息源分开。** 新采集优先使用所选高德POI的photos，链接仅允许高德/阿里云相关图片域名并升级HTTPS；无高德图片时回退来源附件。此次存量补全另外做了图片HTTP可用性检查，未通过的高德图片不写入。guide_url仍是原帖/网页信息源，不改成高德URL。
+6. **未来更新不能倒退。** _collection_metadata.state.events[id].amap_authority保存受保护字段、核验时间及原始business/photos。相同POI、相同记录类型的后续弱来源不能覆盖已确认高德字段；新的高德结果优先，缺失字段沿用之前的高德值。POI或记录类型变化时不继承旧保护。时间元数据与events同步，不因保留了旧结束日期而把常设景点误判过期。这里只保证来源优先级，不承诺新数据自动达到全部黄金要求。
+
+此次存量补全工具为 `scripts/supplement-amap.ts`，使用本机 `.local-data/xian/amap-supplement` 已下载的原始高德详情、时间规范结果及图片检查缓存，默认仅预览：
+
+```powershell
+node scripts/supplement-amap.ts
+# 首次预览确认数据版本后，写回同一个数据库：
+node scripts/supplement-amap.ts --apply
+```
+
+这是本次存量补全的缓存回放工具，不是新的联网采集入口。私有缓存不提交，其他机器须先准备相同结构的可信缓存；后续自动采集仍走原collect/collect:task入口。已写入的批次不能直接重复应用：脚本检查数据库SHA256、逐行原值、批次唯一性，并同时持有task/write锁。SQLite同一事务更新events、时间/来源元数据和before/after审计收据，任何一步失败回滚；20条活动和数据库永久ID不变。核验过程中若DeepSeek余额不足，未完成的复杂时间原文保留，并明确列入待核对，不能按成功规范计数。
+
+黄金覆盖检查包括地点本体、可用图片、A级依据、公众参观条件、费用、简介、建议时长，以及未来14天可用的开放规则。A级未提供与真正地点冲突的严重程度不同，报告逐项列明，**报告不是删除清单，也不是全部记录已达黄金标准的声明**。估算时长可作为规划参考，原文依据与估算依据仍在provenance中区分。门票与简介沿用原来源的事实也会注明。
 
 ## 1. 任务、交付物与当前边界
 
@@ -147,8 +170,8 @@ powershell.exe -NoProfile -File scripts/collection-scheduled-task.ps1 -Config co
 | `currency` | TEXT NOT NULL，默认CNY | 当前采集器只发布人民币。不能把其他货币金额当人民币直接写入。 |
 | `budget_note` | TEXT，可NULL | 门票、可选付费项目、费用未知范围等说明。免费公园不代表游船/游乐设施免费。 |
 | `guide_url` | TEXT，可NULL | **原信息源网址**。新采集记录直接复制帖子/网页URL；不是攻略专用，不改成高德或等级补查链接。历史NULL保留兼容。 |
-| `thumbnail_url` | TEXT，可NULL | 当前取来源图片列表第一张；只保存地址。没有图片则NULL，不拿站点图标凑图。 |
-| `image_urls` | TEXT NOT NULL，默认[] | SQLite里是JSON字符串数组；业务JSON里是数组。来自来源附件，可能包含不完全对应某个提取对象的合集图片，尚未做对象级图片精准匹配。 |
+| `thumbnail_url` | TEXT，可NULL | 优先取已选高德POI图片第一张，无高德图片时回退来源附件；只保存地址，没有图片则NULL。 |
+| `image_urls` | TEXT NOT NULL，默认[] | SQLite里是JSON字符串数组；业务JSON里是数组。优先已选高德POI的photos，无高德照片时回退来源附件；来源合集图片仍可能不完全对应具体对象。本次存量补全额外校验高德图片HTTP可用性。 |
 | `status` | TEXT NOT NULL，默认unknown | active/paused/cancelled/ended/unknown，对象是否有效；未知时间不等于paused或ended。 |
 | `source_published_at` | TEXT，可NULL | 来源首次发布时间，UTC ISO时间点；不是活动开始时间。原站无可靠时间则NULL。 |
 | `source_updated_at` | TEXT，可NULL | 来源编辑时间，与首次发布时间分开，不能单靠旧帖刚编辑就推断活动是今年。 |
@@ -380,7 +403,7 @@ flowchart TD
 {"name":"amap_search","arguments":{"keywords":"开元大剧院"}}
 ```
 
-本地程序向高德地点搜索接口发送：keywords、city=610100、citylimit=true、offset=10、page=1、extensions=all，Key由程序注入，模型看不到Key。接口URL固定，不允许模型访问任意网络地址。
+本地程序向高德v5地点搜索接口发送：keywords、region=610100、city_limit=true、page_size=10、page_num=1、show_fields=business,photos,navi，Key由程序注入，模型看不到Key。接口URL固定，不允许模型访问任意网络地址。返回GCJ-02坐标，同时保留business中的A级、营业时间、评分、人均消费及photos；这些字段由程序保留，不接受模型伪造高德来源。
 
 工具输出place列表，每项是id/name/address/adcode/district/latitude/longitude。程序只保留西安行政码6101xx、城市名西安市、有效地址和合理坐标；location按经度、纬度拆分，直接使用GCJ-02，不转换WGS-84。
 

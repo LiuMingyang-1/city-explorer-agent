@@ -8,6 +8,21 @@ import { ensureEventsSchema } from "../src/data/schema.ts";
 import { availabilityOnDate } from "../src/data/schedule.ts";
 import { assessFreshness } from "../src/collection/freshness.ts";
 import { extractionFixture } from "./collection-downstream-fixture.ts";
+import {amapDetails} from "../src/collection/amap-authority.ts";
+
+test("collector-owned v5 fields override model guesses before preparation without changing source URL",async()=>{
+  const {facts,document,asOf}=extractionFixture();let round=0;
+  const selected={id:"museum",name:"文化博物馆",address:"西安市雁塔区高德路1号",adcode:"610113",district:"雁塔区",latitude:34.23,longitude:108.95,
+    amap:amapDetails({business:{keytag:"4A景区",opentime_week:"周一至周日 09:00-17:00"},photos:[{url:"http://store.is.autonavi.com/photo"}]},asOf)};
+  const model=createToolAnalysisExtractor({deepseekKey:"test",record:()=>{},now:()=>asOf,extractLimit:3,map:{search:async()=>[selected]},fetch:async()=>{
+    if(round++===0)return Response.json({choices:[{finish_reason:"tool_calls",message:{role:"assistant",tool_calls:[{id:"map",type:"function",function:{name:"amap_search",arguments:'{"keywords":"文化博物馆"}'}}]}}]});
+    return Response.json({choices:[{finish_reason:"stop",message:{content:JSON.stringify({activities:[{...facts,record_type:"attraction",category:"5A",venue_name:"文化博物馆",amap_poi_id:"museum",address:"另一处",latitude:0,longitude:0}]})}}]});
+  }});
+  const result=await processCollection([{document}],{asOf,baseDate:"2026-11-12",invoke:model,geocoder:{resolve:async()=>{throw Error("fallback should not run");}}});
+  assert.equal(round,2);assert.equal(result.prepared.dataset.events.length,1,JSON.stringify(result.rejected));
+  const row=result.prepared.dataset.events[0];assert.equal(row.category,"4A");assert.equal(row.latitude,34.23);assert.equal(row.address,selected.address);assert.equal(row.guide_url,document.url);
+  assert.equal(row.time_status,"complete");assert.equal(row.start_at,null);assert.deepEqual(row.image_urls,["https://store.is.autonavi.com/photo"]);
+});
 
 test("invalid schedules and dates fall back to original time notes without losing the object", async () => {
   const {facts,document,asOf} = extractionFixture();

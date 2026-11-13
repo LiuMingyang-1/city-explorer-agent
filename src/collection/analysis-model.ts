@@ -5,8 +5,9 @@ import { venueRequestKey } from "./geocoding.ts";
 import type { VerifiedLocation } from "./geocoding.ts";
 import { locationQueryForFacts } from "./preparation.ts";
 import { documentsFrom } from "./pilot-extract.ts";
+import {amapDetails,amapGrade,applyAmapAuthority,normalizeAmapHours,simpleAmapHours,subjectProblem,AMAP_SOURCE} from "./amap-authority.ts";
 
-export interface MapPlace { id: string; name: string; address: string; adcode: string; district: string; latitude: number; longitude: number; }
+export interface MapPlace { id: string; name: string; address: string; adcode: string; district: string; latitude: number; longitude: number; amap?:import("./amap-authority.ts").AmapDetails; }
 export interface MapSearch { search(keywords: string): Promise<MapPlace[]>; }
 const tool = { type: "function", function: { name: "amap_search", description: "在西安市搜索高德地点。可修改关键词，选择正确分店；返回原始GCJ-02坐标，不证明活动正在举办。", parameters: { type: "object", additionalProperties: false, required: ["keywords"], properties: { keywords: { type: "string", minLength: 1, maxLength: 100 } } } } };
 const levelTool = {type:"function",function:{name:"search_scenic_level",description:"仅为景点补查官方1A—5A级旅游景区等级，不是用户评分或酒店星级。优先文旅部门及景区官网；找不到对应景点的可靠明确等级时返回等级未知。",parameters:{type:"object",additionalProperties:false,required:["venue_name"],properties:{venue_name:{type:"string",minLength:1,maxLength:80}}}}};
@@ -34,8 +35,8 @@ export function createAmapSearch(options: { key: string; fetch?: typeof fetch; r
         if (requests++ >= (options.requestLimit ?? 30)) throw new Error("MAP_BUDGET_EXHAUSTED");
         await new Promise(resolve => setTimeout(resolve, Math.max(0, 1100 - (Date.now() - last))));
         last = Date.now(); const started = last;
-        const url = new URL("https://restapi.amap.com/v3/place/text");
-        for (const [k,v] of Object.entries({key:options.key,keywords,city:"610100",citylimit:"true",offset:"10",page:"1",extensions:"all"})) url.searchParams.set(k,v);
+        const url = new URL(AMAP_SOURCE);
+        for (const [k,v] of Object.entries({key:options.key,keywords,region:"610100",city_limit:"true",page_size:"10",page_num:"1",show_fields:"business,photos,navi"})) url.searchParams.set(k,v);
         let code = "NETWORK_ERROR";
         try {
           const response = await (options.fetch ?? fetch)(url, { signal: AbortSignal.timeout(10000), redirect: "error" });
@@ -49,7 +50,7 @@ export function createAmapSearch(options: { key: string; fetch?: typeof fetch; r
           const places: MapPlace[] = (Array.isArray(data.pois) ? data.pois : []).flatMap((p: any) => {
             const coords = typeof p.location === "string" ? p.location.split(",").map(Number) : [];
             if (!p.id || typeof p.name !== "string" || typeof p.address !== "string" || !p.address.trim() || !/^6101\d{2}$/.test(String(p.adcode)) || p.cityname !== "西安市" || coords.length !== 2 || !Number.isFinite(coords[0]) || !Number.isFinite(coords[1]) || coords[0] < 107 || coords[0] > 110.5 || coords[1] < 33 || coords[1] > 35.5) return [];
-            return [{id:p.id,name:p.name,address:`西安市${p.adname}${p.address}`,adcode:String(p.adcode),district:p.adname,longitude:coords[0],latitude:coords[1]}];
+            return [{id:p.id,name:p.name,address:p.address.startsWith("西安")?p.address:`西安市${p.adname??""}${p.address}`,adcode:String(p.adcode),district:p.adname,longitude:coords[0],latitude:coords[1],amap:amapDetails(p,options.now?.()??new Date().toISOString())}];
           });
           cache.set(keywords, places); return structuredClone(places);
         } finally { options.onRequest?.({elapsed_ms:Date.now()-started,code}); }
@@ -71,6 +72,7 @@ export function createToolAnalysisExtractor(options: ApiOptions & {model?: strin
   const verifiedLevels=new Map<string,{category:string;reason:string}>();
   const registry = new Map<string, Map<string, MapPlace>>();
   const clock = options.now ?? (() => new Date().toISOString());
+  const hoursCache=new Map<string,import("./amap-authority.ts").AmapHours>();
   const invoke: Extractor = async (system, input) => {
     const places = new Map<string, MapPlace>(); registry.set(input.source_url, places);
     const levelSources=new Map<string,string>();let levelCalls=0;
@@ -89,7 +91,30 @@ export function createToolAnalysisExtractor(options: ApiOptions & {model?: strin
         try {
           const parsed=JSON.parse(output);
           for(const row of Array.isArray(parsed?.activities)?parsed.activities:[]){
+            const selected=places.get(row?.amap_poi_id);
+            if(selected?.amap){
+              if(row.record_type==="attraction"&&subjectProblem(row.title??row.venue_name??"",selected.name,selected.amap)){row.amap_poi_id=null;row.latitude=null;row.longitude=null;continue;}
+              if(!row.evidence||typeof row.evidence!=="object"||Array.isArray(row.evidence))row.evidence={};
+              row.conflicts=Array.isArray(row.conflicts)?row.conflicts:[];
+              const d=selected.amap,raw=d.business.opentime_week||d.business.opentime_today;
+              if(row.record_type==="attraction"&&raw){
+                const key=selected.id+"\n"+raw;
+                const simple=d.business.opentime_week?simpleAmapHours(d.business.opentime_week):null;
+                if(simple)hoursCache.set(key,simple);
+                if(!hoursCache.has(key)){
+                  try{
+                    const normalized=await normalizeAmapHours([{id:selected.id,name:selected.name,opentime_week:d.business.opentime_week??"",opentime_today:d.business.opentime_today??""}],new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Shanghai"}).format(Date.parse(clock())),async(prompt,data)=>{
+                      const response=await api.extract(options.model??"deepseek-flash",prompt,data);
+                      if(response?.choices?.[0]?.finish_reason!=="stop")throw new Error("INCOMPLETE_AMAP_HOURS");return response.choices[0].message.content;
+                    });hoursCache.set(key,normalized.get(selected.id)!);
+                  }catch{hoursCache.set(key,{schedule_json:null,time_status:"unknown",reason:"高德时间规范失败，保留原文，不沿用相冲突的其他来源时间"});}
+                }
+                d.hours=structuredClone(hoursCache.get(key)!);
+              }
+              applyAmapAuthority(row,selected);
+            }
             if(row?.record_type!=="attraction")continue;
+            if(selected?.amap&&amapGrade(selected.amap))continue;
             if(!row.evidence||typeof row.evidence!=="object"||Array.isArray(row.evidence))row.evidence=typeof row.evidence==="string"?{summary:row.evidence.slice(0,400)}:{};
             row.category??="等级未知";
             if(row.category==="等级未知")continue;
@@ -147,7 +172,7 @@ export function createToolAnalysisExtractor(options: ApiOptions & {model?: strin
   invoke.locationFor = (url: string, facts: ActivityFacts): VerifiedLocation | null => {
     const p = facts.amap_poi_id ? registry.get(url)?.get(facts.amap_poi_id) : null;
     if (!p || facts.latitude !== p.latitude || facts.longitude !== p.longitude) return null;
-    return {request_key:venueRequestKey(locationQueryForFacts(facts)),venue_name:facts.venue_name,address:p.address,poi_id:p.id,adcode:p.adcode,district:p.district,latitude:p.latitude,longitude:p.longitude,original:{lat:p.latitude,lng:p.longitude},input_system:"GCJ-02",system:"GCJ-02",conversion:null,source_url:"https://restapi.amap.com/v3/place/text",verified_at:clock(),method:"poi"};
+    return {request_key:venueRequestKey(locationQueryForFacts(facts)),venue_name:facts.venue_name,address:p.address,poi_id:p.id,adcode:p.adcode,district:p.district,latitude:p.latitude,longitude:p.longitude,original:{lat:p.latitude,lng:p.longitude},input_system:"GCJ-02",system:"GCJ-02",conversion:null,source_url:p.amap?AMAP_SOURCE:"https://restapi.amap.com/v3/place/text",verified_at:clock(),method:"poi",...(p.amap?{amap:structuredClone(p.amap)}:{})};
   };
   return invoke;
 }
