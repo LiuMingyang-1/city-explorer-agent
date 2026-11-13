@@ -1,6 +1,6 @@
 # Agent 侧实现契约（2026-11-12 定稿）
 
-本文是 docs/next-phase-roadmap.md 中 Agent 同学 P0/P1 任务的实施契约，
+本文是 docs/planning/roadmap.md 中 Agent 同学 P0/P1 任务的实施契约，
 四个并行工作流共同遵守；Mock 见 docs/mocks/day0/，语义以此文为准
 （Mock 中 schema_version / request_id / revision / base_revision / STALE_PLAN
 等扩展字段本期不实现）。

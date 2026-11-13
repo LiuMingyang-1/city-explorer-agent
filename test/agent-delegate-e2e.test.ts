@@ -44,7 +44,7 @@ import { messageRecords, sleep, until } from "./persistent-fixture.ts";
 
 /**
  * createPersistentPlanner 子 Agent 编排全链路集成测试
- * （docs/conversations-and-orchestration.md §7 第 8–11 条不变量）。
+ * （docs/architecture/orchestration.md §7 第 8–11 条不变量）。
  *
  * 全部离线：真实 :memory: SessionRepository + 真实种子 EventRepository +
  * 真实 createPersistentPlanner（delegate_task 接线）+ faux streamFn。

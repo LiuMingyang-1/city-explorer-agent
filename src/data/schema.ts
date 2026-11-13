@@ -6,7 +6,7 @@ import type { DatabaseSync } from "node:sqlite";
  * 旧库按需补列后两者结构一致。
  */
 
-/** v0 既有列，对应 docs/database-design.md 的活动数据库字段。 */
+/** v0 既有列，对应 docs/architecture/database.md 的活动数据库字段。 */
 const BASE_EVENT_COLUMNS: readonly string[] = [
   "id TEXT PRIMARY KEY",
   "title TEXT NOT NULL",

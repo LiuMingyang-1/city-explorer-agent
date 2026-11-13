@@ -22,11 +22,11 @@
 
 ## Agent ↔ 前端：先用样例开发组件
 
-[Mock 目录](mocks/day0/) 已保留。重点看：
+[Mock 目录](../mocks/day0/) 已保留。重点看：
 
-- [双方案](mocks/day0/response-comparison.json)
-- [单方案](mocks/day0/response-single.json)
-- [SSE 阶段样例](mocks/day0/stream.sse)
+- [双方案](../mocks/day0/response-comparison.json)
+- [单方案](../mocks/day0/response-single.json)
+- [SSE 阶段样例](../mocks/day0/stream.sse)
 
 前端可以先用样例做活动卡、A/B 切换、地图轨迹。样例里的版本、revision、request_id 等扩展字段暂不作为接口实施要求；不要求现在开发 v2 接口、幂等、版本冲突或历史协议。
 

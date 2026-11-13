@@ -41,14 +41,14 @@ npm run check               # typecheck + 全部测试
   上下文超长时自动压缩为可回放检查点，原始消息永不删除。
 - 当前所有活动均为模拟数据（约 119 条，未来一周）；还没有交通路线与时间计算；
   仍没有真实登录/多用户认证（Web 入口用匿名 cookie 区分访客，见下节）、
-  子会话调度与结果回投——会话数据结构已支持（见 docs/users-and-sessions.md）。
+  子会话调度与结果回投——会话数据结构已支持（见 docs/architecture/sessions.md）。
 - 活动记录含每人预计费用区间（免费/付费/未知）、攻略链接、缩略图与
   多张图片地址字段；只存 URL 或路径，不存图片本体；
   当前模拟数据含免费、付费与费用未知样例，以及单图与多图示例。
 - 新增字段经非破坏幂等迁移在打开旧库时自动补入，已有数据保留、无需
   重新 seed；显式 `npm run seed` 仍会先清空再写入，替换全部模拟活动。
 - 环境变量与开发细节见 `.env.example` 和 `docs/development.md`；
-  活动字段扩展验收报告见 [docs/event-metadata-acceptance.md](docs/event-metadata-acceptance.md)。
+  活动字段扩展验收报告见 [docs/status/event-metadata-acceptance.md](docs/status/event-metadata-acceptance.md)。
 
 ## Web 演示入口（已实现）
 
@@ -160,8 +160,12 @@ npm run check:frontend      # 前端脚本语法检查（无构建步骤）
 
 ## 设计文档
 
-- [用户与会话数据设计](docs/users-and-sessions.md)：用户归属、长期主会话、
+文档索引与分类规范见 [docs/README.md](docs/README.md)。
+
+- [用户与会话数据设计](docs/architecture/sessions.md)：用户归属、顶层对话会话、
   递归子会话、统一追加日志（消息/压缩检查点）、运行记录与规划状态指针；
   CLI 持久化路径已实现，多用户调度/认证仍为设计目标。
-- [会话实施计划](docs/session-implementation-plan.md)：持久仓库、独立压缩核心、
+- [对话会话模型与子 Agent 编排](docs/architecture/orchestration.md)：每次访问即
+  新对话、`delegate_task` 同步子 Agent 派发的设计。
+- [会话实施计划](docs/status/session-implementation-plan.md)：持久仓库、独立压缩核心、
   Planner/CLI 接入的任务拆分与接口契约。

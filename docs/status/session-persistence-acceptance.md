@@ -6,7 +6,7 @@
 **修复已实施**（按 §3 既定方向），修复后全套 **262/262** 通过（含新增
 同毫秒决胜回归 1 条）；待复审确认后更新最终结论（见 §6）。
 
-关联文档：[users-and-sessions.md](users-and-sessions.md)（数据设计，§10 为
+关联文档：[sessions.md](../architecture/sessions.md)（数据设计，§10 为
 验收清单）、[session-implementation-plan.md](session-implementation-plan.md)
 （任务拆分与接口契约）。
 
@@ -76,7 +76,7 @@ P2/P3 修复后全套 **262/262** 通过（待复审复跑确认）。
 扩展项及重放/终态边界，归入 `test/session-*.test.ts` 与
 `test/session-integration*.test.ts`（泛称，具体名以仓库为准）。
 
-## 4. 原 9 项验收清单状态（users-and-sessions §10）
+## 4. 原 9 项验收清单状态（sessions §10）
 
 | # | 验收点 | 实现/修复方向 | 回归覆盖（泛称） | sol 复审结论 |
 | --- | --- | --- | --- | --- |

@@ -1,7 +1,7 @@
 // Adapted from Rudy src/compaction/checkpoint.ts (pi 1.4.0 lineage, MIT licensed).
 // See NOTICE in this directory for the full license text.
 // The summary message no longer advertises read_session_history: that tool is not
-// implemented yet, so the prompt must not promise it (docs/users-and-sessions.md §9).
+// implemented yet, so the prompt must not promise it (docs/architecture/sessions.md §9).
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
 
 export interface Checkpoint {

@@ -1,7 +1,7 @@
 # 架构（v0 命令行）
 
-本文描述当前实现。运行环境与测试见 [development.md](development.md)，
-规划中的前端与数据源见 [product-plan.md](product-plan.md)。
+本文描述当前实现。运行环境与测试见 [development.md](../development.md)，
+规划中的前端与数据源见 [product-plan.md](../planning/product-plan.md)。
 
 ## 处理链路
 

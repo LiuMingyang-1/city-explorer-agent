@@ -1,8 +1,8 @@
 # Database Design
 
 本文说明活动库的 Schema、字段语义、查询行为、迁移与种子策略。
-范围限第一版单进程 CLI 的活动数据；架构与模块分工见 [architecture.md](architecture.md)，
-运行命令见 [development.md](development.md)。
+范围限第一版单进程 CLI 的活动数据；架构与模块分工见 [overview.md](overview.md)，
+运行命令见 [development.md](../development.md)。
 
 ## 持久化边界
 

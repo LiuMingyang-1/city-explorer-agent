@@ -19,7 +19,7 @@ import type {
 } from "./types.ts";
 
 /**
- * 会话持久仓库接口（docs/users-and-sessions.md）。首版实现见 ./sqlite.ts。
+ * 会话持久仓库接口（docs/architecture/sessions.md）。首版实现见 ./sqlite.ts。
  *
  * 归属模型：所有会话级读写都显式携带 userId——仓库不只靠 FK 关联，
  * 而是逐方法校验 "会话/记录/run 属于该 userId"：

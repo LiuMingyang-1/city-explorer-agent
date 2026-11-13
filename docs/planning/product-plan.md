@@ -4,8 +4,8 @@
 地图上加一个通用聊天框。计划参加
 [传智杯 AI WEB 赛道](https://www.boxuegu.com/matchTrack/detail/?id=10037)。
 
-**当前状态：** 已交付命令行 v0（实现见 [architecture.md](architecture.md)、
-[development.md](development.md)）；本文件的地图前端、真实数据源、长期
+**当前状态：** 已交付命令行 v0（实现见 [overview.md](../architecture/overview.md)、
+[development.md](../development.md)）；本文件的地图前端、真实数据源、长期
 偏好等均为规划目标，尚未实现。演示城市与数据管道由其他 worktree 的未合并
 设计并行调研中，本文不代其做决定。
 

@@ -5,8 +5,8 @@
 运行时与离线测试。sol 复审已完成：独立全套 261/261、定向回归 28/28
 通过，首审 6 项与扩展 3 项中 2 项 closed；遗留 1 项 P2（child 候选
 稳定排序）与 1 项 P3 待修复重验，**尚未最终通过**。任务拆分见
-[session-implementation-plan.md](session-implementation-plan.md)，验收状态见
-[session-persistence-acceptance.md](session-persistence-acceptance.md)。
+[session-implementation-plan.md](../status/session-implementation-plan.md)，验收状态见
+[session-persistence-acceptance.md](../status/session-persistence-acceptance.md)。
 
 本文取代 2026-11-11 早些时候的讨论稿：原 `messages` / `compactions` /
 `session_states` 三张分表合并为统一追加日志 `session_records`，并新增 `runs`
@@ -16,7 +16,7 @@
 2026-11-12 更新：`kind='main'` 语义由"每用户唯一长期主会话"重述为
 "用户面顶层对话会话"（每用户可有多个，每次访问即新对话），同步子 Agent
 派发工具 `delegate_task` 已落地；方案与验收见
-[conversations-and-orchestration.md](conversations-and-orchestration.md)。
+[orchestration.md](orchestration.md)。
 
 ## 1. 已确认的方向
 
@@ -25,7 +25,7 @@
 - 每个 Web 用户可有**多个顶层对话会话**（`kind='main'`，"对话即 main"）：
   每次访问即新对话，由 `createConversation` 在首条消息时懒建；跨对话
   连续性完全由 `user_memory` 长期记忆承担（见
-  [conversations-and-orchestration.md](conversations-and-orchestration.md)）。
+  [orchestration.md](orchestration.md)）。
 - 对话会话持续追加消息并压缩，**压缩不更换 session_id**。
 - 子 Agent 由对话会话派出处理独立任务（`kind='child'`）；子 Agent 可
   **递归**再派生子 Agent，
@@ -238,7 +238,7 @@ seq=41  type=message     message_seq=40   user: "第二个换一个"
 一次"请求 → 工具循环 → 产出"的执行记录。数据模型支持递归层级
 （子 run 可再派生 run）；同步派发工具 `delegate_task` 在运行时层已落地
 （父轮内建 child 会话与子 run，见
-[conversations-and-orchestration.md](conversations-and-orchestration.md) §5），
+[orchestration.md](orchestration.md) §5），
 **不实现后台异步调度**。
 
 | 字段 | 类型 | 必填 | 说明 |
@@ -343,7 +343,7 @@ first_kept 不小于上一条有效检查点的边界。**每条检查点都按�
   **确定性次序**判定：时间戳（含同毫秒并列）与随机 `run_id` 不构成
   次序依据，须以单调序号（如关联记录的 `message_seq`）决胜——
   当前实现的并列决胜仍可能选中旧候选，属已记录 P2 待修项
-  （见 [session-persistence-acceptance.md](session-persistence-acceptance.md)
+  （见 [session-persistence-acceptance.md](../status/session-persistence-acceptance.md)
   §3 第 3 项）。
 - 新需求版本管理、未确认约束的异步冲突检测：本期数据结构**不覆盖**，
   标为待扩展（见 §9），不假装实现。
@@ -390,7 +390,7 @@ first_kept 不小于上一条有效检查点的边界。**每条检查点都按�
   建 `kind='child'` 任务会话与子 run（`parent_run_id` /
   `reply_to_session_id` / `root_run_id` 写全），结构化结果回传父 Agent
   ——详见
-  [conversations-and-orchestration.md](conversations-and-orchestration.md) §5。
+  [orchestration.md](orchestration.md) §5。
 - 独立压缩核心：自动（每次模型请求前，含工具循环续跑）与手动 compact、
   同一模型独立摘要预算（初始 8192）、安全工具批次切分、有限重试、取消、
   检查点落库成功才切换上下文；摘要提示词保留城市规划日期/约束/

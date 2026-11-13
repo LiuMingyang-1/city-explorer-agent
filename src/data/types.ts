@@ -1,5 +1,5 @@
 /**
- * 一条活动时段记录，对应 SQLite events 表的一行（字段见 docs/database-design.md）。
+ * 一条活动时段记录，对应 SQLite events 表的一行（字段见 docs/architecture/database.md）。
  * TS 侧用 camelCase，数据库列名为 snake_case，由 repository 实现负责映射。
  */
 export interface Event {

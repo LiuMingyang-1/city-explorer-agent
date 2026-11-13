@@ -1,6 +1,6 @@
 /**
  * 行程相邻站间道路段（PlanLeg，线上契约 snake_case，见
- * docs/agent-impl-contracts.md §2）。由服务端在行程校验通过后计算，
+ * docs/contracts/agent-api.md §2）。由服务端在行程校验通过后计算，
  * 模型不输出 legs；任何失败单 leg 降级，绝不抛出、不阻塞规划响应。
  */
 import type { Event } from "../data/types.ts";
@@ -12,7 +12,7 @@ import type { GeoPoint, LegGeometry, RouteComputer, TravelMode } from "./types.t
 /** 写入每条 leg 的默认站间缓冲（秒）。 */
 export const DEFAULT_LEG_BUFFER_SECONDS = 300;
 
-/** 线上契约：行程相邻两站间的道路段（docs/agent-impl-contracts.md §2）。 */
+/** 线上契约：行程相邻两站间的道路段（docs/contracts/agent-api.md §2）。 */
 export interface PlanLeg {
   from_event_id: string;
   to_event_id: string;

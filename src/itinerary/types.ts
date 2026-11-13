@@ -10,7 +10,7 @@ export interface PlanningConstraints {
 
 /**
  * 行程中的一站。字段名与最终输出 JSON 完全一致（snake_case，
- * 结构见 docs/architecture.md 的最终 stdout 契约一节），解析时无需改名。
+ * 结构见 docs/architecture/overview.md 的最终 stdout 契约一节），解析时无需改名。
  */
 export interface ItineraryStop {
   event_id: string;

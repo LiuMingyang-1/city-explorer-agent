@@ -58,7 +58,7 @@ export type PlannerErrorTurn = Extract<PlannerTurn, { kind: "error" }>;
 
 /**
  * 流式端点（POST /api/chat/stream）的 progress 阶段枚举，对应
- * docs/agent-impl-contracts.md §4：由 Agent 工具执行事件与校验时机推导——
+ * docs/contracts/agent-api.md §4：由 Agent 工具执行事件与校验时机推导——
  * search_events → searching_events、delegate_task → exploring_plans、
  * 行程校验/纠正 → validating_schedule、legs 算路 → routing（预留）。
  */

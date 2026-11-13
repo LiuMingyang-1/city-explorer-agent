@@ -2,7 +2,7 @@ import type { DatabaseSync } from "node:sqlite";
 
 /**
  * 会话库表结构：users / sessions / session_records / runs / user_memory
- * 五表一次建齐，语义见 docs/users-and-sessions.md。全部 CREATE IF NOT
+ * 五表一次建齐，语义见 docs/architecture/sessions.md。全部 CREATE IF NOT
  * EXISTS，幂等；不做列迁移。
  *
  * 约束要点：

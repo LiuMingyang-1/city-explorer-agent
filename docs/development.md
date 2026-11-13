@@ -1,7 +1,7 @@
 # 开发说明（v0）
 
-架构与输出契约见 [architecture.md](architecture.md)；活动库字段语义见
-[database-design.md](database-design.md)。
+架构与输出契约见 [overview.md](architecture/overview.md)；活动库字段语义见
+[database.md](architecture/database.md)。
 
 ## 环境与技术栈
 
@@ -65,7 +65,7 @@ Anthropic Messages 兼容端点建单模型目录。自定义 `EXPLORER_PROVIDER
   整体重置模拟数据。
 - 活动含每人费用区间（分；0=免费、NULL=未知）、攻略链接、缩略图与图片
   地址字段；完整字段语义、CHECK 约束与查询行为以
-  [database-design.md](database-design.md) 为准。
+  [database.md](architecture/database.md) 为准。
 
 ## 测试
 

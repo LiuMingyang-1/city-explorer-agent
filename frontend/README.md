@@ -47,7 +47,7 @@ https://wlj.xa.gov.cn/wlml/lyjq/1.html 。坐标来自 OpenStreetMap/Nominatim�
 ## P0 组件与样例联调
 
 活动卡、A/B 对比、提供的道路轨迹与通勤时间、SSE 阶段接收已接入。
-运行 `npm run dev:frontend` 后访问 `http://127.0.0.1:5173/?mock=comparison`，发送一条需求即可使用 `docs/mocks/day0/` 的样例演示，无需模型密钥。更多样例、API 兼容与未完成联调项见 [P0 前端交付](../docs/p0-frontend.md)。
+运行 `npm run dev:frontend` 后访问 `http://127.0.0.1:5173/?mock=comparison`，发送一条需求即可使用 `docs/mocks/day0/` 的样例演示，无需模型密钥。更多样例、API 兼容与未完成联调项见 [P0 前端交付](../docs/status/p0-frontend.md)。
 
 ## Agent 接口
 
@@ -68,12 +68,12 @@ npm run check:frontend
 
 ## 地图替换调研
 
-高德 JS API 2.0 可替换当前地图，并通过浅色主题、自定义样式和要素控制接近现有画面；正式切换需配置 Key、安全代理并处理 GCJ-02 坐标。已支持配置后启用高德，无配置时使用 OpenFreeMap。详见 [高德可行性调研](../docs/amap-feasibility.md)。
+高德 JS API 2.0 可替换当前地图，并通过浅色主题、自定义样式和要素控制接近现有画面；正式切换需配置 Key、安全代理并处理 GCJ-02 坐标。已支持配置后启用高德，无配置时使用 OpenFreeMap。详见 [高德接入文档](../docs/integrations/amap.md)。
 
-高德切换所需配置和获取入口见 [高德准备清单](../docs/amap-setup.md)。
+高德切换所需配置和获取入口见 [高德准备清单](../docs/integrations/amap.md#准备清单)。
 
 ## 高德地图运行配置
 
-填写根目录 `.env` 中的 `AMAP_JS_KEY` 和 `AMAP_SECURITY_JSCODE` 后，`npm run dev:frontend` 会启用原生高德地图、搜索、定位转换和天气。默认 `AMAP_STYLE=amap://styles/fresh`。不配置则保留原有底图；安全密钥通过同源代理使用，不写入网页。P0 方案可显示 WGS84 或 GCJ-02 轨迹，前者在入口转换一次。后端位置契约的兼容边界见 [高德准备清单](../docs/amap-setup.md#已实现的运行入口)。
+填写根目录 `.env` 中的 `AMAP_JS_KEY` 和 `AMAP_SECURITY_JSCODE` 后，`npm run dev:frontend` 会启用原生高德地图、搜索、定位转换和天气。默认 `AMAP_STYLE=amap://styles/fresh`。不配置则保留原有底图；安全密钥通过同源代理使用，不写入网页。P0 方案可显示 WGS84 或 GCJ-02 轨迹，前者在入口转换一次。后端位置契约的兼容边界见 [高德接入文档](../docs/integrations/amap.md#已实现的运行入口)。
 
-地图活动假数据已随前端提供，执行 `npm run mock:events` 可从仓库种子模板重新生成当天起 7 天的数据，不必下载或修改数据库。`-- --date=YYYY-MM-DD` 可固定日期。活动点点击打开右上角预览；聊天方案入口点击后覆盖左卡，左上角返回对话。演示配图与活动均有标识；默认读取 `/api/events`（GCJ-02）；独立静态开发环境没有该 API 时回退演示数据。`WANDER_CONFIG.eventsEndpoint` 可替换活动列表地址，字段见 `docs/p0-frontend.md`。
+地图活动假数据已随前端提供，执行 `npm run mock:events` 可从仓库种子模板重新生成当天起 7 天的数据，不必下载或修改数据库。`-- --date=YYYY-MM-DD` 可固定日期。活动点点击打开右上角预览；聊天方案入口点击后覆盖左卡，左上角返回对话。演示配图与活动均有标识；默认读取 `/api/events`（GCJ-02）；独立静态开发环境没有该 API 时回退演示数据。`WANDER_CONFIG.eventsEndpoint` 可替换活动列表地址，字段见 `docs/status/p0-frontend.md`。

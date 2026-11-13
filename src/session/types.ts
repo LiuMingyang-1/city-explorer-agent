@@ -2,7 +2,7 @@ import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import type { Itinerary, PlanningConstraints } from "../itinerary/types.ts";
 
 /**
- * 会话持久仓库的行类型与 payload 形状（docs/users-and-sessions.md）。
+ * 会话持久仓库的行类型与 payload 形状（docs/architecture/sessions.md）。
  * TS 侧 camelCase，数据库 snake_case 映射在 impl/context.ts；
  * payload 是 JSON 文本列，解析/校验在 ./payload.ts。
  */

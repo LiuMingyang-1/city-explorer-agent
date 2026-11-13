@@ -1,6 +1,6 @@
 # P0 前端联调交付
 
-对应 [next-phase-roadmap.md](next-phase-roadmap.md) 的 P0 前端四项任务；遵守 [Day 0 约定](day0-contracts.md)：直接使用已有 Mock 做组件，不要求现在实施 v2 协议、版本、幂等或新历史接口。
+对应 [roadmap.md](../planning/roadmap.md) 的 P0 前端四项任务；遵守 [Day 0 约定](../contracts/day0.md)：直接使用已有 Mock 做组件，不要求现在实施 v2 协议、版本、幂等或新历史接口。
 
 ## 当前完成度
 
@@ -101,4 +101,4 @@ npm run dev:frontend
 
 ## 活动规划快捷入口与偏好（2026-11-13）
 
-活动预览卡新增“加入行程”，与“问问这个活动”并列，二者都只填入草稿。真实活动继续携带引用，demo 不携带；由用户提交后交给 Agent 排期。新增“我的偏好”抽屉，按现有 `/api/memory` 契约读、改、清空，使用同源 cookie，失败保留草稿。预览与真实服务的区别、发布故障证据和恢复流程见 [frontend-alignment.md](frontend-alignment.md)。
+活动预览卡新增“加入行程”，与“问问这个活动”并列，二者都只填入草稿。真实活动继续携带引用，demo 不携带；由用户提交后交给 Agent 排期。新增“我的偏好”抽屉，按现有 `/api/memory` 契约读、改、清空，使用同源 cookie，失败保留草稿。预览与真实服务的区别、发布故障证据和恢复流程见 [frontend-alignment.md](../contracts/frontend-alignment.md)。

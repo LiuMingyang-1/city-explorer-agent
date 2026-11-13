@@ -1,6 +1,7 @@
 # 对话会话模型与子 Agent 编排设计
 
-日期：2026-11-12。状态：已评审修订稿（逻辑与边界问题已收敛，待实现）。
+日期：2026-11-12。状态：已落地（"对话即 main"会话模型与 `delegate_task`
+同步子 Agent 派发均已实现；评审修订稿，逻辑与边界问题已收敛）。
 本文针对两项新需求给出实现方案：
 
 1. **前端每次访问即新对话**——不再默认恢复上次会话；跨对话连续性
@@ -11,7 +12,7 @@
 两项需求共享同一次会话模型重述：**`kind='main'` 的语义从
 "每用户唯一长期主会话"改为"用户面顶层对话会话"**（每用户可有 N 个），
 `kind='child'` 专职表示子 Agent 派生的任务会话。本文取代
-[users-and-sessions.md](users-and-sessions.md) §3/§4 中
+[sessions.md](sessions.md) §3/§4 中
 "每用户恰好一个 main"的相关表述；该文其余语义（记录日志、压缩、
 租约、run 状态机、归属校验）不变。
 
@@ -41,7 +42,7 @@
 
 ## 2. 为什么推翻"每用户一个主会话"
 
-原设计前提（users-and-sessions.md §1）："每个 Web 用户拥有一个长期
+原设计前提（sessions.md §1）："每个 Web 用户拥有一个长期
 主会话，用户默认一直与该主会话交互"。新需求要求每次访问都是新对话，
 该前提失效。曾评估"对话=main 的 child"（不动 schema）方案，但其
 语义债更重：
@@ -206,7 +207,7 @@
 | 前端 | `frontend/chat.js` | 移除 `initHistory`、`state.sessionId` 页内存续、超时放宽至 210s 与长轮提示文案 |
 | CLI | `src/cli/main.ts`、`src/config.ts` | `EXPLORER_SESSION_ID`、子任务并发/超时配置、stderr 打印会话 ID、USAGE 更新 |
 | 测试 | `test/session-*/web-*/memory-distill*` 及新增 `test/agent-delegate*.test.ts` | 旧"唯一 main"断言改写 + 多对话、404/409、串行蒸馏、同步编排/取消/超时/深度回归 |
-| 文档 | `docs/users-and-sessions.md` §3/§4 | 随实现同步更新 |
+| 文档 | `docs/architecture/sessions.md` §3/§4 | 随实现同步更新 |
 
 ## 5. 子 Agent 编排：同步派发
 

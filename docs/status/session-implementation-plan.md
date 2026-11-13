@@ -6,7 +6,7 @@ sol 复审已完成：独立全套 261/261、定向回归 28/28 通过；首审 
 closed；扩展 3 项中 2 项 closed、child 候选恢复遗留 1 项 P2 open，
 另记录 1 项 P3。**尚未最终验收**——逐条结论与待办见
 [session-persistence-acceptance.md](session-persistence-acceptance.md)。
-数据设计语义见 [users-and-sessions.md](users-and-sessions.md)（字段、
+数据设计语义见 [sessions.md](../architecture/sessions.md)（字段、
 恢复、验收清单以该文为准，本文只管任务拆分与代码边界）。
 
 ## 1. 任务划分
@@ -155,7 +155,7 @@ close(): void;
 
 ### 3.3 02 验收
 
-`docs/users-and-sessions.md` §10 中第 1–6、8 条的存储层部分 +
+`docs/architecture/sessions.md` §10 中第 1–6、8 条的存储层部分 +
 并发初始化单主会话 + 租约竞争/过期抢占/过期不可复活/旧 epoch 拒写 +
 plan 标注与指针原子性。
 
@@ -341,7 +341,7 @@ system section），另有 `src/agent/interrupted.ts`（尾部未闭环工具批
 
 ## 6. 任务 05+：sol 只读 review 与修复批次
 
-- sol 首审：对照 `docs/users-and-sessions.md` §10 验收清单逐条核对、
+- sol 首审：对照 `docs/architecture/sessions.md` §10 验收清单逐条核对、
   文件归属无越界、payload 形状一致、MIT 来源注释、无密钥/路径泄露、
   无真实 API 调用路径进测试——提出 6 项问题，已修复并经复审 closed。
 - 扩展复审：追加 3 项（op 异步链内 close 死锁、commit 后迟到 cancel、
