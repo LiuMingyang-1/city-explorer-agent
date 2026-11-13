@@ -7,16 +7,16 @@ function nodes(root: Element): Element[]{return [root,...root.children.flatMap(n
 function find(root: Element,cls: string){return nodes(root).filter(e=>e.className.split(' ').includes(cls));}
 function content(root: Element): string{return nodes(root).map(e=>e.textContent).join('\n');}
 function leaflet(h:ReturnType<typeof setup>){
- const created: {type:string;points:unknown;options:Record<string,unknown>}[]=[],groups:unknown[]=[];let fits=0;
+ const created: {type:string;points:unknown;options:Record<string,unknown>}[]=[],groups:unknown[]=[],fitTargets:any[]=[];let fits=0;
  const make=(type:string,points:unknown,options:Record<string,unknown>)=>{
   const value={type,points,options,bindTooltip(){return this},on(){return this}};created.push(value);return value;
  };
- h.context.map={removeLayer(){},fitBounds(){fits++}};
+ h.context.map={removeLayer(){},fitBounds(bounds:unknown){fits++;fitTargets.push(bounds)}};
  h.context.locationLabel=(s:string)=>s;h.context.innerWidth=1440;
  const card=Object.assign(h.$('card'),{getBoundingClientRect:()=>({right:450,height:844})});
  h.context.document.querySelector=()=>card;
  h.context.L={circleMarker:(p:unknown,o:Record<string,unknown>)=>make('dot',p,o),polyline:(p:unknown,o:Record<string,unknown>)=>make('line',p,o),latLngBounds:(p:unknown)=>p,layerGroup:(layers:unknown[])=>({addTo(){groups.push(layers);return this}})};
- return {created,groups,fits:()=>fits};
+ return {created,groups,fitTargets,fits:()=>fits};
 }
 
 test('rich event cards handle price ranges, free/unknown prices, venue, reason, links and image failure',()=>{
@@ -35,13 +35,14 @@ test('rich event cards handle price ranges, free/unknown prices, venue, reason, 
  assert.equal(h.context.window.WanderPlans.price({budget_min:null,budget_max:null}),'票价待确认');
 });
 
-test('A/B switching draws both supplied road geometries and highlights the selected route without refitting',()=>{
+test('A/B switching draws both supplied road geometries and highlights the selected route and fits its own bounds',()=>{
  const h=setup({api:true}),map=leaflet(h);h.context.payload={...fixture('response-comparison'),coordinate_system:'WGS84'};h.run('window.WanderPlans.append(payload)');
  let lines=map.created.filter(l=>l.type==='line');assert.equal(lines.length,2);assert.equal((lines[0]!.points as unknown[]).length,4);
  assert.deepEqual(Array.from((lines[0]!.points as number[][])[0]!),[34.249,108.94]);
  assert.equal(lines[1]!.options.opacity,.9);assert.equal(map.fits(),1);
  find(h.$('plan-detail'),'plan-tab')[1]!.click();
- lines=map.created.filter(l=>l.type==='line');assert.equal(lines.at(-1)!.options.color,'#64859a');assert.equal(lines.at(-1)!.options.opacity,.9);assert.equal(map.fits(),1);
+ lines=map.created.filter(l=>l.type==='line');assert.equal(lines.at(-1)!.options.color,'#64859a');assert.equal(lines.at(-1)!.options.opacity,.9);assert.equal(map.fits(),2);
+ assert(map.fitTargets[0].every((p:number[])=>p[1]>=108.96),'A focuses the eastern route');assert(map.fitTargets[1].every((p:number[])=>p[1]<108.96),'B focuses the western route');
  assert(content(h.$('plan-detail')).includes('12 分钟'));assert(content(h.$('plan-detail')).includes('另预留 5 分钟'));
 });
 

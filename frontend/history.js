@@ -38,7 +38,7 @@
   window.WanderAMap?.clearRoutes();
   if(map&&routeLayer){map.removeLayer(routeLayer);routeLayer=null;}
   if(map)updatePlaceMarkers([]);
-  updateSendButton();
+  updateSendButton();window.updateChatLayout?.();
  }
  function newChat(){
   capture();clearConversation();activeId=makeId();createdAt=Date.now();setExpanded(false);

@@ -74,3 +74,11 @@ test('a delayed map restore cannot redraw a history route after new chat', async
  assert.equal(h.state.latestPlan,null);assert.equal(h.state.messages.length,0);
  assert.equal(h.run('redraws'),0);
 });
+
+test('composer enters bottom layout after sending and resets only for a new empty chat',async()=>{
+ const h=setup({api:true});assert(!h.$('card').classes.has('has-conversation'));
+ const job=h.run('window.sendMessage("去西安玩一天")');assert(h.$('card').classes.has('has-conversation'));
+ h.requests[0]!.finish({kind:'clarification',question:'想从哪里出发？'});await job;assert(h.$('card').classes.has('has-conversation'));
+ h.$('new-chat').click();assert(!h.$('card').classes.has('has-conversation'));
+ h.$('history-list').children[0]!.click();assert(h.$('card').classes.has('has-conversation'));
+});

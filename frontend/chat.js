@@ -2,12 +2,14 @@
 let ready=true,activeChatRequest;
 window.addEventListener('wander:reset',()=>{activeChatRequest?.abort();activeChatRequest=null;});
 function scrollMessages(){const list=$('messages');list.scrollTo({top:list.scrollHeight,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}
+function updateChatLayout(){document.querySelector('.glass-card').classList.toggle('has-conversation',Boolean(state.messages.length));}
+window.updateChatLayout=updateChatLayout;
 function makeMessage(role){
  $('empty-state')?.remove();const message=document.createElement('div');message.className='message '+role;
  const label=document.createElement('span');label.className='message-label';label.textContent=role==='user'?'你':'漫游 · 城市向导';
  const bubble=document.createElement('div');bubble.className='bubble';message.append(label,bubble);$('messages').append(message);scrollMessages();return {message,bubble};
 }
-function appendMessage(role,text){const {message,bubble}=makeMessage(role);bubble.textContent=text;state.messages.push({role,text});return message;}
+function appendMessage(role,text){const {message,bubble}=makeMessage(role);bubble.textContent=text;state.messages.push({role,text});updateChatLayout();return message;}
 // Retain these entry points for existing local history snapshots.
 function itineraryText(itinerary,events){return window.WanderPlans.summary({itinerary,events});}
 function appendItinerary(itinerary,events){return window.WanderPlans.append({itinerary,events});}
