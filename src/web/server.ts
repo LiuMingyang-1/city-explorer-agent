@@ -10,6 +10,8 @@
  *   静态根下（如 frontend/README.md，或意外混入的密钥文件）也不出目录。
  * - apiHandler 抛异常且响应未发出时回通用 500，内部细节不外泄。
  */
+import { handleAMapNode } from './amap-node.ts';
+import type { AMapEnvironment } from './amap.ts';
 import { createReadStream, existsSync, realpathSync } from "node:fs";
 import { realpath, stat } from "node:fs/promises";
 import type { IncomingMessage, RequestListener, Server, ServerResponse } from "node:http";
@@ -112,6 +114,8 @@ export function createStaticFileHandler(root: string): RequestListener {
 }
 
 export interface WebServerParts {
+  mapEnv?: AMapEnvironment;
+  mapFetch?: typeof fetch;
   /** /api/* 的处理者；真实装配为 createChatHandler(service)。 */
   apiHandler: RequestListener;
   /** 静态根；默认仓库 frontend/。 */
@@ -135,6 +139,9 @@ export function createWebRequestListener(parts: WebServerParts): RequestListener
     } catch {
       respond(res, 400, "bad request");
       return;
+    }
+    if (pathname === '/api/map-config' || pathname.startsWith('/_AMapService/')) {
+      if (await handleAMapNode(req, res, parts.mapEnv, parts.mapFetch)) return;
     }
     if (
       pathname.startsWith("/api/chat") ||
