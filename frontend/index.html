@@ -9,13 +9,28 @@
   <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
   <link rel="stylesheet" href="style.css?v=aligned-5">
   <script src="map-layout.js?v=aligned-5" defer></script><script src="places.js?v=places-1" defer></script><script src="amap.js?v=aligned-5" defer></script><script src="app.js?v=aligned-5" defer></script><script src="plans.js?v=aligned-5" defer></script><script src="transport.js?v=p0-1" defer></script><script src="chat.js?v=aligned-5" defer></script>
-  <script src="history.js?v=aligned-5" defer></script><script src="activities.js?v=aligned-5" defer></script><script src="preferences.js?v=aligned-5" defer></script>
+  <script src="history.js?v=aligned-5" defer></script><script src="activities.js?v=aligned-5" defer></script><script src="preferences.js?v=aligned-5" defer></script><script src="auth.js?v=auth-1" defer></script>
 </head>
 <body>
   <main class="canvas">
     <div id="map" aria-label="西安交互地图"></div>
     <aside class="glass-card" aria-label="城市向导">
       <button id="preferences-open" class="preferences-open" type="button" aria-label="我的偏好" aria-controls="preferences-panel" aria-expanded="false" title="我的偏好"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg></button>
+      <button id="auth-open" class="auth-open" type="button" aria-haspopup="dialog" aria-controls="auth-panel" aria-expanded="false">登录</button>
+      <div id="auth-panel" class="auth-panel" role="dialog" aria-label="账号登录" hidden>
+        <form id="auth-form" class="auth-form">
+          <label for="auth-username-input">用户名</label>
+          <input id="auth-username-input" autocomplete="username" maxlength="128" required>
+          <label for="auth-password-input">密码</label>
+          <input id="auth-password-input" type="password" autocomplete="current-password" maxlength="1024" required>
+          <button id="auth-login" class="auth-submit" type="submit">登录</button>
+        </form>
+        <div id="auth-signed-in" class="auth-signed-in" hidden>
+          <p class="auth-as">已登录为 <strong id="auth-username"></strong></p>
+          <button id="auth-logout" class="auth-logout" type="button">退出</button>
+        </div>
+        <p id="auth-status" class="auth-status" role="status" aria-live="polite"></p>
+      </div>
       <button id="new-chat" class="new-chat" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>新聊天</button>
       <section id="welcome" class="welcome"><h1><span id="greeting">你好</span><span class="greeting-dot">。</span><br>今天想去哪里玩？</h1></section>
       <section class="weather" aria-label="当前地点天气"><div id="weather-icon" class="weather-icon" aria-hidden="true"></div><div class="weather-main"><div class="temperature"><span id="temperature">—</span><span class="degrees">℃</span><span id="weather-description">获取天气中</span></div><form id="search-form" class="location-form" role="search"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><input id="location-input" aria-label="搜索地点，回车定位" placeholder="西安市" autocomplete="off" maxlength="100"><button type="submit" class="search-button" aria-label="搜索地点"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></svg></button></form></div><button id="locate" class="locate-button" aria-label="定位到我的位置" title="定位到我的位置"><svg viewBox="0 0 24 24"><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/></svg></button></section>

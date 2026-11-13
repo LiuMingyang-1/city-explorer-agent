@@ -12,11 +12,15 @@
  * 运行：npm run dev:web（内部 node --env-file-if-exists=.env src/web/main.ts）。
  * 监听 EXPLORER_WEB_HOST/PORT（默认 127.0.0.1:8080），跨域白名单
  * EXPLORER_WEB_ALLOWED_ORIGINS，静态根 EXPLORER_WEB_ROOT（默认 frontend/）。
+ * 可选登录：启动时播种 EXPLORER_ADMIN_USER/EXPLORER_ADMIN_PASSWORD
+ * （缺省 admin/admin，仅本地演示；全默认时 stderr 提示配置口令），
+ * https 部署加 EXPLORER_SECURE_COOKIE=1 为登录 cookie 加 Secure。
  */
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { loadConfig } from "../config.ts";
 import { createSqliteSessionRepository } from "../session/sqlite.ts";
+import { createAuthStore } from "./auth.ts";
 import { createChatHandler } from "./http.ts";
 import { createChatService } from "./service.ts";
 import {
@@ -32,15 +36,30 @@ export async function main(): Promise<void> {
   const config = loadConfig();
   const options = webListenOptions();
   const repository = openEventsRepository(config);
-  const sessions = createSqliteSessionRepository(
-    config.sessionDbPath ?? resolve("data/sessions.db"),
-  );
+  const sessionDbPath = config.sessionDbPath ?? resolve("data/sessions.db");
+  const sessions = createSqliteSessionRepository(sessionDbPath);
+  // 登录存储与会话库同文件：第二条连接（WAL + busy_timeout 共存）。
+  const auth = createAuthStore(sessionDbPath);
   try {
+    // 播种登录账号：该 username 无凭据行才建（已有则原样保留，不重置口令）。
+    const adminUser = process.env.EXPLORER_ADMIN_USER?.trim() || "admin";
+    const adminPassword = process.env.EXPLORER_ADMIN_PASSWORD || "admin";
+    auth.ensureAccount({ username: adminUser, password: adminPassword });
+    // 环境变量只负责首次播种；旧库仍用默认口令时不能因改了 env 而静默。
+    if (auth.verifyLogin("admin", "admin") !== undefined) {
+      console.warn(
+        "[web] 登录账号正在使用默认口令 admin/admin。EXPLORER_ADMIN_PASSWORD 仅首次播种生效；已有账号须另行安全更新凭据。",
+      );
+    }
     await assertEventsNonEmpty(repository, config.dbPath);
     const service = createChatService({ config, repository, sessions });
     const server = createWebServer({
       staticRoot: options.staticRoot,
-      apiHandler: createChatHandler(service, { allowedOrigins: options.allowedOrigins }),
+      apiHandler: createChatHandler(service, {
+        allowedOrigins: options.allowedOrigins,
+        auth,
+        secureCookie: config.secureCookie,
+      }),
     });
     await listen(server, options.host, options.port);
     process.stderr.write(
@@ -52,6 +71,7 @@ export async function main(): Promise<void> {
       server,
       service,
       closeDbs: () => {
+        auth.close();
         sessions.close();
         repository.close();
       },
@@ -65,6 +85,7 @@ export async function main(): Promise<void> {
     process.once("SIGINT", onSignal);
     process.once("SIGTERM", onSignal);
   } catch (error) {
+    auth.close();
     sessions.close();
     repository.close();
     throw error;

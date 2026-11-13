@@ -33,8 +33,13 @@
   }catch(error){if(error?.name==='AbortError')throw new Error('连接超时，请重试');if(error instanceof TypeError)throw new Error('无法连接偏好服务，请检查网络后重试');throw error;}
   finally{clearTimeout(timer);}
  }
- async function load(){
-  if(busy||loaded&&dirty())return;const epoch=++requestEpoch;busy=true;confirmClear=false;status('正在读取偏好…');$('preferences-retry').hidden=true;update();
+ async function load(force=false){
+  // force=true is the identity-switch path: the previous identity's draft and
+  // any in-flight reply are discarded and saving stays disabled until the new
+  // identity's doc arrives — a stale draft can never reach the new account.
+  if(force){requestEpoch++;loaded=false;confirmClear=false;saved={content:'',updated_at:null};input.value='';}
+  else if(busy||loaded&&dirty())return;
+  const epoch=++requestEpoch;busy=true;confirmClear=false;status('正在读取偏好…');$('preferences-retry').hidden=true;update();
   try{const data=await api('GET');if(epoch!==requestEpoch)return;saved=data;loaded=true;input.value=data.content;status(data.content?'这些偏好会帮助城市向导理解你的下一次规划。':'还没有偏好，写下你喜欢的出行方式吧。');}
   catch(error){if(epoch===requestEpoch){status(error.message||'偏好读取失败',true);$('preferences-retry').hidden=false;}}
   finally{if(epoch===requestEpoch){busy=false;update();}}
@@ -43,23 +48,31 @@
  function close(){panel.hidden=true;confirmClear=false;update();$('preferences-open').setAttribute('aria-expanded','false');window.WanderAMap?.updatePlaces?.();(returnFocus||$('preferences-open')).focus({preventScroll:true});}
  async function save(){
   const content=input.value.trim();if(busy||!loaded||!content||content.length>8000||!dirty())return;
-  busy=true;confirmClear=false;status('正在保存偏好…');update();
-  try{saved=await api('PUT',content);input.value=saved.content;status(demo?'演示偏好已保存到当前浏览器。':'偏好已保存，下次规划会参考这些内容。');}
-  catch(error){status(error.message||'保存失败，你的修改仍保留在这里。',true);}
-  finally{busy=false;update();}
+  const epoch=++requestEpoch;busy=true;confirmClear=false;status('正在保存偏好…');update();
+  try{const data=await api('PUT',content);if(epoch!==requestEpoch)return;saved=data;input.value=saved.content;status(demo?'演示偏好已保存到当前浏览器。':'偏好已保存，下次规划会参考这些内容。');}
+  catch(error){if(epoch===requestEpoch)status(error.message||'保存失败，你的修改仍保留在这里。',true);}
+  finally{if(epoch===requestEpoch){busy=false;update();}}
  }
  async function clear(){
   if(busy||!loaded||!saved.content&&!input.value.trim())return;
   if(!confirmClear){confirmClear=true;status('再次点击“确认清空”，删除已保存的偏好。');update();return;}
-  busy=true;status('正在清空偏好…');update();
-  try{saved=await api('DELETE');input.value='';confirmClear=false;status('偏好已清空。');}
-  catch(error){status(error.message||'清空失败，原偏好已保留。',true);}
-  finally{busy=false;update();}
+  const epoch=++requestEpoch;busy=true;status('正在清空偏好…');update();
+  try{const data=await api('DELETE');if(epoch!==requestEpoch)return;saved=data;input.value='';confirmClear=false;status('偏好已清空。');}
+  catch(error){if(epoch===requestEpoch)status(error.message||'清空失败，原偏好已保留。',true);}
+  finally{if(epoch===requestEpoch){busy=false;update();}}
  }
+ // Auth transitions suspend writes at click time — the new cookie can go
+ // live before the login/logout reply lands, and a draft issued under the
+ // old identity must never be sent under it. Every write entry (save, form
+ // submit, clear confirm, input) funnels through the busy/loaded guards.
+ // resume() restores the draft when the transition fails; success goes
+ // through load(true) instead, which discards it.
+ function suspend(){requestEpoch++;busy=true;confirmClear=false;update();}
+ function resume(){busy=false;status(dirty()?'你有尚未保存的修改。':'');update();}
  input.addEventListener('input',()=>{confirmClear=false;status(dirty()?'修改尚未保存。':'');update();});
  $('preferences-open').addEventListener('click',open);$('preferences-close').addEventListener('click',close);
  $('preferences-form').addEventListener('submit',event=>{event.preventDefault();save();});
  $('preferences-clear').addEventListener('click',clear);$('preferences-retry').addEventListener('click',load);
  window.addEventListener('keydown',event=>{if(event.key==='Escape'&&!panel.hidden)close();});
- window.WanderPreferences={open,close,load,save,clear};update();
+ window.WanderPreferences={open,close,load,save,clear,suspend,resume};update();
 })();
