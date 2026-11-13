@@ -2,7 +2,7 @@ import {readFileSync,openSync,closeSync,unlinkSync} from "node:fs";
 import {createHash} from "node:crypto";
 import {DatabaseSync} from "node:sqlite";
 import {collectionDatabasePath} from "./database.ts";
-import {amapDetails,amapGrade,subjectProblem,simpleAmapHours,captureAmapAuthority} from "./amap-authority.ts";
+import {amapDetails,amapGrade,subjectProblem,simpleAmapHours,captureAmapAuthority,normalizeAmapHours} from "./amap-authority.ts";
 import type {AmapHours,AmapAuthoritySnapshot} from "./amap-authority.ts";
 import {parseSchedule,availabilityOnDate} from "../data/schedule.ts";
 import type {Sidecar} from "./releases.ts";
@@ -21,6 +21,27 @@ export interface AttractionReview {
 export interface SupplementPlan {
   expected_sha256:string;asOf:string;updates:{before:Row;after:Row;authority?:AmapAuthoritySnapshot}[];
   reviews:AttractionReview[];
+}
+/** Re-normalization uses the already bound AMap text, without re-verifying or
+ * overwriting unrelated fields. Raw map fetch time is retained separately. */
+export async function planAmapTimeRepairs(baseline:{sha256:string;rows:Row[]},sidecar:Sidecar,items:{id:string;poi_id:string;hours:AmapHours}[],asOf:string):Promise<SupplementPlan>{
+  if(!Number.isFinite(Date.parse(asOf))||new Set(items.map(i=>i.id)).size!==items.length)throw Error("INVALID_AMAP_TIME_REPAIRS");
+  const plan:SupplementPlan={expected_sha256:baseline.sha256,asOf,updates:[],reviews:[]};
+  const today=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Shanghai"}).format(new Date(asOf));
+  for(const item of items){
+    const before=baseline.rows.find(r=>r.id===item.id),old=sidecar.events[item.id]?.amap_authority;
+    if(!before||before.record_type!=="attraction"||before.amap_poi_id!==item.poi_id||old?.poi_id!==item.poi_id)throw Error("AMAP_TIME_REPAIR_NOT_BOUND");
+    const b=old.details.business,text=b.opentime_week||b.opentime_today;if(!text)throw Error("AMAP_TIME_REPAIR_MISSING_SOURCE");
+    const validated=await normalizeAmapHours([{id:item.poi_id,name:before.venue_name,opentime_week:b.opentime_week??"",opentime_today:b.opentime_today??""}],today,async()=>JSON.stringify({items:[{id:item.poi_id,...item.hours}]}));
+    const hours=validated.get(item.poi_id)!,after=structuredClone(before),authority=structuredClone(old);
+    after.schedule_json=hours.schedule_json?JSON.stringify(hours.schedule_json):null;after.time_status=hours.time_status;
+    after.time_note=`高德营业时间：${text}\n${hours.reason}`;after.valid_from=null;after.valid_to=null;after.start_at=null;after.end_at=null;after.updated_at=asOf;
+    authority.details.hours=hours;authority.details.normalized_at=asOf;
+    for(const key of ["time_status","time_note","valid_from","valid_to","start_at","end_at"])authority.fields[key]=after[key];
+    authority.fields.schedule_json=hours.schedule_json;
+    plan.updates.push({before,after,authority});
+  }
+  return plan;
 }
 export function planAmapSupplement(input:SupplementInput):SupplementPlan {
   if(!Number.isFinite(Date.parse(input.asOf)))throw Error("INVALID_SUPPLEMENT_CLOCK");

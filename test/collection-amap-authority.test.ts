@@ -43,3 +43,26 @@ test("AMap time normalization validates clocks and forbids invented date excepti
   await assert.rejects(normalizeAmapHours(input,"2026-11-13",async()=>JSON.stringify({items:[{...value,schedule_json:{...value.schedule_json,exceptions:[{date:"2026-11-16",closed:true}]}}]})),/AMAP_EXCEPTION_NEEDS_EXPLICIT_DATE/);
   await assert.rejects(normalizeAmapHours([{...input[0],opentime_week:"",opentime_today:"09:00-17:00"}],"2026-11-13",async()=>JSON.stringify({items:[value]})),/TODAY_HOURS_NOT_WEEKLY/);
 });
+
+test("seasonal endpoints cannot impersonate a full interval; season boundaries and winter crossing remain usable",async()=>{
+  const input=[{id:"p",name:"公园",opentime_week:"04-01至10-31 周一至周日 07:00-21:00；11-01至03-31 周一至周日 08:00-20:00",opentime_today:""}];
+  const base={id:"p",time_status:"complete",reason:"按高德季节区间",schedule_json:{timezone:"Asia/Shanghai",mode:"dates",dates:[{date:"2026-11-01",windows:[{start:"08:00",end:"20:00"}]},{date:"2027-03-31",windows:[{start:"08:00",end:"20:00"}]}]}};
+  await assert.rejects(normalizeAmapHours(input,"2026-11-13",async()=>JSON.stringify({items:[base]})),/PERIOD_REQUIRES_WEEKLY/);
+  const schedule={timezone:"Asia/Shanghai",mode:"weekly",weekly:[{weekdays:[1,2,3,4,5,6,7],valid_from:"2026-04-01",valid_to:"2026-10-31",windows:[{start:"07:00",end:"21:00"}]},{weekdays:[1,2,3,4,5,6,7],valid_from:"2026-11-01",valid_to:"2027-03-31",windows:[{start:"08:00",end:"20:00"}]}]};
+  const row=(await normalizeAmapHours(input,"2026-11-13",async()=>JSON.stringify({items:[{...base,schedule_json:schedule}]}))).get("p")!;
+  for(const today of ["2026-10-31","2026-11-01","2026-11-13","2027-01-15","2027-03-31"]){
+    const {availabilityOnDate}=await import("../src/data/schedule.ts");assert.equal(availabilityOnDate({recordType:"attraction",timeStatus:row.time_status,schedule:row.schedule_json},today).state,"open");
+  }
+});
+
+test("holiday dates hidden in weekly rules are rejected when the source never gave those dates",async()=>{
+  const input=[{id:"p",name:"公园",opentime_week:"周一至周日09:00-17:00，劳动节延长但时间以公告为准",opentime_today:""}];
+  await assert.rejects(normalizeAmapHours(input,"2026-11-13",async()=>JSON.stringify({items:[{id:"p",time_status:"partial",reason:"假期",schedule_json:{timezone:"Asia/Shanghai",mode:"weekly",weekly:[{weekdays:[1,2,3,4,5,6,7],valid_from:"2026-05-01",valid_to:"2026-05-05",windows:[{start:"09:00",end:"17:00"}]}]}}]})),/DATE_BOUNDARY_NOT_IN_SOURCE/);
+});
+
+test("baseline season complements may use the day before/after a supplied interval",async()=>{
+  const input=[{id:"p",name:"塔",opentime_week:"周一至周日08:30-18:00；7月1日至8月31日08:30-19:00",opentime_today:""}];
+  const rules=[["2026-01-01","2026-06-30","18:00"],["2026-07-01","2026-08-31","19:00"],["2026-09-01","2026-12-31","18:00"]].map(([valid_from,valid_to,end])=>({weekdays:[1,2,3,4,5,6,7],valid_from,valid_to,windows:[{start:"08:30",end}]}));
+  const result=await normalizeAmapHours(input,"2026-11-13",async()=>JSON.stringify({items:[{id:"p",time_status:"complete",reason:"暑期覆盖常规",schedule_json:{timezone:"Asia/Shanghai",mode:"weekly",weekly:rules}}]}));
+  assert.equal(result.get("p")!.time_status,"complete");
+});

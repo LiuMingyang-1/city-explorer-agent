@@ -2,8 +2,8 @@
   "schema_version": "city-explorer-database-delivery/1",
   "created_at": "2026-11-13T09:23:49.977Z",
   "database": "data/events.db",
-  "sha256": "89e67802e2de8d6140f10d1dbb0003c417e34a7eb8cbbf440ef31b0357402a1e",
-  "bytes": 4677632,
+  "sha256": "3df2472e0131ed6f790a4a90cfbf291a5899b1242890023dcfe9bc3a92b107e1",
+  "bytes": 4726784,
   "database_id": "5f58de0a-9f15-417b-a64a-4388aa2906d5",
   "records": 265,
   "record_types": {
@@ -34,8 +34,7 @@
     "A complete time_status is an extraction result, not a guarantee of current venue hours.",
     "The latest Xiaohongshu test reported login required; platform login is local and not shipped.",
     "The Windows scheduled trigger is disabled and has not been installed.",
-    "AMap supplement: 237 attractions require review; see docs/status/amap-attraction-review-20261113.md.",
-    "DeepSeek balance exhausted during complex opening-hours normalization; unprocessed source text is preserved."
+    "AMap supplement: 237 attractions require review; see docs/status/amap-attraction-review-20261113.md."
   ],
   "amap_supplement": {
     "checked_at": "2026-11-13T09:29:41.052Z",
@@ -62,7 +61,7 @@
       "ids_unchanged": true,
       "integrity": "ok",
       "coordinate_duplicates": 0,
-      "sha256": "89e67802e2de8d6140f10d1dbb0003c417e34a7eb8cbbf440ef31b0357402a1e"
+      "sha256": "3df2472e0131ed6f790a4a90cfbf291a5899b1242890023dcfe9bc3a92b107e1"
     }
   },
   "administrative_city_correction": {
@@ -76,5 +75,41 @@
     "renamed_rows": 175,
     "known_A_level_rows": 70,
     "activity_rows_unchanged": true
+  },
+  "latest_time_repair": {
+    "batch_id": "attraction-time-repair-20261113",
+    "normalized": 58,
+    "source_corrections": [
+      {
+        "title": "曲江寒窑遗址公园",
+        "reason": "移除以优惠票25元充当成人预算上限的错误"
+      },
+      {
+        "title": "红色葛牌景区（葛牌古镇）",
+        "reason": "区分古镇公共区域和馆内时间，不把馆内信息缺失扩大为整个古镇未知"
+      },
+      {
+        "title": "西安常宁宫休闲山庄",
+        "reason": "移除住宿套餐误作参观费用的数值，保留原套餐说明"
+      },
+      {
+        "title": "王府井奥莱·临潼小镇（临潼奥特莱斯景区）",
+        "reason": "原有明确免费说明落实为基础入场0元"
+      },
+      {
+        "title": "易俗社文化旅游景区",
+        "reason": "原有明确免费说明落实为基础入场0元"
+      }
+    ],
+    "after": {
+      "records": 265,
+      "time_statuses": {
+        "complete": 208,
+        "partial": 32,
+        "conflicting": 4,
+        "unknown": 1
+      },
+      "budget_missing": 53
+    }
   }
 }

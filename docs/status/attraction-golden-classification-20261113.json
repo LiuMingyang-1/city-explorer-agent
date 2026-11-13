@@ -1,7 +1,7 @@
 {
   "stats": {
-    "checked_at": "2026-11-13T09:55:59.747Z",
-    "database_sha256": "89e67802e2de8d6140f10d1dbb0003c417e34a7eb8cbbf440ef31b0357402a1e",
+    "checked_at": "2026-11-13T10:13:34.600Z",
+    "database_sha256": "3df2472e0131ed6f790a4a90cfbf291a5899b1242890023dcfe9bc3a92b107e1",
     "attractions": 245,
     "known_A_level": 70,
     "amap_explicit_A": 25,
@@ -17,38 +17,9 @@
       "key": "program_dates",
       "title": "程序错误：季节区间只生成了首尾日期",
       "kind": "程序待修复",
-      "count": 4,
+      "count": 0,
       "meaning": "原资料已有开放规则，模型却把区间首尾当作仅有的开放日期，导致未来14天被判全部关闭。不是景点资料缺失，也不是实际闭馆。",
-      "items": [
-        {
-          "id": "xa_69ee06fb336d2b4e60abbdee3d082b2d",
-          "title": "大明宫国家遗址公园丹凤门遗址博物馆",
-          "detail": "高德营业时间：04-15至10-15 周一至周日 08:30-19:00 最晚进入18:30；10-16至04-14 周一至周日 08:30-18:00 最晚进入17:30\n高德给出两段季节区间及最晚进入时间，可展开为2026年度日期区间；opentime_today同时列出两段属季节差异，非冲突；当前mode=dates，仅生成6个日期，应按季节有效期展开每周规则或完整日期。",
-          "category": "暂无评级",
-          "source_url": "https://www.wingontravel.com/discovery/scenic-weinan-1030/scenic-pucheng-1946/scenic-chengcheng-21187/scenic-xi-an-10/scenic-daming-palace-national-heritage-park-84625#1"
-        },
-        {
-          "id": "xa_0768a5f3ded6b0e15eee9b6122eec7e6",
-          "title": "大明宫遗址博物馆",
-          "detail": "高德营业时间：每年3月1日至11月30日 08:30-18:00开放(17:00停止售票) 每年12月1日至次年2月28日 08:30-17:30开放(16:30停止售票)\n原文给出两段季节区间及每日开放钟点，按年度展开为日期区间；停止售票仅备注，不视为停止入场。；当前mode=dates，仅生成4个日期，应按季节有效期展开每周规则或完整日期。",
-          "category": "暂无评级",
-          "source_url": "https://tw.trip.com/moments/detail/xi-an-7-127651231/"
-        },
-        {
-          "id": "xa_249ff8a35d6d05147ff561428580687a",
-          "title": "西安市起良蔡侯纸博物馆",
-          "detail": "高德营业时间：6月至9月 周一至周日 09:00-18:00；1月至5月，10月至12月 周一至周日 09:00-17:30\n高德opentime_week明确给出季节区间及每日开放时间，按2026年度展开为日期区间；无闭馆日或节假日例外信息；当前mode=dates，仅生成6个日期，应按季节有效期展开每周规则或完整日期。",
-          "category": "暂无评级",
-          "source_url": "https://jp.trip.com/travel-guide/attraction/zhouzhi/xi-anshi-qiliang-caihouzhi-museum-79438964?curr=USD&locale=ja-JP"
-        },
-        {
-          "id": "xa_54a713be03270a3017cbaba2f40a8663",
-          "title": "阿房宫遗址公园",
-          "detail": "高德营业时间：04-01至10-31 周一至周日 07:00-21:00；11-01至03-31 周一至周日 08:00-20:00\n依据opentime_week季节月日区间展开2026年度日期；opentime_today两段与季节区间对应，可解释；当前mode=dates，仅生成6个日期，应按季节有效期展开每周规则或完整日期。",
-          "category": "暂无评级",
-          "source_url": "http://www.lvyouplay.com/lvyougonglue/4974.html"
-        }
-      ]
+      "items": []
     },
     {
       "key": "identity",
@@ -168,353 +139,16 @@
       "key": "raw_hours",
       "title": "高德已提供时间原文，尚未规范",
       "kind": "处理待完成",
-      "count": 48,
-      "meaning": "48条已拿到高德时间，未知的是机器可用规则，不是资料一无所知。部分因余额不足尚未处理，部分模型输出不完整；原文仍可供主Agent参考，但不能假称已完成结构化。",
-      "items": [
-        {
-          "id": "xa_733d2f7c03ebb9582b895feba9923180",
-          "title": "丝路欢乐世界",
-          "detail": "高德营业时间：10-08至10-22 周一至周四 10:00-19:00 最晚进入18:00；10-08至10-22 周五至周日 10:00-20:00 最晚进入19:00；10-23至11-30 周一至周四 10:00-20:00 最晚进入18:00；10-23至11-30 周五至周日 10:00-20:30 最晚进入19:00；夜场检票时间为15:30\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "4A",
-          "source_url": "https://www.xiaohongshu.com/explore/6af67f23000000002b01faf4"
-        },
-        {
-          "id": "xa_744dbe7e880b9b65776f9f120ba498b7",
-          "title": "中国唐苑",
-          "detail": "高德营业时间：1月 周一至周日 08:30-17:30 最晚进入17:00 02-01至03-03 周一至周日 09:00-18:00 最晚进入17:30；03-04至12-31 周一至周日 08:30-17:30 最晚进入17:00\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "暂无评级",
-          "source_url": "https://wapbaike.baidu.com/item/%E4%B8%AD%E5%9B%BD%E5%94%90%E8%8B%91/10025839?fromModule=lemma_starMap&lemmaFrom=lemma_relation_starMap&structureId=19986ed3b8c40c3d66355288&structureClickId=10025839&structureItemId=2a5beae43cb2033311bd5559&lemmaIdFrom=6375505#1"
-        },
-        {
-          "id": "xa_893834ba3e96f242eb9b13cd37b4446b",
-          "title": "临潼区鸿门宴博物馆",
-          "detail": "高德营业时间：1月至2月,12月 周一至周日 09:00-17:00；3月至11月 周一至周日 08:30-17:30\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "暂无评级",
-          "source_url": "http://mp.weixin.qq.com/s?__biz=MzIyMDAxMzQ0Nw==&mid=2247486641&idx=1&sn=e2aca77b53fa8ed4008cdbb8c31c2502"
-        },
-        {
-          "id": "xa_876d0e636a13b8c73d819d7d668d4aea",
-          "title": "交大西迁博物馆",
-          "detail": "高德营业时间：周一至周六 09:00-17:00 08-03至09-13 周一至周五 09:00-12:00,14:30-17:30\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "暂无评级",
-          "source_url": "http://wza.xa.gov.cn:9000/xa_wza/web_files/xian/file/2021/11/05/202111051001581957006.pdf#1#1#1"
-        },
-        {
-          "id": "xa_9f582c4f4b77dfc7b064772e5164a17a",
-          "title": "仙游寺博物馆",
-          "detail": "高德营业时间：周二至周日09:00-17:00(16:30停止入内),节假日以官方通知为准\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "暂无评级",
-          "source_url": "https://baike.baidu.com/item/%E4%BB%99%E6%B8%B8%E5%AF%BA%E5%8D%9A%E7%89%A9%E9%A6%86/16410985?bst=1793386380.3669790f10938973#1"
-        },
-        {
-          "id": "xa_b39c470d2ed3a4ea3c769b53ca0e6973",
-          "title": "吉利汽车西安制造基地旅游景区",
-          "detail": "高德营业时间：周一至周二,周四至周五,周日 全天关闭；周三,周六 09:00-09:30,14:00-14:30\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "暂无评级",
-          "source_url": "https://jp.trip.com/travel-guide/attraction/xi-an/city-149671784?curr=JPY&locale=ja-JP&scene=DISTRICT"
-        },
-        {
-          "id": "xa_7b36be9e9985596eea23660eee730116",
-          "title": "大唐芙蓉园",
-          "detail": "高德营业时间：09:00-22:00；节假日09:00-23:00；2月17日-3月3日9:00-23:00，22:00停止售票，22:30清园\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "5A",
-          "source_url": "https://www.getyourguide.com/zh-cn/xi-an-l270/xi-an-datang-furong-garden-tang-dynasty-park-pass-t1411151/?ranking_uuid=c6345fae-63ae-4c6f-a376-c982a6ad38d7&referral_redirect=1&visitor-id=JBK0UOBGS5LV9ENT2W075WYSZCWWWKPC&locale_autoredirect_optout=true"
-        },
-        {
-          "id": "xa_d17a2b8f9f590d2884d7059b0bbe6d5e",
-          "title": "大明宫国家遗址公园",
-          "detail": "高德营业时间：08:30-19:00(17:30停止检票,18:30停止检票入园)\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "5A",
-          "source_url": "https://www.klook.cn/zh-CN/activity/102545-daming-palace-national-park/"
-        },
-        {
-          "id": "xa_987578ed62fb376820397058cbad2d45",
-          "title": "大雁塔（大慈恩寺内）",
-          "detail": "高德营业时间：1月至2月,11月至12月 周一至周日 08:30-17:40；3月至10月 周一至周日 08:00-18:30\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "5A",
-          "source_url": "https://tw.trip.com/moments/detail/xi-an-7-150294229/?locale=zh-TW&curr=TWD#1"
-        },
-        {
-          "id": "xa_712b5c61bc073240b1785d027a017d7a",
-          "title": "小雁塔（荐福寺塔）",
-          "detail": "高德营业时间：周一,周三至周日 08:30-18:00(17:00停止入园)；周二 不开放；元旦节,春节,清明节,端午节,中秋节,国庆节 08:30-18:00(17:00停止入园)；劳动节 07:30-20:00(19:00停止入园)；7月1日至8月31日 暑期 08:30-19:00(18:00停止售票)；具体开放时间以官方通知为准\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "4A",
-          "source_url": "https://th.trip.com/moments/detail/xi-an-7-142914248#1"
-        },
-        {
-          "id": "xa_43b9671b755aa54768932e6ed0de0952",
-          "title": "杨虎城将军止园别墅（西安事变纪念馆旧址）",
-          "detail": "高德营业时间：周一 全天关闭；周二至周日 09:00-17:00\n高德时间规范校验未通过：模型未完整返回结构化时间",
-          "category": "暂无评级",
-          "source_url": "https://mp.weixin.qq.com/s/aDcoM7X0tnptxMAwyde_YA"
-        },
-        {
-          "id": "xa_c02128b0fc19ee41a6f5ac13433113d3",
-          "title": "王府井奥莱·临潼小镇（临潼奥特莱斯景区）",
-          "detail": "高德营业时间：周一至周五 10:00-21:30；周六至周日 10:00-22:00\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "3A",
-          "source_url": "https://hk.trip.com/moments/detail/xi-an-7-145397625/#1"
-        },
-        {
-          "id": "xa_c960ea29e11527c2de5ad7e16cd028e3",
-          "title": "白鹿原·白鹿仓景区",
-          "detail": "高德营业时间：夏季 1/1-12/31(夏季) 09:00–21:30开放；冬季 1/1-12/31(冬季) 09:00–20:00开放\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "4A",
-          "source_url": "https://baike.baidu.com/item/%E7%99%BD%E9%B9%BF%E5%8E%9F%C2%B7%E7%99%BD%E9%B9%BF%E4%BB%93%E6%99%AF%E5%8C%BA/20282700?fromtitle=%E7%99%BD%E9%B9%BF%E5%8E%9F%C2%B7%E7%99%BD%E9%B9%BF%E4%BB%93&fromid=60654792&bst=1791967371.d7c879d2ee872a1a#1#1#1"
-        },
-        {
-          "id": "xa_b81a01740ae47dfcc9f45e8120dc8f90",
-          "title": "秦始皇帝陵博物院（秦始皇兵马俑博物馆·丽山园）",
-          "detail": "高德营业时间：09/25-09/30 08:00–19:30开放 最晚售票17:30；10/01-10/07 07:30–20:00开放 最晚售票18:00；03/16-09/24 08:30–19:00开放 最晚售票17:00 最晚进入17:00；10/08-11/15 08:30–19:00开放 最晚售票17:00 最晚进入17:00；11/16-12/31 08:30–18:00开放 最晚进入16:30；01/01-03/15 08:30–18:00开放 最晚进入16:30；11/16-12/31 08:30–18:00开放 最晚进入16:30；01/01-03/15 08:30–18:00开放 最晚进入16:30；劳动节 07:30–20:00开放 最晚售票18:00 最晚进入18:00\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "5A",
-          "source_url": "http://mp.weixin.qq.com/s?__biz=MzUxOTg2MTA5Ng==&mid=2247513186&idx=1&sn=0edae24d70ef45614266715437595746"
-        },
-        {
-          "id": "xa_8e1a3fbb77212a49d138f80f4331cd90",
-          "title": "秦岭国家植物园",
-          "detail": "高德营业时间：1月至2月,12月 周一至周日 09:00-17:00 最晚进入16:00；3月至11月 周一至周日 08:30-17:30 最晚进入16:30\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "4A",
-          "source_url": "https://www.qinlingbg.com/post/%e5%85%b3%e4%ba%8e%e7%a7%a6%e5%b2%ad%e5%9b%bd%e5%ae%b6%e6%a4%8d%e7%89%a9%e5%9b%ad%e6%89%a7%e8%a1%8c%e6%b7%a1%e5%ad%a3%e7%a5%a8%e4%bb%b7%e5%8f%8a%e5%bc%80%e6%94%be%e6%97%b6%e9%97%b4%e7%9a%84%e5%85%ac/"
-        },
-        {
-          "id": "xa_1163624f9aa08c41f30ef5dcb324064a",
-          "title": "空军军医大学第三附属医院国际口腔医学博物馆",
-          "detail": "高德营业时间：周一至周六 08:00-11:30,14:30-17:00\n高德时间规范校验未通过：Expected ',' or '}' after property value in JSON at position 285 (line 1 column 286)",
-          "category": "暂无评级",
-          "source_url": "https://baike.baidu.com/item/%E7%A9%BA%E5%86%9B%E5%86%9B%E5%8C%BB%E5%A4%A7%E5%AD%A6%E7%AC%AC%E4%B8%89%E9%99%84%E5%B1%9E%E5%8C%BB%E9%99%A2%E5%9B%BD%E9%99%85%E5%8F%A3%E8%85%94%E5%8C%BB%E5%AD%A6%E5%8D%9A%E7%89%A9%E9%A6%86#1"
-        },
-        {
-          "id": "xa_e12dd8aaefaea0afb64a5ab90383d8e0",
-          "title": "翠华山景区（陕西翠华山国家地质公园）",
-          "detail": "高德营业时间：2月15日至2月23日 09:00-17:00 16:30 停止入园；周一至周日 09:00-17:00\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "4A",
-          "source_url": "http://mp.weixin.qq.com/s?__biz=MzI0NDAxNzA2Ng==&mid=2650587913&idx=1&sn=856495f408e952ad552d3bf3f54fec86"
-        },
-        {
-          "id": "xa_3e52e5089a3546e6b23ce2d1f4dcf46d",
-          "title": "蓝田猿人遗址（蓝田猿人遗址博物馆）",
-          "detail": "高德营业时间：周二至周日 09:00-16:30,节假日以官方通知为准\n高德时间规范校验未通过：Expected ',' or '}' after property value in JSON at position 304 (line 1 column 305)",
-          "category": "3A",
-          "source_url": "https://gs.ctrip.com/html5/you/sight/Lantian2755/6102.html"
-        },
-        {
-          "id": "xa_495d605d30c4f0dca385fcf4ab275e7a",
-          "title": "西北大学博物馆",
-          "detail": "高德营业时间：01-01至09-24 周一,周日 全天关闭；01-01至09-24 周二至周六 09:00-17:00 最晚进入16:15；09-25至09-27 周一至周日 全天关闭；09-28至09-30 周一,周日 全天关闭；09-28至09-30 周二至周六 09:00-17:00 最晚进入16:15；10-01至10-07 周一至周日 全天关闭；10-08至12-31 周一,周日 全天关闭；10-08至12-31 周二至周六 09:00-17:00 最晚进入16:15；学校寒暑假期间闭馆，16:15停止入馆，国家法定节假日暂不开放\n高德时间规范校验未通过：模型未完整返回结构化时间",
-          "category": "暂无评级",
-          "source_url": "https://news.qq.com/rain/a/20241227A079IO00?openApp=false&web_channel=wap"
-        },
-        {
-          "id": "xa_3fc1bd8305220c2ba583a4bcc3aac482",
-          "title": "西安万象城·生命之树",
-          "detail": "高德营业时间：周一至周四,周日 10:00-22:00；周五至周六 10:00-22:30\n高德时间规范校验未通过：Expected ',' or '}' after property value in JSON at position 304 (line 1 column 305)",
-          "category": "暂无评级",
-          "source_url": "https://www.xiaohongshu.com/explore/6af2f99b000000001803a790"
-        },
-        {
-          "id": "xa_f3057996a4fb6c9680cd1138202a12df",
-          "title": "西安交通大学博物馆",
-          "detail": "高德营业时间：周一至周六 09:00-12:00，13:00-17:00\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "暂无评级",
-          "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E4%BA%A4%E9%80%9A%E5%A4%A7%E5%AD%A6%E5%8D%9A%E7%89%A9%E9%A6%86/4603197?anchor=4&bst=1789561586.9925fc0511fbffa4#4#1"
-        },
-        {
-          "id": "xa_901a8106d49e54f67ce1ec86d09b2e99",
-          "title": "西安关中民俗艺术博物院",
-          "detail": "高德营业时间：全年 周二–周日 09:00–17:00开放 最晚进入17:00；全年 周一 全天不开放；元旦节,春节,清明节,劳动节,端午节,中秋节,国庆节 09:00–17:00开放 最晚进入17:00\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "4A",
-          "source_url": "https://you.ctrip.com/sight/xian7/73315.html?renderPlatform=#1"
-        },
-        {
-          "id": "xa_aff42837479415d97780039c42c4e8af",
-          "title": "西安博物院（小雁塔）",
-          "detail": "高德营业时间：周一,周三至周日08:30-18:00(17:00停止检票)，节假日开放时间以官方通知为准\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "4A",
-          "source_url": "http://mp.weixin.qq.com/s?__biz=MjM5ODczNzcyOA==&mid=2650765761&idx=1&sn=b3283bea13207ad54371ba84d6a51f56"
-        },
-        {
-          "id": "xa_a0f547689cd8c2a31413cbf71cc658c6",
-          "title": "西安城墙",
-          "detail": "高德营业时间：2.15日-2.23日:8:00-23:00，23点停售；2.24日-3.4日:8:00-22:00，22点停售\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "5A",
-          "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/xi-an-city-wall-75686?creative_id=274&product_outer_id=tnt_zh-TW_attraction_75686&trace_id=6d0f14d0-2a2b-4bc4-9a93-48c12f94e05e"
-        },
-        {
-          "id": "xa_ef5cc5bb9a5b5fe63cc9c97665bbc1b4",
-          "title": "西安大唐西市博物馆",
-          "detail": "高德营业时间：10/11-10/14 周二–周日 09:00–18:00开放 最晚进入17:00；10/11-10/14 周一 全天不开放；10/15-04/15 周二–周日 09:00–17:30开放；10/15-04/15 周一 全天不开放；劳动节,端午节,中秋节,国庆节 09:00–18:00开放 最晚进入17:00；每周一及除夕闭馆（法定节假日正常开放）\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "暂无评级",
-          "source_url": "http://www.dtxsmuseum.com/news_show.aspx?id=1447"
-        },
-        {
-          "id": "xa_1209c4374b748231659167205753edd9",
-          "title": "西安市大唐青铜镜博物馆",
-          "detail": "高德营业时间：周一至周五10:00-16:30节假日以官方通知为准\n高德时间规范校验未通过：Expected ',' or '}' after property value in JSON at position 285 (line 1 column 286)",
-          "category": "暂无评级",
-          "source_url": "https://wapbaike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E5%A4%A7%E5%94%90%E9%9D%92%E9%93%9C%E9%95%9C%E5%8D%9A%E7%89%A9%E9%A6%86/53486986?structureClickId=53486986&structureId=222bebc5df5b5f24b0bd5ef2&structureItemId=15c17d148cd1150da8410f4c&lemmaFrom=starMapTop&fromModule=lemma_starMap-top#1"
-        },
-        {
-          "id": "xa_43874103d0337b6196994fafa96926f0",
-          "title": "西安市明清皮影艺术博物馆",
-          "detail": "高德营业时间：07/01-08/31 周一 全天不开放；07/01-08/31 周二–周日 10:00–19:00开放 最晚进入18:30；01/01-06/30 周一 全天不开放；09/01-10/31 周一 全天不开放；01/01-06/30 周二–周日 10:00–19:00开放 最晚进入18:30；09/01-10/31 周二–周日 10:00–19:00开放 最晚进入18:30；11/01-12/31 周一–周三 全天不开放；11/01-12/31 周四–周日 10:00–19:00开放 最晚进入18:30；元旦节,春节,清明节,劳动节,端午节,中秋节,国庆节 10:00–19:00开放 最晚进入18:30；逢周一闭馆，节假日除外 具体营业状态以当天开放情况为准\n高德时间规范校验未通过：模型未完整返回结构化时间",
-          "category": "暂无评级",
-          "source_url": "http://mp.weixin.qq.com/s?__biz=MzU3NDQwMzU4OQ==&mid=2248148758&idx=1&sn=becf78ee4e185295228238d7b385c68e"
-        },
-        {
-          "id": "xa_ef3298e12304f10c9b2d24b72216d14c",
-          "title": "西安市水墨长安艺术博物馆",
-          "detail": "高德营业时间：周二至周日 10:00-17:00,节假日以官方通知为准\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "暂无评级",
-          "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E6%B0%B4%E5%A2%A8%E9%95%BF%E5%AE%89%E8%89%BA%E6%9C%AF%E5%8D%9A%E7%89%A9%E9%A6%86/53486810?fromModule=lemma_inlink"
-        },
-        {
-          "id": "xa_d2e5999bc82a2dabdd39e3afc509fc20",
-          "title": "西安市秦阿房宫遗址博物馆",
-          "detail": "高德营业时间：周二至周日 10:00-16:00,节假日以官方通知为准\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "暂无评级",
-          "source_url": "https://baike.baidu.com/item/%E7%A7%A6%E9%98%BF%E6%88%BF%E5%AE%AB%E9%81%97%E5%9D%80%E5%8D%9A%E7%89%A9%E9%A6%86/17644208"
-        },
-        {
-          "id": "xa_b37e28dcb5262730a42aa7270e2809dc",
-          "title": "西安市羊文化博物馆",
-          "detail": "高德营业时间：周二至周日 09:00-19:00；节假日营业时间以官方通知为准\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "暂无评级",
-          "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E7%BE%8A%E6%96%87%E5%8C%96%E5%8D%9A%E7%89%A9%E9%A6%86/23782899?lemmaFrom=lemma_starMap&fromModule=lemma_starMap&starNodeId=660f43d920a65fe233fef173&lemmaIdFrom=19909623&bst=1792642796.45605ad855a1880b#1"
-        },
-        {
-          "id": "xa_b3c6f2352ddede4989c5bba816dbc1d5",
-          "title": "西安市青龙寺遗址景区",
-          "detail": "高德营业时间：周一至周日 08:30-18:00 最晚进入17:00；具体营业状态以当天开放情况为准\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "3A",
-          "source_url": "http://mp.weixin.qq.com/s?__biz=MzIzOTU3NTAxNQ==&mid=2247665121&idx=1&sn=996741da64e73461b9e4ecc23946b6f2"
-        },
-        {
-          "id": "xa_7539f68cafd2e2850538e56d8810e9bb",
-          "title": "西安市非物质文化遗产博物馆",
-          "detail": "高德营业时间：周二至周日 10:00-16:00,节假日以官方通知为准\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "暂无评级",
-          "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E9%9D%9E%E7%89%A9%E8%B4%A8%E6%96%87%E5%8C%96%E9%81%97%E4%BA%A7%E5%8D%9A%E7%89%A9%E9%A6%86/16299161?bst=1792113971.5cd7c1dfc76c48b5#1"
-        },
-        {
-          "id": "xa_c9df2c29af733876f586bb84f51a98a2",
-          "title": "西安建筑科技大学贾平凹文学艺术馆",
-          "detail": "高德营业时间：周一至周五 09:00-12:00,14:00-17:00\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "暂无评级",
-          "source_url": "http://wza.xa.gov.cn:9000/beilin_wza/web_files/beilin/file/2023/03/07/202303071707163550368.pdf#1#1#1"
-        },
-        {
-          "id": "xa_f4fc9e0367924c79bc3d9c8dd42f6c3b",
-          "title": "西安曲江富陶国际陶艺博物馆",
-          "detail": "高德营业时间：周一至周四 11:00-14:30,17:00-22:00；周五至周日 11:00-22:00\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "暂无评级",
-          "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E6%9B%B2%E6%B1%9F%E5%AF%8C%E9%99%B6%E5%9B%BD%E9%99%85%E9%99%B6%E8%89%BA%E5%8D%9A%E7%89%A9%E9%A6%86?bst=1789237722.f3a5fad56f5d7988#1"
-        },
-        {
-          "id": "xa_b9f6c8b0303ca8e62ef43bf7528e572b",
-          "title": "西安植物园（新区）",
-          "detail": "高德营业时间：08:00-19:00(18:00停止入园)\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "暂无评级",
-          "source_url": "http://m.ctrip.com/webapp/you/gspoi/sight/0/2040576.html?seo=0"
-        },
-        {
-          "id": "xa_d156f8a446c3298934b6a77669d242d3",
-          "title": "西安浐灞国家湿地公园",
-          "detail": "高德营业时间：03-01至10-10 周一至周日 09:00-20:00；10-11至02-29 周一至周日 09:00-18:00\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "4A",
-          "source_url": "https://baijiahao.baidu.com/s?id=1881441943541703776"
-        },
-        {
-          "id": "xa_f9552442082f1d148fbaf68773699ced",
-          "title": "西安碑林博物馆",
-          "detail": "高德营业时间：8月 08:30-19:00 最晚进入17:30；1月至7月,9月至12月 09:00-18:30\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "暂无评级",
-          "source_url": "https://mp.weixin.qq.com/s?__biz=MzA5NjI2OTI5Ng==&mid=2657696764&idx=1&sn=b475db035c085ec43bd34b22d0653ade&poc_token=HFKf6GqjZrfmSM8JQKt4DLNQ-fPdH0m_SBbLYokS"
-        },
-        {
-          "id": "xa_98a7f1c2b407a6ae3239a741fd4b8c79",
-          "title": "西安秦岭野生动物园",
-          "detail": "高德营业时间：3月至11月 08:30-18:00；1月至2月,12月 09:00-17:00\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "4A",
-          "source_url": "http://mp.weixin.qq.com/s?__biz=MzA4NzUzNTcxMw==&mid=2652868764&idx=1&sn=888082ef273bdb8984b50c9ccfe045e8"
-        },
-        {
-          "id": "xa_465ffd07fc343b11c6a56fed1f8aa1b8",
-          "title": "西安美都艺术博物馆",
-          "detail": "高德营业时间：周一，周三至周日 09:00-17:00\n高德时间规范校验未通过：模型未完整返回结构化时间",
-          "category": "暂无评级",
-          "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E7%BE%8E%E9%83%BD%E8%89%BA%E6%9C%AF%E5%8D%9A%E7%89%A9%E9%A6%86/2571349?fromModule=lemma_inlink#1"
-        },
-        {
-          "id": "xa_e609623d1501dee059c7dce65bebe195",
-          "title": "西安高家大院（高岳崧故居）",
-          "detail": "高德营业时间：09:00-22:30 最晚进入22:00法定节假日及重点时段延长,具体开放时间以景区官方为准\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "暂无评级",
-          "source_url": "https://www.klook.com/zh-TW/activity/7492-gao-grand-courtyard-ticket-xian/?krid=9ad0c737-ab67-457c-64ba-07d635c45416&krt=r30"
-        },
-        {
-          "id": "xa_cfb389f4cf2916a87f012f5da7a40d1b",
-          "title": "长安十二时辰主题街区",
-          "detail": "高德营业时间：10:00-21:30,12月31日:10:00-24:00\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "暂无评级",
-          "source_url": "https://www.xiaohongshu.com/explore/6af67f23000000002b01faf4"
-        },
-        {
-          "id": "xa_bf2f9d1eb54e010504e851a8b8a2f21c",
-          "title": "长安大学地质博物馆",
-          "detail": "高德营业时间：08:00-17:00 寒暑假这里不开放\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "暂无评级",
-          "source_url": "https://mp.weixin.qq.com/s/iNSp8Hz8zfOUid11E3yGtQ"
-        },
-        {
-          "id": "xa_9c0d1a45888aba116a91fb8afc7f02a6",
-          "title": "陕西体育博物馆",
-          "detail": "高德营业时间：09:30-16:30(春节闭馆)\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "暂无评级",
-          "source_url": "https://www.sohu.com/a/945007626_681384?scm=10001.325_13-325_13.0.0.5_32&spm=smpc.channel_248.block3_308_NDdFbm_1_fd.5.17607067673500lj1KeW_324"
-        },
-        {
-          "id": "xa_ac30d26c4c27adebcfc1e22586f8e9fb",
-          "title": "陕西师范大学博物馆",
-          "detail": "高德营业时间：周一至周日 09:00-12:00，14:30-17:00\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "暂无评级",
-          "source_url": "https://baike.baidu.com/item/%E9%99%95%E8%A5%BF%E5%B8%88%E8%8C%83%E5%A4%A7%E5%AD%A6%E5%8D%9A%E7%89%A9%E9%A6%86/6206679?fromModule=lemma_inlink#1"
-        },
-        {
-          "id": "xa_b9d3e1e71e05993273910d7eab45fa88",
-          "title": "陕西汉唐石刻博物馆",
-          "detail": "高德营业时间：09-01至01-28 周一至周日 09:30-17:30 最晚进入16:30\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "暂无评级",
-          "source_url": "http://mp.weixin.qq.com/s?__biz=MzA5NTQ0MjUzOA==&mid=2652561999&idx=1&sn=90f821260f46173511f5186f884efef8"
-        },
-        {
-          "id": "xa_898bfab7557b10ae237b314c3e51384b",
-          "title": "陕西科技大学中国轻工业博物馆",
-          "detail": "高德营业时间：周一至周日 09:00-12:00,14:30-17:00\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "暂无评级",
-          "source_url": "https://baike.baidu.com/item/%E9%99%95%E8%A5%BF%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%A6%E4%B8%AD%E5%9B%BD%E8%BD%BB%E5%B7%A5%E4%B8%9A%E5%8D%9A%E7%89%A9%E9%A6%86/60799467?fromtitle=%E4%B8%AD%E5%9B%BD%E8%BD%BB%E5%B7%A5%E4%B8%9A%E5%8D%9A%E7%89%A9%E9%A6%86&fromid=22852771#1"
-        },
-        {
-          "id": "xa_ef7a33653f1b8f6f3a96e8d049e49d18",
-          "title": "陕西自然博物馆",
-          "detail": "高德营业时间：9月至次年6月 周三至周日09:00-17:00\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "4A",
-          "source_url": "http://mp.weixin.qq.com/s?__biz=MzI3NzQyNjIwMw==&mid=2247497328&idx=2&sn=aeb9002f9ee1c6f870efaf86a6c453fe"
-        },
-        {
-          "id": "xa_a45abeb750ef7575bdeedf45b5a0717a",
-          "title": "骊山国家森林公园",
-          "detail": "高德营业时间：1月至3月,11月至12月 周一至周日 07:30-17:00 最晚进入17:00；4月 周一至周日 07:30-18:30 最晚进入18:00；5月至10月 周一至周日 全天关闭；具体营业状态以当天开放情况为准\n复杂高德时间尚未规范；模型余额不足，保留原文待处理",
-          "category": "4A",
-          "source_url": "http://m.ctrip.com/webapp/you/sight/7/6087.html?seo=0#1"
-        }
-      ]
+      "count": 0,
+      "meaning": "这些记录已拿到高德时间，未知的是机器可用规则，不是资料一无所知。部分因余额不足尚未处理，部分模型输出不完整；原文仍可供主Agent参考，但不能假称已完成结构化。",
+      "items": []
     },
     {
       "key": "partial_hours",
       "title": "开放时间仅部分完整",
       "kind": "信息或规则待补",
-      "count": 26,
-      "meaning": "区分缺少季节、节假日、预约或部分窗口等情况，不能把26条都当作完全没有开放时间。",
+      "count": 32,
+      "meaning": "区分缺少季节、节假日、预约或部分窗口等情况，不能把这些记录都当作完全没有开放时间。",
       "items": [
         {
           "id": "xa_bc3d40f1b19320eccf5f201d470659b1",
@@ -524,23 +158,37 @@
           "source_url": "http://m.hxzpt.com/Information?param=eyJ2ZW5kZXJpZCI6MTc3LCJzaWQiOjIyNH0="
         },
         {
-          "id": "xa_1c56739039773f3c0b3cbd641c413110",
-          "title": "华清宫（陕西华清宫文化旅游景区）",
-          "detail": "高德营业时间：10-19至12-31 周一至周日 07:30-17:30 最晚进入17:10；《长恨歌》演出于华清宫闭园后开演(具体开演实际参考当天演出场次)，届时除长恨歌演出区域外其余华清宫景区部分无法游览；骊山索道开放时间:08:00-18:00（04/01-10/31）、08:30-17:00（11/01-03/31）\n高德仅给出10-19至12-31区间，缺少其他季节常规开放时间；今日07:30-17:30可记录，索道钟点按备注保留，不混入主景点窗口。",
+          "id": "xa_7b36be9e9985596eea23660eee730116",
+          "title": "大唐芙蓉园",
+          "detail": "高德营业时间：09:00-22:00；节假日09:00-23:00；2月17日-3月3日9:00-23:00，22:00停止售票，22:30清园\n高德原文含常规每日09:00-22:00，但节假日延长及2月17日-3月3日特殊时段缺少年份/具体节假日日期，无法规范为确定日期区间；停止售票不等于停止入场，仅保留备注",
           "category": "5A",
-          "source_url": "https://tw.trip.com/moments/detail/xi-an-7-150948652/"
+          "source_url": "https://www.getyourguide.com/zh-cn/xi-an-l270/xi-an-datang-furong-garden-tang-dynasty-park-pass-t1411151/?ranking_uuid=c6345fae-63ae-4c6f-a376-c982a6ad38d7&referral_redirect=1&visitor-id=JBK0UOBGS5LV9ENT2W075WYSZCWWWKPC&locale_autoredirect_optout=true"
+        },
+        {
+          "id": "xa_d17a2b8f9f590d2884d7059b0bbe6d5e",
+          "title": "大明宫国家遗址公园",
+          "detail": "高德营业时间：08:30-19:00(17:30停止检票,18:30停止检票入园)\n开放窗口08:30-19:00明确且无星期/日期限制，可按每日常规处理；但停止检票/停止入园存在17:30与18:30两个矛盾值，无法确定last_entry，故标partial。",
+          "category": "5A",
+          "source_url": "https://www.klook.cn/zh-CN/activity/102545-daming-palace-national-park/"
+        },
+        {
+          "id": "xa_712b5c61bc073240b1785d027a017d7a",
+          "title": "小雁塔（荐福寺塔）",
+          "detail": "高德营业时间：周一,周三至周日 08:30-18:00(17:00停止入园)；周二 不开放；元旦节,春节,清明节,端午节,中秋节,国庆节 08:30-18:00(17:00停止入园)；劳动节 07:30-20:00(19:00停止入园)；7月1日至8月31日 暑期 08:30-19:00(18:00停止售票)；具体开放时间以官方通知为准\n高德opentime_week明确常规周开放及周二闭馆、暑期时段，但元旦/春节/清明/端午/中秋/国庆及劳动节等节假日未给出具体日期，无法规范为exceptions；暑期仅明确停止售票，未明确停止入园时间，故last_entry留空。",
+          "category": "4A",
+          "source_url": "https://th.trip.com/moments/detail/xi-an-7-142914248#1"
         },
         {
           "id": "xa_36df0044a355adf71b9189d298c93438",
           "title": "曲江海洋极地公园",
-          "detail": "高德营业时间：10月1日-10月7日:9:00-19:00,最晚售票时间截至17:00，最晚检票时间截至17:15\n高德仅给出10月1日-10月7日时段，按today年度展开为2026-10-01至2026-10-07；最晚检票17:15记为last_entry，最晚售票17:00仅备注；其他日期无开放时间，故partial",
+          "detail": "高德营业时间：10月1日-10月7日:9:00-19:00,最晚售票时间截至17:00，最晚检票时间截至17:15\n高德原文仅明确10月1日-10月7日时段，已按2026年度展开为具体日期；其他日期无开放时间，无法补全。",
           "category": "4A",
           "source_url": "https://oceanpark.qjtourism.com/scenic/hai/single/788"
         },
         {
           "id": "xa_62a31255b274a84884a3c2d7d8b0f067",
           "title": "朱雀国家森林公园",
-          "detail": "高德营业时间：冬季:09:00-15:00\n仅有冬季开放时间，缺少冬季具体日期区间及其他季节时间，无法完整规范全年",
+          "detail": "高德营业时间：冬季:09:00-15:00\n高德opentime_week仅提供冬季09:00-15:00，未给出冬季起止日期，无法确定全年适用区间；未编造月份或季节分界",
           "category": "4A",
           "source_url": "https://xa.bendibao.com/tour/jingdianbangdan/2460.shtml"
         },
@@ -550,13 +198,6 @@
           "detail": "正文称“今天09:00–17:00营业（16:30停止入场）”；长安区文旅局2024年公示为9:00–17:00、16:30停止入场，并注明周一固定博物馆闭馆日，周一闭馆规则与正文未明确说明存在出入，未强行设定。",
           "category": "2A",
           "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/dufu-memorial-hall-24649540?curr=INR"
-        },
-        {
-          "id": "xa_130e7061db782bba5df66aa1578deea6",
-          "title": "楼观台国家森林公园",
-          "detail": "高德营业时间：1月至2月,12月 08:00-17:30；3月至11月 09:00-17:00\n高德仅给出月份区间与钟点，未给具体日期边界；按2026年度以各月首日记录区间起点，未逐日展开，故为partial",
-          "category": "暂无评级",
-          "source_url": "https://tw.trip.com/travel-guide/attraction/zhouzhi/louguantai-national-forest-park-98060?curr=USD&locale=zh-TW&scene=gsDestination"
         },
         {
           "id": "xa_5fa226895256d3d2bbc0cf6e75429d3e",
@@ -573,9 +214,16 @@
           "source_url": "https://tw.trip.com/travel-guide/attraction/lantian/wangfeng-former-residence-memorial-hall-15031476"
         },
         {
+          "id": "xa_c960ea29e11527c2de5ad7e16cd028e3",
+          "title": "白鹿原·白鹿仓景区",
+          "detail": "高德营业时间：夏季 1/1-12/31(夏季) 09:00–21:30开放；冬季 1/1-12/31(冬季) 09:00–20:00开放\n高德仅给出夏季09:00–21:30、冬季09:00–20:00，但未明确夏冬分界月份/日期，无法规范为具体日期区间；每日星期限制未提及，按每日处理。",
+          "category": "4A",
+          "source_url": "https://baike.baidu.com/item/%E7%99%BD%E9%B9%BF%E5%8E%9F%C2%B7%E7%99%BD%E9%B9%BF%E4%BB%93%E6%99%AF%E5%8C%BA/20282700?fromtitle=%E7%99%BD%E9%B9%BF%E5%8E%9F%C2%B7%E7%99%BD%E9%B9%BF%E4%BB%93&fromid=60654792&bst=1791967371.d7c879d2ee872a1a#1#1#1"
+        },
+        {
           "id": "xa_412fd31d580f63073f10b2707a16c201",
           "title": "白鹿原影视城",
-          "detail": "高德营业时间：10/08-12/31 09:00–20:00开放 最晚进入18:50；中秋节,国庆节 08:00–22:00开放 最晚进入21:00\nopentime_week给出10/08-12/31常规时间及中秋节、国庆节特殊时间，但未给出节假日具体日期，无法规范为exceptions；已按2026年度展开常规日期区间，节假日特殊钟点仅保留在note",
+          "detail": "高德营业时间：10/08-12/31 09:00–20:00开放 最晚进入18:50；中秋节,国庆节 08:00–22:00开放 最晚进入21:00\n高德 opentime_week 明确 10/08-12/31 每日 09:00–20:00、最晚进入18:50，已按年度展开为 weekly 区间；中秋节、国庆节 08:00–22:00（最晚进入21:00）未给出具体日期，无法规范为 exceptions，仅保留备注。",
           "category": "4A",
           "source_url": "http://m.ctrip.com/webapp/you/gspoi/sight/0/1959853.html?seo=0#1"
         },
@@ -585,6 +233,13 @@
           "detail": "正文仅给出“今天09:00–17:00营业”，未列每周规则；外部资料有8:30-18:00、8:30-17:30等不同说法，未采用。",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/moments/poi-caiwenji-memorial-hall-89200/#1"
+        },
+        {
+          "id": "xa_495d605d30c4f0dca385fcf4ab275e7a",
+          "title": "西北大学博物馆",
+          "detail": "高德营业时间：01-01至09-24 周一,周日 全天关闭；01-01至09-24 周二至周六 09:00-17:00 最晚进入16:15；09-25至09-27 周一至周日 全天关闭；09-28至09-30 周一,周日 全天关闭；09-28至09-30 周二至周六 09:00-17:00 最晚进入16:15；10-01至10-07 周一至周日 全天关闭；10-08至12-31 周一,周日 全天关闭；10-08至12-31 周二至周六 09:00-17:00 最晚进入16:15；学校寒暑假期间闭馆，16:15停止入馆，国家法定节假日暂不开放\n高德opentime_week明确周二至周六09:00-17:00、最晚进入16:15及各日期区间闭馆安排，已按年度展开为weekly区间；但学校寒暑假及国家法定节假日闭馆无具体日期，无法规范为exceptions，故为partial",
+          "category": "暂无评级",
+          "source_url": "https://news.qq.com/rain/a/20241227A079IO00?openApp=false&web_channel=wap"
         },
         {
           "id": "xa_080a5c2681a2294729b3bd83c6d80560",
@@ -599,6 +254,20 @@
           "detail": "原文称开放参观时间为寒暑假、周末及节假日，入校时段上午08:30-11:00、下午15:00-17:30；寒暑假及节假日具体日期未给出，故仅按周末周规则记录。",
           "category": "暂无评级",
           "source_url": "http://xa.bendibao.com/xiuxian/2024322/126273.shtm#1#1"
+        },
+        {
+          "id": "xa_a0f547689cd8c2a31413cbf71cc658c6",
+          "title": "西安城墙",
+          "detail": "高德营业时间：2.15日-2.23日:8:00-23:00，23点停售；2.24日-3.4日:8:00-22:00，22点停售\n高德仅提供两个日期区间的开放时间，未标注年份，按2026年度展开；缺少该区间之外日期的常规开放时间，且停售时间不等于停止入园，故为partial。",
+          "category": "5A",
+          "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/xi-an-city-wall-75686?creative_id=274&product_outer_id=tnt_zh-TW_attraction_75686&trace_id=6d0f14d0-2a2b-4bc4-9a93-48c12f94e05e"
+        },
+        {
+          "id": "xa_ef5cc5bb9a5b5fe63cc9c97665bbc1b4",
+          "title": "西安大唐西市博物馆",
+          "detail": "高德营业时间：10/11-10/14 周二–周日 09:00–18:00开放 最晚进入17:00；10/11-10/14 周一 全天不开放；10/15-04/15 周二–周日 09:00–17:30开放；10/15-04/15 周一 全天不开放；劳动节,端午节,中秋节,国庆节 09:00–18:00开放 最晚进入17:00；每周一及除夕闭馆（法定节假日正常开放）\n已按原文规范周二至周日开放窗口及周一闭馆；法定节假日（劳动节、端午节、中秋节、国庆节）具体日期未给出，无法展开为例外日期；除夕闭馆未列具体日期；10/15-04/15 区间跨年，已按年度展开覆盖当前年度，但原文未注明公告年份。",
+          "category": "暂无评级",
+          "source_url": "http://www.dtxsmuseum.com/news_show.aspx?id=1447"
         },
         {
           "id": "xa_608f7db9e5cc305960ac17ecd0523ae8",
@@ -685,11 +354,18 @@
           "source_url": "https://jtg.chd.edu.cn/2026/0407/c7707a259907/page.htm"
         },
         {
-          "id": "xa_32e486d3ab152ff06ce0c31adb042f5c",
-          "title": "陕西唐三彩艺术博物馆",
-          "detail": "高德营业时间：周一全天关闭(10月5日正常开放)；周二至周日:9:00-17:30(17:00停止入园)\n高德opentime_week明确周二至周日9:00-17:30及17:00停止入园，周一闭馆；但10月5日正常开放仅留备注，未给出具体年份，无法规范为exceptions日期，故标partial。",
+          "id": "xa_bf2f9d1eb54e010504e851a8b8a2f21c",
+          "title": "长安大学地质博物馆",
+          "detail": "高德营业时间：08:00-17:00 寒暑假这里不开放\n高德opentime_week明确常规每日08:00-17:00，可规范为每周开放窗口；但“寒暑假这里不开放”未给出具体起止日期，无法规范为例外日期，故标partial。",
           "category": "暂无评级",
-          "source_url": "http://mp.weixin.qq.com/s?__biz=MzA4MjI3NDk4Mw==&mid=2654040462&idx=1&sn=ca3a1bfb7f43f09c40c581ca3ecd43ff"
+          "source_url": "https://mp.weixin.qq.com/s/iNSp8Hz8zfOUid11E3yGtQ"
+        },
+        {
+          "id": "xa_ef7a33653f1b8f6f3a96e8d049e49d18",
+          "title": "陕西自然博物馆",
+          "detail": "高德营业时间：9月至次年6月 周三至周日09:00-17:00\n高德仅给出9月至次年6月周三至周日09:00-17:00，已按年度展开；7-8月时间缺失，无法规范",
+          "category": "4A",
+          "source_url": "http://mp.weixin.qq.com/s?__biz=MzI3NzQyNjIwMw==&mid=2247497328&idx=2&sn=aeb9002f9ee1c6f870efaf86a6c453fe"
         },
         {
           "id": "xa_4a77b7f01a27b0854cf07370d24da01c",
@@ -705,7 +381,7 @@
       "title": "原有时间说法尚有冲突",
       "kind": "依据待确认",
       "count": 4,
-      "meaning": "4条当前time_status为conflicting，下面保留具体冲突。已用高德解决的地址不再按旧地址冲突重复计入；旧备注中的地址说明只作历史记录。",
+      "meaning": "当前time_status为conflicting的记录，下面保留具体冲突。已用高德解决的地址不再按旧地址冲突重复计入；旧备注中的地址说明只作历史记录。",
       "items": [
         {
           "id": "xa_a318fb61dba3626bdf92c722029d0d0b",
@@ -757,17 +433,9 @@
       "key": "mixed_subject",
       "title": "古镇与馆内时间混在一起",
       "kind": "主体处理待改",
-      "count": 1,
+      "count": 0,
       "meaning": "红色葛牌景区已有古镇全天开放资料；纪念馆缺具体钟点，不能把馆内时间缺失扩大为整个古镇未知。应按主体拆分或加备注。",
-      "items": [
-        {
-          "id": "xa_944a121c1808ae4fdcf7ebe172b16e70",
-          "title": "红色葛牌景区（葛牌古镇）",
-          "detail": "资料称葛牌镇24小时全年无休、免费入场；纪念馆周一闭馆，但未给出纪念馆具体开放钟点，故开放规则按未知处理。",
-          "category": "3A",
-          "source_url": "https://tw.trip.com/moments/poi-gepaizhen-56809156/#1"
-        }
-      ]
+      "items": []
     },
     {
       "key": "images",
@@ -909,7 +577,7 @@
       "title": "预算数值为空",
       "kind": "字段待补",
       "count": 53,
-      "meaning": "53条budget_min为空，不代表53条都没有任何费用资料。部分原文明确免费但尚未落实到数值，部分只有外币报价、优惠人群价格或上级景区联票，部分确实未知。逐条见说明。",
+      "meaning": "budget_min为空的记录，不代表都没有任何费用资料。部分原文明确免费但尚未落实到数值，部分只有外币报价、优惠人群价格或上级景区联票，部分确实未知。逐条见说明。",
       "items": [
         {
           "id": "xa_759f6a7bebc86fed6a7b7d27d86757ba",
@@ -1003,18 +671,18 @@
           "source_url": "https://www.xiaohongshu.com/explore/6af6823200000000250115aa"
         },
         {
-          "id": "xa_fd4167e9ce151793748c81f06c957a46",
-          "title": "易俗社文化旅游景区",
-          "detail": "街区及易俗社百年博物馆、秦腔艺术博物馆免费开放；资料中76元为票务平台标价，未明确对应项目，故不采用。",
-          "category": "3A",
-          "source_url": "https://www.dahepiao.com/jingqulvyou1/20250218504395.html"
-        },
-        {
           "id": "xa_8e7f604324ae62418daa994b41a2bd12",
           "title": "智慧文化公园",
           "detail": "现有资料未记录可用费用说明，需确认免费、预约收费或按项目付费，不能根据景点类型直接猜0元",
           "category": "暂无评级",
           "source_url": "https://api.aiyoutravel.com/location/detail/a62316a731daac577e2a73d91cec1890"
+        },
+        {
+          "id": "xa_6af4ef7ba1169f1058b20b62553295e8",
+          "title": "曲江寒窑遗址公园",
+          "detail": "成人基础门票尚未确认；学生票与特定人群免票不能替代成人全价。原资料：资料列明儿童/学生票25元、部分人群免票；成人全价票未明确，预算上限按25元计，实际以景区告示为准",
+          "category": "暂无评级",
+          "source_url": "https://www.tuniu.com/menpiao/1170196#/index"
         },
         {
           "id": "xa_27d29517e4105307913f0837c8aeac55",
@@ -1057,13 +725,6 @@
           "detail": "现有资料未记录可用费用说明，需确认免费、预约收费或按项目付费，不能根据景点类型直接猜0元",
           "category": "暂无评级",
           "source_url": "https://www.iwenbo.fun/index.php/index/museum/4660.html"
-        },
-        {
-          "id": "xa_c02128b0fc19ee41a6f5ac13433113d3",
-          "title": "王府井奥莱·临潼小镇（临潼奥特莱斯景区）",
-          "detail": "入场免费，购物餐饮消费因人而异；原文未给出具体票价",
-          "category": "3A",
-          "source_url": "https://hk.trip.com/moments/detail/xi-an-7-145397625/#1"
         },
         {
           "id": "xa_5a36782143c40a42ca3cf1f25532ba8e",
@@ -1148,6 +809,13 @@
           "detail": "正文称免费入场需预约；百科资料称收费，费用以馆方为准",
           "category": "暂无评级",
           "source_url": "https://www.hopegoo.com/zh-hk/hot-hotels/landmark/xi-an-shiqian-buddha-statue-art-museum-691488/hotel-brand-29323/#2"
+        },
+        {
+          "id": "xa_9a7500de11c9dc5699bd41009f67e96e",
+          "title": "西安常宁宫休闲山庄",
+          "detail": "基础参观门票尚未确认；原670元起为含住宿套餐，不能作为景点门票。原资料：门市价670元起，为含标间住宿、双人早餐、蒋介石行宫参观及10项娱乐项目的套票价格；单项门票价格未提供。",
+          "category": "3A",
+          "source_url": "https://www.guojixing.com/en/jingdian/18680.html"
         },
         {
           "id": "xa_fb46263d38684a9c1ec1b51065a28519",
@@ -1288,52 +956,23 @@
       "key": "free_not_encoded",
       "title": "原资料已说明免费、但数值未落字段",
       "kind": "字段规范待完成",
-      "count": 2,
-      "meaning": "两条可优先依据现有免费说明复核并补0元基础入场预算，无须因为高德没票价就重新认定资料全缺。",
-      "items": [
-        {
-          "id": "xa_fd4167e9ce151793748c81f06c957a46",
-          "title": "易俗社文化旅游景区",
-          "detail": "街区及易俗社百年博物馆、秦腔艺术博物馆免费开放；资料中76元为票务平台标价，未明确对应项目，故不采用。",
-          "category": "3A",
-          "source_url": "https://www.dahepiao.com/jingqulvyou1/20250218504395.html"
-        },
-        {
-          "id": "xa_c02128b0fc19ee41a6f5ac13433113d3",
-          "title": "王府井奥莱·临潼小镇（临潼奥特莱斯景区）",
-          "detail": "入场免费，购物餐饮消费因人而异；原文未给出具体票价",
-          "category": "3A",
-          "source_url": "https://hk.trip.com/moments/detail/xi-an-7-145397625/#1"
-        }
-      ]
+      "count": 0,
+      "meaning": "原资料已说明免费但预算仍为空的记录需要字段恢复；本轮已恢复两条，本组只列尚未恢复的记录。",
+      "items": []
     },
     {
       "key": "price_semantics",
       "title": "有预算数值，但含义或依据需核对",
       "kind": "依据待确认",
-      "count": 4,
-      "meaning": "这4条不是空值问题：成人全价缺失、套餐价混入入场费、免费依据未确认等，影响主Agent预算判断。",
+      "count": 2,
+      "meaning": "这些记录不是空值问题：成人全价缺失、套餐价混入入场费、免费依据未确认等，影响主Agent预算判断。",
       "items": [
-        {
-          "id": "xa_6af4ef7ba1169f1058b20b62553295e8",
-          "title": "曲江寒窑遗址公园",
-          "detail": "现值0—2500分；资料列明儿童/学生票25元、部分人群免票；成人全价票未明确，预算上限按25元计，实际以景区告示为准",
-          "category": "暂无评级",
-          "source_url": "https://www.tuniu.com/menpiao/1170196#/index"
-        },
         {
           "id": "xa_166eface48c08cefe0a45edd8ebb94c7",
           "title": "蓝田荞麦岭景区",
           "detail": "现值0—0分；搜索资料显示门票免费；原文未明确票价，建议以景区现场或官方渠道为准。",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/travel-guide/attraction/lantian/lantian-buckwheat-ridge-140604356/?curr=USD&locale=zh-TW"
-        },
-        {
-          "id": "xa_9a7500de11c9dc5699bd41009f67e96e",
-          "title": "西安常宁宫休闲山庄",
-          "detail": "现值67000—67000分；门市价670元起，为含标间住宿、双人早餐、蒋介石行宫参观及10项娱乐项目的套票价格；单项门票价格未提供。",
-          "category": "3A",
-          "source_url": "https://www.guojixing.com/en/jingdian/18680.html"
         },
         {
           "id": "xa_794913465afc0d85c2836cd68053bb8b",

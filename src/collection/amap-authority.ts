@@ -1,4 +1,4 @@
-import {parseSchedule} from "../data/schedule.ts";
+import {parseSchedule,availabilityOnDate} from "../data/schedule.ts";
 import type {Schedule} from "../data/schedule.ts";
 import type {ActivityFacts} from "./extraction.ts";
 
@@ -6,7 +6,7 @@ export const AMAP_SOURCE="https://restapi.amap.com/v5/place/text";
 export interface AmapHours {schedule_json:Schedule|null;time_status:"complete"|"partial"|"unknown"|"conflicting";reason:string;}
 export interface AmapDetails {
   business:Record<string,string>;photos:{title:string;url:string}[];type:string;tag:string;fetched_at:string;
-  hours?:AmapHours;overrides?:{field:string;previous:unknown;selected:unknown}[];
+  hours?:AmapHours;normalized_at?:string;overrides?:{field:string;previous:unknown;selected:unknown}[];
 }
 export function amapGrade(details:AmapDetails):string|null {
   const m=/(?:^|[;；,，\s])([1-5])A(?:级)?景区(?:$|[;；,，\s])/.exec([details.business.keytag,details.tag].filter(Boolean).join(";"));
@@ -31,22 +31,49 @@ schedule_json格式：{"timezone":"Asia/Shanghai","mode":"weekly|dates|always_op
 优先opentime_week。只有opentime_today时只能记录today当天dates，不推定每周；空时间返回null/unknown。仅写09:00-17:00且无星期/日期限制可按常规每日时间处理。有季节月日则展开today年度的日期区间，跨年冬季同时记录上一年到今年及今年到次年以覆盖当前，注明按年度展开，绝不伪造来源公告年份。不得把'周一闭馆/节假日除外'展开成示例exceptions，节假日原文留备注。
 只处理输入name所指主体，索道、餐厅、停车场、夜间演出、其他分馆的钟点只保留在note，不混入主景点窗口。明确'停止入园/入馆/进入/检票'可填last_entry；停止售票不是停止入场，仅备注。高德内部时间本身矛盾且无法区分主体/季节时标conflicting并保留原文；能解释的季节差异不是冲突。缺少部分季节/只今日可用则partial。没有票价、A级、具体节假日日期不影响常规时间完整性。不得编造钟点、星期限制、例外日期。`;
 
+const AMAP_PERIOD_RULE="季节/月日区间必须用mode=weekly，每段填写valid_from/valid_to及weekdays；不能用dates只列区间首尾，那表示仅两天开放。常规每周规则也用weekly；dates只用于明确的单日或只有今日的时间。不确定夏冬分界月份时不得猜月份，标partial/unknown并保留原文。禁止用weekly的valid_from/valid_to虚构节假日日期来绕过exceptions限制；1月等明确月份可按当年1日至月末展开。日期明确的特殊时段优先于常规时段，常规规则拆开有效期，不因夏季覆盖常规而直接判冲突。常规全年规则完整且仅节假日延长未知，可complete并在备注说明；寒暑假停馆等影响能否进入但无日期则partial。停止入场有两个相互矛盾值时last_entry留null，不随意选一个。";
+
+function supportsPeriodBoundary(source:string,date:string):boolean {
+  const text=source.normalize("NFKC"),md=date.slice(5),year=Number(date.slice(0,4)),allowed=new Set<string>();
+  for(const m of text.matchAll(/(?<!\d)(\d{1,2})(?:月|[-/])(\d{1,2})(?:日)?/g)){
+    const month=Number(m[1]),day=Number(m[2]);if(month>=1&&month<=12&&day>=1&&day<=31){
+      allowed.add(`${String(month).padStart(2,"0")}-${String(day).padStart(2,"0")}`);
+      // Splitting a baseline around a special period legitimately creates the
+      // previous/next day, e.g. July 1 -> June 30 and August 31 -> September 1.
+      for(const offset of [-1,1])allowed.add(new Date(Date.UTC(year,month-1,day+offset)).toISOString().slice(5,10));
+    }
+  }
+  for(const m of text.matchAll(/(?<!\d)(\d{1,2})月/g)){
+    const month=Number(m[1]);if(month<1||month>12)continue;
+    const last=new Date(Date.UTC(year,month,0)).getUTCDate();allowed.add(`${String(month).padStart(2,"0")}-01`);allowed.add(`${String(month).padStart(2,"0")}-${last}`);
+  }
+  if(md==="02-28"&&allowed.has("02-29"))return true;
+  if((md==="01-01"||md==="12-31")&&/全年|跨年|次年|周[一二三四五六日天]/.test(text))return true;
+  return allowed.has(md);
+}
+
 function clocks(text:string){const values=new Set<string>();for(const m of text.normalize("NFKC").matchAll(/(?<!\d)(\d{1,2})(?::|点|时)(\d{1,2})?/g)){const h=Number(m[1]),n=Number(m[2]??0);if(h<=24&&n<60)values.add(`${String(h%24).padStart(2,"0")}:${String(n).padStart(2,"0")}`);}if(/24小时|全天|全日|24h/i.test(text))values.add("00:00");return values;}
 export async function normalizeAmapHours(items:{id:string;name:string;opentime_week:string;opentime_today:string}[],today:string,invoke:(system:string,input:unknown)=>Promise<string>):Promise<Map<string,AmapHours>> {
   const result=new Map<string,AmapHours>();
-  const raw=await invoke(AMAP_HOURS_PROMPT,{today,items});
+  const raw=await invoke(AMAP_HOURS_PROMPT+"\n"+AMAP_PERIOD_RULE,{today,items});
   const parsed=JSON.parse(raw.trim().replace(/^```(?:json)?\s*/i,"").replace(/\s*```$/,""));
   if(!Array.isArray(parsed.items)||parsed.items.length!==items.length||new Set(parsed.items.map((r:any)=>r.id)).size!==items.length)throw new Error("INVALID_AMAP_HOURS_RESPONSE");
   for(const input of items){
     const row=parsed.items.find((r:any)=>r.id===input.id);if(!row||!["complete","partial","unknown","conflicting"].includes(row.time_status))throw new Error("INVALID_AMAP_HOURS_RESPONSE");
     const schedule=parseSchedule(row.schedule_json),source=input.opentime_week||input.opentime_today,allowed=clocks(source);
     if(schedule){
-      if(schedule.mode==="always_open"&&!/24小时|全天(?:开放|营业)?|全日|24h|00:00\s*[-–—至]\s*24:00/i.test(source.normalize("NFKC")))throw new Error("UNSUPPORTED_AMAP_ALL_DAY");
+      if(schedule.mode==="dates"&&input.opentime_week&&/每年|夏季|冬季|\d{1,2}月至|\d{1,2}月\d{1,2}日至|\d{1,2}[-/]\d{1,2}\s*(?:至|-)\s*\d{1,2}[-/]\d{1,2}/.test(source))throw new Error("AMAP_PERIOD_REQUIRES_WEEKLY_RULES");
+      if(schedule.mode==="always_open"&&(!/24小时|全天(?:开放|营业)|^全天$|全日开放|24h|00:00\s*[-–—至]\s*24:00/i.test(source.normalize("NFKC"))||/不开放|关闭|闭馆/.test(source)))throw new Error("UNSUPPORTED_AMAP_ALL_DAY");
       const windows=[...(schedule.weekly??[]),...(schedule.dates??[]),...(schedule.exceptions??[])].flatMap(r=>r.windows??[]);
       if(windows.some(w=>[w.start,w.end,w.last_entry].some(v=>v&&!allowed.has(v))))throw new Error("UNSUPPORTED_AMAP_CLOCK");
       if(!input.opentime_week&&(schedule.mode!=="dates"||schedule.dates?.some(d=>d.date!==today)))throw new Error("TODAY_HOURS_NOT_WEEKLY");
       if(schedule.exceptions?.length)throw new Error("AMAP_EXCEPTION_NEEDS_EXPLICIT_DATE");
+      for(const rule of schedule.weekly??[])for(const date of [rule.valid_from,rule.valid_to])if(date&&!supportsPeriodBoundary(source,date))throw new Error("AMAP_DATE_BOUNDARY_NOT_IN_SOURCE");
       if(row.time_status==="complete"&&schedule.mode!=="always_open"&&(!windows.length||windows.some(w=>!w.start||!w.end)))throw new Error("INCOMPLETE_AMAP_WINDOWS");
+      if(row.time_status==="complete"){
+        const days=Array.from({length:14},(_,i)=>new Date(Date.parse(today+"T12:00:00Z")+i*86400000).toISOString().slice(0,10));
+        if(days.some(date=>availabilityOnDate({recordType:"attraction",timeStatus:"complete",schedule},date).state==="unknown"))throw new Error("AMAP_TIME_COVERAGE_INCOMPLETE");
+      }
     }else if(row.time_status==="complete")throw new Error("INCOMPLETE_AMAP_WINDOWS");
     result.set(input.id,{schedule_json:schedule,time_status:row.time_status,reason:String(row.reason??"").slice(0,1200)});
   }

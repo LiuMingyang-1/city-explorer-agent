@@ -2,7 +2,7 @@ import{test}from"node:test";import assert from"node:assert/strict";
 import{mkdirSync,rmSync,readFileSync,existsSync}from"node:fs";import{randomUUID,createHash}from"node:crypto";import{DatabaseSync}from"node:sqlite";
 import{locatedFixture}from"./collection-downstream-fixture.ts";import{prepareCollection}from"../src/collection/preparation.ts";
 import{initializeCollectionDatabase,writeCollectionDatabase,inspectCollectionDatabase}from"../src/collection/database.ts";
-import{planAmapSupplement,applyAmapSupplement}from"../src/collection/amap-supplement.ts";
+import{planAmapSupplement,applyAmapSupplement,planAmapTimeRepairs}from"../src/collection/amap-supplement.ts";
 test("AMap supplement preserves activities, journals changes and rolls back on failure",async()=>{
   const root=`.local-data/amap-supplement-test-${randomUUID()}`,path=root+"/events.db";mkdirSync(root,{recursive:true});
   try{
@@ -37,5 +37,12 @@ test("AMap supplement preserves activities, journals changes and rolls back on f
     const merged=new DatabaseSync(path,{readOnly:true});try{
       const attractions=merged.prepare("SELECT * FROM events WHERE record_type='attraction'").all();assert.equal(attractions.length,1);assert.equal(attractions[0].category,"4A");assert.equal(attractions[0].address,"陕西省西安市雁塔区高德新址");
     }finally{merged.close();}
+    const reader=new DatabaseSync(path,{readOnly:true});const current=reader.prepare("SELECT * FROM events ORDER BY id").all();reader.close();
+    const selected=current.find(r=>r.record_type==="attraction")!;
+    const repair=await planAmapTimeRepairs({sha256:hash(),rows:current},inspectCollectionDatabase(path).sidecar,[{id:String(selected.id),poi_id:String(selected.amap_poi_id),hours:{schedule_json:{timezone:"Asia/Shanghai",mode:"weekly",weekly:[{weekdays:[1,2,3,4,5,6,7],windows:[{start:"09:00",end:"17:00"}]}]},time_status:"complete",reason:"时间规范复核"}}],"2026-11-12T04:00:00Z");
+    const allowed=new Set(["schedule_json","time_status","time_note","start_at","end_at","valid_from","valid_to","updated_at"]);
+    for(const key of Object.keys(selected))if(!allowed.has(key))assert.equal(repair.updates[0].after[key],selected[key]);
+    assert.equal(repair.updates[0].authority!.checked_at,inspectCollectionDatabase(path).sidecar.events[String(selected.id)].amap_authority!.checked_at);
+    applyAmapSupplement(path,repair,{batchId:"time-only-repair"});assert.equal(inspectCollectionDatabase(path).records,2);
   }finally{rmSync(root,{recursive:true,force:true});}
 });
