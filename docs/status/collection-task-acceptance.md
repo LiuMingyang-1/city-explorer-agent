@@ -1,6 +1,6 @@
 # 初始清单与定时补充入口验收
 
-日期：2026-11-13。分支：feat/xian-nightly-events。当前说明书见[采集系统README](../README.collection.md)。
+日期：2026-11-13。分支：feat/xian-nightly-events。当前说明书见[采集系统README](../architecture/collection.md)。
 
 ## 实现
 

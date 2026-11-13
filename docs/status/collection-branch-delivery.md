@@ -6,7 +6,7 @@
 
 - 统一采集入口、初始景点构建与定向复查、关键词库与定时调度配置。
 - 小红书MediaCrawler适配、本地OCR、DeepSeek理解与搜索、高德工具定位、时间备注降级、去重和同库事务写入。
-- 对应自动测试、README.collection.md、实际初始构建/修复/两轮定时写入报告。
+- 对应自动测试、docs/architecture/collection.md、实际初始构建/修复/两轮定时写入报告。
 - **唯一真实工作库data/events.db**：265条，其中245条景点、20条活动；坐标GCJ-02，events共31列。
 - data/events.manifest.json：文件SHA-256、大小、永久database_id、表名、记录数及当前限制。
 
@@ -14,7 +14,7 @@
 
 ## 使用方式
 
-拉取本分支后，应用默认读取data/events.db；无需再次运行模拟seed。表字段、环境变量、采集命令及第三方本地环境准备见[采集README](../README.collection.md)。
+拉取本分支后，应用默认读取data/events.db；无需再次运行模拟seed。表字段、环境变量、采集命令及第三方本地环境准备见[采集README](../architecture/collection.md)。
 
 后续采集继续更新同一个数据库文件。因为该文件已纳入Git，运行采集后出现数据库工作区改动是正常情况；需要交付更新数据时重新生成清单中的统计与SHA-256。现有清单只证明本次版本的文件内容，不能用于验证后续已更新的工作库。
 

@@ -4,7 +4,7 @@
 
 景点新增默认10米的坐标去重，批次内及跨夜间发布均执行；活动不参与。具体阈值、保留策略及来源审计见[景点经纬度去重](attraction-coordinate-dedup.md)。
 
-2026-11-13完成本轮Demo结构设计收尾验收，结果和已知限制见[最终小样本验收](collection-final-acceptance.md)。后续优先修正数据质量，不继续扩展当前表结构。
+2026-11-13完成本轮Demo结构设计收尾验收，结果和已知限制见[最终小样本验收](../status/collection-final-acceptance.md)。后续优先修正数据质量，不继续扩展当前表结构。
 
 分析模型现可用同一个DeepSeek Key补查景点A级，查不到回退“等级未知”，不新增表字段，见[景点等级搜索工具](scenic-level-search-tool.md)。
 

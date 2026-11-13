@@ -1,4 +1,4 @@
-> 2026-11-13后续更新：清单拆批、模型目标上下文、词库编译与定时runner已实现并通过离线测试。当前使用configs/collection.bootstrap.json与configs/collection.scheduled.json；详细现状见[采集系统README](../README.collection.md)。本文保留原设计，正式应用库替换、稳定主体ID及细粒度请求恢复等未完成内容仍属于规划，不能因部分入口实现就视为全部已完成。
+> 2026-11-13后续更新：清单拆批、模型目标上下文、词库编译与定时runner已实现并通过离线测试。当前使用configs/collection.bootstrap.json与configs/collection.scheduled.json；详细现状见[采集系统README](collection.md)。本文保留原设计，正式应用库替换、稳定主体ID及细粒度请求恢复等未完成内容仍属于规划，不能因部分入口实现就视为全部已完成。
 
 # 定时补充搜索词库与脚本设计
 

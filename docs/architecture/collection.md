@@ -26,7 +26,7 @@
 | 其他社交平台 | 未启用 | 历史解析代码不代表当前可运行；知乎未接通，不宣称全平台覆盖 |
 | 全库营业/结束状态自动维护 | 未完成 | 目前有时效过滤与发布能力，不等于完整刷新所有既有记录 |
 
-清单入口已完成真实批量验证，原始结果见[初始景点构建报告](docs/initial-attractions-build-report-20261113.md)，后续见[前期修复报告](docs/initial-data-repair-report-20261113.md)。定时入口已做[两轮真实写入测试](docs/scheduled-two-rounds-report-20261113.md)：数据库写入成功，采集均为partial；Windows触发器没有安装。本文两条字段示例保留为历史样本；开放时间、价格和活动日期应结合来源与状态使用。
+清单入口已完成真实批量验证，原始结果见[初始景点构建报告](../status/initial-attractions-build-report-20261113.md)，后续见[前期修复报告](../status/initial-data-repair-report-20261113.md)。定时入口已做[两轮真实写入测试](../status/scheduled-two-rounds-report-20261113.md)：数据库写入成功，采集均为partial；Windows触发器没有安装。本文两条字段示例保留为历史样本；开放时间、价格和活动日期应结合来源与状态使用。
 
 ## 2. 文件入口与快速使用
 
@@ -39,7 +39,7 @@
 | `configs/collection.scheduled.json` | 后续补充配置，可运行，定时开关默认 false |
 | `configs/collection.keyword-library.json` | 18组68个搜索模板、地域、季节和节日窗口 |
 | `configs/collection.scheduled.design.json` | 历史设计稿，不能传给运行入口 |
-| `docs/data/xian-attraction-seeds.json` | 247个初始景点目标及名称线索 |
+| `configs/xian-attraction-seeds.json` | 247个初始景点目标及名称线索 |
 | `scripts/collect.ts` | 手动采集 CLI，默认仅预览 |
 | `scripts/collect-task.ts` | 初始/补充任务 CLI，默认仅预览 |
 | `scripts/collection-scheduled-task.ps1` | Windows 触发器预览、显式安装和隐藏执行 |
@@ -438,7 +438,7 @@ validateDataset再次检查字段、ID、来源关联、来源正文SHA-256、UR
 
 生产配置统一使用database_path=data/events.db。每轮、每份资料都更新这个文件，不在run目录或releases目录创建新数据库，不切换CURRENT。
 
-本分支交付包含真实工作库data/events.db（265条：245景点、20活动）及data/events.manifest.json校验清单。克隆此分支后可直接读取该库；后续采集仍原地更新，Git会显示数据库变化，清单校验和只对应本次提交时的版本。其他数据库、SQLite临时文件、.env、Cookie及.local-data缓存仍排除在Git之外。交付范围与验证结果见[分支交付说明](docs/collection-branch-delivery.md)。
+本分支交付包含真实工作库data/events.db（265条：245景点、20活动）及data/events.manifest.json校验清单。克隆此分支后可直接读取该库；后续采集仍原地更新，Git会显示数据库变化，清单校验和只对应本次提交时的版本。其他数据库、SQLite临时文件、.env、Cookie及.local-data缓存仍排除在Git之外。交付范围与验证结果见[分支交付说明](../status/collection-branch-delivery.md)。
 
 1. 首次启动从已有真实发布库迁入229条景点及对应来源信息；以后发现已初始化标记就直接读工作库，不重复覆盖。
 2. 发布前根据私有witness重建并比对记录，沿用原地图、事实和来源校验。
@@ -461,7 +461,7 @@ validateDataset再次检查字段、ID、来源关联、来源正文SHA-256、UR
 node scripts/collection-correct-times.ts .local-data/xian/planning/initial-time-corrections.json
 ```
 
-22个前期未入库目标的复查使用configs/collection.bootstrap-recheck.json，对应docs/data/xian-attraction-recheck-seeds.json；其独立进度在.local-data/xian/bootstrap-recheck/state.json，不重置原247目标进度。每目标2篇DeepSeek资料、5目标一批，同样通过模型/高德/校验/去重写data/events.db。该复查已执行完成，5个目标恢复、17个仍舍弃；再次执行已完成任务不会无限重采。这是一次历史质量修复，不是每天定时任务必须人工介入的步骤。
+22个前期未入库目标的复查使用configs/collection.bootstrap-recheck.json，对应configs/xian-attraction-recheck-seeds.json；其独立进度在.local-data/xian/bootstrap-recheck/state.json，不重置原247目标进度。每目标2篇DeepSeek资料、5目标一批，同样通过模型/高德/校验/去重写data/events.db。该复查已执行完成，5个目标恢复、17个仍舍弃；再次执行已完成任务不会无限重采。这是一次历史质量修复，不是每天定时任务必须人工介入的步骤。
 
 ## 6. 校验不通过、降级与执行异常一览
 
@@ -895,7 +895,7 @@ OCR依赖单独列在scripts/requirements-ocr.txt（rapidocr-onnxruntime==1.4.4�
 
 ### 12.2 历史真实延迟
 
-最新初始构建：247个目标，262次正文检索，取得524份来源（含失败批重试），最终229条景点。累计采集处理49.1分钟，墙钟63.7分钟，包含充值中断与修复；正文搜索平均337毫秒，模型HTTP平均1.855秒。详细调用数和恢复记录见[本次构建报告](docs/initial-attractions-build-report-20261113.md)。以下保留早先10份资料的小样本对照。
+最新初始构建：247个目标，262次正文检索，取得524份来源（含失败批重试），最终229条景点。累计采集处理49.1分钟，墙钟63.7分钟，包含充值中断与修复；正文搜索平均337毫秒，模型HTTP平均1.855秒。详细调用数和恢复记录见[本次构建报告](../status/initial-attractions-build-report-20261113.md)。以下保留早先10份资料的小样本对照。
 
 2026-11-13收尾批次（5小红书＋5网页，等级工具补查之前）：
 
@@ -939,7 +939,7 @@ node scripts/collect-task.ts --config configs/collection.bootstrap.json --date 2
 node scripts/collect-task.ts --config configs/collection.scheduled.json --date 2026-11-13
 ```
 
-本轮重点自动检查：配置严格校验、启用/禁用与固定关键词、周五/周末/跨年、季节跨年与明确节日、全地域轮换、数量不超限、247目标无漏拆批、一文多目标、预览无副作用、每日防重复、并发锁、失败不推进、完成清单后无新调用、目标确认失败拦截、真实SQLite写入和31列完整性、旧入口兼容。最初[入口验收记录](docs/collection-task-acceptance.md)为574项；批量采集修复模拟展项误拦、余额停止、长参考网址后，TypeScript检查、577项Node测试、5项Python测试通过。
+本轮重点自动检查：配置严格校验、启用/禁用与固定关键词、周五/周末/跨年、季节跨年与明确节日、全地域轮换、数量不超限、247目标无漏拆批、一文多目标、预览无副作用、每日防重复、并发锁、失败不推进、完成清单后无新调用、目标确认失败拦截、真实SQLite写入和31列完整性、旧入口兼容。最初[入口验收记录](../status/collection-task-acceptance.md)为574项；批量采集修复模拟展项误拦、余额停止、长参考网址后，TypeScript检查、577项Node测试、5项Python测试通过。
 
 离线测试能证明控制逻辑和约束按设计工作，不能证明每个真实帖子都正确分类、每个高德候选都选对，或夜间账号长期稳定。初始清单已经在线跑完并完成一次定向复查；定时补充已实际测试两轮，同一库229→252→260条。第一轮有一张OCR失败，第二轮小红书登录失效且有2篇模型处理失败；两轮均为partial。后续前期复查新增5条，当前265条。无人值守触发和账号长期稳定仍待验证。
 
@@ -947,17 +947,17 @@ node scripts/collect-task.ts --config configs/collection.scheduled.json --date 2
 
 ## 14. 文档与历史资料索引
 
-- [前期数据修复报告](docs/initial-data-repair-report-20261113.md)：22目标复查、5个恢复、19条时间纠错和仍未通过原因。
-- [两轮定时写入测试](docs/scheduled-two-rounds-report-20261113.md)：4词×5篇、同库累计写入、实测延迟与失败说明。
-- [247目标初始构建真实报告](docs/initial-attractions-build-report-20261113.md)：229条景点及完整调用、失败和恢复统计。
+- [前期数据修复报告](../status/initial-data-repair-report-20261113.md)：22目标复查、5个恢复、19条时间纠错和仍未通过原因。
+- [两轮定时写入测试](../status/scheduled-two-rounds-report-20261113.md)：4词×5篇、同库累计写入、实测延迟与失败说明。
+- [247目标初始构建真实报告](../status/initial-attractions-build-report-20261113.md)：229条景点及完整调用、失败和恢复统计。
 
-- [时间备注与模型工具](docs/collection-time-notes-and-tools.md)
-- [景点A级补查](docs/scenic-level-search-tool.md)
-- [景点坐标去重](docs/attraction-coordinate-dedup.md)
-- [统一手动入口](docs/unified-collection-entry.md)
-- [初始目标清单](docs/xian-attraction-seed-list.md)
-- [初始/正式交付总体规划](docs/xian-bootstrap-and-nightly-plan.md)
-- [定时词库原设计](docs/scheduled-keyword-design.md)
-- [历史真实收尾验收](docs/collection-final-acceptance.md)
+- [时间备注与模型工具](collection-time-notes-and-tools.md)
+- [景点A级补查](scenic-level-search-tool.md)
+- [景点坐标去重](attraction-coordinate-dedup.md)
+- [统一手动入口](unified-collection-entry.md)
+- [初始目标清单](../planning/xian-attraction-seed-list.md)
+- [初始/正式交付总体规划](../planning/xian-bootstrap-and-nightly-plan.md)
+- [定时词库原设计](scheduled-keyword-design.md)
+- [历史真实收尾验收](../status/collection-final-acceptance.md)
 
 旧文档中的WGS-84、18列/27列、guide_url留空、未来14天外拒绝、强制逐字引用和固定字符串地址匹配等可能是历史阶段记录。当前新链路使用GCJ-02、31物理列、原来源guide_url、时间备注降级和模型地图工具。对外解释应说明采用哪个版本，不能将旧拒绝原因无条件套用到新记录。

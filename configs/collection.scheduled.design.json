@@ -159,5 +159,5 @@
     "on_insufficient_results": "report_without_changing_keyword",
     "checkpoint": true
   },
-  "note": "历史设计稿，不用于运行。已实现的v1配置见configs/collection.scheduled.json；查询级续跑等未接通字段以README.collection.md说明为准。"
+  "note": "历史设计稿，不用于运行。已实现的v1配置见configs/collection.scheduled.json；查询级续跑等未接通字段以docs/architecture/collection.md说明为准。"
 }

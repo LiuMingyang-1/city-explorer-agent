@@ -21,7 +21,7 @@ const read=(path:string)=>JSON.parse(readFileSync(path,"utf8"));
 const cfg=()=>parseTaskConfig(read("configs/collection.scheduled.json"));
 const boot=()=>parseTaskConfig(read("configs/collection.bootstrap.json"));
 const lib=()=>read("configs/collection.keyword-library.json") as KeywordLibrary;
-const seeds=()=>read("docs/data/xian-attraction-seeds.json") as SeedList;
+const seeds=()=>read("configs/xian-attraction-seeds.json") as SeedList;
 const friday="2026-11-13";
 function fixture(c=cfg()){
   const root=`.local-data/task-test-${randomUUID()}`;mkdirSync(root,{recursive:true});c.state_file=`${root}/state.json`;c.collection_defaults.output_dir=`${root}/runs`;c.collection_defaults.publish_root=`${root}/release`;c.collection_defaults.database_path=`${root}/events.db`;
