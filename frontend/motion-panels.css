@@ -1,0 +1,5 @@
+/* Right-side panel (activity detail + preferences drawer) slide motion. Loaded after style.css; rules here override it. */
+.activity-detail,.preferences-panel{animation:none;transition:transform .32s cubic-bezier(.22,.8,.32,1),opacity .3s ease}
+.activity-detail.is-off,.activity-detail.is-leaving,.preferences-panel.is-off,.preferences-panel.is-leaving{transform:translateX(calc(100% + 48px));opacity:0}
+.activity-detail.is-leaving,.preferences-panel.is-leaving{pointer-events:none}
+@media(prefers-reduced-motion:reduce){.activity-detail,.preferences-panel{transition:none}}

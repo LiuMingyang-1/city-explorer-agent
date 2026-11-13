@@ -1,7 +1,7 @@
 'use strict';
 // Presentational adapter for legacy itineraries and the Day 0 single/comparison samples.
 (() => {
- let currentView=null,viewCount=0;
+ let currentView=null,viewCount=0,detailEpoch=0,openRect=null,detailFocus=true;
  const colorFor=index=>index===0?'#b67a55':'#64859a';
  const text=(tag,className,value)=>{const node=document.createElement(tag);node.className=className;node.textContent=String(value??'');return node;};
  function safeURL(value){try{const u=new URL(String(value));return ['http:','https:'].includes(u.protocol)?u.href:null;}catch{return null;}}
@@ -99,15 +99,54 @@
   if(!layers.length)return;routeLayer=L.layerGroup(layers).addTo(map);
   if(fit&&bounds.length){const card=document.querySelector('.glass-card').getBoundingClientRect(),size=map.getSize();const frame=window.WanderMapLayout.routeFrame({width:size.x,height:size.y,card});map.fitBounds(L.latLngBounds(bounds),{paddingTopLeft:frame.paddingTopLeft,paddingBottomRight:frame.paddingBottomRight,maxZoom:15,animate:true});}
  }
- function closeDetail(){
-  const overlay=$('plan-detail');if(overlay)overlay.hidden=true;
-  document.querySelector('.glass-card').classList.remove('viewing-plan');
-  currentView?.preview?.setAttribute('aria-expanded','false');
-  currentView?.preview?.focus({preventScroll:true});
+ const reduceMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+ // Where the detail view shrinks to / grows from: the preview rect while it is on screen, else the card center.
+ function detailAnchor(preview,card){
+  const bounds=card.getBoundingClientRect(),center={left:bounds.left+bounds.width*.3,top:bounds.top+bounds.height*.38,width:bounds.width*.4,height:bounds.height*.24};
+  if(!preview?.isConnected||preview.disabled)return center;
+  const rect=preview.getBoundingClientRect();
+  return rect.width>0&&rect.height>0&&rect.bottom>bounds.top&&rect.top<bounds.bottom?rect:center;
+ }
+ const detailRadius=preview=>preview?.isConnected&&getComputedStyle(preview).borderRadius||'15px';
+ const detailInset=(anchor,rect,radius)=>`inset(${Math.round(anchor.top-rect.top)}px ${Math.round(rect.right-anchor.right)}px ${Math.round(rect.bottom-anchor.bottom)}px ${Math.round(anchor.left-rect.left)}px round ${radius||'15px'})`;
+ function endMotion(overlay){openRect=null;overlay.classList.remove('plan-detail-motion','plan-detail-closing');overlay.style.clipPath='';overlay.style.opacity='';}
+ function openDetail(overlay,preview){
+  const card=document.querySelector('.glass-card');
+  if(!overlay.hidden||overlay.classList.contains?.('plan-detail-motion'))return;
+  const epoch=++detailEpoch;
+  overlay.hidden=false;preview.setAttribute('aria-expanded','true');card.classList.add('viewing-plan');
+  if(reduceMotion())return;
+  const anchor=detailAnchor(preview,card),rect=openRect=overlay.getBoundingClientRect();
+  overlay.style.clipPath=detailInset(anchor,rect,detailRadius(preview));overlay.style.opacity='0';
+  void overlay.offsetHeight;
+  overlay.classList.add('plan-detail-motion');overlay.style.clipPath='inset(0px 0px 0px 0px)';overlay.style.opacity='';
+  let settled=false;
+  const done=()=>{if(settled)return;settled=true;clearTimeout(timer);overlay.removeEventListener?.('transitionend',onEnd);if(epoch!==detailEpoch)return;endMotion(overlay);};
+  const onEnd=event=>{if(event.target===overlay&&event.propertyName==='clip-path')done();};
+  overlay.addEventListener('transitionend',onEnd);const timer=setTimeout(done,400);
+ }
+ function closeDetail(options){
+  const overlay=$('plan-detail');if(!overlay)return;
+  const card=document.querySelector('.glass-card'),preview=currentView?.preview;
+  const finish=()=>{endMotion(overlay);overlay.hidden=true;card.classList.remove('viewing-plan','plan-reveal');preview?.setAttribute('aria-expanded','false');if(detailFocus)preview?.focus({preventScroll:true});detailFocus=true;};
+  if(overlay.hidden||options?.animate===false||reduceMotion()){detailFocus=options?.focus!==false;++detailEpoch;finish();return;}
+  if(overlay.classList.contains?.('plan-detail-closing')){if(options?.focus===false)detailFocus=false;return;}
+  detailFocus=options?.focus!==false;
+  const epoch=++detailEpoch;
+  const anchor=detailAnchor(preview,card),rect=openRect||overlay.getBoundingClientRect();
+  const start=getComputedStyle(overlay).clipPath;
+  overlay.style.clipPath=start==='none'?'inset(0px 0px 0px 0px)':start;
+  void overlay.offsetHeight;
+  overlay.classList.add('plan-detail-motion','plan-detail-closing');card.classList.add('plan-reveal');
+  overlay.style.clipPath=detailInset(anchor,rect,detailRadius(preview));overlay.style.opacity='0';
+  let settled=false;
+  const done=()=>{if(settled)return;settled=true;clearTimeout(timer);overlay.removeEventListener?.('transitionend',onEnd);if(epoch!==detailEpoch)return;finish();};
+  const onEnd=event=>{if(event.target===overlay&&event.propertyName==='clip-path')done();};
+  overlay.addEventListener('transitionend',onEnd);const timer=setTimeout(done,370);
  }
  function append(data,{drawMap=true}={}){
   const model=normalize(data);if(!model)throw new Error('方案内容不完整');
-  closeDetail();if(currentView){currentView.preview.disabled=true;currentView.buttons.forEach(b=>{b.disabled=true;});}
+  closeDetail({animate:false});if(currentView){currentView.preview.disabled=true;currentView.buttons.forEach(b=>{b.disabled=true;});}
   const {message,bubble}=makeMessage('assistant');bubble.classList.add('plan-bubble');
   bubble.append(text('p','plan-reply',model.plans.length>1?'为你整理了两种出发方式，看看哪一种更合心意。':'行程已经整理好了，点开看看这一路的安排。'));
   const preview=text('button','plan-preview','');preview.type='button';preview.setAttribute('aria-expanded','false');preview.setAttribute('aria-controls','plan-detail');
@@ -152,12 +191,12 @@
    if(drawMap)draw(model,{fit,onSelect:next=>choose(next)});
    if(capture)window.WanderHistory?.capture();
   }
-  preview.addEventListener('click',()=>{overlay.hidden=false;preview.setAttribute('aria-expanded','true');document.querySelector('.glass-card').classList.add('viewing-plan');choose(model.active_plan,{fit:true,capture:false});scroll.scrollTo({top:0});back.focus({preventScroll:true});});
+  preview.addEventListener('click',()=>{openDetail(overlay,preview);choose(model.active_plan,{fit:true,capture:false});scroll.scrollTo({top:0});back.focus({preventScroll:true});});
   currentView={buttons,preview};choose(model.active_plan,{fit:true,capture:false});
   window.WanderActivities?.addPlanEvents(model);
   scrollMessages();return message;
  }
- window.addEventListener('wander:reset',()=>{closeDetail();currentView=null;state.activePlanId=null;});
+ window.addEventListener('wander:reset',()=>{closeDetail({focus:false});currentView=null;state.activePlanId=null;});
  window.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('plan-detail').hidden)closeDetail();});
  window.WanderPlans={normalize,active,summary,price,geometry,commute,safeURL,eventCover,draw,append,closeDetail};
 })();

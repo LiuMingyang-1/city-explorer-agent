@@ -1,0 +1,19 @@
+/* Button micro-interactions and global motion polish. Loaded after style.css; rules here override it. */
+.plan-back,.activity-close,.activity-choice,.activity-add,.activity-ask,.locate-button,.preferences-open{transition:background .18s,color .18s,border-color .18s,transform .15s}
+.composer-chip-remove{transition:background .18s,color .18s,transform .15s}
+.history-entry,.more-history{transition:color .18s,background .18s}
+#send-button{transition:background .18s,color .18s,opacity .18s,transform .15s}
+.new-chat{transition:background .18s,border-color .18s,transform .15s}
+.location-form .search-button{transition:background .18s,color .18s,transform .15s}
+.retry-button{transition:background .18s,transform .15s}
+.plan-preview{transition:background .2s,border-color .2s,transform .15s}
+.plan-tab{transition:color .18s,transform .15s}
+.preferences-save,.preferences-clear{transition:background .18s,color .18s,border-color .18s,opacity .18s,transform .15s}
+.has-conversation{transition:grid-template-rows .3s ease}
+.plan-back:active,.activity-choice:active,.activity-add:active,.activity-ask:active,.retry-button:active{transform:scale(.96)}
+.activity-close:active,.locate-button:active,.preferences-open:active,.location-form .search-button:active,.composer-chip-remove:active,#send-button:not(:disabled):active{transform:scale(.94)}
+.new-chat:active,.plan-tab:not(:disabled):active,.preferences-save:not(:disabled):active,.preferences-clear:not(:disabled):active{transform:scale(.97)}
+.plan-preview:not(:disabled):active{transform:scale(.985)}
+@keyframes motion-chip-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.composer-chip{animation:motion-chip-in .18s ease}
+@media(prefers-reduced-motion:reduce){.message,.activity-bubble,.activity-bubble-wrap,.activity-detail,.preferences-panel,.plan-detail-view,.has-conversation,.composer,.location-form,.composer-chip,.place-wrap,.activity-pin,.plan-back,.activity-close,.activity-choice,.activity-add,.activity-ask,.locate-button,.locate-button.loading svg,.preferences-open,.composer-chip-remove,.history-entry,.more-history,#send-button,.new-chat,.location-form .search-button,.retry-button,.plan-preview,.plan-tab,.plan-switch:before,.planning-progress:before,.preferences-save,.preferences-clear{animation-duration:.01ms!important;transition-duration:.01ms!important}}
