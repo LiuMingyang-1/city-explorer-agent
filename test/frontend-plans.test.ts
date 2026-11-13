@@ -11,7 +11,7 @@ function leaflet(h:ReturnType<typeof setup>){
  const make=(type:string,points:unknown,options:Record<string,unknown>)=>{
   const value={type,points,options,bindTooltip(){return this},on(){return this}};created.push(value);return value;
  };
- h.context.map={removeLayer(){},fitBounds(bounds:unknown){fits++;fitTargets.push(bounds)}};
+ h.context.map={removeLayer(){},getSize(){return {x:1440,y:900}},fitBounds(bounds:unknown){fits++;fitTargets.push(bounds)}};
  h.context.locationLabel=(s:string)=>s;h.context.innerWidth=1440;
  const card=Object.assign(h.$('card'),{getBoundingClientRect:()=>({right:450,height:844})});
  h.context.document.querySelector=()=>card;

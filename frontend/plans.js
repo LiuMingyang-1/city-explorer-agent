@@ -97,7 +97,7 @@
    });
   });
   if(!layers.length)return;routeLayer=L.layerGroup(layers).addTo(map);
-  if(fit&&bounds.length){const card=document.querySelector('.glass-card').getBoundingClientRect();map.fitBounds(L.latLngBounds(bounds),{paddingTopLeft:innerWidth>700?[card.right+45,90]:[25,60],paddingBottomRight:innerWidth>700?[70,60]:[25,card.height+35],maxZoom:15,animate:true});}
+  if(fit&&bounds.length){const card=document.querySelector('.glass-card').getBoundingClientRect(),size=map.getSize();const frame=window.WanderMapLayout.routeFrame({width:size.x,height:size.y,card});map.fitBounds(L.latLngBounds(bounds),{paddingTopLeft:frame.paddingTopLeft,paddingBottomRight:frame.paddingBottomRight,maxZoom:15,animate:true});}
  }
  function closeDetail(){
   const overlay=$('plan-detail');if(overlay)overlay.hidden=true;

@@ -28,23 +28,26 @@
   const merged=new Map([...feed,...planEvents].map(e=>[e.event_id,e]));groups=groupEvents([...merged.values()]).filter(group=>currentEvents(group.events).length);renderMap();
  }
  function pin(group){
-  const event=currentEvents(group.events)[0]||group.events[0],wrap=document.createElement('div');wrap.className='activity-bubble-wrap';
+  const event=present(currentEvents(group.events)[0]||group.events[0]),wrap=document.createElement('div');wrap.className='activity-bubble-wrap';
   const button=text('button','activity-bubble','');button.type='button';button.setAttribute('aria-label',event.title+'，查看活动');
-  button.append(text('span','activity-bubble-title',event.title),text('span','activity-bubble-meta',(event.category||'活动')+' · '+window.WanderPlans.price(event)));
-  wrap.append(button);return wrap;
+  const cover=window.WanderPlans.eventCover(event);cover.classList.add('activity-bubble-thumb');
+  const copy=document.createElement('span');copy.className='activity-bubble-copy';
+  copy.append(text('strong','activity-bubble-title',event.title),text('span','activity-bubble-meta',(event.category||'活动')+' · '+window.WanderPlans.price(event)));
+  button.append(cover,copy);const tip=text('span','activity-bubble-tip',''),anchor=text('span','activity-bubble-anchor','');tip.setAttribute('aria-hidden','true');anchor.setAttribute('aria-hidden','true');
+  wrap.append(button,tip,anchor);return wrap;
  }
  function layoutBubbles(items,{width,height,zoom=11,occupied=[]}){
-  const boxes=[...occupied],result=new Map(),max=zoom>=15?20:zoom>=13?12:7,w=190,h=49;
+  const boxes=[...occupied],result=new Map(),max=zoom>=15?20:zoom>=13?12:7,w=244,h=98;
   const overlap=(a,b)=>a.left<b.right+9&&a.right>b.left-9&&a.top<b.bottom+9&&a.bottom>b.top-9;
   const ordered=[...items].sort((a,b)=>Math.hypot(a.x-width/2,a.y-height/2)-Math.hypot(b.x-width/2,b.y-height/2)||String(a.id).localeCompare(String(b.id)));
   for(const item of ordered){
    if(result.size>=max)break;
    if(item.x<8||item.x>width-8||item.y<8||item.y>height-25)continue;
-   const offsets=[[16,-h/2],[-w-16,-h/2],[-w/2,-h-20],[-w/2,20]];
+   const offsets=[[-w/2,-h],[-24,-h],[-w+24,-h],[-w/2,0],[-24,0],[-w+24,0]];
    for(const [dx,dy] of offsets){
     const box={left:item.x+dx,right:item.x+dx+w,top:item.y+dy,bottom:item.y+dy+h};
     if(box.left<10||box.right>width-10||box.top<10||box.bottom>height-25||boxes.some(other=>overlap(box,other)))continue;
-    boxes.push(box);result.set(item.id,{dx,dy,box});break;
+    boxes.push(box);result.set(item.id,{dx,dy,box,tailX:-dx,tailY:dy<0?h:0,below:dy===0});break;
    }
   }return result;
  }
@@ -58,10 +61,10 @@
    const marker=L.marker([group.lat,group.lng],{icon:L.divIcon({className:'activity-map-icon',html:node,iconSize:[0,0],iconAnchor:[0,0]}),title:group.events[0].title,zIndexOffset:400});return {marker,group,node};
   });
   const size=map.getSize(),card=document.querySelector('.glass-card').getBoundingClientRect(),occupied=[card];
-  const detail=$('activity-detail');if(!detail.hidden)occupied.push(detail.getBoundingClientRect());
+  for(const id of ['activity-detail','preferences-panel']){const panel=$(id);if(panel&&!panel.hidden&&panel.getBoundingClientRect)occupied.push(panel.getBoundingClientRect());}
   const items=layers.map(item=>{const p=map.latLngToContainerPoint([item.group.lat,item.group.lng]);return {...item,id:item.group.id,x:p.x,y:p.y};});
   const placements=layoutBubbles(items,{width:size.x,height:size.y,zoom:map.getZoom(),occupied});
-  const visible=items.filter(item=>{const fit=placements.get(item.id);if(!fit)return false;item.node.style.setProperty('--bubble-x',fit.dx+'px');item.node.style.setProperty('--bubble-y',fit.dy+'px');return true;});
+  const visible=items.filter(item=>{const fit=placements.get(item.id);if(!fit)return false;item.node.style.setProperty('--bubble-tail-x',fit.tailX+'px');item.node.style.setProperty('--bubble-tail-y',fit.tailY+'px');item.node.classList.toggle('bubble-below',fit.below);item.marker.setIcon(L.divIcon({className:'activity-map-icon',html:item.node,iconSize:[244,98],iconAnchor:[-fit.dx,-fit.dy]}));return true;});
   if(epoch===renderEpoch)leafletLayer=L.layerGroup(visible.map(item=>item.marker)).addTo(map);
  }
  function close(){openEpoch++;const panel=$('activity-detail');panel.hidden=true;window.WanderAMap?.updatePlaces?.();returnFocus?.focus?.({preventScroll:true});}
@@ -90,10 +93,15 @@
    fact('地点',e.address||e.venue_name);fact('预算',window.WanderPlans.price(e)+' / 人');fact('提示',e.budget_note);info.append(facts);
    const links=document.createElement('div');links.className='activity-actions';const url=window.WanderPlans.safeURL(e.guide_url)||window.WanderPlans.safeURL(e.source_url);
    if(url){const link=text('a','activity-source',e.guide_url?'活动原站 ↗':'示例数据来源 ↗');link.href=url;link.target='_blank';link.rel='noopener noreferrer';links.append(link);}else links.append(text('span','activity-no-link','原站链接待补充'));
-   const ask=text('button','activity-ask','问问这个活动 ↗');ask.type='button';ask.addEventListener('click',()=>{
-    if(epoch!==openEpoch)return;window.WanderPlans.closeDetail();window.WanderHistory?.setExpanded(false);
-    $('message-input').value=('我想了解「'+e.title+'」（'+e.venue_name+'），适合加进我的行程吗？').slice(0,1000);state.referencedEventId=e.is_demo?null:e.event_id;state.referencedDraft=$('message-input').value;updateSendButton();$('message-input').focus({preventScroll:true});
-   });links.append(ask);info.append(links);body.append(info);body.scrollTo({top:0});
+   const draftAction=(label,kind)=>{
+    const button=text('button',kind==='add'?'activity-add':'activity-ask',label);button.type='button';button.addEventListener('click',()=>{
+     if(epoch!==openEpoch)return;window.WanderPlans.closeDetail();window.WanderHistory?.setExpanded(false);
+     const prompt=kind==='add'?'请把「'+e.title+'」（'+e.venue_name+'）加入我的行程，帮我安排合适的时间并检查是否顺路。':'我想了解「'+e.title+'」（'+e.venue_name+'），适合加进我的行程吗？';
+     $('message-input').value=prompt.slice(0,1000);state.referencedEventId=e.is_demo?null:e.event_id;state.referencedDraft=$('message-input').value;updateSendButton();$('message-input').focus({preventScroll:true});
+    });return button;
+   };
+   const prompts=document.createElement('div');prompts.className='activity-prompts';prompts.append(draftAction('问问这个活动','ask'),draftAction('加入行程','add'));
+   info.append(links,prompts);body.append(info);body.scrollTo({top:0});
   }
   show(0);window.WanderAMap?.updatePlaces?.();
  }

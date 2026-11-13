@@ -32,27 +32,41 @@
 @media(min-width:1600px){.activity-detail{top:36px;right:36px}}
 @media(max-height:720px) and (min-width:701px){.activity-detail{top:20px;right:20px;min-height:300px;height:50dvh}.plan-detail-title{margin-top:20px;font-size:22px}}
 @media(max-width:700px){.plan-detail-view{padding:20px 20px 0}.plan-detail-title{font-size:22px;margin:18px 0 15px}.plan-detail-view>.plan-switch{margin-bottom:14px}.plan-detail-view .event-card{grid-template-columns:70px minmax(0,1fr)}.plan-detail-view .event-cover{width:70px;height:85px}.activity-detail{top:12px;right:12px;width:calc(100% - 24px);max-width:none;min-height:0;height:calc(45dvh - 36px);max-height:390px;border-radius:20px}.activity-detail-header{padding:12px 16px 10px}.activity-choices{padding:0 16px 9px}.activity-hero.event-cover{height:110px}.activity-info{padding:12px 16px 16px}.activity-title{font-size:18px}.plan-preview{padding:12px}}
-/* Empty chat starts centered; a conversation reserves the bottom for its composer. */
-.has-conversation .composer-area{top:auto;bottom:22px;transform:none;transition:bottom .2s ease}
-.has-conversation .messages{top:260px;bottom:106px;padding:15px 0 8px}
-.has-conversation .history-area{display:none}
-.has-conversation.history-expanded .history-area{display:flex;top:260px;bottom:106px}
-@media(min-width:1600px){.has-conversation .messages,.has-conversation.history-expanded .history-area{top:290px}}
-@media(max-height:700px) and (min-width:701px){.has-conversation .messages,.has-conversation.history-expanded .history-area{top:225px}.has-conversation .composer-area{bottom:18px}}
-@media(max-width:700px){.has-conversation .composer-area{top:auto;bottom:14px;transform:none}.has-conversation .messages,.has-conversation.history-expanded .history-area{top:150px;bottom:86px;padding-top:8px}.has-conversation .welcome h1{font-size:20px;line-height:1.35}.has-conversation .welcome h1 br{display:none}.has-conversation .weather{margin-top:12px}}
-/* Activity titles appear as bubbles only inside the visible map area. */
-.activity-bubble-wrap{position:relative;width:0;height:0;overflow:visible}
-.activity-bubble-wrap:before{content:"";position:absolute;left:-4px;top:-4px;width:8px;height:8px;border:2px solid #fffcf6;border-radius:50%;background:#9e805c;box-shadow:0 1px 4px #5d704736}
-.activity-bubble{position:absolute;left:var(--bubble-x,16px);top:var(--bubble-y,-24px);width:190px;height:49px;padding:8px 12px;display:flex;flex-direction:column;justify-content:center;gap:3px;align-items:flex-start;border:1px solid #c3ceb6c9;border-radius:13px;background:#fbfdf5f5;color:#40573b;box-shadow:0 4px 16px #465e4320;font-family:inherit;text-align:left;animation:bubble-pop .22s ease-out;transform-origin:20% 100%;transition:background .15s,box-shadow .15s}
-.activity-bubble:hover,.activity-bubble:focus-visible{background:#eef5e2;box-shadow:0 5px 20px #465e4338;border-color:#a6ba91;z-index:5}
-.activity-bubble:after{content:"";position:absolute;bottom:-5px;left:19px;width:8px;height:8px;background:inherit;border-right:1px solid #c3ceb6c9;border-bottom:1px solid #c3ceb6c9;transform:rotate(45deg)}
-.activity-bubble-title{font-size:11px;font-weight:500;line-height:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;letter-spacing:.1px}
-.activity-bubble-meta{font-size:9px;line-height:12px;white-space:nowrap;color:#8b987b}
-@keyframes bubble-pop{from{opacity:0;transform:translateY(5px) scale(.94)}to{opacity:1;transform:translateY(0) scale(1)}}
-.has-conversation .history-area{display:block;bottom:84px}
-.has-conversation .history-list{display:none}
-.has-conversation .more-history{font-size:10px;min-height:24px;margin:0;opacity:.8}
-.has-conversation .messages{bottom:126px}
-.has-conversation.history-expanded .history-area{display:flex;bottom:126px}
-.has-conversation.history-expanded .history-list{display:block}
-@media(max-width:700px){.has-conversation .history-area{bottom:72px}.has-conversation .messages,.has-conversation.history-expanded .history-area{bottom:110px}}
+/* Conversation uses normal grid flow: weather, messages, input, then history. */
+.has-conversation{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr) auto auto;row-gap:12px;padding-top:72px}
+.has-conversation .welcome{display:none}
+.has-conversation .weather{grid-row:1;margin-top:0;min-width:0}
+.has-conversation .location-status{grid-row:2;margin:0}
+.has-conversation .messages{grid-row:3;position:relative;inset:auto;width:100%;min-height:0;padding:6px 0;align-self:stretch}
+.has-conversation .composer-area{grid-row:4;position:static;inset:auto;transform:none;padding:0;width:100%;flex-shrink:0}
+.has-conversation .history-area{grid-row:5;position:static;inset:auto;display:block;min-height:0}
+.has-conversation .history-list{display:block;max-height:62px;overflow:auto}
+.has-conversation .more-history{font-size:10px;min-height:24px;margin:2px 0 0;padding:2px 0;opacity:.85}
+.has-conversation.history-expanded{grid-template-rows:auto auto 0fr auto minmax(0,1fr)}
+.has-conversation.history-expanded .history-area{display:flex;flex-direction:column;min-height:0}
+.has-conversation.history-expanded .history-list{display:block;flex:1;min-height:0;max-height:none;overflow:auto}
+@media(min-width:1600px){.has-conversation{padding-top:78px}}
+@media(max-height:700px) and (min-width:701px){.has-conversation{padding-top:63px;row-gap:9px}}
+@media(max-width:700px){.has-conversation{padding-top:60px;row-gap:8px}.has-conversation .weather{margin-top:0}.has-conversation .messages{padding:4px 0}.has-conversation .history-list{max-height:50px}.has-conversation.history-expanded .history-list{max-height:none}}
+/* The complete marker has a fixed size. Its arrow tip is the SDK's geographic anchor. */
+.activity-bubble-wrap{position:relative;width:244px;height:98px;overflow:visible;--bubble-tail-x:122px;--bubble-tail-y:98px;animation:bubble-fade .16s ease}
+.activity-bubble{position:absolute;left:0;top:0;width:244px;height:88px;padding:11px;display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;align-items:center;border:1px solid #bbcbb2;border-radius:17px;background:#fbfdf5;color:#40573b;box-shadow:0 4px 16px #465e4320;font-family:inherit;text-align:left;transition:background .15s,box-shadow .15s;z-index:2}
+.activity-bubble:hover,.activity-bubble:focus-visible{background:#f2f7e9;box-shadow:0 5px 20px #465e4338;border-color:#a6ba91}
+.activity-bubble .event-cover{width:64px;height:64px;border-radius:11px;background:#e8eedf}
+.activity-bubble .cover-fallback{font-size:10px;color:#879477}
+.activity-bubble-copy{display:block;min-width:0}
+.activity-bubble-title{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:13px;font-weight:500;line-height:19px;white-space:normal;overflow-wrap:anywhere;letter-spacing:.1px}
+.activity-bubble-meta{display:block;margin-top:3px;font-size:9px;line-height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#8b987b}
+.activity-bubble-tip{position:absolute;left:calc(var(--bubble-tail-x) - 9px);bottom:0;width:18px;height:11px;background:#bbcbb2;clip-path:polygon(0 0,100% 0,50% 100%);z-index:3;pointer-events:none}
+.activity-bubble-tip:before{content:"";position:absolute;left:1px;right:1px;top:0;height:9px;background:#fbfdf5;clip-path:polygon(0 0,100% 0,50% 100%)}
+.activity-bubble-anchor{position:absolute;left:var(--bubble-tail-x);top:var(--bubble-tail-y);width:6px;height:6px;margin:-3px 0 0 -3px;border:1px solid white;border-radius:50%;background:#718a5b;z-index:1;pointer-events:none}
+.bubble-below .activity-bubble{top:10px}
+.bubble-below .activity-bubble-tip{bottom:auto;top:0;clip-path:polygon(50% 0,100% 100%,0 100%)}
+.bubble-below .activity-bubble-tip:before{top:2px;clip-path:polygon(50% 0,100% 100%,0 100%)}
+@keyframes bubble-fade{from{opacity:0}to{opacity:1}}
+/* Fixed activity actions and a nonmodal preference drawer. */
+.activity-actions{justify-content:flex-start}.activity-prompts{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}.activity-prompts button{font-size:11px;line-height:18px;padding:9px 10px;border-radius:10px}.activity-add{border:1px solid #687f55;background:#687f55;color:#f8fbef;white-space:nowrap}.activity-add:hover{background:#5a7148}.preferences-open{position:absolute;right:112px;top:26px;width:32px;height:32px;display:grid;place-items:center;border:1px solid #edf2df38;border-radius:11px;background:#ffffff08;color:#e9efdf}.preferences-open:hover{background:#ffffff13}.preferences-open svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.4}.preferences-open circle{fill:#506849}.preferences-panel{position:absolute;right:28px;top:28px;bottom:28px;z-index:1400;width:clamp(320px,31vw,430px);max-width:calc(100vw - 24px);display:flex;flex-direction:column;padding:25px;background:#f7faf1f7;backdrop-filter:blur(18px);border:1px solid #ffffffbb;border-radius:24px;box-shadow:0 14px 48px #1e392c30;color:#3f5438;overflow:hidden;animation:bubble-fade .18s ease}.preferences-panel[hidden]{display:none}.preferences-header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-shrink:0}.preferences-header p{font-size:10px;letter-spacing:.8px;color:#91a180;margin:0 0 7px}.preferences-header h2{font-size:26px;line-height:1.4;font-weight:500;letter-spacing:-.5px;margin:0}.preferences-mode{font-size:11px;line-height:1.9;color:#8a987d;margin:22px 0}.preferences-form{display:flex;flex-direction:column;flex:1;min-height:0;gap:12px}.preferences-form label{font-size:12px;color:#65795a}.preferences-form textarea{flex:1;min-height:120px;width:100%;resize:none;font-size:13px;font-family:inherit;line-height:1.9;padding:15px;border:1px solid #c7d3bc;border-radius:15px;background:#ffffffa3;color:#455d3b;outline:none;scrollbar-width:thin;scrollbar-color:#c4cfb9 transparent}.preferences-form textarea:focus-visible{border-color:#8ba478;box-shadow:0 0 0 3px #b6cba12b}.preferences-form textarea:disabled{opacity:.65}.preferences-form textarea::placeholder{color:#a4af9a}.preferences-meta{display:flex;justify-content:space-between;gap:8px;font-size:9px;color:#a0ac94}.preferences-status{min-height:35px;font-size:11px;line-height:1.8;color:#788f68;margin:0}.preferences-status.error{color:#ad7459}.preferences-actions{display:flex;justify-content:space-between;gap:12px}.preferences-actions button{border-radius:11px;padding:10px 16px;font-size:11px;line-height:18px}.preferences-clear{border:1px solid #cdd8c3;background:transparent;color:#86957b}.preferences-save{border:1px solid #6c8559;background:#6c8559;color:#f8fbef}.preferences-actions button:disabled{opacity:.4;cursor:default}.preferences-save:not(:disabled):hover{background:#5e774b}.preferences-retry{align-self:center;border:0;background:transparent;color:#81976f;font-size:11px;text-decoration:underline;text-underline-offset:4px}.preferences-retry[hidden]{display:none}
+@media(min-width:1600px){.preferences-panel{top:36px;right:36px;bottom:36px}.preferences-open{top:30px;right:116px}}
+@media(max-width:700px){.preferences-open{top:20px;right:104px;height:28px;width:28px;border-radius:9px}.preferences-panel{top:12px;right:12px;bottom:12px;width:calc(100% - 24px);padding:22px;border-radius:22px}.preferences-header h2{font-size:23px}}
+
+@media(max-height:600px){.preferences-panel{overflow:auto}.preferences-form{flex:none}.preferences-form textarea{flex:none;min-height:150px;height:150px}}
