@@ -2,8 +2,10 @@
 // The API persists memory per authenticated cookie. Demo storage is explicit and isolated.
 (() => {
  const demo=window.WANDER_CONFIG?.mockMemory===true,storageKey='wander.demo-preferences.v1';
- let saved={content:'',updated_at:null},loaded=false,busy=false,confirmClear=false,requestEpoch=0,returnFocus;
+ let saved={content:'',updated_at:null},loaded=false,busy=false,confirmClear=false,requestEpoch=0,returnFocus,slideTimer=0,slideDone;
  const input=$('preferences-content'),panel=$('preferences-panel');
+ const still=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const refreshMap=()=>{window.WanderAMap?.updatePlaces?.();window.dispatchEvent(new Event('wander:viewport'));};
  const valid=value=>value&&typeof value.content==='string'&&(value.updated_at===null||typeof value.updated_at==='string');
  const dirty=()=>input.value.trim()!==saved.content;
  function status(message,error=false){$('preferences-status').textContent=message;$('preferences-status').classList.toggle('error',error);}
@@ -39,8 +41,38 @@
   catch(error){if(epoch===requestEpoch){status(error.message||'偏好读取失败',true);$('preferences-retry').hidden=false;}}
   finally{if(epoch===requestEpoch){busy=false;update();}}
  }
- function open(){returnFocus=document.activeElement;panel.hidden=false;$('preferences-open').setAttribute('aria-expanded','true');window.WanderAMap?.updatePlaces?.();$('preferences-close').focus({preventScroll:true});if(loaded&&dirty()){status('你有尚未保存的修改。');update();return;}return load();}
- function close(){panel.hidden=true;confirmClear=false;update();$('preferences-open').setAttribute('aria-expanded','false');window.WanderAMap?.updatePlaces?.();(returnFocus||$('preferences-open')).focus({preventScroll:true});}
+ function slideIn(){
+  const wasHidden=panel.hidden;
+  if(!wasHidden&&!panel.classList.contains?.('is-leaving'))return;
+  clearTimeout(slideTimer);panel.removeEventListener?.('transitionend',slideDone);panel.hidden=false;
+  const done=event=>{
+   if(event&&(event.propertyName!=='transform'||event.target!==panel))return;
+   panel.removeEventListener?.('transitionend',done);clearTimeout(slideTimer);refreshMap();
+  };
+  if(panel.classList.contains?.('is-leaving'))panel.classList.remove('is-leaving');
+  else if(still()){refreshMap();return;}
+  else{panel.classList.add('is-off');void panel.offsetWidth;panel.classList.remove('is-off');}
+  panel.addEventListener('transitionend',slideDone=done);slideTimer=setTimeout(done,340);
+ }
+ function slideOut(){
+  if(panel.hidden)return;
+  if(panel.classList.contains?.('is-leaving')){
+   if(!still())return;
+   panel.removeEventListener?.('transitionend',slideDone);clearTimeout(slideTimer);panel.classList.remove('is-leaving');panel.hidden=true;refreshMap();return;
+  }
+  clearTimeout(slideTimer);panel.removeEventListener?.('transitionend',slideDone);
+  if(still()){panel.hidden=true;refreshMap();return;}
+  panel.classList.add('is-leaving');
+  const done=event=>{
+   if(event&&(event.propertyName!=='transform'||event.target!==panel))return;
+   panel.removeEventListener?.('transitionend',done);clearTimeout(slideTimer);
+   if(!panel.classList.contains?.('is-leaving'))return;
+   panel.classList.remove('is-leaving');panel.hidden=true;refreshMap();
+  };
+  panel.addEventListener('transitionend',slideDone=done);slideTimer=setTimeout(done,380);
+ }
+ function open(){returnFocus=document.activeElement;slideIn();$('preferences-open').setAttribute('aria-expanded','true');window.WanderAMap?.updatePlaces?.();$('preferences-close').focus({preventScroll:true});if(loaded&&dirty()){status('你有尚未保存的修改。');update();return;}return load();}
+ function close(){slideOut();confirmClear=false;update();$('preferences-open').setAttribute('aria-expanded','false');window.WanderAMap?.updatePlaces?.();(returnFocus||$('preferences-open')).focus({preventScroll:true});}
  async function save(){
   const content=input.value.trim();if(busy||!loaded||!content||content.length>8000||!dirty())return;
   busy=true;confirmClear=false;status('正在保存偏好…');update();

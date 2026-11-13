@@ -1,8 +1,10 @@
 'use strict';
 // Read-only event feed. Demo data comes from the repository's seed templates.
 (() => {
- let feed=[],planEvents=[],groups=[],leafletLayer,renderEpoch=0,openEpoch=0,returnFocus,feedEpoch=0,feedRequest,viewportTimer,lastViewportKey,feedMissing=false;
+ let feed=[],planEvents=[],groups=[],leafletLayer,renderEpoch=0,openEpoch=0,returnFocus,feedEpoch=0,feedRequest,viewportTimer,lastViewportKey,feedMissing=false,slideTimer=0,slideDone;
  const text=(tag,cls,value)=>{const n=document.createElement(tag);n.className=cls;n.textContent=String(value??'');return n;};
+ const still=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const refreshMap=()=>{if(window.WanderAMap?.ready)window.WanderAMap.updatePlaces?.();else renderMap();};
  const valid=e=>e&&typeof e.event_id==='string'&&typeof e.title==='string'&&typeof e.latitude==='number'&&typeof e.longitude==='number'&&Number.isFinite(e.latitude)&&Number.isFinite(e.longitude)&&Math.abs(e.latitude)<=90&&Math.abs(e.longitude)<=180;
  function present(event){
   if(!event.is_demo&&!/^mock_/i.test(event.event_id))return event;
@@ -67,10 +69,40 @@
   const visible=items.filter(item=>{const fit=placements.get(item.id);if(!fit)return false;item.node.style.setProperty('--bubble-tail-x',fit.tailX+'px');item.node.style.setProperty('--bubble-tail-y',fit.tailY+'px');item.node.classList.toggle('bubble-below',fit.below);item.marker.setIcon(L.divIcon({className:'activity-map-icon',html:item.node,iconSize:[244,98],iconAnchor:[-fit.dx,-fit.dy]}));return true;});
   if(epoch===renderEpoch)leafletLayer=L.layerGroup(visible.map(item=>item.marker)).addTo(map);
  }
- function close(){openEpoch++;const panel=$('activity-detail');panel.hidden=true;window.WanderAMap?.updatePlaces?.();returnFocus?.focus?.({preventScroll:true});}
+ function slideIn(panel){
+  const wasHidden=panel.hidden;
+  if(!wasHidden&&!panel.classList.contains?.('is-leaving'))return;
+  clearTimeout(slideTimer);panel.removeEventListener?.('transitionend',slideDone);panel.hidden=false;
+  const done=event=>{
+   if(event&&(event.propertyName!=='transform'||event.target!==panel))return;
+   panel.removeEventListener?.('transitionend',done);clearTimeout(slideTimer);refreshMap();
+  };
+  if(panel.classList.contains?.('is-leaving'))panel.classList.remove('is-leaving');
+  else if(still()){refreshMap();return;}
+  else{panel.classList.add('is-off');void panel.offsetWidth;panel.classList.remove('is-off');}
+  panel.addEventListener('transitionend',slideDone=done);slideTimer=setTimeout(done,340);
+ }
+ function slideOut(panel){
+  if(panel.hidden)return;
+  if(panel.classList.contains?.('is-leaving')){
+   if(!still())return;
+   panel.removeEventListener?.('transitionend',slideDone);clearTimeout(slideTimer);panel.classList.remove('is-leaving');panel.hidden=true;refreshMap();return;
+  }
+  clearTimeout(slideTimer);panel.removeEventListener?.('transitionend',slideDone);
+  if(still()){panel.hidden=true;refreshMap();return;}
+  panel.classList.add('is-leaving');
+  const done=event=>{
+   if(event&&(event.propertyName!=='transform'||event.target!==panel))return;
+   panel.removeEventListener?.('transitionend',done);clearTimeout(slideTimer);
+   if(!panel.classList.contains?.('is-leaving'))return;
+   panel.classList.remove('is-leaving');panel.hidden=true;refreshMap();
+  };
+  panel.addEventListener('transitionend',slideDone=done);slideTimer=setTimeout(done,380);
+ }
+ function close(){openEpoch++;slideOut($('activity-detail'));window.WanderAMap?.updatePlaces?.();returnFocus?.focus?.({preventScroll:true});}
  function openEvents(events,{placeName='地点活动',coordinateSystem='GCJ-02'}={}){
   const panel=$('activity-detail'),epoch=++openEpoch;returnFocus=document.activeElement;
-  const available=currentEvents(events.filter(valid).map(present));panel.replaceChildren();panel.hidden=false;
+  const available=currentEvents(events.filter(valid).map(present));panel.replaceChildren();slideIn(panel);
   const header=document.createElement('header');header.className='activity-detail-header';
   const titles=document.createElement('div');titles.append(text('p','activity-eyebrow','此地，值得停留'),text('h2','activity-place',placeName));
   const dismiss=text('button','activity-close','×');dismiss.type='button';dismiss.setAttribute('aria-label','关闭活动详情');dismiss.addEventListener('click',close);header.append(titles,dismiss);panel.append(header);
@@ -96,7 +128,7 @@
    if(url){const link=text('a','activity-source',e.guide_url?'活动原站 ↗':'示例数据来源 ↗');link.href=url;link.target='_blank';link.rel='noopener noreferrer';links.append(link);}else links.append(text('span','activity-no-link','原站链接待补充'));
    const draftAction=(label,kind)=>{
     const button=text('button',kind==='add'?'activity-add':'activity-ask',label);button.type='button';button.addEventListener('click',()=>{
-     if(epoch!==openEpoch)return;window.WanderPlans.closeDetail();window.WanderHistory?.setExpanded(false);
+     if(epoch!==openEpoch)return;close();window.WanderPlans.closeDetail({focus:false});window.WanderHistory?.setExpanded(false);
      attachEventChip({eventId:e.is_demo?null:e.event_id,title:e.title,venue:e.venue_name,kind});$('message-input').focus({preventScroll:true});
     });return button;
    };

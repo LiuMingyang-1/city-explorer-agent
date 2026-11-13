@@ -1,0 +1,6 @@
+/* Plan detail expand/collapse motion. Loaded after style.css; rules here override it. */
+.plan-detail-view.plan-detail-motion{will-change:clip-path;transform:translateZ(0);backdrop-filter:none!important;-webkit-backdrop-filter:none!important;transition:clip-path .36s cubic-bezier(.25,.8,.32,1),opacity .22s ease-out}
+.plan-detail-view.plan-detail-closing{pointer-events:none;transition:clip-path .34s cubic-bezier(.55,.1,.7,.4),opacity .1s ease-in .24s}
+.plan-detail-view.plan-detail-closing>*{visibility:hidden}
+.viewing-plan.plan-reveal>:not(.plan-detail-view){visibility:visible;pointer-events:none}
+@media(prefers-reduced-motion:reduce){.plan-detail-view.plan-detail-motion{transition:none}}
