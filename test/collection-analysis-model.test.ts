@@ -118,10 +118,30 @@ test("unresolved map tool failures surface as execution failures, empty results 
   const failed=await run({search:async()=>{throw new Error("MAP_RATE_LIMITED");}});
   assert.equal(failed.result.prepared.dataset.events.length,0);
   assert.deepEqual(failed.model.locationFailuresFor!(document.url),["MAP_RATE_LIMITED"]);
-  assert(failed.result.rejected.some(r=>r.reasons.includes("LOCATION_LOOKUP_FAILED")),JSON.stringify(failed.result.rejected));
+  assert.equal(failed.result.rejected.filter(r=>r.reasons.includes("LOCATION_LOOKUP_FAILED")).length,1,JSON.stringify(failed.result.rejected));
   const empty=await run({search:async()=>[]});
   assert.deepEqual(empty.model.locationFailuresFor!(document.url),[]);
   assert(empty.result.rejected.some(r=>r.reasons.includes("MODEL_LOCATION_NOT_BOUND")),JSON.stringify(empty.result.rejected));
+});
+
+test("a rate-limited map search that yields an empty or early-rejected result still fails the document",async()=>{
+  const {facts,document,asOf}=extractionFixture();
+  const run=async(content:string)=>{
+    let calls=0;
+    const model=createToolAnalysisExtractor({deepseekKey:"test",record:()=>{},now:()=>asOf,map:{search:async()=>{throw new Error("MAP_RATE_LIMITED");}},fetch:async()=>{
+      if(calls++===0)return Response.json({choices:[{finish_reason:"tool_calls",message:{tool_calls:[{id:"c",function:{name:"amap_search",arguments:'{"keywords":"西安荟聚"}'}}]}}]});
+      return Response.json({choices:[{finish_reason:"stop",message:{content}}]});
+    }});
+    return processCollection([{document}],{asOf,baseDate:"2026-11-12",invoke:model,geocoder:{resolve:async()=>{throw new Error("mechanical matching must not run");}}});
+  };
+  // run.ts maps LOCATION_LOOKUP_FAILED to processing_error, so the batch stays partial and seeds are retried.
+  const none=await run('{"activities":[]}');
+  assert.equal(none.prepared.dataset.events.length,0);
+  assert(none.rejected.some(r=>r.reasons.includes("LOCATION_LOOKUP_FAILED")),JSON.stringify(none.rejected));
+  const rejected=await run(JSON.stringify({activities:[{...facts,status:"cancelled"}]}));
+  assert.equal(rejected.prepared.dataset.events.length,0);
+  assert(rejected.rejected.some(r=>r.reasons.includes("NOT_ACTIVE")),JSON.stringify(rejected.rejected));
+  assert(rejected.rejected.some(r=>r.reasons.includes("LOCATION_LOOKUP_FAILED")),JSON.stringify(rejected.rejected));
 });
 
 test("a map retry that later binds still publishes despite an earlier recorded failure",async()=>{
@@ -134,6 +154,7 @@ test("a map retry that later binds still publishes despite an earlier recorded f
   const result=await processCollection([{document}],{asOf,baseDate:"2026-11-12",invoke:model,geocoder:{resolve:async()=>{throw new Error("mechanical matching must not run");}}});
   assert.equal(result.prepared.dataset.events.length,1,JSON.stringify(result.rejected));
   assert.deepEqual(model.locationFailuresFor!(document.url),["MAP_RATE_LIMITED"]);
+  assert(!result.rejected.some(r=>r.reasons.includes("LOCATION_LOOKUP_FAILED")),JSON.stringify(result.rejected));
 });
 
 test("conflicting exhibition dates are kept in notes instead of selecting an arbitrary end date",async()=>{
