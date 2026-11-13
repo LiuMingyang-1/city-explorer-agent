@@ -8,6 +8,7 @@ import { createExplorerModels } from "./model.ts";
 import { buildSystemPrompt, localToday } from "./prompt.ts";
 import { createSearchEventsTool } from "./tools.ts";
 import { createEstimateTravelTool } from "./travel-tool.ts";
+import { createWebSearchTool } from "./web-search.ts";
 
 export interface ExplorerAgentOptions {
   config: ExplorerConfig;
@@ -24,7 +25,7 @@ export interface ExplorerAgentOptions {
   streamFn?: StreamFn;
   /**
    * 追加挂载的工具（编排层在 depth<上限 时注入 delegate_task）；
-   * 缺省只挂 search_events。
+   * 缺省不追加。
    */
   extraTools?: AgentTool<any, any>[];
   /**
@@ -39,12 +40,21 @@ export interface ExplorerAgentOptions {
    * （全链路降级，模型按无算路留缓冲，不阻塞规划）。
    */
   travelRouter?: RouteComputer | null;
+  /**
+   * 联网搜索 fetch 注入点：测试可注入桩实现，或显式 null 强制关闭；
+   * 缺省（undefined）按 config.webSearchKey 决定——有 key 挂 web_search
+   * 工具并附系统提示搜索准则；无 key 两者都不挂（实时信息诉求由模型
+   * 自行说明无法核实，不阻塞规划）。key 仍缺时挂载的工具 execute
+   * 返回未配置 isError，不 throw。
+   */
+  webSearchFetch?: typeof fetch | null;
 }
 
 /**
  * 组装 Pi Agent：模型接入走 src/agent/model.ts 的 createExplorerModels
  * （与本机 Rudy 已跑通的方式一致），getApiKey 直接回配置里的密钥。
- * 只挂 search_events 一个工具；输出契约由系统提示固定。
+ * 必挂 search_events；estimate_travel/web_search 按 key 降级挂载。
+ * 输出契约由系统提示固定。
  * 多轮输入用 prompt()；运行中追加用 steer()；等当前轮结束用 followUp()。
  */
 export async function createExplorerAgent(options: ExplorerAgentOptions): Promise<Agent> {
@@ -72,16 +82,29 @@ export async function createExplorerAgent(options: ExplorerAgentOptions): Promis
         transitThresholdM: config.routeTransitThresholdM,
       })
     : undefined;
+  // 联网搜索降级链同算路：显式注入优先；缺省按 config.webSearchKey
+  // 挂载，无 key → 不挂工具，提示词也不出现该工具说明。
+  const searchFetch =
+    options.webSearchFetch !== undefined
+      ? options.webSearchFetch
+      : config.webSearchKey
+        ? fetch
+        : null;
+  const webSearchTool = searchFetch
+    ? createWebSearchTool({ apiKey: config.webSearchKey, fetchFn: searchFetch })
+    : undefined;
   return new Agent({
     initialState: {
       model,
       systemPrompt: buildSystemPrompt(options.currentDate ?? localToday(), {
         canDelegate: options.canDelegate,
         canEstimateTravel: router !== null,
+        canWebSearch: webSearchTool !== undefined,
       }),
       tools: [
         createSearchEventsTool(options.repository),
         ...(travelTool ? [travelTool] : []),
+        ...(webSearchTool ? [webSearchTool] : []),
         ...(options.extraTools ?? []),
       ],
     },

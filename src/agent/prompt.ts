@@ -11,6 +11,11 @@ export interface SystemPromptOptions {
    * 缺省/false 保留原段落，输出字字不变。
    */
   canEstimateTravel?: boolean;
+  /**
+   * true 时附加 web_search 联网搜索使用边界（装配层在挂载该工具——即
+   * 配置了搜索 key 或注入 fetch——时置位）；缺省/false 输出字字不变。
+   */
+  canWebSearch?: boolean;
 }
 
 const DELEGATE_SECTION = [
@@ -34,6 +39,13 @@ const DELEGATE_SECTION = [
 const NO_TRAVEL_SECTION = [
   "- 不要编造交通路线或精确通勤耗时（如“打车约20分钟”）；目前没有路线计算工具，",
   "  相邻两站留出合理缓冲即可，必要时在 summary 里说明交通时间未计入。",
+];
+
+/** 挂了 web_search 时的联网补盲准则：只补实时主观信息，活动发现仍归 search_events。 */
+const WEB_SEARCH_SECTION = [
+  "- 本地库查不到的长尾需求、或用户问排队/预约/临时闭馆/口碑避雷等实时主观信息时，",
+  "  用 web_search 联网补盲；发现活动、挑选行程站点仍一律用 search_events，",
+  "  搜索结果不得当作活动编进 itinerary（event_id 只能来自 search_events）。",
 ];
 
 /** 挂了 estimate_travel 时的算路准则：真实耗时核实 + 失败降级口径。 */
@@ -67,6 +79,7 @@ export function buildSystemPrompt(currentDate: string, options?: SystemPromptOpt
     "- 活动费用见 budgetMin/budgetMax：每人预计花费，单位分（100 分 = 1 元）；0 是免费，null 是费用未知（不等于免费）。",
     "  行程 JSON 不含费用字段；用户关心花费时可在 summary 或 reason 里按此口径简要说明。",
     ...(options?.canEstimateTravel ? TRAVEL_SECTION : NO_TRAVEL_SECTION),
+    ...(options?.canWebSearch ? WEB_SEARCH_SECTION : []),
     ...(options?.canDelegate ? DELEGATE_SECTION : []),
     "",
     "用户位置（系统消息可能带“用户当前位置”节）：",
