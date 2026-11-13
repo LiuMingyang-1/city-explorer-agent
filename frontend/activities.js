@@ -1,7 +1,7 @@
 'use strict';
 // Read-only event feed. Demo data comes from the repository's seed templates.
 (() => {
- let feed=[],planEvents=[],groups=[],leafletLayer,renderEpoch=0,openEpoch=0,returnFocus;
+ let feed=[],planEvents=[],groups=[],leafletLayer,renderEpoch=0,openEpoch=0,returnFocus,feedEpoch=0,feedRequest,viewportTimer,lastViewportKey;
  const text=(tag,cls,value)=>{const n=document.createElement(tag);n.className=cls;n.textContent=String(value??'');return n;};
  const valid=e=>e&&typeof e.event_id==='string'&&typeof e.title==='string'&&typeof e.latitude==='number'&&typeof e.longitude==='number'&&Number.isFinite(e.latitude)&&Number.isFinite(e.longitude)&&Math.abs(e.latitude)<=90&&Math.abs(e.longitude)<=180;
  function present(event){
@@ -13,7 +13,7 @@
  const distance=(a,b)=>{const lat=(a.lat+b.lat)*Math.PI/360;return Math.hypot((a.lng-b.lng)*Math.cos(lat),a.lat-b.lat)*111.2;};
  function groupEvents(events){
   const map=new Map();events.filter(valid).forEach(e=>{
-   const system=e.coordinate_system||'GCJ-02',key=system+':'+e.latitude.toFixed(5)+','+e.longitude.toFixed(5)+':'+e.venue_name;
+   const system=e.coordinate_system||'GCJ-02',key=system+':'+e.latitude.toFixed(5)+','+e.longitude.toFixed(5)+':'+e.venue_name+':'+e.title;
    if(!map.has(key))map.set(key,{id:key,lat:e.latitude,lng:e.longitude,coordinateSystem:system,name:e.venue_name||e.title,events:[]});
    map.get(key).events.push(e);
   });return [...map.values()];
@@ -25,13 +25,28 @@
   candidates.forEach(e=>{if(!byTitle.has(e.title))byTitle.set(e.title,e);});return [...byTitle.values()];
  }
  function refresh(){
-  const merged=new Map([...feed,...planEvents].map(e=>[e.event_id,e]));groups=groupEvents([...merged.values()]);renderMap();
+  const merged=new Map([...feed,...planEvents].map(e=>[e.event_id,e]));groups=groupEvents([...merged.values()]).filter(group=>currentEvents(group.events).length);renderMap();
  }
  function pin(group){
-  const button=text('button','activity-pin','');button.type='button';button.setAttribute('aria-label',group.name+'，查看活动');
-  button.append(text('span','activity-pin-symbol',/书/.test(group.events[0]?.category)?'阅':/演出|音乐/.test(group.events[0]?.category)?'演':/市集/.test(group.events[0]?.category)?'集':'展'));
-  const n=currentEvents(group.events).length;if(n>1)button.append(text('span','activity-pin-count',n));
-  return button;
+  const event=currentEvents(group.events)[0]||group.events[0],wrap=document.createElement('div');wrap.className='activity-bubble-wrap';
+  const button=text('button','activity-bubble','');button.type='button';button.setAttribute('aria-label',event.title+'，查看活动');
+  button.append(text('span','activity-bubble-title',event.title),text('span','activity-bubble-meta',(event.category||'活动')+' · '+window.WanderPlans.price(event)));
+  wrap.append(button);return wrap;
+ }
+ function layoutBubbles(items,{width,height,zoom=11,occupied=[]}){
+  const boxes=[...occupied],result=new Map(),max=zoom>=15?20:zoom>=13?12:7,w=190,h=49;
+  const overlap=(a,b)=>a.left<b.right+9&&a.right>b.left-9&&a.top<b.bottom+9&&a.bottom>b.top-9;
+  const ordered=[...items].sort((a,b)=>Math.hypot(a.x-width/2,a.y-height/2)-Math.hypot(b.x-width/2,b.y-height/2)||String(a.id).localeCompare(String(b.id)));
+  for(const item of ordered){
+   if(result.size>=max)break;
+   if(item.x<8||item.x>width-8||item.y<8||item.y>height-25)continue;
+   const offsets=[[16,-h/2],[-w-16,-h/2],[-w/2,-h-20],[-w/2,20]];
+   for(const [dx,dy] of offsets){
+    const box={left:item.x+dx,right:item.x+dx+w,top:item.y+dy,bottom:item.y+dy+h};
+    if(box.left<10||box.right>width-10||box.top<10||box.bottom>height-25||boxes.some(other=>overlap(box,other)))continue;
+    boxes.push(box);result.set(item.id,{dx,dy,box});break;
+   }
+  }return result;
  }
  async function renderMap(){
   const epoch=++renderEpoch;
@@ -40,17 +55,23 @@
   if(leafletLayer)map.removeLayer(leafletLayer);
   const layers=groups.filter(g=>['WGS84','WGS-84'].includes(g.coordinateSystem)).map(group=>{
    const node=pin(group);node.addEventListener('click',()=>openEvents(group.events,{placeName:group.name,coordinateSystem:group.coordinateSystem}));
-   return L.marker([group.lat,group.lng],{icon:L.divIcon({className:'activity-map-icon',html:node,iconSize:[34,34],iconAnchor:[17,17]}),title:group.name,zIndexOffset:400});
-  });if(epoch===renderEpoch)leafletLayer=L.layerGroup(layers).addTo(map);
+   const marker=L.marker([group.lat,group.lng],{icon:L.divIcon({className:'activity-map-icon',html:node,iconSize:[0,0],iconAnchor:[0,0]}),title:group.events[0].title,zIndexOffset:400});return {marker,group,node};
+  });
+  const size=map.getSize(),card=document.querySelector('.glass-card').getBoundingClientRect(),occupied=[card];
+  const detail=$('activity-detail');if(!detail.hidden)occupied.push(detail.getBoundingClientRect());
+  const items=layers.map(item=>{const p=map.latLngToContainerPoint([item.group.lat,item.group.lng]);return {...item,id:item.group.id,x:p.x,y:p.y};});
+  const placements=layoutBubbles(items,{width:size.x,height:size.y,zoom:map.getZoom(),occupied});
+  const visible=items.filter(item=>{const fit=placements.get(item.id);if(!fit)return false;item.node.style.setProperty('--bubble-x',fit.dx+'px');item.node.style.setProperty('--bubble-y',fit.dy+'px');return true;});
+  if(epoch===renderEpoch)leafletLayer=L.layerGroup(visible.map(item=>item.marker)).addTo(map);
  }
- function close(){openEpoch++;const panel=$('activity-detail');panel.hidden=true;returnFocus?.focus?.({preventScroll:true});}
+ function close(){openEpoch++;const panel=$('activity-detail');panel.hidden=true;window.WanderAMap?.updatePlaces?.();returnFocus?.focus?.({preventScroll:true});}
  function openEvents(events,{placeName='地点活动',coordinateSystem='GCJ-02'}={}){
   const panel=$('activity-detail'),epoch=++openEpoch;returnFocus=document.activeElement;
   const available=currentEvents(events.filter(valid).map(present));panel.replaceChildren();panel.hidden=false;
   const header=document.createElement('header');header.className='activity-detail-header';
   const titles=document.createElement('div');titles.append(text('p','activity-eyebrow','此地，值得停留'),text('h2','activity-place',placeName));
   const dismiss=text('button','activity-close','×');dismiss.type='button';dismiss.setAttribute('aria-label','关闭活动详情');dismiss.addEventListener('click',close);header.append(titles,dismiss);panel.append(header);
-  if(!available.length){panel.append(text('p','activity-empty','这里暂未收录活动。可以继续在地图上看看带有「展 / 阅 / 演 / 集」的地点。'));return;}
+  if(!available.length){panel.append(text('p','activity-empty','这里暂未收录活动。可以拖动或放大地图，查看附近的活动气泡。'));return;}
   const choices=document.createElement('div');choices.className='activity-choices';choices.setAttribute('aria-label','此地活动');
   const body=document.createElement('div');body.className='activity-detail-body';
   const buttons=available.map((event,index)=>{
@@ -74,7 +95,7 @@
     $('message-input').value=('我想了解「'+e.title+'」（'+e.venue_name+'），适合加进我的行程吗？').slice(0,1000);state.referencedEventId=e.is_demo?null:e.event_id;state.referencedDraft=$('message-input').value;updateSendButton();$('message-input').focus({preventScroll:true});
    });links.append(ask);info.append(links);body.append(info);body.scrollTo({top:0});
   }
-  show(0);
+  show(0);window.WanderAMap?.updatePlaces?.();
  }
  async function openNearby(place){
   const epoch=++openEpoch;let gcj;
@@ -84,18 +105,31 @@
   openEvents(nearby.flatMap(g=>g.group.events),{placeName:place.name});
  }
  function addPlanEvents(model){planEvents=(model.events||[]).filter(valid).map(e=>({...e,coordinate_system:model.coordinate_system||'GCJ-02',is_demo:e.is_demo||/^mock_/i.test(e.event_id)}));refresh();}
- async function load(){
+ async function load({viewport=false}={}){
+  const epoch=++feedEpoch;feedRequest?.abort();const request=new AbortController();feedRequest=request;
   try{
    const configured=window.WANDER_CONFIG?.eventsEndpoint;
-   let response=await fetch(configured||'/api/events',{credentials:'same-origin'});
-   // The frontend-only dev server has no API. Other server failures must not look like live demo results.
-   if(!configured&&response.status===404)response=await fetch('/data/demo-events.json',{credentials:'same-origin'});
-   if(!response.ok)throw new Error('Feed unavailable');const data=await response.json();if(!Array.isArray(data.events))return;
+   let endpoint=configured||'/api/events';
+   if(viewport&&(!configured||configured.startsWith('/api/events'))){
+    const view=window.WanderAMap?.getViewport?.();
+    if(view?.bbox?.length===4){const query=new URLSearchParams({bbox:view.bbox.map(v=>v.toFixed(4)).join(','),limit:'200'});endpoint+=(endpoint.includes('?')?'&':'?')+query;}
+   }
+   let response=await fetch(endpoint,{credentials:'same-origin',signal:request.signal});
+   if(!configured&&response.status===404)response=await fetch('/data/demo-events.json',{credentials:'same-origin',signal:request.signal});
+   if(!response.ok)throw new Error('Feed unavailable');const data=await response.json();if(epoch!==feedEpoch||!Array.isArray(data.events))return;
    feed=data.events.filter(valid).map(e=>({...e,coordinate_system:data.coordinate_system||'GCJ-02',is_demo:Boolean(data.is_demo||e.is_demo||/模拟数据，非真实活动/.test(e.description||''))}));refresh();
-  }catch{ /* Existing map and plan replies remain available when the feed is unavailable. */ }
+  }catch{ /* Keep the current viewport's usable data when the feed is temporarily unavailable. */ }
  }
- window.addEventListener('wander:map-ready',renderMap);
+ function viewportChanged(){
+  if(!window.WanderAMap?.ready)renderMap();
+  const configured=window.WANDER_CONFIG?.eventsEndpoint;if(configured&&!configured.startsWith('/api/events'))return;
+  const view=window.WanderAMap?.getViewport?.();if(!view?.bbox)return;
+  const key=view.bbox.map(v=>v.toFixed(4)).join(',');if(key===lastViewportKey)return;lastViewportKey=key;
+  clearTimeout(viewportTimer);viewportTimer=setTimeout(()=>load({viewport:true}),250);
+ }
+ window.addEventListener('wander:map-ready',()=>{renderMap();viewportChanged();});
+ window.addEventListener('wander:viewport',viewportChanged);
  window.addEventListener('wander:reset',()=>{close();planEvents=[];refresh();});
  window.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('activity-detail').hidden)close();});
- window.WanderActivities={openEvents,openNearby,addPlanEvents,groupEvents,currentEvents,pin,close,reload:load};load();
+ window.WanderActivities={openEvents,openNearby,addPlanEvents,groupEvents,currentEvents,pin,layoutBubbles,close,reload:load};load();
 })();

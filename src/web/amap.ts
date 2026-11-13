@@ -27,7 +27,7 @@ export async function handleAMap(
   if (url.pathname === '/api/map-config') {
     return json(enabled ? {
       enabled: true, jsKey: env.AMAP_JS_KEY, serviceHost: '/_AMapService',
-      style: /^amap:\/\/styles\/[\w-]+$/.test(env.AMAP_STYLE ?? '') ? env.AMAP_STYLE : 'amap://styles/light',
+      style: /^amap:\/\/styles\/[\w-]+$/.test(env.AMAP_STYLE ?? '') ? env.AMAP_STYLE : 'amap://styles/fresh',
       backendCoordinateSystem: env.AMAP_BACKEND_COORDINATE_SYSTEM === 'WGS84' ? 'WGS84' : 'GCJ02',
     } : { enabled: false, backendCoordinateSystem: env.AMAP_BACKEND_COORDINATE_SYSTEM === 'WGS84' ? 'WGS84' : 'GCJ02' });
   }
