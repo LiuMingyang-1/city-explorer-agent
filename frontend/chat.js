@@ -29,7 +29,7 @@ function buildChatBody(text){
  if(state.eventChip&&typeof state.eventChip.eventId==='string'&&state.eventChip.eventId)body.referenced_event_id=state.eventChip.eventId;
  return body;
 }
-async function deliver(text){
+async function deliver(text,retried=false){
  const generation=window.WanderHistory?.generation(),isCurrent=()=>!window.WanderHistory||generation===window.WanderHistory.generation(),sentChip=state.eventChip;
  const request=new AbortController();activeChatRequest=request;state.busy=true;updateSendButton();
  const pending=document.createElement('div');pending.className='message assistant';
@@ -47,7 +47,10 @@ async function deliver(text){
   if(data&&(data.kind==='plans'||data.kind==='itinerary'))window.WanderPlans.append(data);
   else if(data&&data.kind==='clarification'&&typeof data.question==='string'&&data.question)appendMessage('assistant',data.question);
   else throw new Error('收到的方案格式暂不支持');
- }catch(error){if(!isCurrent())return;pending.remove();showSendError(text,error);}
+ }catch(error){if(!isCurrent())return;pending.remove();
+  // A stale session (different anonymous cookie/browser, wiped session db) is unrecoverable for the backend; drop it and continue as a fresh conversation instead of dead-ending every later message.
+  if((error?.code==='not_found'||error?.message==='session not found')&&state.sessionId&&!retried){state.sessionId=null;window.WanderHistory?.capture();appendMessage('assistant','原会话已失效，本次以新对话继续。');return await deliver(text,true);}
+  showSendError(text,error);}
  finally{clearTimeout(slow);pending.remove();if(isCurrent()){if(state.eventChip===sentChip)clearEventChip();activeChatRequest=null;state.busy=false;updateSendButton();window.WanderHistory?.capture();$('message-input').focus({preventScroll:true});}}
 }
 async function sendMessage(text){
