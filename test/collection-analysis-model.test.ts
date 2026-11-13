@@ -144,6 +144,38 @@ test("a rate-limited map search that yields an empty or early-rejected result st
   assert(rejected.rejected.some(r=>r.reasons.includes("LOCATION_LOOKUP_FAILED")),JSON.stringify(rejected.rejected));
 });
 
+test("a map failure recorded before a structural retry still fails the document",async()=>{
+  const {document,asOf}=extractionFixture();let calls=0;
+  const model=createToolAnalysisExtractor({deepseekKey:"test",record:()=>{},now:()=>asOf,map:{search:async()=>{throw new Error("MAP_RATE_LIMITED");}},fetch:async()=>{
+    if(++calls===1)return Response.json({choices:[{finish_reason:"tool_calls",message:{tool_calls:[{id:"c",function:{name:"amap_search",arguments:'{"keywords":"西安荟聚"}'}}]}}]});
+    if(calls===2)return Response.json({choices:[{finish_reason:"stop",message:{content:"{broken"}}]});
+    return Response.json({choices:[{finish_reason:"stop",message:{content:'{"activities":[]}'}}]});
+  }});
+  const failed=await processCollection([{document}],{asOf,baseDate:"2026-11-12",invoke:model,geocoder:{resolve:async()=>{throw new Error("mechanical matching must not run");}}});
+  assert.equal(calls,3);assert.equal(failed.prepared.dataset.events.length,0);
+  assert.deepEqual(model.locationFailuresFor!(document.url),["MAP_RATE_LIMITED"]);
+  assert(failed.rejected.some(r=>r.reasons.includes("LOCATION_LOOKUP_FAILED")),JSON.stringify(failed.rejected));
+  // A later document lifecycle for the same URL starts clean instead of inheriting failures.
+  const clean=await processCollection([{document}],{asOf,baseDate:"2026-11-12",invoke:model,geocoder:{resolve:async()=>{throw new Error("mechanical matching must not run");}}});
+  assert.deepEqual(model.locationFailuresFor!(document.url),[]);
+  assert(!clean.rejected.some(r=>r.reasons.includes("LOCATION_LOOKUP_FAILED")),JSON.stringify(clean.rejected));
+});
+
+test("a structural retry that later binds still publishes despite an earlier recorded failure",async()=>{
+  const {facts,document,asOf}=extractionFixture();let calls=0,searches=0;
+  const selected={id:"mall",name:"西安荟聚",address:"西安市雁塔区西部大道",adcode:"610113",district:"雁塔区",latitude:34.17116,longitude:108.900077};
+  const model=createToolAnalysisExtractor({deepseekKey:"test",record:()=>{},now:()=>asOf,map:{search:async()=>{if(searches++===0)throw new Error("MAP_RATE_LIMITED");return[selected];}},fetch:async()=>{
+    const n=++calls;
+    if(n===1||n===3)return Response.json({choices:[{finish_reason:"tool_calls",message:{tool_calls:[{id:`c${n}`,function:{name:"amap_search",arguments:JSON.stringify({keywords:`尝试${n}`})}}]}}]});
+    if(n===2)return Response.json({choices:[{finish_reason:"stop",message:{content:"{broken"}}]});
+    return Response.json({choices:[{finish_reason:"stop",message:{content:JSON.stringify({activities:[{...facts,venue_name:"西安荟聚·雁南中厅",address:selected.address,amap_poi_id:selected.id,latitude:selected.latitude,longitude:selected.longitude}]})}}]});
+  }});
+  const result=await processCollection([{document}],{asOf,baseDate:"2026-11-12",invoke:model,geocoder:{resolve:async()=>{throw new Error("mechanical matching must not run");}}});
+  assert.equal(result.prepared.dataset.events.length,1,JSON.stringify(result.rejected));
+  assert.deepEqual(model.locationFailuresFor!(document.url),["MAP_RATE_LIMITED"]);
+  assert(!result.rejected.some(r=>r.reasons.includes("LOCATION_LOOKUP_FAILED")),JSON.stringify(result.rejected));
+});
+
 test("a map retry that later binds still publishes despite an earlier recorded failure",async()=>{
   const {facts,document,asOf}=extractionFixture();let calls=0,searches=0;
   const selected={id:"mall",name:"西安荟聚",address:"西安市雁塔区西部大道",adcode:"610113",district:"雁塔区",latitude:34.17116,longitude:108.900077};

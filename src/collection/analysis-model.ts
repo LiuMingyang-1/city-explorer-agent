@@ -75,7 +75,8 @@ export function createToolAnalysisExtractor(options: ApiOptions & {model?: strin
   const clock = options.now ?? (() => new Date().toISOString());
   const invoke: ToolAnalysisExtractor = async (system, input) => {
     const places = new Map<string, MapPlace>(); registry.set(input.source_url, places);
-    const failures = new Set<string>(); toolFailures.set(input.source_url, failures);
+    // Failures persist across a document's structural retries; beginDocument resets them.
+    const failures = toolFailures.get(input.source_url) ?? new Set<string>(); toolFailures.set(input.source_url, failures);
     const levelSources=new Map<string,string>();let levelCalls=0;
     const messages: any[] = [{role:"system",content:system},{role:"user",content:JSON.stringify(input)}];
     let calls = 0;
@@ -158,5 +159,7 @@ export function createToolAnalysisExtractor(options: ApiOptions & {model?: strin
   };
   /** Tool execution failures (rate limits, network, budgets) that may have prevented binding. */
   invoke.locationFailuresFor = (url: string): readonly string[] => [...(toolFailures.get(url) ?? [])];
+  /** A new document lifecycle never borrows another document's places or failures. */
+  invoke.beginDocument = (url: string): void => { toolFailures.delete(url); registry.delete(url); };
   return invoke;
 }

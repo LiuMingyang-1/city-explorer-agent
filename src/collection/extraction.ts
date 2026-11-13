@@ -142,10 +142,12 @@ export function checkFacts(facts: ActivityFacts, doc: ExtractionDocument, asOf: 
 
 export interface CheckedActivity { facts: ActivityFacts; document_sha256: string; check: FactsCheck; }
 export interface ExtractionResult { route: "structured" | "model"; activities: CheckedActivity[]; issues: string[]; model_calls: number; }
-export type Extractor = ((system: string, input: { text: string; source_url: string; schema: typeof extractionSchema; current_time?: string; timezone?: string; published_at?: string | null; updated_at?: string | null; search_city?: string; target?:CollectionTarget }) => Promise<string>) & { locationFor?: (url: string, facts: ActivityFacts) => import("./geocoding.ts").VerifiedLocation | null };
+export type Extractor = ((system: string, input: { text: string; source_url: string; schema: typeof extractionSchema; current_time?: string; timezone?: string; published_at?: string | null; updated_at?: string | null; search_city?: string; target?:CollectionTarget }) => Promise<string>) & { locationFor?: (url: string, facts: ActivityFacts) => import("./geocoding.ts").VerifiedLocation | null; beginDocument?: (url: string) => void };
 
 /** Structural retries are bounded; fact failures are never repaired by inventing values. */
 export async function extractActivities(doc: ExtractionDocument, options: { asOf: string; structured?: unknown; invoke?: Extractor; target?:CollectionTarget }): Promise<ExtractionResult> {
+  // Tool state accumulates across the retries below; a new document lifecycle starts clean.
+  options.invoke?.beginDocument?.(doc.url);
   const route = options.structured === undefined ? "model" : "structured";
   const result: ExtractionResult = { route, activities: [], issues: [], model_calls: 0 };
   if (!doc.text.trim() || doc.text.length > 30000 || !publicUrl(doc.url)) return { ...result, issues: ["INVALID_DOCUMENT"] };

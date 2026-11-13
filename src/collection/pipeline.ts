@@ -52,6 +52,7 @@ export async function processCollection(input: readonly PipelineDocument[], opti
     metrics.model_calls++;
     return options.invoke!(...args);
   } : undefined;
+  if (invoke && options.invoke?.beginDocument) invoke.beginDocument = options.invoke.beginDocument.bind(options.invoke);
   for (const original of input) {
     const candidate = { ...original, document: { ...original.document } };
     if (options.ocr && candidate.document.image_urls.length) {
