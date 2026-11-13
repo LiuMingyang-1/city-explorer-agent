@@ -11,7 +11,7 @@ $taskConfig = Get-Content -LiteralPath $configPath -Raw -Encoding UTF8 | Convert
 if ($taskConfig.schema_version -ne "xian-collection-task/1" -or $taskConfig.mode -ne "supplement") { throw "INVALID_SCHEDULE_CONFIG" }
 $nodePath = (Get-Command node -ErrorAction Stop).Source
 if ($RunOnce) {
-    & $nodePath (Join-Path $PSScriptRoot "collect-task.ts") --config $configPath --live
+    & $nodePath (Join-Path $PSScriptRoot "collect-task.ts") --config $configPath --backend windows_task_scheduler --live
     exit $LASTEXITCODE
 }
 # Preview uses the real runtime validator. It does not read API keys or create files.
@@ -19,6 +19,7 @@ if ($RunOnce) {
 if ($LASTEXITCODE -ne 0) { throw "SCHEDULE_CONFIG_VALIDATION_FAILED" }
 if (-not $Install) { Write-Output "Preview only. Use -Install explicitly to register this task."; exit 0 }
 if (-not $taskConfig.schedule.enabled) { throw "SCHEDULE_DISABLED_ENABLE_CONFIG_FIRST" }
+if ($taskConfig.schedule.backend -ne "windows_task_scheduler") { throw "SCHEDULE_BACKEND_MISMATCH" }
 $taskName = [string]$taskConfig.schedule.task_name
 if ($taskName -notmatch '^[A-Za-z][A-Za-z0-9_-]{0,79}$') { throw "INVALID_TASK_NAME" }
 if (Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue) { throw "TASK_ALREADY_EXISTS" }

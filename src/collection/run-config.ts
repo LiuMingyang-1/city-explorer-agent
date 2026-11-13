@@ -3,6 +3,7 @@ import {isCalendarDate} from "../itinerary/constraints.ts";
 
 export interface CollectionEngineConfig {name:string;enabled:boolean;limit:number;keywords?:string[];}
 export interface CollectionRunConfig {
+  python?:string;
   city:"西安市";keywords:string[];engines:CollectionEngineConfig[];output_dir:string;publish_root?:string;database_path?:string;base_date?:string;
   processing:{enabled:boolean;ocr:boolean;ocr_max_images?:number;attraction_duplicate_meters:number};
   budgets:{model_requests:number;map_requests:number;level_searches:number};
@@ -11,6 +12,7 @@ export interface CollectionRunConfig {
 export interface CollectionTarget {seed_id:string;name:string;aliases:string[];area_hint:string;}
 const keywords={type:"array",minItems:1,maxItems:10,uniqueItems:true,items:{type:"string",minLength:1,maxLength:100}};
 const schema={type:"object",additionalProperties:false,required:["engines","output_dir"],properties:{
+  python:{type:"string",minLength:1,maxLength:2000},
   city:{const:"西安市"},keywords,output_dir:{type:"string",minLength:1},publish_root:{type:"string",minLength:1},database_path:{type:"string",minLength:1},base_date:{type:"string"},
   engines:{type:"array",minItems:1,maxItems:10,items:{type:"object",additionalProperties:false,required:["name"],properties:{name:{type:"string",pattern:"^[a-z][a-z0-9_-]{0,39}$"},enabled:{type:"boolean"},limit:{type:"integer",minimum:1,maximum:100},keywords}}},
   processing:{type:"object",additionalProperties:false,properties:{enabled:{type:"boolean"},ocr:{type:"boolean"},ocr_max_images:{type:"integer",minimum:1,maximum:20},attraction_duplicate_meters:{type:"number",minimum:0,maximum:100}}},
@@ -22,6 +24,7 @@ const validate=new Ajv2020({allErrors:true}).compile(schema);
 export function parseCollectionRunConfig(input:unknown):CollectionRunConfig {
   if(!validate(input))throw new Error("INVALID_COLLECTION_RUN_CONFIG");
   const value=structuredClone(input) as any;
+  if(value.python!==undefined&&(!value.python.trim()||/[\r\n\x00]/.test(value.python)))throw new Error("INVALID_COLLECTION_PYTHON");
   value.city??="西安市";value.keywords??=[];
   value.processing={enabled:true,ocr:true,ocr_max_images:10,attraction_duplicate_meters:10,...value.processing};
   if(value.processing.enabled)value.database_path??="data/events.db";

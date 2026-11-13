@@ -20,9 +20,12 @@ function stateFor(config:TaskConfig):State {
   return state;
 }
 export interface TaskResult {status:string;task_completed:boolean;target_outcomes?:unknown[];}
-export interface TaskRunOptions {live?:boolean;manual?:boolean;force?:boolean;retryFailed?:boolean;date?:string;now?:()=>string;execute?:(config:CompiledTask["config"],control:{deadline:number})=>Promise<TaskResult>;}
+export interface TaskRunOptions {live?:boolean;manual?:boolean;force?:boolean;retryFailed?:boolean;backend?:"windows_task_scheduler"|"cron";date?:string;now?:()=>string;execute?:(config:CompiledTask["config"],control:{deadline:number})=>Promise<TaskResult>;}
 export async function runTask(configFile:string,options:TaskRunOptions={}) {
   const config=parseTaskConfig(readJson(resolve(configFile))),now=options.now??(()=>new Date().toISOString()),instant=now();
+  if(options.backend&&options.manual)throw new Error("SCHEDULER_CANNOT_BYPASS_MANUAL_GUARD");
+  if(options.live&&options.backend&&options.backend!==config.schedule.backend)throw new Error("SCHEDULE_BACKEND_MISMATCH");
+  if(options.live&&!options.manual&&config.schedule.backend==="manual")return {status:"skipped",reason:"MANUAL_BACKEND_REQUIRES_MANUAL"};
   if(options.date&&options.live)throw new Error("DATE_OVERRIDE_PREVIEW_ONLY");
   if(options.force&&!options.manual)throw new Error("FORCE_REQUIRES_MANUAL");
   const date=options.date??(!options.live||options.manual||config.mode==="bootstrap"?shanghaiDate(instant):dueDate(config,instant));

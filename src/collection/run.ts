@@ -12,6 +12,7 @@ import {createToolAnalysisExtractor,createAmapSearch} from "./analysis-model.ts"
 import {createLocalOcr} from "./ocr.ts";
 import {processCollection} from "./pipeline.ts";
 import {initializeCollectionDatabase,inspectCollectionDatabase,writeCollectionDatabase,collectionDatabasePath} from "./database.ts";
+import {collectionPython} from "./runtime.ts";
 
 function privatePath(path:string){
   const full=resolve(path),child=relative(resolve(".local-data"),full);
@@ -23,9 +24,9 @@ function privatePath(path:string){
 export async function runCollection(config: ReturnType<typeof parseCollectionRunConfig>, control:{deadline?:number}={}) {
   const output=privatePath(config.output_dir);if(config.publish_root)privatePath(config.publish_root);
   const canonical=config.processing.enabled?collectionDatabasePath(config.database_path):undefined;
-  const workspace=process.cwd(),python=resolve(".local-data/tools/mediacrawler-venv/Scripts/python.exe");
-  const plan=buildCollectionPlan(config,createDefaultCollectionEngines({workspace,python,deepseekKey:"",record:()=>{}}));
   if(existsSync(".env"))process.loadEnvFile(".env");
+  const workspace=process.cwd(),python=collectionPython({python:config.python,workspace});
+  const plan=buildCollectionPlan(config,createDefaultCollectionEngines({workspace,python,deepseekKey:"",record:()=>{}}));
   const needsModel=config.processing.enabled||config.engines.some(e=>e.enabled&&e.name==="deepseek");
   const credentials=needsModel?collectionCredentials():undefined;
   const mapKey=config.processing.enabled?geocodingKey():"";

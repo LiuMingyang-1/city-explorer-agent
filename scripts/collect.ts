@@ -5,6 +5,7 @@ import {buildCollectionPlan,collectionError} from "../src/collection/collector.t
 import {createDefaultCollectionEngines} from "../src/collection/source-adapters.ts";
 import {runCollection} from "../src/collection/run.ts";
 import {collectionDatabasePath} from "../src/collection/database.ts";
+import {collectionPython} from "../src/collection/runtime.ts";
 function privatePath(path:string){
   const full=resolve(path),child=relative(resolve(".local-data"),full);
   if(!child||child.startsWith("..")||isAbsolute(child))throw new Error("PATH_MUST_BE_PRIVATE");
@@ -21,7 +22,7 @@ async function main(){
   const config=parseCollectionRunConfig(JSON.parse(readFileSync(resolve(path),"utf8")));
   const output=privatePath(config.output_dir);if(config.publish_root)privatePath(config.publish_root);
   const database=config.processing.enabled?collectionDatabasePath(config.database_path):null;
-  const workspace=process.cwd(),python=resolve(".local-data/tools/mediacrawler-venv/Scripts/python.exe");
+  const workspace=process.cwd(),python=collectionPython({python:config.python,workspace});
   const dryRegistry=createDefaultCollectionEngines({workspace,python,deepseekKey:"",record:()=>{}});
   const plan=buildCollectionPlan(config,dryRegistry);
   if(!live){console.log(JSON.stringify({mode:"dry-run",plan,output_dir:output,database_path:database,api_calls:0},null,2));return;}
