@@ -66,3 +66,9 @@ test("baseline season complements may use the day before/after a supplied interv
   const result=await normalizeAmapHours(input,"2026-11-13",async()=>JSON.stringify({items:[{id:"p",time_status:"complete",reason:"暑期覆盖常规",schedule_json:{timezone:"Asia/Shanghai",mode:"weekly",weekly:rules}}]}));
   assert.equal(result.get("p")!.time_status,"complete");
 });
+test("accepted nearby AMap coordinates do not replace museum identity, hours or grade with the parent campus",()=>{
+ const{facts}=extractionFixture();Object.assign(facts,{record_type:"attraction",title:"中国音乐史博物馆",venue_name:"中国音乐史博物馆",category:"暂无评级"});const start=facts.start_at;
+ const d=details();d.location_only=true;d.nearby_name="学府城";
+ applyAmapAuthority(facts,{id:"p",name:"学府城",address:"西安市校园",latitude:34.2,longitude:108.9,amap:d});assert.equal(facts.venue_name,"中国音乐史博物馆");assert.equal(facts.category,"暂无评级");assert.equal(facts.start_at,start);assert.equal(facts.longitude,108.9);
+ const captured=captureAmapAuthority({...facts,image_urls:[],thumbnail_url:null},{poi_id:"p",source_url:"https://restapi.amap.com/v5/place/text",amap:d})!;assert(!("category"in captured.fields));assert(!("schedule_json"in captured.fields));assert(!("image_urls"in captured.fields));
+});

@@ -1,154 +1,220 @@
 {
   "stats": {
-    "checked_at": "2026-11-13T10:13:34.600Z",
-    "database_sha256": "3df2472e0131ed6f790a4a90cfbf291a5899b1242890023dcfe9bc3a92b107e1",
+    "checked_at": "2026-11-13T10:57:27.593Z",
+    "database_sha256": "c3a4e686ae6ea749bb08133b167456cba9ed71c61b6f2df64a89f0db851fdcac",
     "attractions": 245,
     "known_A_level": 70,
-    "amap_explicit_A": 25,
     "default_grade": 175,
-    "with_images": 227,
-    "no_description": 0,
-    "no_source_url": 0,
-    "no_duration": 0,
-    "estimated_duration": 237
+    "with_images": 245,
+    "default_budget": 53,
+    "unavailable": 11
   },
   "groups": [
     {
       "key": "program_dates",
-      "title": "程序错误：季节区间只生成了首尾日期",
-      "kind": "程序待修复",
+      "title": "季节区间展开错误",
+      "kind": "需修复",
       "count": 0,
-      "meaning": "原资料已有开放规则，模型却把区间首尾当作仅有的开放日期，导致未来14天被判全部关闭。不是景点资料缺失，也不是实际闭馆。",
+      "meaning": "此前4条已修复，本项重新按当前库检查，不将只有首尾日期当作完整区间。",
       "items": []
     },
     {
       "key": "identity",
-      "title": "地点本体需核对",
-      "kind": "依据待确认",
+      "title": "地点本体待核对",
+      "kind": "需修复",
+      "count": 0,
+      "meaning": "用户已接受高德附近定位；只在缺少坐标或POI时记录缺失，不因父校园/附近点拦截。",
+      "items": []
+    },
+    {
+      "key": "partial_hours",
+      "title": "部分时间没有备注",
+      "kind": "需补充",
+      "count": 0,
+      "meaning": "部分时间有备注即可保留，不要求全部变成完整规则。",
+      "items": []
+    },
+    {
+      "key": "conflicting_hours",
+      "title": "仍未消除的时间冲突",
+      "kind": "需处理",
+      "count": 4,
+      "meaning": "这4条仍是conflicting，不把矛盾悄悄改成完整；其中不开放的记录已排除规划。历史地址已按高德处理，本项只列时间问题。",
+      "items": [
+        {
+          "id": "xa_a318fb61dba3626bdf92c722029d0d0b",
+          "title": "西安市云之翼航空博物馆",
+          "detail": "【仍在候选中，精确时间需处理】常规开放时间9:00-17:00（全年无休）；另有资料称开放至18:00，节假日延时安排未给出具体日期，未纳入规则。；常规闭馆时间存在9:00-17:00与9:00-18:00两种说法；时间冲突，待确认：{\"timezone\":\"Asia/Shanghai\",\"mode\":\"weekly\",\"weekly\":[{\"weekdays\":[1,2,3,4,5,6,7],\"windows\":[{\"start\":\"09:00\",\"end\":\"17:00\",\"end_day_offset\":0,\"last_entry\":null}],\"valid_from\":null,\"valid_to\":null}],\"note\":\"正文称全年无休，常规开放9:00-17:00；暑期、国庆等假期曾延长至19:00-20:00，具体日期未列明\"}",
+          "category": "暂无评级",
+          "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E4%BA%91%E4%B9%8B%E7%BF%BC%E8%88%AA%E7%A9%BA%E5%8D%9A%E7%89%A9%E9%A6%86?bst=1790310087.faa7aed8c0001bc8#1"
+        },
+        {
+          "id": "xa_ef6e8642555e8bf5aca90895c572c8bf",
+          "title": "西安市古陶瓷博物馆",
+          "detail": "【仍在候选中，精确时间需处理】正文开放时间8:00-17:00；外部参观指南称9:30-17:00、周二闭馆。两套规则不一致，未强行采用，开放规则留空。；开放时间存在冲突：正文称8:00-17:00，另有参观指南称9:30开馆、17:00闭馆且周二闭馆",
+          "category": "暂无评级",
+          "source_url": "https://www.baike.com/wikiid/8214465667367258295?enter_type=blue_link&source=collection&from_doc_title=%E8%A5%BF%E5%AE%89%E5%B8%82%E5%A2%83%E5%86%85%E7%9A%84%E5%8D%9A%E7%89%A9%E9%A6%86&from_doc_id=7336010493439705140&from_version_id=7545248589925367848#1"
+        },
+        {
+          "id": "xa_776ed7f97a5914518fc327442a5ce952",
+          "title": "西安市吉兆春皮肤医药博物馆",
+          "detail": "【仍在候选中，精确时间需处理】正文：周一至周五9:00-17:00，周六周日闭馆；其他资料：除每周五及法定节假日外每天9:00-17:00。开放日冲突，未强行选定，仅保留钟点9:00-17:00。；开放日冲突：正文称周一至周五开放、周六周日闭馆；其他资料称除每周五及法定节假日外每天开放；时间冲突，待确认：{\"timezone\":\"Asia/Shanghai\",\"mode\":\"unknown\",\"note\":\"开放日存在冲突，需预约确认\"}",
+          "category": "暂无评级",
+          "source_url": "https://www.jizhaochun.com/h-col-118.html"
+        },
+        {
+          "id": "xa_0d04b281d7ef3d2cd834f99bc2544e4d",
+          "title": "西安高陵场畔农耕文化生态观光产业园",
+          "detail": "【仍在候选中，精确时间需处理】正文称营业时间9:00-19:30、民俗小吃街9:30-18:30、兑票9:00-17:00；搜索资料另载春冬季09:00-17:00、夏秋季09:00-21:00，存在冲突，未强行采用某一套",
+          "category": "3A",
+          "source_url": "https://www.autohome.com.cn/ask/17810084.html"
+        }
+      ]
+    },
+    {
+      "key": "missing_hours",
+      "title": "确实缺少开放时间且没有默认",
+      "kind": "需补充",
+      "count": 0,
+      "meaning": "无资料时默认每天09:00–17:00并标注默认依据，不覆盖已知季节限制和冲突。",
+      "items": []
+    },
+    {
+      "key": "images",
+      "title": "缺少图片",
+      "kind": "需补充",
+      "count": 0,
+      "meaning": "按最终image_urls统计，已补18条、47张。",
+      "items": []
+    },
+    {
+      "key": "budget_missing",
+      "title": "预算数值为空",
+      "kind": "需补充",
+      "count": 0,
+      "meaning": "景点预算全空时默认每人20元，存2000分；明确免费或已有价格不覆盖。",
+      "items": []
+    },
+    {
+      "key": "nearby_accepted",
+      "title": "已接受高德附近定位",
+      "kind": "正常保留",
       "count": 15,
-      "meaning": "沿用此前15条地点绑定疑点。父校园、商业楼、游客中心不必然等于馆址；这里列为待确认，不断言这些场馆不存在。",
+      "meaning": "15条接受高德地址和GCJ-02坐标，保留馆名；不套用父地点时间、星级或图片。",
       "items": [
         {
           "id": "xa_759f6a7bebc86fed6a7b7d27d86757ba",
           "title": "上王村景区",
-          "detail": "当前候选：滦镇街道上王村村委会；地点待确认：高德返回村委会，不能作为目标景点本体",
+          "detail": "高德定位点：滦镇街道上王村村委会",
           "category": "3A",
           "source_url": "http://m.xinlvtuan.com/ticket/76204.htm"
         },
         {
           "id": "xa_237fe0975bc8c2316b21ca24ad00ec07",
           "title": "丰镐遗址车马坑陈列馆",
-          "detail": "当前候选：丰镐遗址车马坑；地点待确认：高德返回父校园、外部景点或其他机构，未确认具体馆址",
+          "detail": "高德定位点：丰镐遗址车马坑",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%e4%b8%b0%e9%95%90%e9%81%97%e5%9d%80%e8%bd%a6%e9%a9%ac%e5%9d%91%e9%99%88%e5%88%97%e9%a6%86/17517236?bst=1791654082.dfeda0f59e25fc09#1"
         },
         {
           "id": "xa_9a57da43cbb84ee0fa6e78b7889b3a05",
           "title": "唐华清宫梨园遗址博物馆",
-          "detail": "当前候选：华清宫-梨园；地点待确认：高德返回父校园、外部景点或其他机构，未确认具体馆址",
+          "detail": "高德定位点：华清宫-梨园",
           "category": "暂无评级",
           "source_url": "http://travel.qunar.com/p-oi9778757-tanghuaqinggongliyuan"
         },
         {
           "id": "xa_5fa226895256d3d2bbc0cf6e75429d3e",
           "title": "汉长安城未央宫遗址陈列馆",
-          "detail": "当前候选：西安市汉长安城遗址保管所；地点待确认：高德返回政府机关，不能作为目标景点本体",
+          "detail": "高德定位点：西安市汉长安城遗址保管所",
           "category": "暂无评级",
           "source_url": "https://xixinews.com/m/view.php?aid=73421"
         },
         {
           "id": "xa_776ed7f97a5914518fc327442a5ce952",
           "title": "西安市吉兆春皮肤医药博物馆",
-          "detail": "当前候选：高陵中小企业聚集园；地点待确认：高德返回父校园、外部景点或其他机构，未确认具体馆址",
+          "detail": "高德定位点：高陵中小企业聚集园",
           "category": "暂无评级",
           "source_url": "https://www.jizhaochun.com/h-col-118.html"
         },
         {
           "id": "xa_dae9be3b7b614175ff1c20aff524a290",
           "title": "西安市太和医室博物馆",
-          "detail": "当前候选：花萼相辉楼；地点待确认：高德返回父校园、外部景点或其他机构，未确认具体馆址",
+          "detail": "高德定位点：花萼相辉楼",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E5%A4%AA%E5%92%8C%E5%8C%BB%E5%AE%A4%E5%8D%9A%E7%89%A9%E9%A6%86?bst=1792636983.552c049384c424d0"
         },
         {
           "id": "xa_4283cda2269698e1b9f78fee89a5f84e",
           "title": "西安市德江陶瓷模范标本博物馆",
-          "detail": "当前候选：白家大院；地点待确认：高德返回父校园、外部景点或其他机构，未确认具体馆址",
+          "detail": "高德定位点：白家大院",
           "category": "暂无评级",
           "source_url": "https://www.daqinhao.com/news/677.html#3"
         },
         {
           "id": "xa_d5c22ab3dad673f3329d76d36839cce7",
           "title": "西安市瑛煌关中婚俗文化博物馆",
-          "detail": "当前候选：关中婚俗文化产业园；地点待确认：高德返回父校园、外部景点或其他机构，未确认具体馆址",
+          "detail": "高德定位点：关中婚俗文化产业园",
           "category": "暂无评级",
           "source_url": "http://www.sxyhsy.net/hgzhswhbwg/333.html"
         },
         {
           "id": "xa_2f8987a7f6773a95f26875acc465f14e",
           "title": "西安市石仟佛造像艺术博物馆",
-          "detail": "当前候选：阳阳国际广场；地点待确认：高德返回父校园、外部景点或其他机构，未确认具体馆址",
+          "detail": "高德定位点：阳阳国际广场",
           "category": "暂无评级",
           "source_url": "https://www.hopegoo.com/zh-hk/hot-hotels/landmark/xi-an-shiqian-buddha-statue-art-museum-691488/hotel-brand-29323/#2"
         },
         {
           "id": "xa_a7295b4f9067adb666fc4c76fed43ea8",
           "title": "西安市鄠邑区非物质文化遗产博物馆",
-          "detail": "当前候选：鄠邑区文化中心；地点待确认：高德返回父校园、外部景点或其他机构，未确认具体馆址",
+          "detail": "高德定位点：鄠邑区文化中心",
           "category": "暂无评级",
           "source_url": "http://www.xahy.gov.cn/zwgk/shgy/ggwhty/1998584630863257602.html"
         },
         {
           "id": "xa_620b6083e386a9bc81a85010d65f84bf",
           "title": "西安建筑科技大学中国音乐史博物馆",
-          "detail": "当前候选：西安建筑科技大学草堂校区-学府城；地点待确认：高德返回父校园、外部景点或其他机构，未确认具体馆址",
+          "detail": "高德定位点：西安建筑科技大学草堂校区-学府城",
           "category": "暂无评级",
           "source_url": "https://sie.xauat.edu.cn/gjjyxy/xzjd1/xszy1/ylsbwg.htm"
         },
         {
           "id": "xa_3635d3120986ca93614b2b3910d7a185",
           "title": "西安红色体育博物馆（中国红色体育博物馆）",
-          "detail": "当前候选：鼎正大都城；地点待确认：高德返回住宅区，不能作为目标景点本体",
+          "detail": "高德定位点：鼎正大都城",
           "category": "暂无评级",
           "source_url": "https://you.ctrip.com/sight/xian7/124906723.html#1"
         },
         {
           "id": "xa_6b444eb7f90430d55620bf876d67b922",
           "title": "西安美术学院美术博物馆",
-          "detail": "当前候选：西安美术学院雁塔校区；地点待确认：高德返回父校园、外部景点或其他机构，未确认具体馆址",
+          "detail": "高德定位点：西安美术学院雁塔校区",
           "category": "暂无评级",
           "source_url": "https://fineartmuseum.xafa.edu.cn/zl/lszl.htm"
         },
         {
           "id": "xa_6a0594ae3a8d5262f43a9129ec7ffa39",
           "title": "西安音乐学院艺术博物馆",
-          "detail": "当前候选：西安音乐学院艺术中心；地点待确认：高德返回父校园、外部景点或其他机构，未确认具体馆址",
+          "detail": "高德定位点：西安音乐学院艺术中心",
           "category": "暂无评级",
           "source_url": "https://bkso.baidu.com/item/%e8%a5%bf%e5%ae%89%e9%9f%b3%e4%b9%90%e5%ad%a6%e9%99%a2%e8%89%ba%e6%9c%af%e5%8d%9a%e7%89%a9%e9%a6%86/22187753?fromModule=lemma_inlink#1"
         },
         {
           "id": "xa_4a77b7f01a27b0854cf07370d24da01c",
           "title": "高陵场畔农耕文化生态观光产业园",
-          "detail": "当前候选：高陵场畔农耕文化博物院游客中心；地点待确认：高德返回游客中心，不能作为目标景点本体",
+          "detail": "高德定位点：高陵场畔农耕文化博物院游客中心",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/changpan-agricultural-garden-gaoling-30804120"
         }
       ]
     },
     {
-      "key": "raw_hours",
-      "title": "高德已提供时间原文，尚未规范",
-      "kind": "处理待完成",
-      "count": 0,
-      "meaning": "这些记录已拿到高德时间，未知的是机器可用规则，不是资料一无所知。部分因余额不足尚未处理，部分模型输出不完整；原文仍可供主Agent参考，但不能假称已完成结构化。",
-      "items": []
-    },
-    {
-      "key": "partial_hours",
-      "title": "开放时间仅部分完整",
-      "kind": "信息或规则待补",
-      "count": 32,
-      "meaning": "区分缺少季节、节假日、预约或部分窗口等情况，不能把这些记录都当作完全没有开放时间。",
+      "key": "partial_notes_accepted",
+      "title": "部分时间已有备注",
+      "kind": "正常保留",
+      "count": 33,
+      "meaning": "按用户要求有备注即可，不独立判不合格。",
       "items": [
         {
           "id": "xa_bc3d40f1b19320eccf5f201d470659b1",
@@ -226,6 +292,13 @@
           "detail": "高德营业时间：10/08-12/31 09:00–20:00开放 最晚进入18:50；中秋节,国庆节 08:00–22:00开放 最晚进入21:00\n高德 opentime_week 明确 10/08-12/31 每日 09:00–20:00、最晚进入18:50，已按年度展开为 weekly 区间；中秋节、国庆节 08:00–22:00（最晚进入21:00）未给出具体日期，无法规范为 exceptions，仅保留备注。",
           "category": "4A",
           "source_url": "http://m.ctrip.com/webapp/you/gspoi/sight/0/1959853.html?seo=0#1"
+        },
+        {
+          "id": "xa_a273718bd61e370366aede7966c80c8e",
+          "title": "百跃羊乳文化景区",
+          "detail": "原文未给出开放时间，仅说明免费开放；建议参观前电话确认。\n默认开放时间：每天09:00–17:00（非来源确认，按项目默认规则用于规划）",
+          "category": "3A",
+          "source_url": "https://mp.weixin.qq.com/s/Rxsw2M8vgR1rweDm_xRZrw?"
         },
         {
           "id": "xa_482e294b4c6eabdff9c8a58b48b1394e",
@@ -377,722 +450,501 @@
       ]
     },
     {
-      "key": "conflicting_hours",
-      "title": "原有时间说法尚有冲突",
-      "kind": "依据待确认",
-      "count": 4,
-      "meaning": "当前time_status为conflicting的记录，下面保留具体冲突。已用高德解决的地址不再按旧地址冲突重复计入；旧备注中的地址说明只作历史记录。",
-      "items": [
-        {
-          "id": "xa_a318fb61dba3626bdf92c722029d0d0b",
-          "title": "西安市云之翼航空博物馆",
-          "detail": "常规开放时间9:00-17:00（全年无休）；另有资料称开放至18:00，节假日延时安排未给出具体日期，未纳入规则。\n常规闭馆时间存在9:00-17:00与9:00-18:00两种说法\n时间冲突，待确认：{\"timezone\":\"Asia/Shanghai\",\"mode\":\"weekly\",\"weekly\":[{\"weekdays\":[1,2,3,4,5,6,7],\"windows\":[{\"start\":\"09:00\",\"end\":\"17:00\",\"end_day_offset\":0,\"last_entry\":null}],\"valid_from\":null,\"valid_to\":null}],\"note\":\"正文称全年无休，常规开放9:00-17:00；暑期、国庆等假期曾延长至19:00-20:00，具体日期未列明\"}",
-          "category": "暂无评级",
-          "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E4%BA%91%E4%B9%8B%E7%BF%BC%E8%88%AA%E7%A9%BA%E5%8D%9A%E7%89%A9%E9%A6%86?bst=1790310087.faa7aed8c0001bc8#1"
-        },
-        {
-          "id": "xa_ef6e8642555e8bf5aca90895c572c8bf",
-          "title": "西安市古陶瓷博物馆",
-          "detail": "正文开放时间8:00-17:00；外部参观指南称9:30-17:00、周二闭馆。两套规则不一致，未强行采用，开放规则留空。\n开放时间存在冲突：正文称8:00-17:00，另有参观指南称9:30开馆、17:00闭馆且周二闭馆\n地址存在冲突：正文称灞桥区电厂南路8号，高德及部分资料为雁塔区咸宁东路附28号",
-          "category": "暂无评级",
-          "source_url": "https://www.baike.com/wikiid/8214465667367258295?enter_type=blue_link&source=collection&from_doc_title=%E8%A5%BF%E5%AE%89%E5%B8%82%E5%A2%83%E5%86%85%E7%9A%84%E5%8D%9A%E7%89%A9%E9%A6%86&from_doc_id=7336010493439705140&from_version_id=7545248589925367848#1"
-        },
-        {
-          "id": "xa_776ed7f97a5914518fc327442a5ce952",
-          "title": "西安市吉兆春皮肤医药博物馆",
-          "detail": "正文：周一至周五9:00-17:00，周六周日闭馆；其他资料：除每周五及法定节假日外每天9:00-17:00。开放日冲突，未强行选定，仅保留钟点9:00-17:00。\n开放日冲突：正文称周一至周五开放、周六周日闭馆；其他资料称除每周五及法定节假日外每天开放\n时间冲突，待确认：{\"timezone\":\"Asia/Shanghai\",\"mode\":\"unknown\",\"note\":\"开放日存在冲突，需预约确认\"}",
-          "category": "暂无评级",
-          "source_url": "https://www.jizhaochun.com/h-col-118.html"
-        },
-        {
-          "id": "xa_0d04b281d7ef3d2cd834f99bc2544e4d",
-          "title": "西安高陵场畔农耕文化生态观光产业园",
-          "detail": "正文称营业时间9:00-19:30、民俗小吃街9:30-18:30、兑票9:00-17:00；搜索资料另载春冬季09:00-17:00、夏秋季09:00-21:00，存在冲突，未强行采用某一套",
-          "category": "3A",
-          "source_url": "https://www.autohome.com.cn/ask/17810084.html"
-        }
-      ]
-    },
-    {
-      "key": "missing_hours",
-      "title": "确实缺少常规开放时间",
-      "kind": "信息缺失",
+      "key": "default_time",
+      "title": "默认每日09:00–17:00",
+      "kind": "正常默认值",
       "count": 1,
-      "meaning": "结合原资料与高德之后，尚无可采用的常规开放钟点。",
+      "meaning": "项目默认规划时间，不是官方确认的营业时间。",
       "items": [
         {
           "id": "xa_a273718bd61e370366aede7966c80c8e",
           "title": "百跃羊乳文化景区",
-          "detail": "原文未给出开放时间，仅说明免费开放；建议参观前电话确认。",
+          "detail": "原文未给出开放时间，仅说明免费开放；建议参观前电话确认。\n默认开放时间：每天09:00–17:00（非来源确认，按项目默认规则用于规划）",
           "category": "3A",
           "source_url": "https://mp.weixin.qq.com/s/Rxsw2M8vgR1rweDm_xRZrw?"
         }
       ]
     },
     {
-      "key": "mixed_subject",
-      "title": "古镇与馆内时间混在一起",
-      "kind": "主体处理待改",
-      "count": 0,
-      "meaning": "红色葛牌景区已有古镇全天开放资料；纪念馆缺具体钟点，不能把馆内时间缺失扩大为整个古镇未知。应按主体拆分或加备注。",
-      "items": []
-    },
-    {
-      "key": "images",
-      "title": "最终记录缺少图片",
-      "kind": "信息缺失",
-      "count": 18,
-      "meaning": "统计的是合并后image_urls仍为空的18条，不是高德没图但旧来源已有图的记录。",
-      "items": [
-        {
-          "id": "xa_759f6a7bebc86fed6a7b7d27d86757ba",
-          "title": "上王村景区",
-          "detail": "image_urls=[]；地点待确认：高德返回村委会，不能作为目标景点本体",
-          "category": "3A",
-          "source_url": "http://m.xinlvtuan.com/ticket/76204.htm"
-        },
-        {
-          "id": "xa_237fe0975bc8c2316b21ca24ad00ec07",
-          "title": "丰镐遗址车马坑陈列馆",
-          "detail": "image_urls=[]；地点待确认：高德返回父校园、外部景点或其他机构，未确认具体馆址",
-          "category": "暂无评级",
-          "source_url": "https://baike.baidu.com/item/%e4%b8%b0%e9%95%90%e9%81%97%e5%9d%80%e8%bd%a6%e9%a9%ac%e5%9d%91%e9%99%88%e5%88%97%e9%a6%86/17517236?bst=1791654082.dfeda0f59e25fc09#1"
-        },
-        {
-          "id": "xa_9a57da43cbb84ee0fa6e78b7889b3a05",
-          "title": "唐华清宫梨园遗址博物馆",
-          "detail": "image_urls=[]；地点待确认：高德返回父校园、外部景点或其他机构，未确认具体馆址",
-          "category": "暂无评级",
-          "source_url": "http://travel.qunar.com/p-oi9778757-tanghuaqinggongliyuan"
-        },
-        {
-          "id": "xa_5fa226895256d3d2bbc0cf6e75429d3e",
-          "title": "汉长安城未央宫遗址陈列馆",
-          "detail": "image_urls=[]；地点待确认：高德返回政府机关，不能作为目标景点本体",
-          "category": "暂无评级",
-          "source_url": "https://xixinews.com/m/view.php?aid=73421"
-        },
-        {
-          "id": "xa_b81a01740ae47dfcc9f45e8120dc8f90",
-          "title": "秦始皇帝陵博物院（秦始皇兵马俑博物馆·丽山园）",
-          "detail": "image_urls=[]；高德未返回图片或其图片未通过访问检查",
-          "category": "5A",
-          "source_url": "http://mp.weixin.qq.com/s?__biz=MzUxOTg2MTA5Ng==&mid=2247513186&idx=1&sn=0edae24d70ef45614266715437595746"
-        },
-        {
-          "id": "xa_776ed7f97a5914518fc327442a5ce952",
-          "title": "西安市吉兆春皮肤医药博物馆",
-          "detail": "image_urls=[]；地点待确认：高德返回父校园、外部景点或其他机构，未确认具体馆址",
-          "category": "暂无评级",
-          "source_url": "https://www.jizhaochun.com/h-col-118.html"
-        },
-        {
-          "id": "xa_dae9be3b7b614175ff1c20aff524a290",
-          "title": "西安市太和医室博物馆",
-          "detail": "image_urls=[]；地点待确认：高德返回父校园、外部景点或其他机构，未确认具体馆址",
-          "category": "暂无评级",
-          "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E5%A4%AA%E5%92%8C%E5%8C%BB%E5%AE%A4%E5%8D%9A%E7%89%A9%E9%A6%86?bst=1792636983.552c049384c424d0"
-        },
-        {
-          "id": "xa_4283cda2269698e1b9f78fee89a5f84e",
-          "title": "西安市德江陶瓷模范标本博物馆",
-          "detail": "image_urls=[]；地点待确认：高德返回父校园、外部景点或其他机构，未确认具体馆址",
-          "category": "暂无评级",
-          "source_url": "https://www.daqinhao.com/news/677.html#3"
-        },
-        {
-          "id": "xa_5927186945f08c28e62e28026b3cce08",
-          "title": "西安市惟德玉文化博物馆",
-          "detail": "image_urls=[]；高德未返回图片或其图片未通过访问检查",
-          "category": "暂无评级",
-          "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/xi-anshi-weideyu-culture-museum-79438961?poiType=3"
-        },
-        {
-          "id": "xa_d5c22ab3dad673f3329d76d36839cce7",
-          "title": "西安市瑛煌关中婚俗文化博物馆",
-          "detail": "image_urls=[]；地点待确认：高德返回父校园、外部景点或其他机构，未确认具体馆址",
-          "category": "暂无评级",
-          "source_url": "http://www.sxyhsy.net/hgzhswhbwg/333.html"
-        },
-        {
-          "id": "xa_2f8987a7f6773a95f26875acc465f14e",
-          "title": "西安市石仟佛造像艺术博物馆",
-          "detail": "image_urls=[]；地点待确认：高德返回父校园、外部景点或其他机构，未确认具体馆址",
-          "category": "暂无评级",
-          "source_url": "https://www.hopegoo.com/zh-hk/hot-hotels/landmark/xi-an-shiqian-buddha-statue-art-museum-691488/hotel-brand-29323/#2"
-        },
-        {
-          "id": "xa_a7295b4f9067adb666fc4c76fed43ea8",
-          "title": "西安市鄠邑区非物质文化遗产博物馆",
-          "detail": "image_urls=[]；地点待确认：高德返回父校园、外部景点或其他机构，未确认具体馆址",
-          "category": "暂无评级",
-          "source_url": "http://www.xahy.gov.cn/zwgk/shgy/ggwhty/1998584630863257602.html"
-        },
-        {
-          "id": "xa_620b6083e386a9bc81a85010d65f84bf",
-          "title": "西安建筑科技大学中国音乐史博物馆",
-          "detail": "image_urls=[]；地点待确认：高德返回父校园、外部景点或其他机构，未确认具体馆址",
-          "category": "暂无评级",
-          "source_url": "https://sie.xauat.edu.cn/gjjyxy/xzjd1/xszy1/ylsbwg.htm"
-        },
-        {
-          "id": "xa_c8dcae1b0da0e4fc3fa362d3366effd1",
-          "title": "西安建筑科技大学校史馆",
-          "detail": "image_urls=[]；高德未返回图片或其图片未通过访问检查",
-          "category": "暂无评级",
-          "source_url": "http://wza.xa.gov.cn:9000/beilin_wza/zwgk/fdzdgk/wtly/ssml/1773177264902094849.html"
-        },
-        {
-          "id": "xa_3635d3120986ca93614b2b3910d7a185",
-          "title": "西安红色体育博物馆（中国红色体育博物馆）",
-          "detail": "image_urls=[]；地点待确认：高德返回住宅区，不能作为目标景点本体",
-          "category": "暂无评级",
-          "source_url": "https://you.ctrip.com/sight/xian7/124906723.html#1"
-        },
-        {
-          "id": "xa_6b444eb7f90430d55620bf876d67b922",
-          "title": "西安美术学院美术博物馆",
-          "detail": "image_urls=[]；地点待确认：高德返回父校园、外部景点或其他机构，未确认具体馆址",
-          "category": "暂无评级",
-          "source_url": "https://fineartmuseum.xafa.edu.cn/zl/lszl.htm"
-        },
-        {
-          "id": "xa_6a0594ae3a8d5262f43a9129ec7ffa39",
-          "title": "西安音乐学院艺术博物馆",
-          "detail": "image_urls=[]；地点待确认：高德返回父校园、外部景点或其他机构，未确认具体馆址",
-          "category": "暂无评级",
-          "source_url": "https://bkso.baidu.com/item/%e8%a5%bf%e5%ae%89%e9%9f%b3%e4%b9%90%e5%ad%a6%e9%99%a2%e8%89%ba%e6%9c%af%e5%8d%9a%e7%89%a9%e9%a6%86/22187753?fromModule=lemma_inlink#1"
-        },
-        {
-          "id": "xa_4a77b7f01a27b0854cf07370d24da01c",
-          "title": "高陵场畔农耕文化生态观光产业园",
-          "detail": "image_urls=[]；地点待确认：高德返回游客中心，不能作为目标景点本体",
-          "category": "暂无评级",
-          "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/changpan-agricultural-garden-gaoling-30804120"
-        }
-      ]
-    },
-    {
-      "key": "budget_missing",
-      "title": "预算数值为空",
-      "kind": "字段待补",
+      "key": "default_budget",
+      "title": "默认每人20元",
+      "kind": "正常默认值",
       "count": 53,
-      "meaning": "budget_min为空的记录，不代表都没有任何费用资料。部分原文明确免费但尚未落实到数值，部分只有外币报价、优惠人群价格或上级景区联票，部分确实未知。逐条见说明。",
+      "meaning": "数据库单位分，数值为2000；备注保留原来源的不确定价格说明。",
       "items": [
         {
           "id": "xa_759f6a7bebc86fed6a7b7d27d86757ba",
           "title": "上王村景区",
-          "detail": "现有资料未记录可用费用说明，需确认免费、预约收费或按项目付费，不能根据景点类型直接猜0元",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）",
           "category": "3A",
           "source_url": "http://m.xinlvtuan.com/ticket/76204.htm"
         },
         {
           "id": "xa_733d2f7c03ebb9582b895feba9923180",
           "title": "丝路欢乐世界",
-          "detail": "原文未给出票价，仅提及大学生特惠票",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n原文未给出票价，仅提及大学生特惠票",
           "category": "4A",
           "source_url": "https://www.xiaohongshu.com/explore/6af67f23000000002b01faf4"
         },
         {
           "id": "xa_bc3d40f1b19320eccf5f201d470659b1",
           "title": "伊利集团西安乳业园景区",
-          "detail": "资料未给出具体票价，仅说明儿童、老人免票及学生、老人优惠政策",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n资料未给出具体票价，仅说明儿童、老人免票及学生、老人优惠政策",
           "category": "暂无评级",
           "source_url": "http://m.hxzpt.com/Information?param=eyJ2ZW5kZXJpZCI6MTc3LCJzaWQiOjIyNH0="
         },
         {
           "id": "xa_b39c470d2ed3a4ea3c769b53ca0e6973",
           "title": "吉利汽车西安制造基地旅游景区",
-          "detail": "现有资料未记录可用费用说明，需确认免费、预约收费或按项目付费，不能根据景点类型直接猜0元",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）",
           "category": "暂无评级",
           "source_url": "https://jp.trip.com/travel-guide/attraction/xi-an/city-149671784?curr=JPY&locale=ja-JP&scene=DISTRICT"
         },
         {
           "id": "xa_11bce8d2f4b35add8e4729d254bb3859",
           "title": "启航公园",
-          "detail": "现有资料未记录可用费用说明，需确认免费、预约收费或按项目付费，不能根据景点类型直接猜0元",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）",
           "category": "暂无评级",
           "source_url": "https://www.wingontravel.com/discovery/scenic-luochuan-2580/list/scenic-xianyang-111/scenic-jingyang-20985/scenic-jingyang-20985/scenic-qihang-park-52189205"
         },
         {
           "id": "xa_6d804f1182800eb0d3da665795677b04",
           "title": "土门小树林公园",
-          "detail": "现有资料未记录可用费用说明，需确认免费、预约收费或按项目付费，不能根据景点类型直接猜0元",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）",
           "category": "暂无评级",
           "source_url": "https://sg.trip.com/travel-guide/attraction/xi-an/tumenxiao-shulin-park-51978910?curr=SGD#1"
         },
         {
           "id": "xa_415968e17a9dac8634ed3ab81fca824c",
           "title": "大兴汤院遗址公园",
-          "detail": "现有资料未记录可用费用说明，需确认免费、预约收费或按项目付费，不能根据景点类型直接猜0元",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E5%A4%A7%E5%85%B4%E6%B1%A4%E9%99%A2%E9%81%97%E5%9D%80%E5%85%AC%E5%9B%AD?bst=1792391035.9f99486e10a6efb9"
         },
         {
           "id": "xa_7b36be9e9985596eea23660eee730116",
           "title": "大唐芙蓉园",
-          "detail": "资料未给出具体票价（第三方页面价格未加载），门票费用未知。",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n资料未给出具体票价（第三方页面价格未加载），门票费用未知。",
           "category": "5A",
           "source_url": "https://www.getyourguide.com/zh-cn/xi-an-l270/xi-an-datang-furong-garden-tang-dynasty-park-pass-t1411151/?ranking_uuid=c6345fae-63ae-4c6f-a376-c982a6ad38d7&referral_redirect=1&visitor-id=JBK0UOBGS5LV9ENT2W075WYSZCWWWKPC&locale_autoredirect_optout=true"
         },
         {
           "id": "xa_d17a2b8f9f590d2884d7059b0bbe6d5e",
           "title": "大明宫国家遗址公园",
-          "detail": "原文未给出票价，仅说明需购买门票；补查资料提及60元/人，未采用。",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n原文未给出票价，仅说明需购买门票；补查资料提及60元/人，未采用。",
           "category": "5A",
           "source_url": "https://www.klook.cn/zh-CN/activity/102545-daming-palace-national-park/"
         },
         {
           "id": "xa_69ee06fb336d2b4e60abbdee3d082b2d",
           "title": "大明宫国家遗址公园丹凤门遗址博物馆",
-          "detail": "资料仅给出港币标价（成人票HKD 70+、学生票HKD 35+等），未提供人民币票价，故留空；建议游玩3-5小时为原文建议。",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n资料仅给出港币标价（成人票HKD 70+、学生票HKD 35+等），未提供人民币票价，故留空；建议游玩3-5小时为原文建议。",
           "category": "暂无评级",
           "source_url": "https://www.wingontravel.com/discovery/scenic-weinan-1030/scenic-pucheng-1946/scenic-chengcheng-21187/scenic-xi-an-10/scenic-daming-palace-national-heritage-park-84625#1"
         },
         {
           "id": "xa_260b726df821043eeed2e2fd0fa2a543",
           "title": "天坛遗址公园",
-          "detail": "现有资料未记录可用费用说明，需确认免费、预约收费或按项目付费，不能根据景点类型直接猜0元",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/xi-antiantan-ruins-89251?curr=TWD&locale=zh-TW&poiType=3&scene=gsDestination"
         },
         {
           "id": "xa_778c7b6cb807dfdd6e12bac0c2ef5c9c",
           "title": "太平万花山风景区",
-          "detail": "原文未给出票价；另有资料提及门票36元，未采用。",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n原文未给出票价；另有资料提及门票36元，未采用。",
           "category": "暂无评级",
           "source_url": "http://m.tuniu.com/menpiao/3088936?"
         },
         {
           "id": "xa_79cac853cca47a640f77af77e62b6505",
           "title": "明秦王世子公园（世子公园）",
-          "detail": "现有资料未记录可用费用说明，需确认免费、预约收费或按项目付费，不能根据景点类型直接猜0元",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）",
           "category": "暂无评级",
           "source_url": "https://www.xiaohongshu.com/explore/6af6823200000000250115aa"
         },
         {
           "id": "xa_8e7f604324ae62418daa994b41a2bd12",
           "title": "智慧文化公园",
-          "detail": "现有资料未记录可用费用说明，需确认免费、预约收费或按项目付费，不能根据景点类型直接猜0元",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）",
           "category": "暂无评级",
           "source_url": "https://api.aiyoutravel.com/location/detail/a62316a731daac577e2a73d91cec1890"
         },
         {
           "id": "xa_6af4ef7ba1169f1058b20b62553295e8",
           "title": "曲江寒窑遗址公园",
-          "detail": "成人基础门票尚未确认；学生票与特定人群免票不能替代成人全价。原资料：资料列明儿童/学生票25元、部分人群免票；成人全价票未明确，预算上限按25元计，实际以景区告示为准",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n成人基础门票尚未确认；学生票与特定人群免票不能替代成人全价。原资料：资料列明儿童/学生票25元、部分人群免票；成人全价票未明确，预算上限按25元计，实际以景区告示为准",
           "category": "暂无评级",
           "source_url": "https://www.tuniu.com/menpiao/1170196#/index"
         },
         {
           "id": "xa_27d29517e4105307913f0837c8aeac55",
           "title": "曲江新开门运动公园",
-          "detail": "部分场地特定时段免费，其余时段收费价格原文未给出（估计停留时长）",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n部分场地特定时段免费，其余时段收费价格原文未给出（估计停留时长）",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E6%9B%B2%E6%B1%9F%E6%96%B0%E5%BC%80%E9%97%A8%E8%BF%90%E5%8A%A8%E5%85%AC%E5%9B%AD?bst=1793151082.3409cf776c8e0f4d#1"
         },
         {
           "id": "xa_36df0044a355adf71b9189d298c93438",
           "title": "曲江海洋极地公园",
-          "detail": "门票价格未在资料中给出；65周岁以上老人、6周岁以内或身高1.2米以下儿童、残疾人、现役军人及部分优待对象免首道门票，退役军人首道门票5折。",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n门票价格未在资料中给出；65周岁以上老人、6周岁以内或身高1.2米以下儿童、残疾人、现役军人及部分优待对象免首道门票，退役军人首道门票5折。",
           "category": "4A",
           "source_url": "https://oceanpark.qjtourism.com/scenic/hai/single/788"
         },
         {
           "id": "xa_82c8270fd7d3c5e3e31e2f7645c9fe92",
           "title": "曲江秦二世陵遗址公园（秦二世胡亥墓）",
-          "detail": "资料未给出成人门票价格；仅列优待政策：1.2米以下儿童、70岁以上老人、现役军人、残疾人凭证免票，1.2—1.4米儿童及65岁以上老人10元/人。",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n资料未给出成人门票价格；仅列优待政策：1.2米以下儿童、70岁以上老人、现役军人、残疾人凭证免票，1.2—1.4米儿童及65岁以上老人10元/人。",
           "category": "3A",
           "source_url": "https://www.tuniu.com/menpiao/1806107#/index"
         },
         {
           "id": "xa_51de672c914794503bf346f635ceb7f3",
           "title": "永兴坊（陕西非遗文化特色街区）",
-          "detail": "原文称免门票，但页面另列“TWD103起”门票价格，信息矛盾，费用未确定。",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n原文称免门票，但页面另列“TWD103起”门票价格，信息矛盾，费用未确定。",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/moments/poi-yongxing-fang-39706665/#1"
         },
         {
           "id": "xa_57b3485b318d2b4400b240f8ae3f3d6a",
           "title": "汉城湖旅游风景区",
-          "detail": "现有资料未记录可用费用说明，需确认免费、预约收费或按项目付费，不能根据景点类型直接猜0元",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）",
           "category": "4A",
           "source_url": "https://you.ctrip.com/sight/xian7/121495.html?renderPlatform=#1"
         },
         {
           "id": "xa_62b7a22d0978bd516b96b59abf8f3ea7",
           "title": "汉长安城长乐宫四、五号遗址博物馆",
-          "detail": "现有资料未记录可用费用说明，需确认免费、预约收费或按项目付费，不能根据景点类型直接猜0元",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）",
           "category": "暂无评级",
           "source_url": "https://www.iwenbo.fun/index.php/index/museum/4660.html"
         },
         {
           "id": "xa_5a36782143c40a42ca3cf1f25532ba8e",
           "title": "石川河阎良风景区",
-          "detail": "来源未明确票价；第三方游记称免费开放，未获官方确认",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n来源未明确票价；第三方游记称免费开放，未获官方确认",
           "category": "暂无评级",
           "source_url": "https://sg.trip.com/travel-guide/attraction/xi-an/ishikawa-river-133942263/"
         },
         {
           "id": "xa_1864498793e36bb118720db883abead8",
           "title": "老子墓",
-          "detail": "门票信息未知；另有资料称免费开放，未采用。",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n门票信息未知；另有资料称免费开放，未采用。",
           "category": "暂无评级",
           "source_url": "https://hk.trip.com/travel-guide/attraction/zhouzhi/tomb-of-laozi-144365753/?curr=USD&locale=zh-HK"
         },
         {
           "id": "xa_9ea6db5e37ec2be13761f98067bd3baf",
           "title": "西仓市集文创公园",
-          "detail": "现有资料未记录可用费用说明，需确认免费、预约收费或按项目付费，不能根据景点类型直接猜0元",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）",
           "category": "暂无评级",
           "source_url": "https://m.toutiao.com/article/7679710244724851210/?wid=1789474787564&upstream_biz=toutiao_pc"
         },
         {
           "id": "xa_3fc1bd8305220c2ba583a4bcc3aac482",
           "title": "西安万象城·生命之树",
-          "detail": "正文未提及费用",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n正文未提及费用",
           "category": "暂无评级",
           "source_url": "https://www.xiaohongshu.com/explore/6af2f99b000000001803a790"
         },
         {
           "id": "xa_901a8106d49e54f67ce1ec86d09b2e99",
           "title": "西安关中民俗艺术博物院",
-          "detail": "正文未给出成人门票价格；优待政策：6岁以下或1.2米以下儿童免费，1.2-1.4米儿童、65岁以上老人、残疾人30元，现役军人、大中小学生60元；华阴老腔演出另付每剧目500元。",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n正文未给出成人门票价格；优待政策：6岁以下或1.2米以下儿童免费，1.2-1.4米儿童、65岁以上老人、残疾人30元，现役军人、大中小学生60元；华阴老腔演出另付每剧目500元。",
           "category": "4A",
           "source_url": "https://you.ctrip.com/sight/xian7/73315.html?renderPlatform=#1"
         },
         {
           "id": "xa_9c220f7f4bf78f6b0ac4306509b3690d",
           "title": "西安唐皇城墙含光门遗址博物馆",
-          "detail": "正文未给出票价；第三方页面称免费开放，另有页面称成人票40元，信息矛盾，未采用。",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n正文未给出票价；第三方页面称免费开放，另有页面称成人票40元，信息矛盾，未采用。",
           "category": "暂无评级",
           "source_url": "https://you.ctrip.com/sight/xian7/73055.html?renderPlatform=#1"
         },
         {
           "id": "xa_007ddab319cad02878e2ebcc9aeb07ab",
           "title": "西安国际陆港网球运动公园（西安陆港运动公园）",
-          "detail": "正文未说明入园及场地收费标准；部分群众健身设施免费开放。",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n正文未说明入园及场地收费标准；部分群众健身设施免费开放。",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E9%99%86%E6%B8%AF%E8%BF%90%E5%8A%A8%E5%85%AC%E5%9B%AD/64749570?bst=1791704425.070df5265f190881#1#1"
         },
         {
           "id": "xa_a0f547689cd8c2a31413cbf71cc658c6",
           "title": "西安城墙",
-          "detail": "原文仅给出第三方平台票价（TWD257起，原价TWD475），未提供人民币官方票价，故未填写。",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n原文仅给出第三方平台票价（TWD257起，原价TWD475），未提供人民币官方票价，故未填写。",
           "category": "5A",
           "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/xi-an-city-wall-75686?creative_id=274&product_outer_id=tnt_zh-TW_attraction_75686&trace_id=6d0f14d0-2a2b-4bc4-9a93-48c12f94e05e"
         },
         {
           "id": "xa_9fee748e716323af0321bf26e0a70d6e",
           "title": "西安大汉上林苑（杜陵）生态景区",
-          "detail": "原文未给出明确票价，仅提及景区须知与预订提醒。",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n原文未给出明确票价，仅提及景区须知与预订提醒。",
           "category": "3A",
           "source_url": "https://www.tuniu.com/menpiao/2031936#/index#1"
         },
         {
           "id": "xa_c83f5d732b5ed97a4ac6d7860930b45c",
           "title": "西安市圣普美术博物馆",
-          "detail": "现有资料未记录可用费用说明，需确认免费、预约收费或按项目付费，不能根据景点类型直接猜0元",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E5%9C%A3%E6%99%AE%E7%BE%8E%E6%9C%AF%E5%8D%9A%E7%89%A9%E9%A6%86?svcp_stk=1_8Mk_bkWE586tff1mK-k8m1dX-VyazssTOa9bi_wu-KYedQ9va3D0tfVlrXukGDYBIjd63Y2XDfT8zqblazB6j1HDjhjrbpMlXVADBtXL9hyVRrYUo8adl3o_d948pX63vEZu-aYZGSFYLZmRusojCvemMvi9Tj51AhsE9zqlCvH-8TxTLEwsyZ9buovrUy3d#1"
         },
         {
           "id": "xa_ef3298e12304f10c9b2d24b72216d14c",
           "title": "西安市水墨长安艺术博物馆",
-          "detail": "现有资料未记录可用费用说明，需确认免费、预约收费或按项目付费，不能根据景点类型直接猜0元",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E6%B0%B4%E5%A2%A8%E9%95%BF%E5%AE%89%E8%89%BA%E6%9C%AF%E5%8D%9A%E7%89%A9%E9%A6%86/53486810?fromModule=lemma_inlink"
         },
         {
           "id": "xa_2f8987a7f6773a95f26875acc465f14e",
           "title": "西安市石仟佛造像艺术博物馆",
-          "detail": "正文称免费入场需预约；百科资料称收费，费用以馆方为准",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n正文称免费入场需预约；百科资料称收费，费用以馆方为准",
           "category": "暂无评级",
           "source_url": "https://www.hopegoo.com/zh-hk/hot-hotels/landmark/xi-an-shiqian-buddha-statue-art-museum-691488/hotel-brand-29323/#2"
         },
         {
           "id": "xa_9a7500de11c9dc5699bd41009f67e96e",
           "title": "西安常宁宫休闲山庄",
-          "detail": "基础参观门票尚未确认；原670元起为含住宿套餐，不能作为景点门票。原资料：门市价670元起，为含标间住宿、双人早餐、蒋介石行宫参观及10项娱乐项目的套票价格；单项门票价格未提供。",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n基础参观门票尚未确认；原670元起为含住宿套餐，不能作为景点门票。原资料：门市价670元起，为含标间住宿、双人早餐、蒋介石行宫参观及10项娱乐项目的套票价格；单项门票价格未提供。",
           "category": "3A",
           "source_url": "https://www.guojixing.com/en/jingdian/18680.html"
         },
         {
           "id": "xa_fb46263d38684a9c1ec1b51065a28519",
           "title": "西安广新园民族村",
-          "detail": "原文仅称景区收取门票，未给出票价。",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n原文仅称景区收取门票，未给出票价。",
           "category": "3A",
           "source_url": "https://baike.baidu.com/item/%E9%95%BF%E5%AE%89%E5%8C%BA%E5%B9%BF%E6%96%B0%E5%9B%AD%E6%B0%91%E6%97%8F%E6%9D%91/8395741?fromtitle=%E5%B9%BF%E6%96%B0%E9%99%A2%E6%B0%91%E6%97%8F%E6%9D%91&fromid=14713575#1"
         },
         {
           "id": "xa_620b6083e386a9bc81a85010d65f84bf",
           "title": "西安建筑科技大学中国音乐史博物馆",
-          "detail": "现有资料未记录可用费用说明，需确认免费、预约收费或按项目付费，不能根据景点类型直接猜0元",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）",
           "category": "暂无评级",
           "source_url": "https://sie.xauat.edu.cn/gjjyxy/xzjd1/xszy1/ylsbwg.htm"
         },
         {
           "id": "xa_a56c3a18119855fe19417b97da8c9ad5",
           "title": "西安祥峪森林公园",
-          "detail": "正文称无需门票，另有“人均29.9玩足一日”及玻璃栈道、山顶观瀑额外收费的说法，价格信息不一致，以景区公示为准。",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n正文称无需门票，另有“人均29.9玩足一日”及玻璃栈道、山顶观瀑额外收费的说法，价格信息不一致，以景区公示为准。",
           "category": "3A",
           "source_url": "https://tw.trip.com/moments/detail/xi-an-7-147134947/"
         },
         {
           "id": "xa_90679a57b1f31b72da69f7cf17df6d09",
           "title": "西安秦砖汉瓦博物馆",
-          "detail": "正文未给出票价，仅说明购买杜陵景区门票即可参观；免费开放日免费。",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n正文未给出票价，仅说明购买杜陵景区门票即可参观；免费开放日免费。",
           "category": "暂无评级",
           "source_url": "https://xixinews.com/shenghuo/20260104/63676.html"
         },
         {
           "id": "xa_3635d3120986ca93614b2b3910d7a185",
           "title": "西安红色体育博物馆（中国红色体育博物馆）",
-          "detail": "资料未明确门票价格；2024年国际博物馆日期间曾免费预约开放",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n资料未明确门票价格；2024年国际博物馆日期间曾免费预约开放",
           "category": "暂无评级",
           "source_url": "https://you.ctrip.com/sight/xian7/124906723.html#1"
         },
         {
           "id": "xa_96e8a0fd414fb938100f891e63fdddfa",
           "title": "西安连珠潭风景区",
-          "detail": "历史门票约20元/人，价格以景区实际公示为准；当前是否收费及是否营业未知。",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n历史门票约20元/人，价格以景区实际公示为准；当前是否收费及是否营业未知。",
           "category": "2A",
           "source_url": "https://maps.apple.com/place?place-id=H2710I3F80DA92C5AA6&address=%E4%B8%AD%E5%9B%BD%E9%99%95%E8%A5%BF%E7%9C%81%E8%A5%BF%E5%AE%89%E5%B8%82%E9%95%BF%E5%AE%89%E5%8C%BA%E6%B2%A3%E5%B3%AA%E5%8F%A3%E5%86%8517%E5%85%AC%E9%87%8C%E5%A4%84&coordinate=33.938659%2C108.837484&name=%E8%BF%9E%E7%8F%A0%E6%BD%AD%E9%A3%8E%E6%99%AF%E5%8C%BA&_provider=57879"
         },
         {
           "id": "xa_3b5a61938c651f1277d6b07eec51e832",
           "title": "西安阎良航空科技馆",
-          "detail": "原文未提及门票价格，费用未知。",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n原文未提及门票价格，费用未知。",
           "category": "3A",
           "source_url": "http://mp.weixin.qq.com/s?__biz=MzkyMjYwMjg1Ng==&mid=2247490100&idx=1&sn=e56a568197412731e7ead227752a6276"
         },
         {
           "id": "xa_e609623d1501dee059c7dce65bebe195",
           "title": "西安高家大院（高岳崧故居）",
-          "detail": "原文仅提及成人票方案，未给出具体票价；外部资料称成人票15元，仅供参考。",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n原文仅提及成人票方案，未给出具体票价；外部资料称成人票15元，仅供参考。",
           "category": "暂无评级",
           "source_url": "https://www.klook.com/zh-TW/activity/7492-gao-grand-courtyard-ticket-xian/?krid=9ad0c737-ab67-457c-64ba-07d635c45416&krt=r30"
         },
         {
           "id": "xa_0d04b281d7ef3d2cd834f99bc2544e4d",
           "title": "西安高陵场畔农耕文化生态观光产业园",
-          "detail": "资料未给出具体票价金额，仅说明门票包含项目及免票政策",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n资料未给出具体票价金额，仅说明门票包含项目及免票政策",
           "category": "3A",
           "source_url": "https://www.autohome.com.cn/ask/17810084.html"
         },
         {
           "id": "xa_25912949ef928de87b4b0634877614da",
           "title": "西影电影博物馆（西安电影制片厂·西影电影博物馆）",
-          "detail": "资料仅给出港币报价（学生票HKD 68起、成人票HKD 116起等），未提供确定的人民币票价，故留空。",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n资料仅给出港币报价（学生票HKD 68起、成人票HKD 116起等），未提供确定的人民币票价，故留空。",
           "category": "暂无评级",
           "source_url": "https://www.wingontravel.com/discovery/scenic-xiying-film-museum-71516576#1"
         },
         {
           "id": "xa_ead5f687fbf0751a6f26e4a67cfa55fe",
           "title": "鄠邑区钟楼",
-          "detail": "现有资料未记录可用费用说明，需确认免费、预约收费或按项目付费，不能根据景点类型直接猜0元",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）",
           "category": "暂无评级",
           "source_url": "https://m.xa.bendibao.com/tour/jingdianbao/detail.php?id=25719"
         },
         {
           "id": "xa_cfb389f4cf2916a87f012f5da7a40d1b",
           "title": "长安十二时辰主题街区",
-          "detail": "原文未给出票价，仅提及大学生特惠票需找主播领取",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n原文未给出票价，仅提及大学生特惠票需找主播领取",
           "category": "暂无评级",
           "source_url": "https://www.xiaohongshu.com/explore/6af67f23000000002b01faf4"
         },
         {
           "id": "xa_4080e09dbfd65a221af9e5fda8064162",
           "title": "长安唐村（长安唐村·中国农业公园）",
-          "detail": "页面显示今日票价约MYR12.13，人民币金额未明确，未换算填写。",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n页面显示今日票价约MYR12.13，人民币金额未明确，未换算填写。",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/chang-an-tang-village-83812240/?curr=MYR&locale=zh-TW"
         },
         {
           "id": "xa_af43331ffa38d34098f418e7343d5305",
           "title": "长安塔",
-          "detail": "现有资料未记录可用费用说明，需确认免费、预约收费或按项目付费，不能根据景点类型直接猜0元",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）",
           "category": "暂无评级",
           "source_url": "https://jp.trip.com/travel-guide/attraction/xi-an/chang-an-tower-98082?poiType=3"
         },
         {
           "id": "xa_29532784f963a23efc428f24888310ae",
           "title": "陕西广播电视塔（西部之光）",
-          "detail": "资料显示暂无报价，票价未知",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n资料显示暂无报价，票价未知",
           "category": "暂无评级",
           "source_url": "http://piao.qunar.com/ticket/detaillight_40998.html#in_track=travel_place"
         },
         {
           "id": "xa_f1c0a472dcc0a49dfe2b59e0b7d1767a",
           "title": "雏鹰展翅航空文化科普研学基地（雏鹰展翅航空文化景区）",
-          "detail": "现有资料未记录可用费用说明，需确认免费、预约收费或按项目付费，不能根据景点类型直接猜0元",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）",
           "category": "3A",
           "source_url": "https://mp.weixin.qq.com/s/Rxsw2M8vgR1rweDm_xRZrw?"
         },
         {
           "id": "xa_292a7f2e6ef8dbaa0ba90183499fa303",
           "title": "飞翔梦航空体验基地旅游景区",
-          "detail": "原文未给出票价金额，仅说明本地居民半价及部分人群免费",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n原文未给出票价金额，仅说明本地居民半价及部分人群免费",
           "category": "3A",
           "source_url": "https://weibo.com/2/detail/5342307369094127?utm_source=travel#1"
         },
         {
           "id": "xa_a45abeb750ef7575bdeedf45b5a0717a",
           "title": "骊山国家森林公园",
-          "detail": "需购买华清宫景区门票，骊山不单独售票；具体票价以景区为准。",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n需购买华清宫景区门票，骊山不单独售票；具体票价以景区为准。",
           "category": "4A",
           "source_url": "http://m.ctrip.com/webapp/you/sight/7/6087.html?seo=0#1"
         },
         {
           "id": "xa_4a77b7f01a27b0854cf07370d24da01c",
           "title": "高陵场畔农耕文化生态观光产业园",
-          "detail": "资料称需购票入园，票价未提供；高陵区市民凭身份证周一至周五（不含法定节假日）可免费入场。",
+          "detail": "默认预算：每人20元（项目默认估算，非已核实门票）\n资料称需购票入园，票价未提供；高陵区市民凭身份证周一至周五（不含法定节假日）可免费入场。",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/changpan-agricultural-garden-gaoling-30804120"
         }
       ]
     },
     {
-      "key": "free_not_encoded",
-      "title": "原资料已说明免费、但数值未落字段",
-      "kind": "字段规范待完成",
-      "count": 0,
-      "meaning": "原资料已说明免费但预算仍为空的记录需要字段恢复；本轮已恢复两条，本组只列尚未恢复的记录。",
-      "items": []
-    },
-    {
-      "key": "price_semantics",
-      "title": "有预算数值，但含义或依据需核对",
-      "kind": "依据待确认",
-      "count": 2,
-      "meaning": "这些记录不是空值问题：成人全价缺失、套餐价混入入场费、免费依据未确认等，影响主Agent预算判断。",
-      "items": [
-        {
-          "id": "xa_166eface48c08cefe0a45edd8ebb94c7",
-          "title": "蓝田荞麦岭景区",
-          "detail": "现值0—0分；搜索资料显示门票免费；原文未明确票价，建议以景区现场或官方渠道为准。",
-          "category": "暂无评级",
-          "source_url": "https://tw.trip.com/travel-guide/attraction/lantian/lantian-buckwheat-ridge-140604356/?curr=USD&locale=zh-TW"
-        },
-        {
-          "id": "xa_794913465afc0d85c2836cd68053bb8b",
-          "title": "长安大学公路交通博物馆",
-          "detail": "现值0—0分；资料未明确票价；其他来源称周一至周五免费开放，仅供参考",
-          "category": "暂无评级",
-          "source_url": "https://jtg.chd.edu.cn/2026/0407/c7707a259907/page.htm"
-        }
-      ]
-    },
-    {
       "key": "paused",
-      "title": "当前暂停开放",
-      "kind": "出行状态限制",
-      "count": 4,
-      "meaning": "4条高德明确暂停开放。应保留准确状态并避免规划进去；状态正确本身不是数据质量不合格。",
-      "items": [
-        {
-          "id": "xa_13e106226d8a43583909fb2c4c5d7786",
-          "title": "西安源浩华藏博物馆",
-          "detail": "高德名称：源浩华藏博物馆(暂停开放)",
-          "category": "暂无评级",
-          "source_url": "http://www.daqinip.com/wap/museumdetail.php?id=51#copyright"
-        },
-        {
-          "id": "xa_083d52d56868563ba549f6ac1cc69b34",
-          "title": "西安锦业美术博物馆（锦业美术馆）",
-          "detail": "高德名称：高新锦业美术馆(暂停开放)",
-          "category": "暂无评级",
-          "source_url": "https://www.sohu.com/a/880703161_681384?scm=10001.325_13-109000.0.0.5_32&spm=smpc.channel_248.block3_308_NDdFbm_1_fd.3.1744019714832JX5qIzX_324"
-        },
-        {
-          "id": "xa_0545e69c4954d6daa54d584b85a7ee6f",
-          "title": "金龙峡风景区",
-          "detail": "高德名称：金龙峡风景区(暂停开放)",
-          "category": "4A",
-          "source_url": "http://mp.weixin.qq.com/s?__biz=MzU3OTM4OTU2Mw==&mid=2247554807&idx=4&sn=70a06ee19ffdce466fbd2651813e10aa"
-        },
-        {
-          "id": "xa_35dfb9d5c15a86c82348bc5fd017a703",
-          "title": "陕西黑河国家森林公园",
-          "detail": "高德名称：黑河国家森林公园(暂停开放)",
-          "category": "4A",
-          "source_url": "http://heihepark.com/2729.html"
-        }
-      ]
-    },
-    {
-      "key": "unknown_status",
-      "title": "尚未确认正常开放状态",
-      "kind": "依据待确认",
-      "count": 6,
-      "meaning": "6条status仍为unknown，不能混同已暂停开放；需要结合原文、预约与最新营业情况判断。",
+      "title": "不开放，排除规划",
+      "kind": "正常保留但不规划",
+      "count": 11,
+      "meaning": "原暂停开放、未确认开放状态与高德明确内部专用共11条。未确认不等于已证实永久停业；均有不开放备注，status=paused。",
       "items": [
         {
           "id": "xa_415968e17a9dac8634ed3ab81fca824c",
           "title": "大兴汤院遗址公园",
-          "detail": "位于蓝田县汤峪镇塘子村南面、终南山下的汉唐沐浴文化主题遗址公园，2012年获评国家AAA级旅游景区。园内保留古秦岭石门汤泉老洞子遗址、古泉汤、贵妃汤、石门汤、龙龟汤、洗脸汤五汤池遗址，以及明代石门汤泉洗浴时辰碑，另有古泉亭、唐祠堂、天亭、地亭等景点。；高德营业时间：1月1日-12月31日 09:00-18:00\nopentime_week明确全年1月1日-12月31日09:00-18:00，无星期限制，按常规每日时间处理",
+          "detail": "高德营业时间：1月1日-12月31日 09:00-18:00\nopentime_week明确全年1月1日-12月31日09:00-18:00，无星期限制，按常规每日时间处理\n不开放：尚未确认正常开放，按项目规则暂不纳入规划，并非确认永久停业",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E5%A4%A7%E5%85%B4%E6%B1%A4%E9%99%A2%E9%81%97%E5%9D%80%E5%85%AC%E5%9B%AD?bst=1792391035.9f99486e10a6efb9"
         },
         {
           "id": "xa_324b1e53bf9e23ece07b15ef4339a9b4",
           "title": "秦龙乳业旅游园",
-          "detail": "位于西安市阎良区的工业旅游景区，占地约160亩，以羊乳文化与园林化景观为特色，包含羊文化广场、羊乳文化展厅、世界羊乳加工样板工厂参观走廊等功能区，兼具工业观光、科普研学与购物接待功能。2020年公告显示园区实行预约登记免费参观，仅开放南大门，室内场馆曾因疫情防控暂不开放；参观需提前预约，具体开放范围以景区最新公告为准。；高德营业时间：周一至周日 09:00-11:00,14:00-17:00\n高德opentime_week明确周一至周日分上下午开放，午休拆窗口；opentime_today一致。",
+          "detail": "高德营业时间：周一至周日 09:00-11:00,14:00-17:00\n高德opentime_week明确周一至周日分上下午开放，午休拆窗口；opentime_today一致。\n不开放：尚未确认正常开放，按项目规则暂不纳入规划，并非确认永久停业",
           "category": "3A",
           "source_url": "http://www.sxqlry.com/m/mArticle.chtml?cid=bY3yaq&id=3Ufy2m"
         },
         {
           "id": "xa_ac90ed1f26cabe8f5f25db4cbb989099",
           "title": "西安楼观生态文化旅游度假区（楼观台）",
-          "detail": "位于周至县终南山北麓的道文化与生态旅游度假区，2020年更名为西安楼观生态文化旅游度假区，下辖赵公明文化景区、终南山古楼观历史文化景区、延生观景区、化女泉景区、丝路文化园等。2020年8月宣布免费开放，需通过美团、携程、去哪儿预约0元门票，入园须出示预约二维码和西安个人电子识别码，全程佩戴口罩。；高德营业时间：周一至周日 09:00-17:30\n高德明确每周规则，本地完整匹配规范；未推定节假日例外",
+          "detail": "高德营业时间：周一至周日 09:00-17:30\n高德明确每周规则，本地完整匹配规范；未推定节假日例外\n不开放：尚未确认正常开放，按项目规则暂不纳入规划，并非确认永久停业",
           "category": "4A",
           "source_url": "http://gov.cnwest.com/kfqdt/a/2020/08/03/18973087_2.html"
         },
         {
           "id": "xa_9c21383644993470bcca1d4128f0174c",
           "title": "西安渼陂湖水系生态文化区（渼陂湖景区）",
-          "detail": "位于西安市鄠邑区涝河西畔的唐风湖景景区，秦汉上林苑、唐代游览胜地，有“关中山水最佳处”之称。核心看点包括云溪塔（仿唐密檐塔，外部可观赏）、百步三桥、环湖木栈道与芦苇荡、空翠堂/渼陂书院、萯阳湖与白沙滩等，地势平缓，适合散步、拍照、亲子游玩。大门票免费，游船、环湖观光车等为自费项目。；高德营业时间：周一至周日 06:30-21:00\n高德明确每周规则，本地完整匹配规范；未推定节假日例外",
+          "detail": "高德营业时间：周一至周日 06:30-21:00\n高德明确每周规则，本地完整匹配规范；未推定节假日例外\n不开放：尚未确认正常开放，按项目规则暂不纳入规划，并非确认永久停业",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/moments/poi-meibeihu-sceneic-area-77199207/"
         },
         {
+          "id": "xa_13e106226d8a43583909fb2c4c5d7786",
+          "title": "西安源浩华藏博物馆",
+          "detail": "高德营业时间：周一至周日 10:00-20:00\n高德明确每周规则，本地完整匹配规范；未推定节假日例外\n不开放：当前暂停开放，不纳入规划",
+          "category": "暂无评级",
+          "source_url": "http://www.daqinip.com/wap/museumdetail.php?id=51#copyright"
+        },
+        {
           "id": "xa_96e8a0fd414fb938100f891e63fdddfa",
           "title": "西安连珠潭风景区",
-          "detail": "位于西安市长安区沣峪口内约17公里处、玉皇坪附近的沣峪与太平沟内，属秦岭北麓山地峡谷景观。以多级瀑布与串珠状潭池（连珠潭）、飞天斜瀑布、藤蔓密林及沿绝壁的百余米铁钎栈道为主要看点，春季可赏紫荆花。资料记载2025年10月曾暂停营业、恢复时间待定，出行前建议核实最新开放状态。；高德营业时间：周一至周日 08:00-18:00\n高德明确每周规则，本地完整匹配规范；未推定节假日例外",
+          "detail": "高德营业时间：周一至周日 08:00-18:00\n高德明确每周规则，本地完整匹配规范；未推定节假日例外\n不开放：尚未确认正常开放，按项目规则暂不纳入规划，并非确认永久停业",
           "category": "2A",
           "source_url": "https://maps.apple.com/place?place-id=H2710I3F80DA92C5AA6&address=%E4%B8%AD%E5%9B%BD%E9%99%95%E8%A5%BF%E7%9C%81%E8%A5%BF%E5%AE%89%E5%B8%82%E9%95%BF%E5%AE%89%E5%8C%BA%E6%B2%A3%E5%B3%AA%E5%8F%A3%E5%86%8517%E5%85%AC%E9%87%8C%E5%A4%84&coordinate=33.938659%2C108.837484&name=%E8%BF%9E%E7%8F%A0%E6%BD%AD%E9%A3%8E%E6%99%AF%E5%8C%BA&_provider=57879"
         },
         {
+          "id": "xa_083d52d56868563ba549f6ac1cc69b34",
+          "title": "西安锦业美术博物馆（锦业美术馆）",
+          "detail": "高德营业时间：周一至周日 09:00-18:00\n高德明确每周规则，本地完整匹配规范；未推定节假日例外\n不开放：当前暂停开放，不纳入规划",
+          "category": "暂无评级",
+          "source_url": "https://www.sohu.com/a/880703161_681384?scm=10001.325_13-109000.0.0.5_32&spm=smpc.channel_248.block3_308_NDdFbm_1_fd.3.1744019714832JX5qIzX_324"
+        },
+        {
           "id": "xa_ead5f687fbf0751a6f26e4a67cfa55fe",
           "title": "鄠邑区钟楼",
-          "detail": "位于西安市鄠邑区东街、南街、西街、北街交汇处的文物古迹钟楼，高德地图上标注为“鄠邑区钟楼”，附近另有“西安市鄠邑区钟楼博物馆”。据公开资料，该钟楼属于文物古迹，曾记载为“已不对外开放”；本次资料正文未提供鄠邑区钟楼的开放时间、门票或参观信息，实际能否入内参观需以现场公告为准。；高德营业时间：周一至周日 08:00-18:00\n高德明确每周规则，本地完整匹配规范；未推定节假日例外",
+          "detail": "高德营业时间：周一至周日 08:00-18:00\n高德明确每周规则，本地完整匹配规范；未推定节假日例外\n不开放：尚未确认正常开放，按项目规则暂不纳入规划，并非确认永久停业",
           "category": "暂无评级",
           "source_url": "https://m.xa.bendibao.com/tour/jingdianbao/detail.php?id=25719"
-        }
-      ]
-    },
-    {
-      "key": "access",
-      "title": "公众参观资格待确认",
-      "kind": "参观条件待补",
-      "count": 1,
-      "meaning": "高德明确标为内部专用，校园/馆内参观条件需补充，不可自动按公众自由进入规划。",
-      "items": [
+        },
+        {
+          "id": "xa_0545e69c4954d6daa54d584b85a7ee6f",
+          "title": "金龙峡风景区",
+          "detail": "高德营业时间：8:30-17:30(17:00停止入园)\n高德opentime_week明确8:30-17:30且17:00停止入园；名称含暂停开放仅备注，不改变常规时间。\n不开放：当前暂停开放，不纳入规划",
+          "category": "4A",
+          "source_url": "http://mp.weixin.qq.com/s?__biz=MzU3OTM4OTU2Mw==&mid=2247554807&idx=4&sn=70a06ee19ffdce466fbd2651813e10aa"
+        },
         {
           "id": "xa_ac30d26c4c27adebcfc1e22586f8e9fb",
           "title": "陕西师范大学博物馆",
-          "detail": "高德名称：陕西师范大学长安校区教育博物馆(内部专用)；位于陕西师范大学长安校区的高校综合性博物馆（教育博物馆），建筑面积23000平方米，展厅面积约7000平方米，内设中国教育馆、妇女文化馆、书画艺术馆、历史文化馆、校史展览馆，馆藏文物2万余件（套）。免费参观，逢周一和法定节假日闭馆；位于校园内，校外访客入校参观可能需遵守学校门禁与预约规定。",
+          "detail": "高德营业时间：周一至周日 09:00-12:00，14:30-17:00\n高德opentime_week明确给出每周星期与上下午分段时间，已拆分为两个窗口；无季节、节假日或停止入场信息。\n不开放：高德标注内部专用，暂不用于公众行程",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E9%99%95%E8%A5%BF%E5%B8%88%E8%8C%83%E5%A4%A7%E5%AD%A6%E5%8D%9A%E7%89%A9%E9%A6%86/6206679?fromModule=lemma_inlink#1"
+        },
+        {
+          "id": "xa_35dfb9d5c15a86c82348bc5fd017a703",
+          "title": "陕西黑河国家森林公园",
+          "detail": "高德营业时间：周一至周日 08:00-18:00\n高德明确每周规则，本地完整匹配规范；未推定节假日例外\n不开放：当前暂停开放，不纳入规划",
+          "category": "4A",
+          "source_url": "http://heihepark.com/2729.html"
         }
       ]
     },
     {
+      "key": "unavailable_note_missing",
+      "title": "不开放但缺少备注",
+      "kind": "需补充",
+      "count": 0,
+      "meaning": "所有暂停记录都应写明不开放原因。",
+      "items": []
+    },
+    {
       "key": "scope",
-      "title": "行政范围需确认",
-      "kind": "范围选择",
+      "title": "行政范围说明",
+      "kind": "范围事项",
       "count": 1,
-      "meaning": "丝路欢乐世界高德行政城市为咸阳市，已按高德更正。可作为西安周边目标保留，但严格只收西安市时应排除。",
+      "meaning": "丝路欢乐世界行政城市按高德为咸阳市，作为既有西安周边目标保留；严格只收西安市时需从目标范围排除，这不是地址字段填写错误。",
       "items": [
         {
           "id": "xa_733d2f7c03ebb9582b895feba9923180",
@@ -1104,1590 +956,1263 @@
       ]
     },
     {
+      "key": "possible_duplicates",
+      "title": "相同核心名称的近邻记录",
+      "kind": "疑似重复，未自动合并",
+      "count": 3,
+      "meaning": "坐标10米去重已通过；这里补查同名或别名。高德可能给出不同入口/子场馆，保留真实定位，需判断合并还是改名区分，避免主Agent重复安排。",
+      "items": [
+        {
+          "id": "xa_fd4167e9ce151793748c81f06c957a46、xa_dc8b7cd27a4f4e1a5f14ceb27a687dac",
+          "title": "易俗社文化旅游景区",
+          "detail": "易俗社文化旅游景区；高德西安易俗社（B001D041LV） / 易俗社文化旅游景区（易俗社文化街区）；高德易俗社文化街区（B0L0L59EIJ）",
+          "source_url": "https://www.dahepiao.com/jingqulvyou1/20250218504395.html"
+        },
+        {
+          "id": "xa_43b9671b755aa54768932e6ed0de0952、xa_0e640ef487a572df84f13686f40c8a72",
+          "title": "杨虎城将军止园别墅",
+          "detail": "杨虎城将军止园别墅（西安事变纪念馆旧址）；高德杨虎城将军纪念馆（B0L0XAKHZV） / 杨虎城将军止园别墅（西安事变纪念馆）；高德杨虎城别墅（B0FFGNTYMM）",
+          "source_url": "https://mp.weixin.qq.com/s/aDcoM7X0tnptxMAwyde_YA"
+        },
+        {
+          "id": "xa_0d04b281d7ef3d2cd834f99bc2544e4d、xa_4a77b7f01a27b0854cf07370d24da01c",
+          "title": "高陵场畔农耕文化生态观光产业园",
+          "detail": "西安高陵场畔农耕文化生态观光产业园；高德高陵场畔农耕文化博物院（B0FFG1YUKQ） / 高陵场畔农耕文化生态观光产业园；高德高陵场畔农耕文化生态观光产业园（B0HDA7ZD8P）",
+          "source_url": "https://www.autohome.com.cn/ask/17810084.html"
+        }
+      ]
+    },
+    {
       "key": "default_grade",
       "title": "暂无评级",
-      "kind": "默认值，不独立判失败",
+      "kind": "正常默认值",
       "count": 175,
-      "meaning": "175条没有已记录的可靠A级，按用户要求使用默认值暂无评级。可能实际未评级、评级不适用或尚未找到依据，不据此删除，也不把175条直接算成黄金数据失败。",
+      "meaning": "暂无评级是允许的默认值，不据此判不合格。",
       "items": [
         {
           "id": "xa_4b708d77b4b5fabc2be330f1fcc5d0e2",
           "title": "东元公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E4%B8%9C%E5%85%83%E5%85%AC%E5%9B%AD?bst=1793882300.69e1f9459c432aa8#1"
         },
         {
           "id": "xa_63d2e2f73d0ba31c9aa1151b7b52aa74",
           "title": "中国古琴博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E4%B8%AD%E5%9B%BD%E5%8F%A4%E7%90%B4%E5%8D%9A%E7%89%A9%E9%A6%86/22719864?fromtitle=%E8%A5%BF%E5%AE%89%E5%B8%82%E4%B8%AD%E5%9B%BD%E5%8F%A4%E7%90%B4%E5%8D%9A%E7%89%A9%E9%A6%86&fromid=53487420&bst=1791382754.3e05dc45bd8f9e46#1"
         },
         {
           "id": "xa_744dbe7e880b9b65776f9f120ba498b7",
           "title": "中国唐苑",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://wapbaike.baidu.com/item/%E4%B8%AD%E5%9B%BD%E5%94%90%E8%8B%91/10025839?fromModule=lemma_starMap&lemmaFrom=lemma_relation_starMap&structureId=19986ed3b8c40c3d66355288&structureClickId=10025839&structureItemId=2a5beae43cb2033311bd5559&lemmaIdFrom=6375505#1"
         },
         {
           "id": "xa_a08ee1d4d1b4bad34a2a72741fb2cd15",
           "title": "丰庆公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://you.ctrip.com/sight/xian7/74008.html?renderPlatform=#1"
         },
         {
           "id": "xa_237fe0975bc8c2316b21ca24ad00ec07",
           "title": "丰镐遗址车马坑陈列馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%e4%b8%b0%e9%95%90%e9%81%97%e5%9d%80%e8%bd%a6%e9%a9%ac%e5%9d%91%e9%99%88%e5%88%97%e9%a6%86/17517236?bst=1791654082.dfeda0f59e25fc09#1"
         },
         {
           "id": "xa_893834ba3e96f242eb9b13cd37b4446b",
           "title": "临潼区鸿门宴博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://mp.weixin.qq.com/s?__biz=MzIyMDAxMzQ0Nw==&mid=2247486641&idx=1&sn=e2aca77b53fa8ed4008cdbb8c31c2502"
         },
         {
           "id": "xa_70d4a62b05c2e8e6d7571087a8d4fae9",
           "title": "乐天公园（周至县康养融合主题健身公园）",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://www.zhouzhi.gov.cn/xxgk/fdzdgknr/shgysyjs/ggwhty/whtyhd/1768457871246290946.html"
         },
         {
           "id": "xa_876d0e636a13b8c73d819d7d668d4aea",
           "title": "交大西迁博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://wza.xa.gov.cn:9000/xa_wza/web_files/xian/file/2021/11/05/202111051001581957006.pdf#1#1#1"
         },
         {
           "id": "xa_9f582c4f4b77dfc7b064772e5164a17a",
           "title": "仙游寺博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E4%BB%99%E6%B8%B8%E5%AF%BA%E5%8D%9A%E7%89%A9%E9%A6%86/16410985?bst=1793386380.3669790f10938973#1"
         },
         {
           "id": "xa_bc3d40f1b19320eccf5f201d470659b1",
           "title": "伊利集团西安乳业园景区",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://m.hxzpt.com/Information?param=eyJ2ZW5kZXJpZCI6MTc3LCJzaWQiOjIyNH0="
         },
         {
           "id": "xa_5992ec53d7617aa88ed875b4fbf73be5",
           "title": "可可主角·西安巧克力博物馆（回民街店）",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://zhuanlan.zhihu.com/p/2043146060399371681"
         },
         {
           "id": "xa_b39c470d2ed3a4ea3c769b53ca0e6973",
           "title": "吉利汽车西安制造基地旅游景区",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://jp.trip.com/travel-guide/attraction/xi-an/city-149671784?curr=JPY&locale=ja-JP&scene=DISTRICT"
         },
         {
           "id": "xa_11bce8d2f4b35add8e4729d254bb3859",
           "title": "启航公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://www.wingontravel.com/discovery/scenic-luochuan-2580/list/scenic-xianyang-111/scenic-jingyang-20985/scenic-jingyang-20985/scenic-qihang-park-52189205"
         },
         {
           "id": "xa_318dde95052e3ebd6af99662ed8df00b",
           "title": "周至水街沙沙河景区",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://my.trip.com/moments/detail/zhouzhi-2781-143831556?locale=zh-MY#1"
         },
         {
           "id": "xa_c4f85cfc573232d2ade3a93f9b805bac",
           "title": "唐华清宫御汤遗址博物馆（华清宫景区内）",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://jp.trip.com/moments/detail/xi-an-7-133122802"
         },
         {
           "id": "xa_9a57da43cbb84ee0fa6e78b7889b3a05",
           "title": "唐华清宫梨园遗址博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://travel.qunar.com/p-oi9778757-tanghuaqinggongliyuan"
         },
         {
           "id": "xa_baa7572df24f940e4d5d6df75f8504f1",
           "title": "唐城墙遗址公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E5%94%90%E5%9F%8E%E5%A2%99%E9%81%97%E5%9D%80%E5%85%AC%E5%9B%AD/14077866?fromtitle=%E8%A5%BF%E5%AE%89%E5%94%90%E5%9F%8E%E5%A2%99&fromid=8516056#1"
         },
         {
           "id": "xa_3fdde4a909e435e626f3d9bcbd312745",
           "title": "唐大慈恩寺遗址公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/moments/detail/xi-an-7-153836460/"
         },
         {
           "id": "xa_f35ad893b164e1d111b9b4fcad9a3d70",
           "title": "嘉午台风景区",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/moments/poi-jiawutai-scenic-spot-76842/#2"
         },
         {
           "id": "xa_6d804f1182800eb0d3da665795677b04",
           "title": "土门小树林公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://sg.trip.com/travel-guide/attraction/xi-an/tumenxiao-shulin-park-51978910?curr=SGD#1"
         },
         {
           "id": "xa_415968e17a9dac8634ed3ab81fca824c",
           "title": "大兴汤院遗址公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E5%A4%A7%E5%85%B4%E6%B1%A4%E9%99%A2%E9%81%97%E5%9D%80%E5%85%AC%E5%9B%AD?bst=1792391035.9f99486e10a6efb9"
         },
         {
           "id": "xa_69ee06fb336d2b4e60abbdee3d082b2d",
           "title": "大明宫国家遗址公园丹凤门遗址博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://www.wingontravel.com/discovery/scenic-weinan-1030/scenic-pucheng-1946/scenic-chengcheng-21187/scenic-xi-an-10/scenic-daming-palace-national-heritage-park-84625#1"
         },
         {
           "id": "xa_63c37de389f0ab52f87be2144d9b2ca2",
           "title": "大明宫国家遗址公园考古探索中心",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://www.toutiao.com/article/7658497092230431247/?&source=m_redirect&wid=1791856325331"
         },
         {
           "id": "xa_0768a5f3ded6b0e15eee9b6122eec7e6",
           "title": "大明宫遗址博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/moments/detail/xi-an-7-127651231/"
         },
         {
           "id": "xa_260b726df821043eeed2e2fd0fa2a543",
           "title": "天坛遗址公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/xi-antiantan-ruins-89251?curr=TWD&locale=zh-TW&poiType=3&scene=gsDestination"
         },
         {
           "id": "xa_778c7b6cb807dfdd6e12bac0c2ef5c9c",
           "title": "太平万花山风景区",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://m.tuniu.com/menpiao/3088936?"
         },
         {
           "id": "xa_8859cee2baaab7470262ccc33f60f2f8",
           "title": "广仁寺",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://pk.trip.com/moments/detail/xi-an-7-156938811"
         },
         {
           "id": "xa_40cd331b02d0fef84fb143e7f7a2a924",
           "title": "开元公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://jp.trip.com/travel-guide/attraction/xi-an/kaiyuan-park-112647325?curr=JPY&locale=ja-JP&scene=gsDestination"
         },
         {
           "id": "xa_87f4ae7ae0a9b170087a63cb9517cb4a",
           "title": "文景公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://k.sina.cn/article_2162541102_80e5c22e04001l6ci.html?from=travel"
         },
         {
           "id": "xa_5787a240cb38b26fac537c230f3b2579",
           "title": "文景山公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://you.ctrip.com/sight/xian7/2037594.html#1"
         },
         {
           "id": "xa_79cac853cca47a640f77af77e62b6505",
           "title": "明秦王世子公园（世子公园）",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://www.xiaohongshu.com/explore/6af6823200000000250115aa"
         },
         {
           "id": "xa_8450d240f333faeaf7546553332c6c81",
           "title": "明秦王府城墙遗址",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://uk.trip.com/travel-guide/attraction/xi-an/mingqin-mansion-city-wall-relic-site-13853788?curr=GBP#1"
         },
         {
           "id": "xa_3f3d0c20832f5504aeb9ceedc08102db",
           "title": "明秦王愍王墓遗址",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/tomb-of-prince-qin-of-ming-dynasty-31677133?poiType=3"
         },
         {
           "id": "xa_dc8b7cd27a4f4e1a5f14ceb27a687dac",
           "title": "易俗社文化旅游景区（易俗社文化街区）",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://chinatripprimer.com/zh-cn/xian/attractions/yisu-society-cultural-district"
         },
         {
           "id": "xa_d398a2f823301ffc5a52013f4f9e00e3",
           "title": "易俗社百年博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://www.dahepiao.com/jingqulvyou1/20250218504395.html"
         },
         {
           "id": "xa_096996b5aba1e6663fb5c37040706b25",
           "title": "星河运动公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://www.toutiao.com/article/7675063223464378903/?wid=1792349170361"
         },
         {
           "id": "xa_8e7f604324ae62418daa994b41a2bd12",
           "title": "智慧文化公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://api.aiyoutravel.com/location/detail/a62316a731daac577e2a73d91cec1890"
         },
         {
           "id": "xa_be7f3144c314bd6dd70e997c4167634b",
           "title": "曲江大华社区公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E6%9B%B2%E6%B1%9F%E5%A4%A7%E5%8D%8E%E7%A4%BE%E5%8C%BA%E5%85%AC%E5%9B%AD?bst=1792784616.86df4db3c94b27cb#1"
         },
         {
           "id": "xa_6af4ef7ba1169f1058b20b62553295e8",
           "title": "曲江寒窑遗址公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://www.tuniu.com/menpiao/1170196#/index"
         },
         {
           "id": "xa_7d0ef47c8baa027c4584b9e9075dafff",
           "title": "曲江悦动公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E6%9B%B2%E6%B1%9F%E6%82%A6%E5%8A%A8%E5%85%AC%E5%9B%AD/56552734?fromModule=lemma_inlink&bst=1792611309.69969ddd9ad365e2"
         },
         {
           "id": "xa_27d29517e4105307913f0837c8aeac55",
           "title": "曲江新开门运动公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E6%9B%B2%E6%B1%9F%E6%96%B0%E5%BC%80%E9%97%A8%E8%BF%90%E5%8A%A8%E5%85%AC%E5%9B%AD?bst=1793151082.3409cf776c8e0f4d#1"
         },
         {
           "id": "xa_251caeeac125d4991a6d0049c4d529e0",
           "title": "曲江青年公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://you.ctrip.com/sight/xian7/5719149.html#1"
         },
         {
           "id": "xa_43b9671b755aa54768932e6ed0de0952",
           "title": "杨虎城将军止园别墅（西安事变纪念馆旧址）",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://mp.weixin.qq.com/s/aDcoM7X0tnptxMAwyde_YA"
         },
         {
           "id": "xa_0e640ef487a572df84f13686f40c8a72",
           "title": "杨虎城将军止园别墅（西安事变纪念馆）",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://mp.weixin.qq.com/s?__biz=MzAxMDY4MjQzNQ==&mid=2667681029&idx=1&sn=a9895181739958357aead0adb4001578"
         },
         {
           "id": "xa_130e7061db782bba5df66aa1578deea6",
           "title": "楼观台国家森林公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/travel-guide/attraction/zhouzhi/louguantai-national-forest-park-98060?curr=USD&locale=zh-TW&scene=gsDestination"
         },
         {
           "id": "xa_51de672c914794503bf346f635ceb7f3",
           "title": "永兴坊（陕西非遗文化特色街区）",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/moments/poi-yongxing-fang-39706665/#1"
         },
         {
           "id": "xa_871e2b52995ee045f7f6e8108beed36c",
           "title": "永阳公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://m.toutiao.com/article/7692633370387300919/?wid=1791575108229&upstream_biz=toutiao_pc"
         },
         {
           "id": "xa_5ae9bef5ff18389e214ccb865d66fe1d",
           "title": "汉长安城未央宫国家考古遗址公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/archaeological-park-of-weiyang-palace-in-chang-an-city-of-the-western-han-dynasty-89236?curr=JOD&locale=zh-TW&scene=gsDestination"
         },
         {
           "id": "xa_5fa226895256d3d2bbc0cf6e75429d3e",
           "title": "汉长安城未央宫遗址陈列馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://xixinews.com/m/view.php?aid=73421"
         },
         {
           "id": "xa_62b7a22d0978bd516b96b59abf8f3ea7",
           "title": "汉长安城长乐宫四、五号遗址博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://www.iwenbo.fun/index.php/index/museum/4660.html"
         },
         {
           "id": "xa_17686a1be2045b1c76dedda2e9c5650a",
           "title": "汤峪湖森林公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%e6%b9%af%e5%b3%aa%e6%b9%96%e6%a3%ae%e6%9e%97%e5%85%ac%e5%9c%92?_x_tr_sch=http&bst=1791168295.647a2a3c61510a7e#1"
         },
         {
           "id": "xa_3b40a1a135d5d444456a980072e1180e",
           "title": "汪锋故居纪念馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/travel-guide/attraction/lantian/wangfeng-former-residence-memorial-hall-15031476"
         },
         {
           "id": "xa_dfb522953b15ee47818218d5aee09b8b",
           "title": "泾渭分明景区（泾渭分明观景台）",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E6%B3%BE%E6%B8%AD%E5%88%86%E6%98%8E%E6%99%AF%E5%8C%BA/67777563?fromtitle=%E6%B3%BE%E6%B8%AD%E5%88%86%E6%98%8E%E8%A7%82%E6%99%AF%E5%8F%B0&fromid=67742512&bst=1792597345.dd21ed569696e5e9#1"
         },
         {
           "id": "xa_fa25b250183849b20c3948b6a4d4f98a",
           "title": "洪庆山国家森林公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/mt-hongqing-national-forest-park-31668198?curr=MYR&locale=zh-TW&scene=gsDestination"
         },
         {
           "id": "xa_cc54c1442c306d3e39c0d99967c5f151",
           "title": "浐灞滋水公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E6%B5%90%E7%81%9E%E6%BB%8B%E6%B0%B4%E5%85%AC%E5%9B%AD/18449945?bst=1791829828.bc9196031fca9276"
         },
         {
           "id": "xa_92c4c6a1b3a50a966bc828f07f06fc8c",
           "title": "清凉山森林公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/qingliangshan-forest-park-13822193?poiType=3"
         },
         {
           "id": "xa_78867ca2da0d2adaf03b5e7457aa496c",
           "title": "潭滨公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://mp.weixin.qq.com/s?__biz=MzkyNzY1ODM2NQ==&mid=2247494757&idx=1&sn=6844b23ea73c4b46471c593ee67a9dac"
         },
         {
           "id": "xa_8adf528d614465e72a5ca00fec2d298b",
           "title": "王莽千亩荷花",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/moments/poi-wangmang-lotus-pond-31671949/#1"
         },
         {
           "id": "xa_6b9288b7103c3b678d4b4933b4f86197",
           "title": "环城西苑公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/huancheng-xiyuan-park-10538860?curr=TWD&locale=zh-TW"
         },
         {
           "id": "xa_5a36782143c40a42ca3cf1f25532ba8e",
           "title": "石川河阎良风景区",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://sg.trip.com/travel-guide/attraction/xi-an/ishikawa-river-133942263/"
         },
         {
           "id": "xa_09bb53e468710a7c2835e1e02dc78390",
           "title": "秦二世陵遗址博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/qin-ershiling-ruins-museum-79437759/"
         },
         {
           "id": "xa_24bbbb698934f422f94ee6446b0d15ac",
           "title": "空军军医大学国际口腔医学博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://m.dianping.com/ugcdetail/237688892?bizType=29"
         },
         {
           "id": "xa_1163624f9aa08c41f30ef5dcb324064a",
           "title": "空军军医大学第三附属医院国际口腔医学博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E7%A9%BA%E5%86%9B%E5%86%9B%E5%8C%BB%E5%A4%A7%E5%AD%A6%E7%AC%AC%E4%B8%89%E9%99%84%E5%B1%9E%E5%8C%BB%E9%99%A2%E5%9B%BD%E9%99%85%E5%8F%A3%E8%85%94%E5%8C%BB%E5%AD%A6%E5%8D%9A%E7%89%A9%E9%A6%86#1"
         },
         {
           "id": "xa_1f7a7bd4b38a73166be48f7b575247e0",
           "title": "红光公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://wapbaike.baidu.com/item/%E7%BA%A2%E5%85%89%E5%85%AC%E5%9B%AD/20724909?structureClickId=20724909&structureId=06a4e94ffa5c4881ede884e9&lemmaFrom=starMapTop&fromModule=lemma_starMap-top#1"
         },
         {
           "id": "xa_1864498793e36bb118720db883abead8",
           "title": "老子墓",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://hk.trip.com/travel-guide/attraction/zhouzhi/tomb-of-laozi-144365753/?curr=USD&locale=zh-HK"
         },
         {
           "id": "xa_aef9e16e53de8915c386c05d237fb060",
           "title": "航天城中湖公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/hangtiancheng-zhong-hu-park-22867500?curr=TWD&locale=zh-TW"
         },
         {
           "id": "xa_0d87ee7cbacd6704a06a6722817fd1c6",
           "title": "莲湖公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/moments/poi-yang-hucheng-s-zhiyuan-villa-84618/#1"
         },
         {
           "id": "xa_482e294b4c6eabdff9c8a58b48b1394e",
           "title": "蓝田县蔡文姬纪念馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/moments/poi-caiwenji-memorial-hall-89200/#1"
         },
         {
           "id": "xa_166eface48c08cefe0a45edd8ebb94c7",
           "title": "蓝田荞麦岭景区",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/travel-guide/attraction/lantian/lantian-buckwheat-ridge-140604356/?curr=USD&locale=zh-TW"
         },
         {
           "id": "xa_9ea6db5e37ec2be13761f98067bd3baf",
           "title": "西仓市集文创公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://m.toutiao.com/article/7679710244724851210/?wid=1789474787564&upstream_biz=toutiao_pc"
         },
         {
           "id": "xa_923a0eb77dc6751f79ce9bc930b2265c",
           "title": "西北人民革命大学旧址博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://www.gaoling.gov.cn/ztzl/rdzt/glqbwgzc/bwgdl/1905190501185781761.html"
         },
         {
           "id": "xa_495d605d30c4f0dca385fcf4ab275e7a",
           "title": "西北大学博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://news.qq.com/rain/a/20241227A079IO00?openApp=false&web_channel=wap"
         },
         {
           "id": "xa_3fc1bd8305220c2ba583a4bcc3aac482",
           "title": "西安万象城·生命之树",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://www.xiaohongshu.com/explore/6af2f99b000000001803a790"
         },
         {
           "id": "xa_50f360628eb77e4aee64f815a73ed8e9",
           "title": "西安中国书法艺术博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/zhongguoshufa-art-museum-10538778?curr=HKD&locale=zh-TW"
         },
         {
           "id": "xa_095928a4609bffadfb10ab45d3bb3d1e",
           "title": "西安于右任书法艺术博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%e8%a5%bf%e5%ae%89%e4%ba%8e%e5%8f%b3%e4%bb%bb%e4%b9%a6%e6%b3%95%e8%89%ba%e6%9c%af%e5%8d%9a%e7%89%a9%e9%a6%86/19686566#1"
         },
         {
           "id": "xa_080a5c2681a2294729b3bd83c6d80560",
           "title": "西安于右任故居纪念馆（于右任故居博物馆）",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://jp.trip.com/moments/detail/xi-an-7-149824158/"
         },
         {
           "id": "xa_dc541e65324ccf903f36d14713ef1173",
           "title": "西安交通大学创新港校区（校园预约参观）",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://xa.bendibao.com/xiuxian/2024322/126273.shtm#1#1"
         },
         {
           "id": "xa_f3057996a4fb6c9680cd1138202a12df",
           "title": "西安交通大学博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E4%BA%A4%E9%80%9A%E5%A4%A7%E5%AD%A6%E5%8D%9A%E7%89%A9%E9%A6%86/4603197?anchor=4&bst=1789561586.9925fc0511fbffa4#4#1"
         },
         {
           "id": "xa_e1388cf7c5627d818ca7d8e8439e8d5e",
           "title": "西安人才公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/moments/poi-xi-an-talent-park-136315489/#1"
         },
         {
           "id": "xa_b578c68af59cc3d44f66e7be67d40c03",
           "title": "西安健康博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://www.iwenbo.fun/index.php/index/museum/4733.html"
         },
         {
           "id": "xa_9c220f7f4bf78f6b0ac4306509b3690d",
           "title": "西安唐皇城墙含光门遗址博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://you.ctrip.com/sight/xian7/73055.html?renderPlatform=#1"
         },
         {
           "id": "xa_e5fca9b065ed2a868f2adfcf7aff4b3b",
           "title": "西安唐都新碑林艺术博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/tangdouxin-beilin-museum-31671876?curr=OMR&locale=zh-TW&scene=gsDestination"
         },
         {
           "id": "xa_007ddab319cad02878e2ebcc9aeb07ab",
           "title": "西安国际陆港网球运动公园（西安陆港运动公园）",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E9%99%86%E6%B8%AF%E8%BF%90%E5%8A%A8%E5%85%AC%E5%9B%AD/64749570?bst=1791704425.070df5265f190881#1#1"
         },
         {
           "id": "xa_25b72879767948565cb67fac7cd93c8c",
           "title": "西安城市运动公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/moments/poi-xi-an-city-sports-park-10538838/#1"
         },
         {
           "id": "xa_3c69b4ca371762b0d6df2d9c52fb0746",
           "title": "西安大华博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://wapbaike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%A4%A7%E5%8D%8E%E5%8D%9A%E7%89%A9%E9%A6%86/53487417?structureClickId=53487417&structureId=043d1618c3a97842b6b8abed&structureItemId=aa3243d272496619a52f98be&lemmaFrom=starMapTop&fromModule=lemma_starMap-top#1"
         },
         {
           "id": "xa_ef5cc5bb9a5b5fe63cc9c97665bbc1b4",
           "title": "西安大唐西市博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://www.dtxsmuseum.com/news_show.aspx?id=1447"
         },
         {
           "id": "xa_39a81549060e944b2cbec9669dd3fee7",
           "title": "西安工程大学纺织服装博物馆（临潼校区）",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://you.ctrip.com/sight/xian7/5704151.html?renderPlatform=#1"
         },
         {
           "id": "xa_608f7db9e5cc305960ac17ecd0523ae8",
           "title": "西安市临潼区扁鹊纪念馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/bianque-memorial-hall-10557688?curr=USD&locale=zh-TW#1"
         },
         {
           "id": "xa_a318fb61dba3626bdf92c722029d0d0b",
           "title": "西安市云之翼航空博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E4%BA%91%E4%B9%8B%E7%BF%BC%E8%88%AA%E7%A9%BA%E5%8D%9A%E7%89%A9%E9%A6%86?bst=1790310087.faa7aed8c0001bc8#1"
         },
         {
           "id": "xa_ef6e8642555e8bf5aca90895c572c8bf",
           "title": "西安市古陶瓷博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://www.baike.com/wikiid/8214465667367258295?enter_type=blue_link&source=collection&from_doc_title=%E8%A5%BF%E5%AE%89%E5%B8%82%E5%A2%83%E5%86%85%E7%9A%84%E5%8D%9A%E7%89%A9%E9%A6%86&from_doc_id=7336010493439705140&from_version_id=7545248589925367848#1"
         },
         {
           "id": "xa_776ed7f97a5914518fc327442a5ce952",
           "title": "西安市吉兆春皮肤医药博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://www.jizhaochun.com/h-col-118.html"
         },
         {
           "id": "xa_c83f5d732b5ed97a4ac6d7860930b45c",
           "title": "西安市圣普美术博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E5%9C%A3%E6%99%AE%E7%BE%8E%E6%9C%AF%E5%8D%9A%E7%89%A9%E9%A6%86?svcp_stk=1_8Mk_bkWE586tff1mK-k8m1dX-VyazssTOa9bi_wu-KYedQ9va3D0tfVlrXukGDYBIjd63Y2XDfT8zqblazB6j1HDjhjrbpMlXVADBtXL9hyVRrYUo8adl3o_d948pX63vEZu-aYZGSFYLZmRusojCvemMvi9Tj51AhsE9zqlCvH-8TxTLEwsyZ9buovrUy3d#1"
         },
         {
           "id": "xa_272704efef7fef88d30ad0107d1437d5",
           "title": "西安市城市影像博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/localandxi-anshi-chengshi-yingxiang-museum-80052135"
         },
         {
           "id": "xa_e3086b0129b476a9fe35d35db3046d61",
           "title": "西安市城市记忆博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://www.sohu.com/a/945007626_681384?scm=10001.325_13-325_13.0.0.5_32&spm=smpc.channel_248.block3_308_NDdFbm_1_fd.5.17607067673500lj1KeW_324"
         },
         {
           "id": "xa_1209c4374b748231659167205753edd9",
           "title": "西安市大唐青铜镜博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://wapbaike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E5%A4%A7%E5%94%90%E9%9D%92%E9%93%9C%E9%95%9C%E5%8D%9A%E7%89%A9%E9%A6%86/53486986?structureClickId=53486986&structureId=222bebc5df5b5f24b0bd5ef2&structureItemId=15c17d148cd1150da8410f4c&lemmaFrom=starMapTop&fromModule=lemma_starMap-top#1"
         },
         {
           "id": "xa_dae9be3b7b614175ff1c20aff524a290",
           "title": "西安市太和医室博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E5%A4%AA%E5%92%8C%E5%8C%BB%E5%AE%A4%E5%8D%9A%E7%89%A9%E9%A6%86?bst=1792636983.552c049384c424d0"
         },
         {
           "id": "xa_4283cda2269698e1b9f78fee89a5f84e",
           "title": "西安市德江陶瓷模范标本博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://www.daqinhao.com/news/677.html#3"
         },
         {
           "id": "xa_5927186945f08c28e62e28026b3cce08",
           "title": "西安市惟德玉文化博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/xi-anshi-weideyu-culture-museum-79438961?poiType=3"
         },
         {
           "id": "xa_36a3027b1a671f72fc2071439eaf08b4",
           "title": "西安市新源民俗艺术博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://www.daqinhao.com/news/677.html#3"
         },
         {
           "id": "xa_43874103d0337b6196994fafa96926f0",
           "title": "西安市明清皮影艺术博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://mp.weixin.qq.com/s?__biz=MzU3NDQwMzU4OQ==&mid=2248148758&idx=1&sn=becf78ee4e185295228238d7b385c68e"
         },
         {
           "id": "xa_4f69f178b32769daa9868391d1ffa5c7",
           "title": "西安市曲江红色记忆博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E6%9B%B2%E6%B1%9F%E7%BA%A2%E8%89%B2%E8%AE%B0%E5%BF%86%E5%8D%9A%E7%89%A9%E9%A6%86?bst=1793456082.406bd7b4d826dc3a#1"
         },
         {
           "id": "xa_c059366b61384d4e3f3fef9ddfa119f8",
           "title": "西安市民俗博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://mp.weixin.qq.com/s?__biz=MzE5MTE0ODY5OQ==&mid=2247484169&idx=1&sn=294201e03decf8e25756612fc4df2424"
         },
         {
           "id": "xa_ef3298e12304f10c9b2d24b72216d14c",
           "title": "西安市水墨长安艺术博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E6%B0%B4%E5%A2%A8%E9%95%BF%E5%AE%89%E8%89%BA%E6%9C%AF%E5%8D%9A%E7%89%A9%E9%A6%86/53486810?fromModule=lemma_inlink"
         },
         {
           "id": "xa_5254a04cedaf4cf89ce654a4f206a479",
           "title": "西安市沣峪口老油坊博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E6%B2%A3%E5%B3%AA%E5%8F%A3%E8%80%81%E6%B2%B9%E5%9D%8A%E5%8D%9A%E7%89%A9%E9%A6%86?bst=1791397629.5ae1ff7dc77c4bd3#1"
         },
         {
           "id": "xa_d5c22ab3dad673f3329d76d36839cce7",
           "title": "西安市瑛煌关中婚俗文化博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://www.sxyhsy.net/hgzhswhbwg/333.html"
         },
         {
           "id": "xa_2f8987a7f6773a95f26875acc465f14e",
           "title": "西安市石仟佛造像艺术博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://www.hopegoo.com/zh-hk/hot-hotels/landmark/xi-an-shiqian-buddha-statue-art-museum-691488/hotel-brand-29323/#2"
         },
         {
           "id": "xa_d2e5999bc82a2dabdd39e3afc509fc20",
           "title": "西安市秦阿房宫遗址博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E7%A7%A6%E9%98%BF%E6%88%BF%E5%AE%AB%E9%81%97%E5%9D%80%E5%8D%9A%E7%89%A9%E9%A6%86/17644208"
         },
         {
           "id": "xa_c1dd6bcf6e6ccbadef503a1fe294a3cb",
           "title": "西安市纺织公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/xi-an-textile-park-10538883?poiType=3"
         },
         {
           "id": "xa_b37e28dcb5262730a42aa7270e2809dc",
           "title": "西安市羊文化博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E7%BE%8A%E6%96%87%E5%8C%96%E5%8D%9A%E7%89%A9%E9%A6%86/23782899?lemmaFrom=lemma_starMap&fromModule=lemma_starMap&starNodeId=660f43d920a65fe233fef173&lemmaIdFrom=19909623&bst=1792642796.45605ad855a1880b#1"
         },
         {
           "id": "xa_efafb6a76e11f8ac512208382f150ca4",
           "title": "西安市蓝田玉文化博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://www.ltywhbwg.com/aboutus.html"
         },
         {
           "id": "xa_249ff8a35d6d05147ff561428580687a",
           "title": "西安市起良蔡侯纸博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://jp.trip.com/travel-guide/attraction/zhouzhi/xi-anshi-qiliang-caihouzhi-museum-79438964?curr=USD&locale=ja-JP"
         },
         {
           "id": "xa_a7295b4f9067adb666fc4c76fed43ea8",
           "title": "西安市鄠邑区非物质文化遗产博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://www.xahy.gov.cn/zwgk/shgy/ggwhty/1998584630863257602.html"
         },
         {
           "id": "xa_5316f46cb8047576d2c759cb14a7db14",
           "title": "西安市长安博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://hk.trip.com/travel-guide/attraction/xi-an/chang-an-museum-87705?curr=HKD&locale=zh-HK&scene=gsDestination"
         },
         {
           "id": "xa_7539f68cafd2e2850538e56d8810e9bb",
           "title": "西安市非物质文化遗产博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E9%9D%9E%E7%89%A9%E8%B4%A8%E6%96%87%E5%8C%96%E9%81%97%E4%BA%A7%E5%8D%9A%E7%89%A9%E9%A6%86/16299161?bst=1792113971.5cd7c1dfc76c48b5#1"
         },
         {
           "id": "xa_a6a343b00207ff6b8e5930bcf007e339",
           "title": "西安市黄土画派美术博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://wza.xa.gov.cn:9000/beilin_wza/web_files/beilin/file/2022/11/10/202211101750481002845.pdf#1#1#1"
         },
         {
           "id": "xa_620b6083e386a9bc81a85010d65f84bf",
           "title": "西安建筑科技大学中国音乐史博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://sie.xauat.edu.cn/gjjyxy/xzjd1/xszy1/ylsbwg.htm"
         },
         {
           "id": "xa_c8dcae1b0da0e4fc3fa362d3366effd1",
           "title": "西安建筑科技大学校史馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://wza.xa.gov.cn:9000/beilin_wza/zwgk/fdzdgk/wtly/ssml/1773177264902094849.html"
         },
         {
           "id": "xa_c9df2c29af733876f586bb84f51a98a2",
           "title": "西安建筑科技大学贾平凹文学艺术馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://wza.xa.gov.cn:9000/beilin_wza/web_files/beilin/file/2023/03/07/202303071707163550368.pdf#1#1#1"
         },
         {
           "id": "xa_f170cb328283aa30977eb67d21094320",
           "title": "西安户邑民间艺术博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://mp.weixin.qq.com/s?__biz=Mzg5Nzg3NDU2MQ==&mid=2247487859&idx=1&sn=d2eb2dfd8d01d08c8031764d50a6ddb2"
         },
         {
           "id": "xa_f4fc9e0367924c79bc3d9c8dd42f6c3b",
           "title": "西安曲江富陶国际陶艺博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E6%9B%B2%E6%B1%9F%E5%AF%8C%E9%99%B6%E5%9B%BD%E9%99%85%E9%99%B6%E8%89%BA%E5%8D%9A%E7%89%A9%E9%A6%86?bst=1789237722.f3a5fad56f5d7988#1"
         },
         {
           "id": "xa_88c7017b78cb3ff91052be904fdca013",
           "title": "西安曲江艺术博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/moments/poi-xi-an-qujiang-museum-of-fine-arts-13415519/#1"
         },
         {
           "id": "xa_c3e892b1fccdeba91388a1d66a94c701",
           "title": "西安柴窑文化博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E6%9F%B4%E7%AA%91%E6%96%87%E5%8C%96%E5%8D%9A%E7%89%A9%E9%A6%86/18409453#1"
         },
         {
           "id": "xa_b9f6c8b0303ca8e62ef43bf7528e572b",
           "title": "西安植物园（新区）",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://m.ctrip.com/webapp/you/gspoi/sight/0/2040576.html?seo=0"
         },
         {
           "id": "xa_3816921b669349cebc256cdbfccb682b",
           "title": "西安汉风水务博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://www.iwenbo.fun/index.php/index/museum/4708.html"
         },
         {
           "id": "xa_30620582752299b38be68edc78684c88",
           "title": "西安浐灞生态区城建博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E6%B5%90%E7%81%9E%E7%94%9F%E6%80%81%E5%8C%BA%E5%9F%8E%E5%BB%BA%E5%8D%9A%E7%89%A9%E9%A6%86/8513640?fromtitle=%E8%A5%BF%E5%AE%89%E6%B5%90%E7%81%9E%E7%94%9F%E6%80%81%E5%8C%BA%E5%9F%8E%E5%BB%BA%E5%8D%9A%E7%89%A9%E9%A6%86&fromid=53487418&bst=1793672871.11b67ad14eb402f0#1"
         },
         {
           "id": "xa_f51603a24ae345f706f87a2a96cb11ea",
           "title": "西安海棠职业学院中医美容博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://mp.weixin.qq.com/s?__biz=MzU2NjA2NjU5NQ==&mid=2247485020&idx=1&sn=c129a6c506ba467d449098e93a9afc91"
         },
         {
           "id": "xa_3ca67e3b26245e42979a9e977ddac05c",
           "title": "西安渭河城市运动公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://jp.trip.com/travel-guide/attraction/xi-an/xi-an-weihe-city-greenland-sports-park-31668111"
         },
         {
           "id": "xa_9c21383644993470bcca1d4128f0174c",
           "title": "西安渼陂湖水系生态文化区（渼陂湖景区）",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/moments/poi-meibeihu-sceneic-area-77199207/"
         },
         {
           "id": "xa_9061926f93d48df1897af80cb099a02f",
           "title": "西安湖",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/xi-an-lake-112646767?curr=OMR"
         },
         {
           "id": "xa_13e106226d8a43583909fb2c4c5d7786",
           "title": "西安源浩华藏博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://www.daqinip.com/wap/museumdetail.php?id=51#copyright"
         },
         {
           "id": "xa_0e3110b8be8c5ef43a084904e0792d6f",
           "title": "西安牡丹苑",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://mp.weixin.qq.com/s?__biz=MzE5MTUzMDI3Nw==&mid=2247486247&idx=1&sn=a5073b44ca75bf7b50abeeef7c8c3fae"
         },
         {
           "id": "xa_920c0a4f9e45fe1711ba920031d53ba3",
           "title": "西安皇家艺术博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://wapbaike.baidu.com/item/%E8%A5%BF%E5%AE%89%E7%9A%87%E5%AE%B6%E8%89%BA%E6%9C%AF%E5%8D%9A%E7%89%A9%E9%A6%86/16299116?structureClickId=16299116&structureId=043d1618c3a97842b6b8abed&lemmaFrom=starMapTop&fromModule=lemma_starMap-top"
         },
         {
           "id": "xa_f9552442082f1d148fbaf68773699ced",
           "title": "西安碑林博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://mp.weixin.qq.com/s?__biz=MzA5NjI2OTI5Ng==&mid=2657696764&idx=1&sn=b475db035c085ec43bd34b22d0653ade&poc_token=HFKf6GqjZrfmSM8JQKt4DLNQ-fPdH0m_SBbLYokS"
         },
         {
           "id": "xa_90679a57b1f31b72da69f7cf17df6d09",
           "title": "西安秦砖汉瓦博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://xixinews.com/shenghuo/20260104/63676.html"
         },
         {
           "id": "xa_3635d3120986ca93614b2b3910d7a185",
           "title": "西安红色体育博物馆（中国红色体育博物馆）",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://you.ctrip.com/sight/xian7/124906723.html#1"
         },
         {
           "id": "xa_6b444eb7f90430d55620bf876d67b922",
           "title": "西安美术学院美术博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://fineartmuseum.xafa.edu.cn/zl/lszl.htm"
         },
         {
           "id": "xa_465ffd07fc343b11c6a56fed1f8aa1b8",
           "title": "西安美都艺术博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E7%BE%8E%E9%83%BD%E8%89%BA%E6%9C%AF%E5%8D%9A%E7%89%A9%E9%A6%86/2571349?fromModule=lemma_inlink#1"
         },
         {
           "id": "xa_e20a6e558215681c72099053be1f5974",
           "title": "西安辋川溶洞风景区",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/moments/poi-wangchuan-scenic-resort-58278513/#2"
         },
         {
           "id": "xa_b024f58a09b680482e9f86053007bf91",
           "title": "西安金鼎蓝田玉文化石艺博览园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://www.xasqyg.cn/culture-travel-detail.html?pubId=7584"
         },
         {
           "id": "xa_083d52d56868563ba549f6ac1cc69b34",
           "title": "西安锦业美术博物馆（锦业美术馆）",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://www.sohu.com/a/880703161_681384?scm=10001.325_13-109000.0.0.5_32&spm=smpc.channel_248.block3_308_NDdFbm_1_fd.3.1744019714832JX5qIzX_324"
         },
         {
           "id": "xa_6a0594ae3a8d5262f43a9129ec7ffa39",
           "title": "西安音乐学院艺术博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://bkso.baidu.com/item/%e8%a5%bf%e5%ae%89%e9%9f%b3%e4%b9%90%e5%ad%a6%e9%99%a2%e8%89%ba%e6%9c%af%e5%8d%9a%e7%89%a9%e9%a6%86/22187753?fromModule=lemma_inlink#1"
         },
         {
           "id": "xa_e609623d1501dee059c7dce65bebe195",
           "title": "西安高家大院（高岳崧故居）",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://www.klook.com/zh-TW/activity/7492-gao-grand-courtyard-ticket-xian/?krid=9ad0c737-ab67-457c-64ba-07d635c45416&krt=r30"
         },
         {
           "id": "xa_71d8fe03020eac2ba598c6b7239ed217",
           "title": "西安高陵钱币博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E9%AB%98%E9%99%B5%E9%92%B1%E5%B8%81%E5%8D%9A%E7%89%A9%E9%A6%86?fromtitle=%E9%AB%98%E9%99%B5%E5%8E%BF%E9%92%B1%E5%B8%81%E5%8D%9A%E7%89%A9%E9%A6%86&fromid=15882594&bst=1790606445.9a46e389cb06fb90#1"
         },
         {
           "id": "xa_b4506e58143a2337b348caa2314daab1",
           "title": "西寺沟旅游风景区",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://www.sina.cn/gc/article/niwswni4284132.html"
         },
         {
           "id": "xa_25912949ef928de87b4b0634877614da",
           "title": "西影电影博物馆（西安电影制片厂·西影电影博物馆）",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://www.wingontravel.com/discovery/scenic-xiying-film-museum-71516576#1"
         },
         {
           "id": "xa_84936a5332d7801bf4bbdd34cec46fc3",
           "title": "郭杜公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E9%83%AD%E6%9D%9C%E5%85%AC%E5%9B%AD"
         },
         {
           "id": "xa_a02939d9fe766af5496fb4a40936a2d6",
           "title": "郭杜森林公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://mp.weixin.qq.com/s?__biz=MzI5OTY3NTg5NA==&mid=2247485393&idx=1&sn=ea9de5bbd6abc7f6ad3130ee747d0651"
         },
         {
           "id": "xa_ead5f687fbf0751a6f26e4a67cfa55fe",
           "title": "鄠邑区钟楼",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://m.xa.bendibao.com/tour/jingdianbao/detail.php?id=25719"
         },
         {
           "id": "xa_793fe36b2ec4993bc2a9274d35171fff",
           "title": "重阳成道宫（活死人墓）",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://hk.trip.com/travel-guide/attraction/xi-an/chongyang-chengdao-palace-142244604?poiType=3"
         },
         {
           "id": "xa_27dd35ba106c049a9461171c13b505dd",
           "title": "长乐公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E9%95%BF%E4%B9%90%E5%85%AC%E5%9B%AD/13011261?bst=1793193571.11e1f2c79ac5be39#1"
         },
         {
           "id": "xa_cfb389f4cf2916a87f012f5da7a40d1b",
           "title": "长安十二时辰主题街区",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://www.xiaohongshu.com/explore/6af67f23000000002b01faf4"
         },
         {
           "id": "xa_4080e09dbfd65a221af9e5fda8064162",
           "title": "长安唐村（长安唐村·中国农业公园）",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/chang-an-tang-village-83812240/?curr=MYR&locale=zh-TW"
         },
         {
           "id": "xa_af43331ffa38d34098f418e7343d5305",
           "title": "长安塔",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://jp.trip.com/travel-guide/attraction/xi-an/chang-an-tower-98082?poiType=3"
         },
         {
           "id": "xa_794913465afc0d85c2836cd68053bb8b",
           "title": "长安大学公路交通博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://jtg.chd.edu.cn/2026/0407/c7707a259907/page.htm"
         },
         {
           "id": "xa_bf2f9d1eb54e010504e851a8b8a2f21c",
           "title": "长安大学地质博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://mp.weixin.qq.com/s/iNSp8Hz8zfOUid11E3yGtQ"
         },
         {
           "id": "xa_c7960443322d2a5ed0aac994c73ccbf6",
           "title": "阎良公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E9%98%8E%E8%89%AF%E5%85%AC%E5%9B%AD/4858895?bst=1790646231.b6e327f7b7258d5a#1"
         },
         {
           "id": "xa_54a713be03270a3017cbaba2f40a8663",
           "title": "阿房宫遗址公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://www.lvyouplay.com/lvyougonglue/4974.html"
         },
         {
           "id": "xa_9c0d1a45888aba116a91fb8afc7f02a6",
           "title": "陕西体育博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://www.sohu.com/a/945007626_681384?scm=10001.325_13-325_13.0.0.5_32&spm=smpc.channel_248.block3_308_NDdFbm_1_fd.5.17607067673500lj1KeW_324"
         },
         {
           "id": "xa_63e1e1236c59b7914e107c678ed3028b",
           "title": "陕西元阳文化博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://sg.trip.com/travel-guide/attraction/xi-an/shanxiyuanyang-culture-museum-52086936?curr=USD#1"
         },
         {
           "id": "xa_32e486d3ab152ff06ce0c31adb042f5c",
           "title": "陕西唐三彩艺术博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://mp.weixin.qq.com/s?__biz=MzA4MjI3NDk4Mw==&mid=2654040462&idx=1&sn=ca3a1bfb7f43f09c40c581ca3ecd43ff"
         },
         {
           "id": "xa_ac30d26c4c27adebcfc1e22586f8e9fb",
           "title": "陕西师范大学博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E9%99%95%E8%A5%BF%E5%B8%88%E8%8C%83%E5%A4%A7%E5%AD%A6%E5%8D%9A%E7%89%A9%E9%A6%86/6206679?fromModule=lemma_inlink#1"
         },
         {
           "id": "xa_29532784f963a23efc428f24888310ae",
           "title": "陕西广播电视塔（西部之光）",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://piao.qunar.com/ticket/detaillight_40998.html#in_track=travel_place"
         },
         {
           "id": "xa_b9d3e1e71e05993273910d7eab45fa88",
           "title": "陕西汉唐石刻博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://mp.weixin.qq.com/s?__biz=MzA5NTQ0MjUzOA==&mid=2652561999&idx=1&sn=90f821260f46173511f5186f884efef8"
         },
         {
           "id": "xa_568e9fe27675ead6c4caa6701bd8d2f8",
           "title": "陕西省美术博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://mp.weixin.qq.com/s/DLHNUhSS0N9PySUXvSIgfg"
         },
         {
           "id": "xa_ce68c6e5479921b38b91f381ed39fe6b",
           "title": "陕西科学技术馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E9%99%95%E8%A5%BF%E7%A7%91%E5%AD%A6%E6%8A%80%E6%9C%AF%E9%A6%86/6840397?bst=1789572874.6a53a2e44f2fc5b4#1"
         },
         {
           "id": "xa_898bfab7557b10ae237b314c3e51384b",
           "title": "陕西科技大学中国轻工业博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E9%99%95%E8%A5%BF%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%A6%E4%B8%AD%E5%9B%BD%E8%BD%BB%E5%B7%A5%E4%B8%9A%E5%8D%9A%E7%89%A9%E9%A6%86/60799467?fromtitle=%E4%B8%AD%E5%9B%BD%E8%BD%BB%E5%B7%A5%E4%B8%9A%E5%8D%9A%E7%89%A9%E9%A6%86&fromid=22852771#1"
         },
         {
           "id": "xa_bba0cade4d1a82bcbd00ff22d3d6d887",
           "title": "雁南公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://www.xiaohongshu.com/explore/6af682c90000000026011856"
         },
         {
           "id": "xa_205c4eeec6cf99c688dcdabc678f00f3",
           "title": "雁鸣湖休闲公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://jp.trip.com/moments/poi-yanminghu-leisure-park-31678160#1"
         },
         {
           "id": "xa_1d4473ff223840868dd386c52ee8d36b",
           "title": "青龙寺遗址博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://mp.weixin.qq.com/s/cn7ftGkO65T19INuuvSOiA"
         },
         {
           "id": "xa_e1ec1171ffbe59c2df32449b14ee4add",
           "title": "革命公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://www.029558.com/content/detail/28531"
         },
         {
           "id": "xa_7e1cf6c28d36f25968ff7c6e6720a02b",
           "title": "高陵区防震减灾科普馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E9%AB%98%E9%99%B5%E5%8C%BA%E9%98%B2%E9%9C%87%E5%87%8F%E7%81%BE%E7%A7%91%E6%99%AE%E9%A6%86/53608752?fromModule=lemma_inlink#1"
         },
         {
           "id": "xa_4a77b7f01a27b0854cf07370d24da01c",
           "title": "高陵场畔农耕文化生态观光产业园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/changpan-agricultural-garden-gaoling-30804120"
         },
         {
           "id": "xa_51c035b65107e9af98c73e14667fb42f",
           "title": "高陵祥顺博物馆",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://baike.baidu.com/item/%E9%AB%98%E9%99%B5%E7%A5%A5%E9%A1%BA%E5%8D%9A%E7%89%A9%E9%A6%86/19686567?bst=1791502019.10f55d31cc19b475#1"
         },
         {
           "id": "xa_6b1cd6968f630985684e37e1117512fe",
           "title": "鲸鱼沟竹海风景区",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "http://m.tuniu.com/menpiao/4403516?#/index"
         },
         {
           "id": "xa_4d9e7f95009468a463180cfd08adf021",
           "title": "鹦鹉寺公园",
-          "detail": "当前category=暂无评级",
+          "detail": "category=暂无评级",
           "category": "暂无评级",
           "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/parrot-temple-park-31672339?curr=AUD&locale=zh-TW&scene=gsDestination"
-        }
-      ]
-    },
-    {
-      "key": "old_grade",
-      "title": "原有A级仍然有效保留，未获高德重复标注",
-      "kind": "不按缺项处理",
-      "count": 45,
-      "meaning": "45条原有1A—5A值未被高德明确新值覆盖，不能因为高德没标注就说等级字段缺失；原等级最终可靠性仍应追溯原资料，非本次重新独立核验的结论。",
-      "items": [
-        {
-          "id": "xa_759f6a7bebc86fed6a7b7d27d86757ba",
-          "title": "上王村景区",
-          "detail": "当前category=3A，原来源保留",
-          "category": "3A",
-          "source_url": "http://m.xinlvtuan.com/ticket/76204.htm"
-        },
-        {
-          "id": "xa_733d2f7c03ebb9582b895feba9923180",
-          "title": "丝路欢乐世界",
-          "detail": "当前category=4A，原来源保留",
-          "category": "4A",
-          "source_url": "https://www.xiaohongshu.com/explore/6af67f23000000002b01faf4"
-        },
-        {
-          "id": "xa_9e563b07f818fc5dd57aed323296a570",
-          "title": "乐游原（青龙寺遗址景区）",
-          "detail": "当前category=3A，原来源保留",
-          "category": "3A",
-          "source_url": "https://hk.trip.com/moments/poi-leyouyuan-scenic-resort-15009280/#3"
-        },
-        {
-          "id": "xa_0b720a84d1ac9fc6d1ac0e79bfa5e576",
-          "title": "亮宝楼艺术文化景区（陕西亮宝楼艺术博物馆）",
-          "detail": "当前category=3A，原来源保留",
-          "category": "3A",
-          "source_url": "https://hk.trip.com/travel-guide/attraction/xi-an/city-152151594?curr=HKD&locale=zh-HK&scene=gsDestination"
-        },
-        {
-          "id": "xa_bab1e69231a5be2697701cdd07bc4d32",
-          "title": "仪祉湖水利旅游景区",
-          "detail": "当前category=3A，原来源保留",
-          "category": "3A",
-          "source_url": "https://mp.weixin.qq.com/s/aY5p4-N9HQwsQ2UyApsOeg"
-        },
-        {
-          "id": "xa_3f07ab78f9bfa1d65659f158540fcdc2",
-          "title": "八路军西安办事处纪念馆",
-          "detail": "当前category=4A，原来源保留",
-          "category": "4A",
-          "source_url": "https://you.ctrip.com/sight/xian7/18281.html?renderPlatform=#1"
-        },
-        {
-          "id": "xa_38ff748c6fed1fad6fcdfe9a13edc3a1",
-          "title": "兴庆宫公园",
-          "detail": "当前category=3A，原来源保留",
-          "category": "3A",
-          "source_url": "https://you.ctrip.com/sight/xian7/18277.html?renderPlatform=#1"
-        },
-        {
-          "id": "xa_5ab309d55ad7ac12523364aa5c9c5ec4",
-          "title": "太平国家森林公园",
-          "detail": "当前category=4A，原来源保留",
-          "category": "4A",
-          "source_url": "https://jp.trip.com/moments/detail/xi-an-7-150171281/"
-        },
-        {
-          "id": "xa_fd4167e9ce151793748c81f06c957a46",
-          "title": "易俗社文化旅游景区",
-          "detail": "当前category=3A，原来源保留",
-          "category": "3A",
-          "source_url": "https://www.dahepiao.com/jingqulvyou1/20250218504395.html"
-        },
-        {
-          "id": "xa_82c8270fd7d3c5e3e31e2f7645c9fe92",
-          "title": "曲江秦二世陵遗址公园（秦二世胡亥墓）",
-          "detail": "当前category=3A，原来源保留",
-          "category": "3A",
-          "source_url": "https://www.tuniu.com/menpiao/1806107#/index"
-        },
-        {
-          "id": "xa_62a31255b274a84884a3c2d7d8b0f067",
-          "title": "朱雀国家森林公园",
-          "detail": "当前category=4A，原来源保留",
-          "category": "4A",
-          "source_url": "https://xa.bendibao.com/tour/jingdianbangdan/2460.shtml"
-        },
-        {
-          "id": "xa_53749aac7c0802723cd3114f83221574",
-          "title": "杜公祠（杜甫纪念馆）",
-          "detail": "当前category=2A，原来源保留",
-          "category": "2A",
-          "source_url": "https://jp.trip.com/moments/detail/xi-an-7-150802653/"
-        },
-        {
-          "id": "xa_adeb614d63bbd211c88b071aa9195250",
-          "title": "杜甫纪念馆（杜公祠）",
-          "detail": "当前category=2A，原来源保留",
-          "category": "2A",
-          "source_url": "https://tw.trip.com/travel-guide/attraction/xi-an/dufu-memorial-hall-24649540?curr=INR"
-        },
-        {
-          "id": "xa_f1a735730aa544148c3c3f9eeade2bea",
-          "title": "杜邑遗址公园",
-          "detail": "当前category=3A，原来源保留",
-          "category": "3A",
-          "source_url": "https://jp.trip.com/travel-guide/attraction/xi-an/dujuan-relics-park-130892912/"
-        },
-        {
-          "id": "xa_57b3485b318d2b4400b240f8ae3f3d6a",
-          "title": "汉城湖旅游风景区",
-          "detail": "当前category=4A，原来源保留",
-          "category": "4A",
-          "source_url": "https://you.ctrip.com/sight/xian7/121495.html?renderPlatform=#1"
-        },
-        {
-          "id": "xa_e79909a7f9fb930566630d9cb765c7cb",
-          "title": "灞桥生态湿地公园",
-          "detail": "当前category=3A，原来源保留",
-          "category": "3A",
-          "source_url": "https://wapbaike.baidu.com/item/%E7%81%9E%E6%A1%A5%E7%94%9F%E6%80%81%E6%B9%BF%E5%9C%B0%E5%85%AC%E5%9B%AD/189682?fromModule=lemma_starMap&lemmaFrom=lemma_relation_starMap&structureId=12a053617ab295d3133412eb&structureClickId=189682&structureItemId=4cc6a4b858f804ce08f96042&lemmaIdFrom=20627001"
-        },
-        {
-          "id": "xa_152ff5b7aa219ae20ef4aed1770a0b9d",
-          "title": "爱菊健康文化体验园",
-          "detail": "当前category=3A，原来源保留",
-          "category": "3A",
-          "source_url": "https://www.meipian.cn/5odjh444"
-        },
-        {
-          "id": "xa_c02128b0fc19ee41a6f5ac13433113d3",
-          "title": "王府井奥莱·临潼小镇（临潼奥特莱斯景区）",
-          "detail": "当前category=3A，原来源保留",
-          "category": "3A",
-          "source_url": "https://hk.trip.com/moments/detail/xi-an-7-145397625/#1"
-        },
-        {
-          "id": "xa_58350d811f23abc82239db6ac5cef1da",
-          "title": "王顺山国家森林公园",
-          "detail": "当前category=4A，原来源保留",
-          "category": "4A",
-          "source_url": "https://tw.trip.com/moments/detail/lantian-2755-123758923/"
-        },
-        {
-          "id": "xa_a273718bd61e370366aede7966c80c8e",
-          "title": "百跃羊乳文化景区",
-          "detail": "当前category=3A，原来源保留",
-          "category": "3A",
-          "source_url": "https://mp.weixin.qq.com/s/Rxsw2M8vgR1rweDm_xRZrw?"
-        },
-        {
-          "id": "xa_b81a01740ae47dfcc9f45e8120dc8f90",
-          "title": "秦始皇帝陵博物院（秦始皇兵马俑博物馆·丽山园）",
-          "detail": "当前category=5A，原来源保留",
-          "category": "5A",
-          "source_url": "http://mp.weixin.qq.com/s?__biz=MzUxOTg2MTA5Ng==&mid=2247513186&idx=1&sn=0edae24d70ef45614266715437595746"
-        },
-        {
-          "id": "xa_1e16bea1d85537a84e1ad2cf553f494d",
-          "title": "秦岭九龙潭景区",
-          "detail": "当前category=2A，原来源保留",
-          "category": "2A",
-          "source_url": "https://jp.trip.com/moments/detail/xi-an-7-147954773/?locale=ja-JP&curr=JPY"
-        },
-        {
-          "id": "xa_8e1a3fbb77212a49d138f80f4331cd90",
-          "title": "秦岭国家植物园",
-          "detail": "当前category=4A，原来源保留",
-          "category": "4A",
-          "source_url": "https://www.qinlingbg.com/post/%e5%85%b3%e4%ba%8e%e7%a7%a6%e5%b2%ad%e5%9b%bd%e5%ae%b6%e6%a4%8d%e7%89%a9%e5%9b%ad%e6%89%a7%e8%a1%8c%e6%b7%a1%e5%ad%a3%e7%a5%a8%e4%bb%b7%e5%8f%8a%e5%bc%80%e6%94%be%e6%97%b6%e9%97%b4%e7%9a%84%e5%85%ac/"
-        },
-        {
-          "id": "xa_944a121c1808ae4fdcf7ebe172b16e70",
-          "title": "红色葛牌景区（葛牌古镇）",
-          "detail": "当前category=3A，原来源保留",
-          "category": "3A",
-          "source_url": "https://tw.trip.com/moments/poi-gepaizhen-56809156/#1"
-        },
-        {
-          "id": "xa_901a8106d49e54f67ce1ec86d09b2e99",
-          "title": "西安关中民俗艺术博物院",
-          "detail": "当前category=4A，原来源保留",
-          "category": "4A",
-          "source_url": "https://you.ctrip.com/sight/xian7/73315.html?renderPlatform=#1"
-        },
-        {
-          "id": "xa_701fa3cb08b7c26565a979ced09f68ff",
-          "title": "西安半坡博物馆",
-          "detail": "当前category=4A，原来源保留",
-          "category": "4A",
-          "source_url": "https://www.banpomuseum.com.cn/index.php?m=content&c=index&a=show&catid=15&id=936"
-        },
-        {
-          "id": "xa_aff42837479415d97780039c42c4e8af",
-          "title": "西安博物院（小雁塔）",
-          "detail": "当前category=4A，原来源保留",
-          "category": "4A",
-          "source_url": "http://mp.weixin.qq.com/s?__biz=MjM5ODczNzcyOA==&mid=2650765761&idx=1&sn=b3283bea13207ad54371ba84d6a51f56"
-        },
-        {
-          "id": "xa_07239797efc819277f693cb090c85195",
-          "title": "西安市临潼区博物馆",
-          "detail": "当前category=3A，原来源保留",
-          "category": "3A",
-          "source_url": "https://big5.cri.cn/gate/big5/sn.cri.cn/n/20250423/94f07cf2-d39d-2d8e-2b60-f9c7ef1a4b8e.html"
-        },
-        {
-          "id": "xa_b3c6f2352ddede4989c5bba816dbc1d5",
-          "title": "西安市青龙寺遗址景区",
-          "detail": "当前category=3A，原来源保留",
-          "category": "3A",
-          "source_url": "http://mp.weixin.qq.com/s?__biz=MzIzOTU3NTAxNQ==&mid=2247665121&idx=1&sn=996741da64e73461b9e4ecc23946b6f2"
-        },
-        {
-          "id": "xa_9a7500de11c9dc5699bd41009f67e96e",
-          "title": "西安常宁宫休闲山庄",
-          "detail": "当前category=3A，原来源保留",
-          "category": "3A",
-          "source_url": "https://www.guojixing.com/en/jingdian/18680.html"
-        },
-        {
-          "id": "xa_0bc9090cba266cdc4b6d85b727ca4472",
-          "title": "西安御品轩幸福烘焙魔法城堡景区",
-          "detail": "当前category=3A，原来源保留",
-          "category": "3A",
-          "source_url": "https://m.xa.bendibao.com/tour/ly96032.shtm"
-        },
-        {
-          "id": "xa_ac90ed1f26cabe8f5f25db4cbb989099",
-          "title": "西安楼观生态文化旅游度假区（楼观台）",
-          "detail": "当前category=4A，原来源保留",
-          "category": "4A",
-          "source_url": "http://gov.cnwest.com/kfqdt/a/2020/08/03/18973087_2.html"
-        },
-        {
-          "id": "xa_d156f8a446c3298934b6a77669d242d3",
-          "title": "西安浐灞国家湿地公园",
-          "detail": "当前category=4A，原来源保留",
-          "category": "4A",
-          "source_url": "https://baijiahao.baidu.com/s?id=1881441943541703776"
-        },
-        {
-          "id": "xa_a56c3a18119855fe19417b97da8c9ad5",
-          "title": "西安祥峪森林公园",
-          "detail": "当前category=3A，原来源保留",
-          "category": "3A",
-          "source_url": "https://tw.trip.com/moments/detail/xi-an-7-147134947/"
-        },
-        {
-          "id": "xa_de4325db172a22c89d664ddf3f62b10a",
-          "title": "西安秦汉酒文化园",
-          "detail": "当前category=3A，原来源保留",
-          "category": "3A",
-          "source_url": "http://m.hxzpt.com/product/detil?id=15835&pid=16165"
-        },
-        {
-          "id": "xa_96e8a0fd414fb938100f891e63fdddfa",
-          "title": "西安连珠潭风景区",
-          "detail": "当前category=2A，原来源保留",
-          "category": "2A",
-          "source_url": "https://maps.apple.com/place?place-id=H2710I3F80DA92C5AA6&address=%E4%B8%AD%E5%9B%BD%E9%99%95%E8%A5%BF%E7%9C%81%E8%A5%BF%E5%AE%89%E5%B8%82%E9%95%BF%E5%AE%89%E5%8C%BA%E6%B2%A3%E5%B3%AA%E5%8F%A3%E5%86%8517%E5%85%AC%E9%87%8C%E5%A4%84&coordinate=33.938659%2C108.837484&name=%E8%BF%9E%E7%8F%A0%E6%BD%AD%E9%A3%8E%E6%99%AF%E5%8C%BA&_provider=57879"
-        },
-        {
-          "id": "xa_3b5a61938c651f1277d6b07eec51e832",
-          "title": "西安阎良航空科技馆",
-          "detail": "当前category=3A，原来源保留",
-          "category": "3A",
-          "source_url": "http://mp.weixin.qq.com/s?__biz=MzkyMjYwMjg1Ng==&mid=2247490100&idx=1&sn=e56a568197412731e7ead227752a6276"
-        },
-        {
-          "id": "xa_3cdf70dcf2d3e7dccfa5aec32b4a241a",
-          "title": "西安饭庄·陕菜文化体验博物馆旅游景区",
-          "detail": "当前category=3A，原来源保留",
-          "category": "3A",
-          "source_url": "https://baike.baidu.com/item/%E9%99%95%E8%8F%9C%E6%96%87%E5%8C%96%E4%BD%93%E9%AA%8C%E5%8D%9A%E7%89%A9%E9%A6%86/58484832?bst=1792046577.f3f33e832d99f991#1"
-        },
-        {
-          "id": "xa_f2e89abd9ff629f7e0296cba6b7e448e",
-          "title": "西安高陵奇石博物馆",
-          "detail": "当前category=3A，原来源保留",
-          "category": "3A",
-          "source_url": "https://you.ctrip.com/sight/xian7/1479642.html#1"
-        },
-        {
-          "id": "xa_e004c85774bea8943e5dc40af1f0e9eb",
-          "title": "鄂豫陕苏维埃政府葛牌镇纪念馆",
-          "detail": "当前category=2A，原来源保留",
-          "category": "2A",
-          "source_url": "https://tw.trip.com/travel-guide/attraction/lantian/gepaizhenqusuwei-aizhengfu-memorial-hall-89240?poiType=3"
-        },
-        {
-          "id": "xa_ef7a33653f1b8f6f3a96e8d049e49d18",
-          "title": "陕西自然博物馆",
-          "detail": "当前category=4A，原来源保留",
-          "category": "4A",
-          "source_url": "http://mp.weixin.qq.com/s?__biz=MzI3NzQyNjIwMw==&mid=2247497328&idx=2&sn=aeb9002f9ee1c6f870efaf86a6c453fe"
-        },
-        {
-          "id": "xa_35dfb9d5c15a86c82348bc5fd017a703",
-          "title": "陕西黑河国家森林公园",
-          "detail": "当前category=4A，原来源保留",
-          "category": "4A",
-          "source_url": "http://heihepark.com/2729.html"
-        },
-        {
-          "id": "xa_f1c0a472dcc0a49dfe2b59e0b7d1767a",
-          "title": "雏鹰展翅航空文化科普研学基地（雏鹰展翅航空文化景区）",
-          "detail": "当前category=3A，原来源保留",
-          "category": "3A",
-          "source_url": "https://mp.weixin.qq.com/s/Rxsw2M8vgR1rweDm_xRZrw?"
-        },
-        {
-          "id": "xa_292a7f2e6ef8dbaa0ba90183499fa303",
-          "title": "飞翔梦航空体验基地旅游景区",
-          "detail": "当前category=3A，原来源保留",
-          "category": "3A",
-          "source_url": "https://weibo.com/2/detail/5342307369094127?utm_source=travel#1"
-        },
-        {
-          "id": "xa_a45abeb750ef7575bdeedf45b5a0717a",
-          "title": "骊山国家森林公园",
-          "detail": "当前category=4A，原来源保留",
-          "category": "4A",
-          "source_url": "http://m.ctrip.com/webapp/you/sight/7/6087.html?seo=0#1"
-        }
-      ]
-    },
-    {
-      "key": "extra_cost",
-      "title": "基础免费，附加消费未知或估算",
-      "kind": "不独立判失败",
-      "count": 3,
-      "meaning": "此前费用正则将这3条一起标成不合格过严。基础入园免费已说明，租船、体育场馆或DIY收费可以留备注，按需另行估算，不应否定基础游览记录。",
-      "items": [
-        {
-          "id": "xa_152ff5b7aa219ae20ef4aed1770a0b9d",
-          "title": "爱菊健康文化体验园",
-          "detail": "入园及儿童乐园免费；亲子DIY体验约38元/人（按正文估算）",
-          "category": "3A",
-          "source_url": "https://www.meipian.cn/5odjh444"
-        },
-        {
-          "id": "xa_1f7a7bd4b38a73166be48f7b575247e0",
-          "title": "红光公园",
-          "detail": "公园免费开放；园内租船、主题乐园等游乐项目另行收费，价格未知。",
-          "category": "暂无评级",
-          "source_url": "https://wapbaike.baidu.com/item/%E7%BA%A2%E5%85%89%E5%85%AC%E5%9B%AD/20724909?structureClickId=20724909&structureId=06a4e94ffa5c4881ede884e9&lemmaFrom=starMapTop&fromModule=lemma_starMap-top#1"
-        },
-        {
-          "id": "xa_25b72879767948565cb67fac7cd93c8c",
-          "title": "西安城市运动公园",
-          "detail": "公园免费入园；运动场馆另行收费，价格未提供",
-          "category": "暂无评级",
-          "source_url": "https://tw.trip.com/moments/poi-xi-an-city-sports-park-10538838/#1"
         }
       ]
     }

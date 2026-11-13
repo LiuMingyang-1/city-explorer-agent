@@ -7,6 +7,9 @@ import type {AmapHours,AmapAuthoritySnapshot} from "./amap-authority.ts";
 import {parseSchedule,availabilityOnDate} from "../data/schedule.ts";
 import type {Sidecar} from "./releases.ts";
 import {normalizeScenicLevel} from "../data/categories.ts";
+import {applyDefaultAttractionHours,applyDefaultAttractionBudget}from"./default-opening.ts";
+import type{ImageSupplement}from"./types.ts";
+import{applyAttractionStatusPolicy}from"./demo-status.ts";
 
 type Row=Record<string,any>;
 export interface SupplementInput {
@@ -19,7 +22,7 @@ export interface AttractionReview {
   issues:string[];notes:string[];changed_fields:string[];current:Row;
 }
 export interface SupplementPlan {
-  expected_sha256:string;asOf:string;updates:{before:Row;after:Row;authority?:AmapAuthoritySnapshot}[];
+  expected_sha256:string;asOf:string;updates:{before:Row;after:Row;authority?:AmapAuthoritySnapshot;image_supplement?:ImageSupplement}[];
   reviews:AttractionReview[];
 }
 /** Re-normalization uses the already bound AMap text, without re-verifying or
@@ -30,7 +33,7 @@ export async function planAmapTimeRepairs(baseline:{sha256:string;rows:Row[]},si
   const today=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Shanghai"}).format(new Date(asOf));
   for(const item of items){
     const before=baseline.rows.find(r=>r.id===item.id),old=sidecar.events[item.id]?.amap_authority;
-    if(!before||before.record_type!=="attraction"||before.amap_poi_id!==item.poi_id||old?.poi_id!==item.poi_id)throw Error("AMAP_TIME_REPAIR_NOT_BOUND");
+    if(!before||before.record_type!=="attraction"||before.amap_poi_id!==item.poi_id||old?.poi_id!==item.poi_id||old.details.location_only)throw Error("AMAP_TIME_REPAIR_NOT_BOUND");
     const b=old.details.business,text=b.opentime_week||b.opentime_today;if(!text)throw Error("AMAP_TIME_REPAIR_MISSING_SOURCE");
     const validated=await normalizeAmapHours([{id:item.poi_id,name:before.venue_name,opentime_week:b.opentime_week??"",opentime_today:b.opentime_today??""}],today,async()=>JSON.stringify({items:[{id:item.poi_id,...item.hours}]}));
     const hours=validated.get(item.poi_id)!,after=structuredClone(before),authority=structuredClone(old);
@@ -54,7 +57,8 @@ export function planAmapSupplement(input:SupplementInput):SupplementPlan {
     const poi=index.get(input.repairs?.[before.amap_poi_id]??before.amap_poi_id);
     let authority:AmapAuthoritySnapshot|undefined;
     const d=poi?amapDetails(poi,input.asOf):undefined;
-    const identity=poi&&d?subjectProblem(before.title,poi.name,d):"未获取到该景点的高德详情";
+    const identity=!poi||!d?"未获取到该景点的高德详情":null;
+    if(poi&&d&&subjectProblem(before.title,poi.name,d)){d.location_only=true;d.nearby_name=poi.name;notes.push(`接受高德附近定位点：${poi.name}；保留景点名称与原有参观资料`);}
     if(identity){
       issues.push("地点待确认："+identity);
       issues.push(`A级：当前地点绑定未确认，无法用其等级为目标景点佐证；现值${after.category}`);
@@ -63,17 +67,17 @@ export function planAmapSupplement(input:SupplementInput):SupplementPlan {
     else if(poi&&d){
       const [lng,lat]=String(poi.location).split(",").map(Number);
       if(!Number.isFinite(lng)||!Number.isFinite(lat)||lng<107||lng>111||lat<33||lat>35.5)throw Error("INVALID_SUPPLEMENT_COORDINATES");
-      after.venue_name=poi.name;after.address=[poi.pname,poi.cityname,poi.adname,poi.address].filter(v=>typeof v==="string"&&v).join("");
+      if(!d.location_only)after.venue_name=poi.name;after.address=[poi.pname,poi.cityname,poi.adname,poi.address].filter(v=>typeof v==="string"&&v).join("");
       after.latitude=lat;after.longitude=lng;after.amap_poi_id=poi.id;
       after.city=poi.cityname;
       if(poi.cityname!=="西安市")issues.push(`城市范围：高德行政城市为${poi.cityname}，城市字段已按高德更正；既有西安周边目标是否保留需确认`);
-      const grade=amapGrade(d);if(grade)after.category=grade;
+      const grade=!d.location_only?amapGrade(d):null;if(grade)after.category=grade;
       d.photos=d.photos.filter(p=>{
         const hit=input.images[p.url]??Object.values(input.images).find(c=>c.url===p.url);
         return hit?.ok&&hit.url===p.url;
       });
-      if(d.photos.length){after.image_urls=JSON.stringify([...new Set(d.photos.map(p=>p.url))]);after.thumbnail_url=d.photos[0].url;}
-      const raw=d.business.opentime_week||d.business.opentime_today;
+      if(d.photos.length&&!d.location_only){after.image_urls=JSON.stringify([...new Set(d.photos.map(p=>p.url))]);after.thumbnail_url=d.photos[0].url;}
+      const raw=!d.location_only?(d.business.opentime_week||d.business.opentime_today):undefined;
       if(raw){
         d.hours=(d.business.opentime_week?simpleAmapHours(d.business.opentime_week):null)??input.hours[poi.id]??{schedule_json:null,time_status:"unknown",reason:"复杂高德时间尚未规范；模型余额不足，保留原文待处理"};
         parseSchedule(d.hours.schedule_json);
@@ -81,17 +85,23 @@ export function planAmapSupplement(input:SupplementInput):SupplementPlan {
         after.time_status=d.hours.time_status;after.time_note=`高德营业时间：${raw}\n${d.hours.reason}`;
         after.valid_from=null;after.valid_to=null;after.start_at=null;after.end_at=null;
       }
-      if(/暂停开放|暂停营业|暂不开放|停业|已关闭/.test(poi.name))after.status="paused";
+      if(!d.location_only&&/暂停开放|暂停营业|暂不开放|停业|已关闭/.test(poi.name))after.status="paused";
       if(d.business.cost)notes.push(`高德人均消费${d.business.cost}元，仅供参考，未作为门票写入budget字段`);
       const normalized={...after,image_urls:JSON.parse(after.image_urls),schedule_json:parseSchedule(after.schedule_json)};
       authority=captureAmapAuthority(normalized,{poi_id:poi.id,source_url:"https://restapi.amap.com/v5/place/detail",amap:d});
-      if(!d.photos.length)issues.push("图片：高德未返回可访问的景点图片");
-      if(!raw)issues.push("开放时间：高德未提供，现有时间仅沿用原来源");
+      if(!JSON.parse(after.image_urls).length)issues.push("图片：尚无可用的景点图片");
+      if(!raw)notes.push("开放时间沿用景点原资料，高德附近POI不代替馆内时间");
       if(!grade)issues.push(`A级：高德未标注，当前${after.category}不能据此认定为未评级`);
       if(/内部专用|不对外/.test(poi.name))issues.push("参观资格：高德标注内部专用，尚未确认公众能否进入");
     }
+    applyDefaultAttractionBudget(after);
+    const defaultFields:Row={...after,schedule_json:parseSchedule(after.schedule_json)};
+    if(applyDefaultAttractionHours(defaultFields,after.description??"")){
+      after.schedule_json=JSON.stringify(defaultFields.schedule_json);after.time_status=defaultFields.time_status;after.time_note=defaultFields.time_note;
+    }
+    applyAttractionStatusPolicy(after);
     const schedule=parseSchedule(after.schedule_json);
-    if(after.time_status!=="complete"){
+    if(after.time_status!=="complete"&&!(after.time_status==="partial"&&after.time_note?.trim())){
       const explanation=String(after.time_note??"缺少开放时间说明")
         .replaceAll("INCOMPLETE_MODEL_RESPONSE","模型未完整返回结构化时间，尚未形成可用规则")
         .replaceAll("UNSUPPORTED_AMAP_CLOCK","模型钟点缺少高德原文支持，未采用该规则")
@@ -132,15 +142,16 @@ export function applyAmapSupplement(path:string,plan:SupplementPlan,options:{bat
       const state=get("state") as Sidecar;if(state?.schema_version!=="xian-release/2")throw Error("INVALID_SUPPLEMENT_METADATA");
       if(get("batch:"+options.batchId))throw Error("DUPLICATE_DATABASE_BATCH");
       const activityBefore=JSON.stringify(db.prepare("SELECT * FROM events WHERE record_type='activity' ORDER BY id").all());
-      for(const {before,after,authority} of plan.updates){
+      for(const {before,after,authority,image_supplement} of plan.updates){
         const current=db.prepare("SELECT * FROM events WHERE id=?").get(before.id);
         if(!current||before.record_type!=="attraction"||after.record_type!=="attraction"||after.id!==before.id||Object.keys(current).some(k=>current[k]!==before[k])||!state.events[before.id])throw Error("SUPPLEMENT_ROW_CHANGED");
         const columns=Object.keys(current).filter(k=>k!=="id");
         db.prepare(`UPDATE events SET ${columns.map(k=>`"${k}"=?`).join(",")} WHERE id=?`).run(...columns.map(k=>after[k]),before.id);
         const meta=state.events[before.id];
+        if(image_supplement)meta.image_supplement=structuredClone(image_supplement);
         meta.freshness.timeStatus=after.time_status;
         meta.freshness.confirmedStartDate=after.valid_from;meta.freshness.confirmedEndDate=after.valid_to;
-        meta.window={start_at:after.start_at,end_at:after.end_at,record_type:"attraction",schedule_json:parseSchedule(after.schedule_json)};
+        meta.window={start_at:after.start_at,end_at:after.end_at,record_type:"attraction",schedule_json:parseSchedule(after.schedule_json),time_note:after.time_note,status:after.status};
         if(authority){
           meta.amap_authority=authority;meta.provenance.coordinates={system:"GCJ-02",source_url:authority.source_url,method:"geocoding",input_system:"GCJ-02",conversion:null};
           meta.provenance.city_evidence={source_url:authority.source_url,quote:after.address};

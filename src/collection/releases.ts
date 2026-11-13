@@ -13,6 +13,7 @@ import type { PreparedCollection } from "./preparation.ts";
 import { prepareCollection } from "./preparation.ts";
 import type { SlotIdentity } from "./identity.ts";
 import type { EventProvenance } from "./types.ts";
+import type{ImageSupplement}from"./types.ts";
 import type { ExtractionDocument } from "./extraction.ts";
 import { publicUrl } from "./validate.ts";
 import { isCalendarDate } from "../itinerary/constraints.ts";
@@ -22,9 +23,10 @@ import {captureAmapAuthority,mergeAmapAuthority} from "./amap-authority.ts";
 import type {AmapAuthoritySnapshot} from "./amap-authority.ts";
 
 export interface Sidecar { schema_version: "xian-release/2"; batch_id: string; identities: SlotIdentity[]; attraction_duplicates?: AttractionDuplicate[]; events: Record<string, {
-  freshness: NightlyMetadata; provenance: EventProvenance; window: { start_at: string | null; end_at: string | null; record_type?: "activity" | "attraction"; schedule_json?: import("../data/schedule.ts").Schedule | null };
+  freshness: NightlyMetadata; provenance: EventProvenance; window: { start_at: string | null; end_at: string | null; record_type?: "activity" | "attraction"; schedule_json?: import("../data/schedule.ts").Schedule | null;time_note?:string|null;status?:string };
   status_evidence?: { source_url: string; quote: string; verified_at: string };
   amap_authority?: AmapAuthoritySnapshot;
+  image_supplement?:ImageSupplement;
 }>; }
 const checksum = (path: string) => createHash("sha256").update(readFileSync(path)).digest("hex");
 const validBatch = (value: string) => /^[A-Za-z0-9_-]{1,80}$/.test(value);
@@ -104,11 +106,17 @@ export function applyPublication(db:DatabaseSync,sidecar:Sidecar,input:PreparedC
             .filter(row=>row?.poi_id===event.amap_poi_id&&row?.record_type===event.record_type)
             .sort((a,b)=>Date.parse(b!.checked_at)-Date.parse(a!.checked_at))[0];
           const amap_authority=mergeAmapAuthority(event,priorAuthority,captureAmapAuthority(event,input.witnesses[event.id].location));
+          const curated=Object.values(sidecar.events).map(r=>r.image_supplement).filter(r=>r&&r.poi_id===event.amap_poi_id&&r.record_type===event.record_type).sort((a,b)=>Date.parse(b!.verified_at)-Date.parse(a!.verified_at))[0];
+          const currentMap=input.witnesses[event.id].location.amap;
+          const protectedMapImages=amap_authority?.fields.image_urls;
+          if(curated&&!(Array.isArray(protectedMapImages)&&protectedMapImages.length)&&!(currentMap&&!currentMap.location_only&&currentMap.photos.length)){
+            event.image_urls=curated.images.map(i=>i.url);event.thumbnail_url=event.image_urls[0]??null;
+          }
           if(amap_authority){incoming.timeStatus=event.time_status;incoming.confirmedStartDate=event.valid_from??null;incoming.confirmedEndDate=event.valid_to??null;}
           insert.run(...columns.map(c => c === "image_urls" ? JSON.stringify(event[c]) : c === "schedule_json" ? event.schedule_json ? JSON.stringify(event.schedule_json) : null : event[c] ?? (c === "record_type" ? "activity" : c === "city" ? "西安市" : c === "time_status" ? "unknown" : c === "status" ? "unknown" : null)));
           written++;
           inserted.add(event.id);
-          sidecar.events[event.id] = { freshness: incoming, provenance, window: { start_at: event.start_at, end_at: event.end_at, record_type: event.record_type, schedule_json: event.schedule_json }, ...(amap_authority?{amap_authority}:{}) };
+          sidecar.events[event.id] = { freshness: incoming, provenance, window: { start_at: event.start_at, end_at: event.end_at, record_type: event.record_type, schedule_json: event.schedule_json,time_note:event.time_note,status:event.status }, ...(amap_authority?{amap_authority}:{}),...(curated?{image_supplement:curated}:{}) };
         }
         for (const notice of options.cancellations ?? []) {
           const row = sidecar.events[notice.event_id];

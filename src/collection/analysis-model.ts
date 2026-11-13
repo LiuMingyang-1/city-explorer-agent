@@ -94,11 +94,13 @@ export function createToolAnalysisExtractor(options: ApiOptions & {model?: strin
           for(const row of Array.isArray(parsed?.activities)?parsed.activities:[]){
             const selected=places.get(row?.amap_poi_id);
             if(selected?.amap){
-              if(row.record_type==="attraction"&&subjectProblem(row.title??row.venue_name??"",selected.name,selected.amap)){row.amap_poi_id=null;row.latitude=null;row.longitude=null;continue;}
+              if(row.record_type==="attraction"&&subjectProblem(row.title??row.venue_name??"",selected.name,selected.amap)){
+                selected.amap.location_only=true;selected.amap.nearby_name=selected.name;
+              }
               if(!row.evidence||typeof row.evidence!=="object"||Array.isArray(row.evidence))row.evidence={};
               row.conflicts=Array.isArray(row.conflicts)?row.conflicts:[];
               const d=selected.amap,raw=d.business.opentime_week||d.business.opentime_today;
-              if(row.record_type==="attraction"&&raw){
+              if(row.record_type==="attraction"&&raw&&!d.location_only){
                 const key=selected.id+"\n"+raw;
                 const simple=d.business.opentime_week?simpleAmapHours(d.business.opentime_week):null;
                 if(simple)hoursCache.set(key,simple);
@@ -115,7 +117,7 @@ export function createToolAnalysisExtractor(options: ApiOptions & {model?: strin
               applyAmapAuthority(row,selected);
             }
             if(row?.record_type!=="attraction")continue;
-            if(selected?.amap&&amapGrade(selected.amap))continue;
+            if(selected?.amap&&!selected.amap.location_only&&amapGrade(selected.amap))continue;
             if(!row.evidence||typeof row.evidence!=="object"||Array.isArray(row.evidence))row.evidence=typeof row.evidence==="string"?{summary:row.evidence.slice(0,400)}:{};
             row.category=normalizeScenicLevel(row.category);
             if(row.category==="暂无评级")continue;

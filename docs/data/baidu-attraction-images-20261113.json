@@ -1,0 +1,443 @@
+{
+  "checked_at": "2026-11-13T10:44:59.476Z",
+  "method": "百度图片检索，结合来源标题和实际图像核对；学院美术博物馆另补一张馆方官网展示资料；排除错馆、AI配图及无关广告",
+  "selections": [
+    {
+      "id": "xa_759f6a7bebc86fed6a7b7d27d86757ba",
+      "title": "上王村景区",
+      "images": [
+        {
+          "url": "https://news4g.xiancity.cn/pic/003/004/836/00300483650_7b75f692.jpg",
+          "source_url": "http://news4g.xiancity.cn/system/2025/11/19/031227498.shtml",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E4%B8%8A%E7%8E%8B%E6%9D%91%E6%99%AF%E5%8C%BA",
+          "title": "西安长安区上王村:美了乡村 富了乡党",
+          "sha256": "d10f30283fe46e1957f5a5f49559e407b9a50409b1e80cb24b42864c2e694ba1"
+        },
+        {
+          "url": "https://www.xiancn.com/pic/2025-11/11/7266832_630f6fb4-dea8-428e-9c83-4b5e21ed5fe1copy.jpg",
+          "source_url": "http://www.xiancn.com/content/2025-11/11/content_7266832.htm",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E4%B8%8A%E7%8E%8B%E6%9D%91%E6%99%AF%E5%8C%BA",
+          "title": "西安上王村:晴冬里的乡村新貌",
+          "sha256": "e1a04003d3e1d7fe0ff0051c35e77a4e397a064aaf5e0089db79d1f7fb29620d"
+        },
+        {
+          "url": "https://q9.itc.cn/q_70/images03/20260313/c3ff92cdee944814aa3c3caa5814880f.jpeg",
+          "source_url": "http://news.sohu.com/a/996107185_121106991",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E4%B8%8A%E7%8E%8B%E6%9D%91%E6%99%AF%E5%8C%BA",
+          "title": "陕西省西安市上王村:守关中底色 焕上王新韵|美翻了,我的村!",
+          "sha256": "707a464b1b770e2330badfdcd3d676334699fcbf404d419cc8221bdd5013a8e0"
+        }
+      ]
+    },
+    {
+      "id": "xa_237fe0975bc8c2316b21ca24ad00ec07",
+      "title": "丰镐遗址车马坑陈列馆",
+      "images": [
+        {
+          "url": "https://bkimg.cdn.bcebos.com/pic/35a85edf8db1cb13519e8b70d854564e93584bd9",
+          "source_url": "http://baike.baidu.com/item/%E4%B8%B0%E9%95%90%E9%81%97%E5%9D%80%E8%BD%A6%E9%A9%AC%E5%9D%91%E9%99%88%E5%88%97%E9%A6%86/17517236",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E4%B8%B0%E9%95%90%E9%81%97%E5%9D%80%E8%BD%A6%E9%A9%AC%E5%9D%91%E9%99%88%E5%88%97%E9%A6%86",
+          "title": "丰镐遗址车马坑陈列馆",
+          "sha256": "cbfc5bcabbf985484e0f3db5a0e8514638beaa0ca0aa169d682fcc5badf67854"
+        },
+        {
+          "url": "https://bkimg.cdn.bcebos.com/pic/e1fe9925bc315c6022ba230985b1cb134954772c",
+          "source_url": "http://baike.baidu.com/item/%E4%B8%B0%E9%95%90%E9%81%97%E5%9D%80%E8%BD%A6%E9%A9%AC%E5%9D%91%E9%99%88%E5%88%97%E9%A6%86/17517236",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E4%B8%B0%E9%95%90%E9%81%97%E5%9D%80%E8%BD%A6%E9%A9%AC%E5%9D%91%E9%99%88%E5%88%97%E9%A6%86",
+          "title": "丰镐遗址车马坑陈列馆",
+          "sha256": "aa1b0b9cee58135b919b2548796ff9e7b5b799e84d8cb27f82397bbe304d660a"
+        },
+        {
+          "url": "https://pic.rmb.bdstatic.com/bjh/news/7b27dfeffa8d4f943ef278c49c5b5d7e.png",
+          "source_url": "http://baijiahao.baidu.com/s?id=1835333431425272213&wfr=spider&for=pc",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E4%B8%B0%E9%95%90%E9%81%97%E5%9D%80%E8%BD%A6%E9%A9%AC%E5%9D%91%E9%99%88%E5%88%97%E9%A6%86",
+          "title": "丰镐遗址:车马坑的历史揭秘与考古探索",
+          "sha256": "1b4182021d2229b7d1438e196e3a61a404de93a4e4b1afbf256302ec8a883ff0"
+        }
+      ]
+    },
+    {
+      "id": "xa_9a57da43cbb84ee0fa6e78b7889b3a05",
+      "title": "唐华清宫梨园遗址博物馆",
+      "images": [
+        {
+          "url": "https://gips2.baidu.com/it/u=957342802,830239728&fm=3074&app=3074&f=JPEG",
+          "source_url": "http://mbd.baidu.com/newspage/data/dtlandingsuper?nid=dt_4386418089650904056",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E5%94%90%E5%8D%8E%E6%B8%85%E5%AE%AB%E6%A2%A8%E5%9B%AD%E9%81%97%E5%9D%80%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "唐华清宫梨园遗址博物馆:传承千年梨园文化",
+          "sha256": "9ac7b2e79b08b5f99ef664ba45b2890b7d59ad6d3fe48117b8a4c123e7125eef"
+        },
+        {
+          "url": "https://gips1.baidu.com/it/u=3483070314,1580003747&fm=3074&app=3074&f=JPEG?w=2161&h=1600&type=normal&func=T",
+          "source_url": "http://mbd.baidu.com/newspage/data/dtlandingsuper?nid=dt_4893879565647404479",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E5%94%90%E5%8D%8E%E6%B8%85%E5%AE%AB%E6%A2%A8%E5%9B%AD%E9%81%97%E5%9D%80%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "🏛️探秘唐梨园遗址博物馆 📍位于华清池景区的唐梨园遗址,是",
+          "sha256": "0298fa66a3492b25ab8e4267d0fc8975ea5ba3ecfa23b83b2558baf42c3faaa4"
+        },
+        {
+          "url": "https://bkimg.cdn.bcebos.com/pic/30adcbef76094b36acaf8d1a1a9d6bd98d1000e937b0",
+          "source_url": "http://baike.baidu.com/item/%E5%94%90%E5%8D%8E%E6%B8%85%E5%AE%AB%E6%A2%A8%E5%9B%AD%E9%81%97%E5%9D%80%E5%8D%9A%E7%89%A9%E9%A6%86/53519197",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E5%94%90%E5%8D%8E%E6%B8%85%E5%AE%AB%E6%A2%A8%E5%9B%AD%E9%81%97%E5%9D%80%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "唐华清宫梨园遗址博物馆",
+          "sha256": "14c599f7f423d645cf5d55c37cc1a1bdd52d3e56ada7af3a748ddeb23d9d85e9"
+        }
+      ]
+    },
+    {
+      "id": "xa_5fa226895256d3d2bbc0cf6e75429d3e",
+      "title": "汉长安城未央宫遗址陈列馆",
+      "images": [
+        {
+          "url": "https://img0.baidu.com/it/u=3008736511,1059504576&fm=253&fmt=auto&app=138&f=JPEG?w=508&h=381",
+          "source_url": "http://baike.baidu.com/item/%E6%B1%89%E9%95%BF%E5%AE%89%E5%9F%8E%E9%81%97%E5%9D%80%E9%99%88%E5%88%97%E9%A6%86/9907938",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E6%B1%89%E9%95%BF%E5%AE%89%E5%9F%8E%E6%9C%AA%E5%A4%AE%E5%AE%AB%E9%81%97%E5%9D%80%E9%99%88%E5%88%97%E9%A6%86",
+          "title": " p data-id=\"t3mtkzs2jvmt\">汉长安城未央宫遗址陈列馆是2009年6月13",
+          "sha256": "1d85c6a24a4af9d4f804c788a3188d2a750ea02e4d05bab093151ea901cd56e3"
+        },
+        {
+          "url": "https://pic.rmb.bdstatic.com/bjh/news/abbd42793ae26577ec975580374fda28.png",
+          "source_url": "http://baijiahao.baidu.com/s?id=1844385070946438653&wfr=spider&for=pc",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E6%B1%89%E9%95%BF%E5%AE%89%E5%9F%8E%E6%9C%AA%E5%A4%AE%E5%AE%AB%E9%81%97%E5%9D%80%E9%99%88%E5%88%97%E9%A6%86",
+          "title": "探遇汉长安城未央宫遗址公园的历史与自然之美",
+          "sha256": "fac578492a94e81af28892c7fff095ed898e2cd94cdcf5b321c7cf00e64e9508"
+        }
+      ]
+    },
+    {
+      "id": "xa_b81a01740ae47dfcc9f45e8120dc8f90",
+      "title": "秦始皇帝陵博物院（秦始皇兵马俑博物馆·丽山园）",
+      "images": [
+        {
+          "url": "https://q5.itc.cn/images01/20260207/5ce96b33d4bc49b089b7a3c8bcf01de2.jpeg",
+          "source_url": "http://www.sohu.com/a/984843324_253235",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E7%A7%A6%E5%A7%8B%E7%9A%87%E5%B8%9D%E9%99%B5%E5%8D%9A%E7%89%A9%E9%99%A2",
+          "title": "秦始皇帝陵博物院最新公告",
+          "sha256": "25bb42596235d1053a045fc6823a66eb757253e45cf2b5f8f180b6e7c0c0175c"
+        },
+        {
+          "url": "https://q5.itc.cn/q_70/images03/20260114/cd0572df086848deb3f8f36e36eacef7.png",
+          "source_url": "http://news.sohu.com/a/976065684_121124423",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E7%A7%A6%E5%A7%8B%E7%9A%87%E5%B8%9D%E9%99%B5%E5%8D%9A%E7%89%A9%E9%99%A2",
+          "title": "位于秦始皇帝陵博物院中的秦始皇陵墓(丽山园)之中,是一级保护文物",
+          "sha256": "9ca413a52b38e2919c3de3dea8339da60bdf92c900e96161a18d4b28c8e71aed"
+        }
+      ]
+    },
+    {
+      "id": "xa_776ed7f97a5914518fc327442a5ce952",
+      "title": "西安市吉兆春皮肤医药博物馆",
+      "images": [
+        {
+          "url": "https://22936271.s21i.faiusr.com/95/ABUIABBfGAAg3dnmwAYompDKmQMwgAo4qg0",
+          "source_url": "http://www.kcpfyjs.com/h-nd-992.html",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E5%B8%82%E5%90%89%E5%85%86%E6%98%A5%E7%9A%AE%E8%82%A4%E5%8C%BB%E8%8D%AF%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "西安市吉兆春皮肤医药博物馆 西安市高陵区第三批非物质文化遗产",
+          "sha256": "8b849227c06085e3f39d0e4c21a3e42acbde13d9360171604900ae8999de18f6"
+        },
+        {
+          "url": "https://22936271.s21i.faiusr.com/95/ABUIABBfGAAg49TmwAYooMvj-AMwgAo4wAc",
+          "source_url": "http://www.kcpfyjs.com/h-nd-992.html",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E5%B8%82%E5%90%89%E5%85%86%E6%98%A5%E7%9A%AE%E8%82%A4%E5%8C%BB%E8%8D%AF%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "西安市吉兆春皮肤医药博物馆 西安市高陵区第三批非物质文化遗产",
+          "sha256": "6e23f6f9829b971b19e6e1e03deb0c7fd4b3ec30d1444d39631012c75868f6f2"
+        },
+        {
+          "url": "https://img1.baidu.com/it/u=1665771954,786354897&fm=253&fmt=auto&app=138&f=JPEG?w=667&h=500",
+          "source_url": "http://www.kcpfyjs.com/h-nd-992.html",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E5%B8%82%E5%90%89%E5%85%86%E6%98%A5%E7%9A%AE%E8%82%A4%E5%8C%BB%E8%8D%AF%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "西安市吉兆春皮肤医药博物馆 西安市高陵区第三批非物质文化遗产",
+          "sha256": "6b66b0f40bc776a8a06c31f48eb587427968b259df93902693e3c1e90ded3d5e"
+        }
+      ]
+    },
+    {
+      "id": "xa_dae9be3b7b614175ff1c20aff524a290",
+      "title": "西安市太和医室博物馆",
+      "images": [
+        {
+          "url": "https://bkimg.cdn.bcebos.com/pic/b03533fa828ba61ea8d396166c6d800a304e251ff3cb",
+          "source_url": "http://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E5%A4%AA%E5%92%8C%E5%8C%BB%E5%AE%A4%E5%8D%9A%E7%89%A9%E9%A6%86/55142488",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E5%B8%82%E5%A4%AA%E5%92%8C%E5%8C%BB%E5%AE%A4%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "西安市太和医室博物馆",
+          "sha256": "4993398e9600020255ca4a983c08b892204bf71da02c1e8236aa68ced1997df4"
+        },
+        {
+          "url": "https://bkimg.cdn.bcebos.com/pic/b64543a98226cffc1e17308a94585d90f603738dbcc8",
+          "source_url": "http://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E5%A4%AA%E5%92%8C%E5%8C%BB%E5%AE%A4%E5%8D%9A%E7%89%A9%E9%A6%86/55142488",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E5%B8%82%E5%A4%AA%E5%92%8C%E5%8C%BB%E5%AE%A4%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "西安市太和医室博物馆",
+          "sha256": "ccc16933322cec52dff5a6dd529965b9640b230603b5f5732ccc81e281a67644"
+        },
+        {
+          "url": "https://bkimg.cdn.bcebos.com/pic/9e3df8dcd100baa1cd110c826a49ae12c8fcc3ce80cb",
+          "source_url": "http://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E5%A4%AA%E5%92%8C%E5%8C%BB%E5%AE%A4%E5%8D%9A%E7%89%A9%E9%A6%86/55142488",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E5%B8%82%E5%A4%AA%E5%92%8C%E5%8C%BB%E5%AE%A4%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "西安市太和医室博物馆",
+          "sha256": "650bf170ce7d5682dbc480b8afca96064fecf323d3329bc3686e97a804d8a063"
+        }
+      ]
+    },
+    {
+      "id": "xa_4283cda2269698e1b9f78fee89a5f84e",
+      "title": "西安市德江陶瓷模范标本博物馆",
+      "images": [
+        {
+          "url": "https://t11.baidu.com/it/u=1281884823,272019619&fm=30&app=106&f=JPEG?w=640&h=616&s=98948B558132CBCC44295D6E0300C030",
+          "source_url": "http://baijiahao.baidu.com/s?id=1838719924283233078&wfr=spider&for=pc",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E5%B8%82%E5%BE%B7%E6%B1%9F%E9%99%B6%E7%93%B7%E6%A8%A1%E8%8C%83%E6%A0%87%E6%9C%AC%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "博物馆里过大年,喻德江陶瓷博物馆春节期间热闹非凡,吸引了三万余人次",
+          "sha256": "c2281f7362f6a613efc7288d2386f9016849e939f7a48deacfefef1837e7b71a"
+        },
+        {
+          "url": "https://pic3.zhimg.com/100/v2-f59831712bdfd0086cdb40a5d1ff3614_r.jpg",
+          "source_url": "http://www.zhihu.com/people/78-12-62-43",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E5%B8%82%E5%BE%B7%E6%B1%9F%E9%99%B6%E7%93%B7%E6%A8%A1%E8%8C%83%E6%A0%87%E6%9C%AC%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "5发布于 2025-09-17 19:38一起来逛博物馆发布了想法2025-09-01 22",
+          "sha256": "2f53d852ed2348ef2e57a3c9b3d59ad2c1a88033193683b5257867e33b9a264e"
+        },
+        {
+          "url": "https://img.mala.cn/forum/202310/01/195608hq7g7jsnclc5qu9w.jpg",
+          "source_url": "http://www.mala.cn/forum.php?mod=viewthread&tid=16543909",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E5%B8%82%E5%BE%B7%E6%B1%9F%E9%99%B6%E7%93%B7%E6%A8%A1%E8%8C%83%E6%A0%87%E6%9C%AC%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "[生活资讯]",
+          "sha256": "bbf3b1ec325b185847f3ee8324d7f3fee9f20d273dd27c3f12487f94b7d32a8d"
+        }
+      ]
+    },
+    {
+      "id": "xa_5927186945f08c28e62e28026b3cce08",
+      "title": "西安市惟德玉文化博物馆",
+      "images": [
+        {
+          "url": "https://bkimg.cdn.bcebos.com/pic/0b55b319ebc4b74543a9c57452ad09178a82b901bf0a",
+          "source_url": "http://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E6%83%9F%E5%BE%B7%E7%8E%89%E6%96%87%E5%8C%96%E5%8D%9A%E7%89%A9%E9%A6%86/53486834",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E5%B8%82%E6%83%9F%E5%BE%B7%E7%8E%89%E6%96%87%E5%8C%96%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "西安市惟德玉文化博物馆",
+          "sha256": "75bb0a27d2c77e643ed4efc412c9d0345f1b4692dd2769abcd4c55ffb9147b29"
+        },
+        {
+          "url": "https://pic.rmb.bdstatic.com/bjh/news/0b654b29fbed5af2c31fac7f6b60b1ae.png",
+          "source_url": "http://baijiahao.baidu.com/s?id=1844564979476776082&wfr=spider&for=pc",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E5%B8%82%E6%83%9F%E5%BE%B7%E7%8E%89%E6%96%87%E5%8C%96%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "西安市惟德玉文化博物馆章程深度解析",
+          "sha256": "021da4ad43a254f1d68f454c11e94d22d01c0414d3dffe4036e44ab5a9f7723d"
+        }
+      ]
+    },
+    {
+      "id": "xa_d5c22ab3dad673f3329d76d36839cce7",
+      "title": "西安市瑛煌关中婚俗文化博物馆",
+      "images": [
+        {
+          "url": "https://bkimg.cdn.bcebos.com/pic/21a4462309f79052982210e6cea2c0ca7bcb0b467f93",
+          "source_url": "http://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E7%91%9B%E7%85%8C%E5%85%B3%E4%B8%AD%E5%A9%9A%E4%BF%97%E6%96%87%E5%8C%96%E5%8D%9A%E7%89%A9%E9%A6%86/56737788",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E5%B8%82%E7%91%9B%E7%85%8C%E5%85%B3%E4%B8%AD%E5%A9%9A%E4%BF%97%E6%96%87%E5%8C%96%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "西安市瑛煌关中婚俗文化博物馆",
+          "sha256": "7cd95387fca79800fc9c28c0fa8ddb19240b34991fbde4d1256c34aa195ff292"
+        },
+        {
+          "url": "https://img0.baidu.com/it/u=505001053,5810008&fm=253&fmt=auto&app=138&f=JPEG?w=500&h=667",
+          "source_url": "http://www.meipian.cn/2rs5grd0",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E5%B8%82%E7%91%9B%E7%85%8C%E5%85%B3%E4%B8%AD%E5%A9%9A%E4%BF%97%E6%96%87%E5%8C%96%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "西安市瑛煌关中婚俗文化博物馆备案通过市文物局博物馆处专家综合评审",
+          "sha256": "f2d6fb5aeb1b309e5717c8c1133ffb17cfaaa0b073768a4d09b537e7994b88e4"
+        },
+        {
+          "url": "https://q2.itc.cn/q_70/images03/20260211/f7a81ff34764420bb0f37a30a29cf2fe.jpeg",
+          "source_url": "http://www.sohu.com/a/986358419_121106869",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E5%B8%82%E7%91%9B%E7%85%8C%E5%85%B3%E4%B8%AD%E5%A9%9A%E4%BF%97%E6%96%87%E5%8C%96%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "文脉鄠邑 志愿传情┃志愿者走进鄠邑区瑛煌婚俗博物馆_文化_关中_记忆",
+          "sha256": "6960730575174128bc8ddacf22e34326e30917ededf162947fea6a936e5bb499"
+        }
+      ]
+    },
+    {
+      "id": "xa_2f8987a7f6773a95f26875acc465f14e",
+      "title": "西安市石仟佛造像艺术博物馆",
+      "images": [
+        {
+          "url": "https://bkimg.cdn.bcebos.com/pic/5243fbf2b2119313b07e6cb8c3691bd7912397dd2723",
+          "source_url": "http://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E7%9F%B3%E4%BB%9F%E4%BD%9B%E9%80%A0%E5%83%8F%E8%89%BA%E6%9C%AF%E5%8D%9A%E7%89%A9%E9%A6%86/56718045",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E5%B8%82%E7%9F%B3%E4%BB%9F%E4%BD%9B%E9%80%A0%E5%83%8F%E8%89%BA%E6%9C%AF%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "西安市石仟佛造像艺术博物馆",
+          "sha256": "d9c6cddb0400436ea822bf25c52230178b8d699a315aa682ce1c59aa78b4da74"
+        },
+        {
+          "url": "https://img1.baidu.com/it/u=158609362,480067052&fm=253&fmt=auto&app=138&f=JPEG?w=500&h=607",
+          "source_url": "http://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E7%9F%B3%E4%BB%9F%E4%BD%9B%E9%80%A0%E5%83%8F%E8%89%BA%E6%9C%AF%E5%8D%9A%E7%89%A9%E9%A6%86/56718045",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E5%B8%82%E7%9F%B3%E4%BB%9F%E4%BD%9B%E9%80%A0%E5%83%8F%E8%89%BA%E6%9C%AF%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "西安市石仟佛造像艺术博物馆",
+          "sha256": "71a87e850a8edc9a64a790e4170f9fbb7726f71af74cca53a2592036c950d8ec"
+        }
+      ]
+    },
+    {
+      "id": "xa_a7295b4f9067adb666fc4c76fed43ea8",
+      "title": "西安市鄠邑区非物质文化遗产博物馆",
+      "images": [
+        {
+          "url": "https://bkimg.cdn.bcebos.com/pic/c2fdfc039245d688d43f659e77946a1ed21b0ef48ec8",
+          "source_url": "http://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E9%84%A0%E9%82%91%E5%8C%BA%E9%9D%9E%E7%89%A9%E8%B4%A8%E6%96%87%E5%8C%96%E9%81%97%E4%BA%A7%E5%8D%9A%E7%89%A9%E9%A6%86/62883419",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E5%B8%82%E9%84%A0%E9%82%91%E5%8C%BA%E9%9D%9E%E7%89%A9%E8%B4%A8%E6%96%87%E5%8C%96%E9%81%97%E4%BA%A7%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "西安市鄠邑区非物质文化遗产博物馆",
+          "sha256": "9f1cf09ebdcee2c0f1910f24fd955c5b04ae6f971780bc9d1106fb64a20a602b"
+        },
+        {
+          "url": "https://www.xiancn.com/pic/2025-01/22/7056912_27ff965a-e5e6-42a8-a280-77edd1fff86d.jpg",
+          "source_url": "http://www.xiancn.com/content/2025-01/22/content_7056912.htm",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E5%B8%82%E9%84%A0%E9%82%91%E5%8C%BA%E9%9D%9E%E7%89%A9%E8%B4%A8%E6%96%87%E5%8C%96%E9%81%97%E4%BA%A7%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "西安市鄠邑区非物质文化遗产博物馆位于甘亭街道人民路南段文化中心5",
+          "sha256": "f20672be727a73b6f68080e759bd6433bbae52aba3815885a6e360eb727c9f34"
+        }
+      ]
+    },
+    {
+      "id": "xa_620b6083e386a9bc81a85010d65f84bf",
+      "title": "西安建筑科技大学中国音乐史博物馆",
+      "images": [
+        {
+          "url": "https://bkimg.cdn.bcebos.com/pic/962bd40735fae6cd7b896531c0e2182442a7d933a11b",
+          "source_url": "http://baike.baidu.com/item/%E4%B8%AD%E5%9B%BD%E9%9F%B3%E4%B9%90%E5%8F%B2%E5%8D%9A%E7%89%A9%E9%A6%86/4836580",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E5%BB%BA%E7%AD%91%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%A6%E4%B8%AD%E5%9B%BD%E9%9F%B3%E4%B9%90%E5%8F%B2%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": " p data-id=\"go0ce45uyz\">西安建筑科技大学中国音乐史博物馆位于陕西",
+          "sha256": "189188427226bd817b7b866558c75854ad94a2bdf4842156c4e594a83ea34cd7"
+        },
+        {
+          "url": "https://img1.baidu.com/it/u=2534548525,210653904&fm=253&fmt=auto&app=138&f=JPEG?w=781&h=500",
+          "source_url": "http://www.daqinip.com/daqin/musinfo.php?id=840",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E5%BB%BA%E7%AD%91%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%A6%E4%B8%AD%E5%9B%BD%E9%9F%B3%E4%B9%90%E5%8F%B2%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "音乐史博物馆的十大乐器",
+          "sha256": "585f341cfaefe0a3a95a6367d1effbce3152c9e0a97473fa20bd3b03ed2ab0ef"
+        }
+      ]
+    },
+    {
+      "id": "xa_c8dcae1b0da0e4fc3fa362d3366effd1",
+      "title": "西安建筑科技大学校史馆",
+      "images": [
+        {
+          "url": "https://img1.baidu.com/it/u=521638022,1582439512&fm=253&fmt=auto&app=138&f=JPEG?w=570&h=378",
+          "source_url": "http://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%BB%BA%E7%AD%91%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%A6%E6%A0%A1%E5%8F%B2%E9%A6%86/18119369",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E5%BB%BA%E7%AD%91%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%A6%E6%A0%A1%E5%8F%B2%E9%A6%86",
+          "title": "西安建筑科技大学校史馆",
+          "sha256": "646c17b07d36b2514166a8a6a919df579eb1321354b9712d0afa8b6f5d05781f"
+        },
+        {
+          "url": "https://sns-img-hw.xhscdn.com/1000g00826nbmh8afe0005o0d5vd08bb26aembq8?imageView2/2/h/1080/format/webp",
+          "source_url": "http://www.xiaohongshu.com/discovery/item/641294f50000000027028d3f",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E5%BB%BA%E7%AD%91%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%A6%E6%A0%A1%E5%8F%B2%E9%A6%86",
+          "title": "博物馆54陕西省西安建筑科技大学校史馆",
+          "sha256": "d7f1b147603d2737aef8bc4c5a57721f651d432659ab6242b9a7dbfbb2d85e89"
+        },
+        {
+          "url": "https://bkimg.cdn.bcebos.com/pic/bd3eb13533fa828ba61e88898a4e5634970a304eec02",
+          "source_url": "http://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%BB%BA%E7%AD%91%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%A6%E6%A0%A1%E5%8F%B2%E9%A6%86/18119369",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E5%BB%BA%E7%AD%91%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%A6%E6%A0%A1%E5%8F%B2%E9%A6%86",
+          "title": "西安建筑科技大学校史馆",
+          "sha256": "63e8b86486ca0db54d5b0641940c1fa3b68eb48a22aae2a1f81d24aa2309c08c"
+        }
+      ]
+    },
+    {
+      "id": "xa_3635d3120986ca93614b2b3910d7a185",
+      "title": "西安红色体育博物馆（中国红色体育博物馆）",
+      "images": [
+        {
+          "url": "https://bkimg.cdn.bcebos.com/pic/8b82b9014a90f603738db7b2f744a41bb051f91947b5",
+          "source_url": "http://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B8%82%E7%BA%A2%E8%89%B2%E4%BD%93%E8%82%B2%E5%8D%9A%E7%89%A9%E9%A6%86/56823865",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E7%BA%A2%E8%89%B2%E4%BD%93%E8%82%B2%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "西安市红色体育博物馆",
+          "sha256": "069d8514b2d7f2632cafc61ae986be2b53c392757eea2bf959a3d4bdc03b0e4d"
+        },
+        {
+          "url": "https://ss-mpvolc.meipian.me/users/8148894/f1fb650508d3dca23c3944f9d09eb714__jpg.heic~tplv-s1ctq42ewb-wm-s2-cC-q:watermark/1/image/dG9zLWNuLWktczFjdHE0MmV3Yi9hcnRpY2xlL2NvbnRlbnRfaW1nX2xvZ28ucG5n/dissolve/80/gravity/SouthEast/dx/13/dy/96/ws/0.09/wst/2%7Cwatermark/2/text/QOmDreWLhw/dissolve/80/gravity/SouthEast/dx/13/dy/52/font/UWluaXUgRm9udA/fontsize/520/fill/I2ZmZmZmZg%7Cwatermark/2/text/576O56-H5Y-3OjgxNDg4OTQ/dissolve/80/gravity/SouthEast/dx/13/dy/13/font/UWluaXUgRm9udA/fontsize/520/fill/I2ZmZmZmZg:750:0:0:0:q80.webp",
+          "source_url": "http://www.meipian.cn/3ki94mli",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E7%BA%A2%E8%89%B2%E4%BD%93%E8%82%B2%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "参观西安红色体育博物馆",
+          "sha256": "93d7e3327a265ea37cf05e6f8df32d92b1effd799b7cb2241a222ce8fda4acbe"
+        },
+        {
+          "url": "https://ss-mpvolc.meipian.me/users/8148894/15064cbe0ee7c369783e4deac5468924__jpg.heic~tplv-s1ctq42ewb-wm-s2-cC-q:watermark/1/image/dG9zLWNuLWktczFjdHE0MmV3Yi9hcnRpY2xlL2NvbnRlbnRfaW1nX2xvZ28ucG5n/dissolve/80/gravity/SouthEast/dx/13/dy/96/ws/0.09/wst/2%7Cwatermark/2/text/QOmDreWLhw/dissolve/80/gravity/SouthEast/dx/13/dy/52/font/UWluaXUgRm9udA/fontsize/520/fill/I2ZmZmZmZg%7Cwatermark/2/text/576O56-H5Y-3OjgxNDg4OTQ/dissolve/80/gravity/SouthEast/dx/13/dy/13/font/UWluaXUgRm9udA/fontsize/520/fill/I2ZmZmZmZg:750:0:0:0:q80.webp",
+          "source_url": "http://www.meipian.cn/3ki94mli",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E7%BA%A2%E8%89%B2%E4%BD%93%E8%82%B2%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "参观西安红色体育博物馆",
+          "sha256": "f5fab198280921d5d652369cce5b8ec2d94fed383e40452dac10cf2448db41fa"
+        }
+      ]
+    },
+    {
+      "id": "xa_6b444eb7f90430d55620bf876d67b922",
+      "title": "西安美术学院美术博物馆",
+      "images": [
+        {
+          "url": "https://img2.baidu.com/it/u=121943684,2434289950&fm=253&fmt=auto&app=138&f=JPEG?w=664&h=443",
+          "source_url": "http://www.sxsskw.org.cn/c/2025-03-31/981342.shtml",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E7%BE%8E%E6%9C%AF%E5%AD%A6%E9%99%A2%E7%BE%8E%E6%9C%AF%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "西安美术学院美术博物馆社科普及基地简介",
+          "sha256": "c526de8641ee7efa8d47cf7fdb14a8df56b77b0eedc1a3ac03f92d8aae821e54"
+        },
+        {
+          "url": "https://fineartmuseum.xafa.edu.cn/__local/B/1B/AE/CC02F5F169C4979FAB51CFCBC38_004DB36E_39C22.jpg",
+          "source_url": "https://fineartmuseum.xafa.edu.cn/",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E7%BE%8E%E6%9C%AF%E5%AD%A6%E9%99%A2%E7%BE%8E%E6%9C%AF%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "西安美术学院美术博物馆官网馆藏研究展宣传图（展示资料，非当前展期说明）",
+          "sha256": "671079c3262a51f32a13df5324e9786526acc9577d325ce84522276129182a53"
+        }
+      ]
+    },
+    {
+      "id": "xa_6a0594ae3a8d5262f43a9129ec7ffa39",
+      "title": "西安音乐学院艺术博物馆",
+      "images": [
+        {
+          "url": "https://mmbiz.qpic.cn/sz_mmbiz_png/GkLFebheyicRtfXbnQnnXcKLx3KQQ0IibqUQIwpTZYmJvP9HbUmEZegQjNPcaiadqMtSejEzrWmj17bmRj3DSeuWQ/640?wx_fmt=png&from=appmsg",
+          "source_url": "http://baijiahao.baidu.com/s?id=1783341579455218840&wfr=spider&for=pc",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E9%9F%B3%E4%B9%90%E5%AD%A6%E9%99%A2%E8%89%BA%E6%9C%AF%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "宝藏西安・博物馆之旅|走进西安音乐学院艺术博物馆",
+          "sha256": "864b06f2553a6e710568558556a71ce31475abd753c789a35fa6ba4b76509a15"
+        },
+        {
+          "url": "https://mmbiz.qpic.cn/sz_mmbiz_png/GkLFebheyicRtfXbnQnnXcKLx3KQQ0IibqhvjydvTuC8UTtLjIDRAK3PKsESckCkESVeYMaXL2XftZfRgL2cInbQ/640?wx_fmt=png&from=appmsg",
+          "source_url": "http://baijiahao.baidu.com/s?id=1783341579455218840&wfr=spider&for=pc",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E9%9F%B3%E4%B9%90%E5%AD%A6%E9%99%A2%E8%89%BA%E6%9C%AF%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "宝藏西安・博物馆之旅|走进西安音乐学院艺术博物馆",
+          "sha256": "235c16f4a2c560a17273b00fe477ac91bbc34268f235950e6420734178ccd50e"
+        },
+        {
+          "url": "https://news.xjtu.edu.cn/__local/2/17/10/DB40C44510243550C225F092CAB_FAE71584_13300.jpg?e=.jpg",
+          "source_url": "http://news.xjtu.edu.cn/info/1219/193691.htm",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E8%A5%BF%E5%AE%89%E9%9F%B3%E4%B9%90%E5%AD%A6%E9%99%A2%E8%89%BA%E6%9C%AF%E5%8D%9A%E7%89%A9%E9%A6%86",
+          "title": "中国古代音乐穿越时空之旅——西安音乐学院艺术博物馆参观游学纪实",
+          "sha256": "93cf05295274719f7a7957a558729e25d56ab050df35128f8a88154e3c36e4bd"
+        }
+      ]
+    },
+    {
+      "id": "xa_4a77b7f01a27b0854cf07370d24da01c",
+      "title": "高陵场畔农耕文化生态观光产业园",
+      "images": [
+        {
+          "url": "https://bkimg.cdn.bcebos.com/pic/f3d3572c11dfa9ec36bd050d65d0f703918fc11d",
+          "source_url": "http://baike.baidu.com/item/%E9%AB%98%E9%99%B5%E5%9C%BA%E7%95%94%E5%86%9C%E8%80%95%E6%96%87%E5%8C%96%E7%94%9F%E6%80%81%E8%A7%82%E5%85%89%E4%BA%A7%E4%B8%9A%E5%9B%AD/19255256",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E9%AB%98%E9%99%B5%E5%9C%BA%E7%95%94%E5%86%9C%E8%80%95%E6%96%87%E5%8C%96%E7%94%9F%E6%80%81%E8%A7%82%E5%85%89%E4%BA%A7%E4%B8%9A%E5%9B%AD",
+          "title": "高陵场畔农耕文化生态观光产业园",
+          "sha256": "aa1705c063235e36d3546efb856961a9cb82ba0b65d35ec63f9b617898bcd751"
+        },
+        {
+          "url": "https://pic.rmb.bdstatic.com/8d213476cb74c054e88455659197f97b.jpeg@h_1280",
+          "source_url": "https://mbd.baidu.com/newspage/data/dtlandingsuper?nid=dt_4269921615785543780",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E9%AB%98%E9%99%B5%E5%9C%BA%E7%95%94%E5%86%9C%E8%80%95%E6%96%87%E5%8C%96%E7%94%9F%E6%80%81%E8%A7%82%E5%85%89%E4%BA%A7%E4%B8%9A%E5%9B%AD",
+          "title": "高陵场畔农耕文化生态观光产业园位于陕西省西安市高陵区通远镇儒村",
+          "sha256": "b12dc863ebee4de4acc90115e14c845fb29c9f5a0c806a43bde48394d14a078c"
+        },
+        {
+          "url": "https://n.sinaimg.cn/sinacn/267/w1600h1067/20180319/0864-fyskeuc1234524.jpg",
+          "source_url": "http://k.sina.com.cn/article_1428366771_p552325b30010043c5.html",
+          "search_url": "https://image.baidu.com/search/index?tn=baiduimage&word=%E9%AB%98%E9%99%B5%E5%9C%BA%E7%95%94%E5%86%9C%E8%80%95%E6%96%87%E5%8C%96%E7%94%9F%E6%80%81%E8%A7%82%E5%85%89%E4%BA%A7%E4%B8%9A%E5%9B%AD",
+          "title": "西安高陵:场畔农耕文化观光园",
+          "sha256": "efb2524ca41a3636773a455b71e8ee4c7b9804a6290724066ba60f71d06832ff"
+        }
+      ]
+    }
+  ]
+}
