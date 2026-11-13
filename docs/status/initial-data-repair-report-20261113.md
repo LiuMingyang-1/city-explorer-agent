@@ -75,7 +75,7 @@
 ## 程序修正和可重放流程
 
 1. FACT_EXTRACTION_PROMPT新增售票/入场区分、禁止示例exceptions、子场馆时间独立性要求，后续采集自动使用。
-2. configs/collection.bootstrap-recheck.json和docs/data/xian-attraction-recheck-seeds.json保存本次22目标复查配置；独立进度文件，不重置原247目标进度。仍写固定data/events.db，正常坐标去重。
+2. configs/collection.bootstrap-recheck.json和configs/xian-attraction-recheck-seeds.json保存本次22目标复查配置；独立进度文件，不重置原247目标进度。仍写固定data/events.db，正常坐标去重。
 3. correctCollectionTimes只允许删除已有例外、清除已有last_entry、清空无依据规则或降低时间确定性；不允许填新日期、时刻或坐标。精确比较被审计版本的guide_url、schedule_json、time_note、time_status，版本改变拒绝整批，防止覆盖新资料。
 4. 时间纠错在与采集共用的任务锁下执行，events和_collection_metadata同事务更新，保留事件ID、来源证据和原来的核验时间。before/after及原因写入数据库batch回执；模拟失败回滚与非法路径拦截已测试。
 5. 原始审计建议、来源缓存、修正manifest和回执保存在本地.local-data/xian/planning；未加入Git。该维护入口用于历史数据纠错，不是定时任务的人工补数步骤。普通定时任务仍执行有界自动重试并舍弃失败数据。

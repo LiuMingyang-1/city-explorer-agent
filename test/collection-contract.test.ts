@@ -63,7 +63,7 @@ test("public URL rejects credentials, private targets, test hosts and API tokens
  assert.equal(publicUrl("https://www.sxhm.com/notice?id=123"),true);
 });
 test("delivery DDL retains 18 fields with nullable paired coordinates",()=>{
- const db=new DatabaseSync(":memory:");try{db.exec(readFileSync(new URL("../docs/real-events-stage-a/events-delivery.sql",import.meta.url),"utf8"));
+ const db=new DatabaseSync(":memory:");try{db.exec(readFileSync(new URL("../docs/planning/real-events-stage-a/events-delivery.sql",import.meta.url),"utf8"));
  const columns=db.prepare("PRAGMA table_info(events)").all();assert.equal(columns.length,18);assert(columns.some(c=>c.name==="guide_url"));assert(!columns.some(c=>c.name==="source_url"));
  for(const name of ["start_at","end_at","suggested_duration_minutes"])assert.equal(columns.find(c=>c.name===name)!.notnull,0);
  for(const name of ["latitude","longitude"])assert.equal(columns.find(c=>c.name===name)!.notnull,0);

@@ -1,4 +1,4 @@
-> 2026-11-13后续更新：清单拆批、模型目标上下文、词库编译与定时runner已实现并通过离线测试。当前使用configs/collection.bootstrap.json与configs/collection.scheduled.json；详细现状见[采集系统README](../README.collection.md)。本文保留原设计，正式应用库替换、稳定主体ID及细粒度请求恢复等未完成内容仍属于规划，不能因部分入口实现就视为全部已完成。
+> 2026-11-13后续更新：清单拆批、模型目标上下文、词库编译与定时runner已实现并通过离线测试。当前使用configs/collection.bootstrap.json与configs/collection.scheduled.json；详细现状见[采集系统README](../architecture/collection.md)。本文保留原设计，正式应用库替换、稳定主体ID及细粒度请求恢复等未完成内容仍属于规划，不能因部分入口实现就视为全部已完成。
 
 # 西安真实景点初始化、直接入库与定时补充方案
 
@@ -7,7 +7,7 @@
 ## 1. 本轮交付与边界
 
 - [景点目标清单](xian-attraction-seed-list.md)：247个目标，包括创新港校区开发者彩蛋。
-- [机器清单](data/xian-attraction-seeds.json)：名称、别名、地域线索、检索词、优先级及名称参考来源。
+- [机器清单](../../configs/xian-attraction-seeds.json)：名称、别名、地域线索、检索词、优先级及名称参考来源。
 - 初始化只用DeepSeek获取内容；高德仍用于确认地点、GCJ-02坐标，不算新增内容搜索引擎。仅接收attraction。
 - 后续用小红书＋DeepSeek补充景点和活动，复用统一采集入口。小红书图片走本地OCR。
 - 清单不是已核验数据，不能直接当events导入。旧名录只提供名称线索，不能拿旧时间和票价填当前字段；不保证247个目标都能通过核验或去重后仍为247个点。
