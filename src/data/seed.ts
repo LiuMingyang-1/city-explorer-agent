@@ -36,7 +36,9 @@ function addMinutes(hhmm: string, minutes: number): string {
 }
 
 /** 生成基准日起 7 天的全部模拟活动；同一 baseDate 输出完全一致。 */
-export function generateSeedEvents(baseDate: string): Event[] {
+export type SeedEvent = Event & {startAt: string; endAt: string; suggestedDurationMinutes: number};
+
+export function generateSeedEvents(baseDate: string): SeedEvent[] {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(baseDate)) {
     throw new Error(`baseDate must be YYYY-MM-DD, got: ${baseDate}`);
   }
@@ -44,7 +46,7 @@ export function generateSeedEvents(baseDate: string): Event[] {
   if (formatDay(base) !== baseDate) {
     throw new Error(`baseDate is not a real calendar date: ${baseDate}`);
   }
-  const events: Event[] = [];
+  const events: SeedEvent[] = [];
   for (const t of TEMPLATES) {
     const [name, address, latitude, longitude] = VENUES[t.venue];
     for (const offset of t.days) {

@@ -1,0 +1,300 @@
+{
+  "schema_version": "xian-keyword-library/1",
+  "city": "西安市",
+  "status": "runtime_v1",
+  "variables": {
+    "city": "配置keyword_city，如西安",
+    "area": "轮换区域中的一个名称，不把整个区域组拼到同一个词里",
+    "year_month": "按搜索锚点日期生成，如2026年11月",
+    "weekend_range": "按锚点生成最近尚未结束的周末范围，同日仅显示一次",
+    "next_weekend_range": "上述周末之后的周六至周日",
+    "season_topic": "当前命中的季节主题词",
+    "holiday": "显式节日日期窗口中的节日名称"
+  },
+  "area_groups": [
+    {
+      "id": "south",
+      "areas": [
+        "曲江",
+        "雁塔区",
+        "长安区"
+      ]
+    },
+    {
+      "id": "old_city",
+      "areas": [
+        "碑林区",
+        "莲湖区",
+        "新城区"
+      ]
+    },
+    {
+      "id": "north_east",
+      "areas": [
+        "未央区",
+        "灞桥区"
+      ]
+    },
+    {
+      "id": "outer_east",
+      "areas": [
+        "临潼区",
+        "阎良区",
+        "高陵区"
+      ]
+    },
+    {
+      "id": "outer_west",
+      "areas": [
+        "鄠邑区",
+        "周至县"
+      ]
+    },
+    {
+      "id": "outer_south",
+      "areas": [
+        "蓝田县"
+      ]
+    }
+  ],
+  "season_topics": [
+    {
+      "id": "plum",
+      "phrase": "梅花",
+      "start_mmdd": "02-15",
+      "end_mmdd": "03-31"
+    },
+    {
+      "id": "cherry",
+      "phrase": "樱花",
+      "start_mmdd": "03-01",
+      "end_mmdd": "04-30"
+    },
+    {
+      "id": "peony",
+      "phrase": "牡丹",
+      "start_mmdd": "04-01",
+      "end_mmdd": "05-15"
+    },
+    {
+      "id": "spring_walk",
+      "phrase": "踏青",
+      "start_mmdd": "03-01",
+      "end_mmdd": "05-31"
+    },
+    {
+      "id": "lotus",
+      "phrase": "荷花",
+      "start_mmdd": "06-01",
+      "end_mmdd": "08-31"
+    },
+    {
+      "id": "summer_night",
+      "phrase": "夜游",
+      "start_mmdd": "06-01",
+      "end_mmdd": "09-15"
+    },
+    {
+      "id": "autumn_leaves",
+      "phrase": "红叶",
+      "start_mmdd": "10-01",
+      "end_mmdd": "11-30"
+    },
+    {
+      "id": "ginkgo",
+      "phrase": "银杏",
+      "start_mmdd": "10-15",
+      "end_mmdd": "12-05"
+    },
+    {
+      "id": "winter_indoor",
+      "phrase": "室内展馆",
+      "start_mmdd": "12-01",
+      "end_mmdd": "02-28"
+    }
+  ],
+  "holiday_calendar": {
+    "enabled": false,
+    "date_policy": "explicit_windows_only",
+    "windows": [],
+    "note": "春节、中秋等不按公历固定月日猜测；填写经确认的当年日期窗口或后续接入官方日历导入器后才启用。"
+  },
+  "groups": {
+    "xhs_weekend": {
+      "engine": "xiaohongshu",
+      "record_type_hint": "activity",
+      "templates": [
+        "{city} 本周末去哪",
+        "{city} 周末活动合集",
+        "{city} 这周有什么活动",
+        "{city} 周末新鲜事"
+      ]
+    },
+    "xhs_exhibitions": {
+      "engine": "xiaohongshu",
+      "record_type_hint": "activity",
+      "templates": [
+        "{city} 最近新展",
+        "{city} 本月看展",
+        "{city} 免费展览",
+        "{city} 小众艺术展"
+      ]
+    },
+    "xhs_markets": {
+      "engine": "xiaohongshu",
+      "record_type_hint": "activity",
+      "templates": [
+        "{city} 周末市集",
+        "{city} 创意市集",
+        "{city} 文创市集",
+        "{city} 跳蚤市集"
+      ]
+    },
+    "xhs_performances": {
+      "engine": "xiaohongshu",
+      "record_type_hint": "activity",
+      "templates": [
+        "{city} 本周演出",
+        "{city} 小剧场演出",
+        "{city} 音乐现场",
+        "{city} 脱口秀演出"
+      ]
+    },
+    "xhs_family": {
+      "engine": "xiaohongshu",
+      "record_type_hint": "activity",
+      "templates": [
+        "{city} 周末遛娃活动",
+        "{city} 亲子市集",
+        "{city} 亲子工作坊",
+        "{city} 周末研学活动"
+      ]
+    },
+    "xhs_new_places": {
+      "engine": "xiaohongshu",
+      "record_type_hint": "attraction",
+      "templates": [
+        "{city} 新开放公园",
+        "{city} 新发现小众景点",
+        "{city} 新晋散步地",
+        "{city} 新开的文创园"
+      ]
+    },
+    "xhs_new_venues": {
+      "engine": "xiaohongshu",
+      "record_type_hint": "attraction",
+      "templates": [
+        "{city} 新开艺术空间",
+        "{city} 新开博物馆",
+        "{city} 新开放展馆",
+        "{city} 最近新开的美术馆"
+      ]
+    },
+    "xhs_seasonal": {
+      "engine": "xiaohongshu",
+      "record_type_hint": "attraction",
+      "templates": [
+        "{city} {season_topic} 好去处",
+        "{city} {season_topic} 最近实拍",
+        "{city} {area} {season_topic}"
+      ]
+    },
+    "xhs_holiday": {
+      "engine": "xiaohongshu",
+      "record_type_hint": "activity",
+      "templates": [
+        "{city} {holiday} 活动",
+        "{city} {holiday} 市集",
+        "{city} {holiday} 去哪玩"
+      ]
+    },
+    "deepseek_exhibitions": {
+      "engine": "deepseek",
+      "record_type_hint": "activity",
+      "templates": [
+        "{city} {year_month} 展览 展期",
+        "{city} {year_month} 美术馆 新展",
+        "{city} {year_month} 免费展览 开放",
+        "{city} {year_month} 博物馆 临时展览"
+      ]
+    },
+    "deepseek_markets": {
+      "engine": "deepseek",
+      "record_type_hint": "activity",
+      "templates": [
+        "{city} {weekend_range} 市集",
+        "{city} {year_month} 文创市集 举办地点",
+        "{city} {next_weekend_range} 市集 活动",
+        "{city} {year_month} 跳蚤市集 报名"
+      ]
+    },
+    "deepseek_performances": {
+      "engine": "deepseek",
+      "record_type_hint": "activity",
+      "templates": [
+        "{city} {year_month} 演出 音乐会",
+        "{city} {weekend_range} 小剧场 演出",
+        "{city} {year_month} 脱口秀 演出时间",
+        "{city} {year_month} 音乐现场 演出公告"
+      ]
+    },
+    "deepseek_culture": {
+      "engine": "deepseek",
+      "record_type_hint": "activity",
+      "templates": [
+        "{city} {year_month} 讲座 报名",
+        "{city} {year_month} 工作坊 活动",
+        "{city} {year_month} 电影 放映 活动",
+        "{city} {weekend_range} 读书会"
+      ]
+    },
+    "deepseek_family": {
+      "engine": "deepseek",
+      "record_type_hint": "activity",
+      "templates": [
+        "{city} {weekend_range} 亲子活动",
+        "{city} {year_month} 亲子研学 报名",
+        "{city} {year_month} 儿童 手工 活动",
+        "{city} {year_month} 亲子市集 举办时间"
+      ]
+    },
+    "deepseek_new_places": {
+      "engine": "deepseek",
+      "record_type_hint": "attraction",
+      "templates": [
+        "{city} {area} 新开放公园 开放公告",
+        "{city} {area} 新增景点 开放",
+        "{city} {area} 文创园 开园公告",
+        "{city} {area} 新开放 历史街区"
+      ]
+    },
+    "deepseek_new_venues": {
+      "engine": "deepseek",
+      "record_type_hint": "attraction",
+      "templates": [
+        "{city} {area} 新开博物馆 展馆 开放公告",
+        "{city} {area} 美术馆 新馆 开放",
+        "{city} {area} 新开放 科普场馆",
+        "{city} {area} 新开 艺术空间"
+      ]
+    },
+    "deepseek_seasonal": {
+      "engine": "deepseek",
+      "record_type_hint": "attraction",
+      "templates": [
+        "{city} {area} {year_month} {season_topic} 观赏地点",
+        "{city} {area} {season_topic} 游览",
+        "{city} {area} {season_topic} 公园 近期情况"
+      ]
+    },
+    "deepseek_holiday": {
+      "engine": "deepseek",
+      "record_type_hint": "activity",
+      "templates": [
+        "{city} {year_month} {holiday} 活动公告",
+        "{city} {holiday} 市集 举办时间",
+        "{city} {holiday} 演出 活动安排"
+      ]
+    }
+  }
+}

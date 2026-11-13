@@ -8,6 +8,7 @@
     "node": ">=22.19.0"
   },
   "scripts": {
+    "collect": "node scripts/collect.ts",
     "dev": "node --env-file-if-exists=.env src/cli/main.ts",
     "start": "node --env-file-if-exists=.env src/cli/main.ts",
     "dev:web": "node --env-file-if-exists=.env src/web/main.ts",
@@ -18,11 +19,13 @@
     "test": "node --test \"test/**/*.test.ts\"",
     "check": "npm run typecheck && npm test",
     "check:frontend": "node --check frontend/preferences.js && node --check frontend/map-layout.js && node --check frontend/activities.js && node --check frontend/amap.js && node --check frontend/app.js && node --check frontend/places.js && node --check frontend/plans.js && node --check frontend/transport.js && node --check frontend/chat.js && node --check frontend/history.js && node --check scripts/frontend-dev.mjs",
-    "mock:events": "node scripts/export-demo-events.ts"
+    "mock:events": "node scripts/export-demo-events.ts",
+    "collect:task": "node scripts/collect-task.ts"
   },
   "dependencies": {
     "@earendil-works/pi-agent-core": "1.4.0",
     "@earendil-works/pi-ai": "1.4.0",
+    "ajv": "8.20.0",
     "typebox": "1.3.27"
   },
   "devDependencies": {

@@ -1,0 +1,306 @@
+{
+  "schema_version": "xian-attraction-seed-plan/1",
+  "prepared_on": "2026-11-13",
+  "city": "西安市",
+  "phase": "bootstrap_recheck",
+  "content_engine": "deepseek",
+  "target_record_type": "attraction",
+  "target_count": 22,
+  "status": "planned_not_verified",
+  "verification_policy": "所有目标均须由DeepSeek补查来源、模型提取、高德确认坐标后再判定入库；清单不是已核验events数据。高德仍可用于定位。",
+  "references": {
+    "A": {
+      "title": "西安市A级旅游景区信息表",
+      "url": "https://www.xa.gov.cn/ztzl/ztzl/lzledc/ywdc/1824366329290301442.html",
+      "published_at": "2026-02-25",
+      "usage": "仅用于目标名称和地域线索；等级在实际采集时另行核验。"
+    },
+    "M": {
+      "title": "西安市博物馆信息",
+      "url": "https://wwj.xa.gov.cn/xxgk/wbxx/62d8ba0ef8fd1c4c210ae016.html",
+      "published_at": "2024-05-29",
+      "usage": "旧名录只证明有登记线索，不直接采用其旧开放时间、票价或开放状态。"
+    },
+    "P": {
+      "title": "西安旅游景点目录（扩展线索）",
+      "url": "https://www.yyxbj.com/jingdian/city/xian.html",
+      "published_at": null,
+      "usage": "第三方目录仅作待核验名称线索，不采用其评分、时间或地址作为入库事实。"
+    },
+    "U": {
+      "title": "西安交通大学官方创新港参观报道",
+      "url": "https://news.xjtu.edu.cn/info/1219/231566.htm",
+      "published_at": null,
+      "usage": "支持校区主体线索，不证明校园对校外访客自由开放。"
+    }
+  },
+  "targets": [
+    {
+      "seed_id": "XA-S0050",
+      "name": "蓝田丝路慢城玉山景区",
+      "aliases": [],
+      "area_hint": "蓝田县玉山镇峒峪河",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 蓝田丝路慢城玉山景区 蓝田县玉山镇峒峪河 地址 参观 开放 官方",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0055",
+      "name": "高陵区博物馆",
+      "aliases": [],
+      "area_hint": "高陵区昭慧广场",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 高陵区博物馆 高陵区昭慧广场 地址 参观 开放 官方",
+      "reference_ids": [
+        "A",
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0072",
+      "name": "西安连珠潭风景区",
+      "aliases": [],
+      "area_hint": "长安区沣峪口",
+      "kind": "景区/文化旅游场所",
+      "priority": 1,
+      "search_query": "西安 西安连珠潭风景区 长安区沣峪口 地址 参观 开放 官方",
+      "reference_ids": [
+        "A"
+      ]
+    },
+    {
+      "seed_id": "XA-S0096",
+      "name": "西安大明宫陶瓷艺术博物馆",
+      "aliases": [],
+      "area_hint": "曲江新区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安大明宫陶瓷艺术博物馆 曲江新区 地址 参观 开放 官方",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0112",
+      "name": "西安毛泽东敬览馆",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安毛泽东敬览馆 雁塔区 地址 参观 开放 官方",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0114",
+      "name": "西安雪花啤酒博物馆",
+      "aliases": [],
+      "area_hint": "经开区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安雪花啤酒博物馆 经开区 地址 参观 开放 官方",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0115",
+      "name": "西安源浩华藏博物馆",
+      "aliases": [],
+      "area_hint": "曲江新区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安源浩华藏博物馆 曲江新区 地址 参观 开放 官方",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0120",
+      "name": "西安曲江大玉坊博物馆",
+      "aliases": [],
+      "area_hint": "临潼区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安曲江大玉坊博物馆 临潼区 地址 参观 开放 官方",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0127",
+      "name": "陕西钱币博物馆",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 陕西钱币博物馆 雁塔区 地址 参观 开放 官方",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0134",
+      "name": "西安市新美域和镜博物馆",
+      "aliases": [],
+      "area_hint": "碑林区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市新美域和镜博物馆 碑林区 地址 参观 开放 官方",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0137",
+      "name": "西安市雅观陶瓷艺术博物馆",
+      "aliases": [],
+      "area_hint": "未央区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市雅观陶瓷艺术博物馆 未央区 地址 参观 开放 官方",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0139",
+      "name": "西安美术学院美术博物馆",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安美术学院美术博物馆 雁塔区 地址 参观 开放 官方",
+      "reference_ids": [
+        "M"
+      ],
+      "access_note": "名录含大学/专业机构博物馆；须核对校外访问、预约或团队参观条件。"
+    },
+    {
+      "seed_id": "XA-S0140",
+      "name": "西安市贾平凹文学艺术博物馆",
+      "aliases": [],
+      "area_hint": "曲江新区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市贾平凹文学艺术博物馆 曲江新区 地址 参观 开放 官方",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0144",
+      "name": "西安市荞麦园美术博物馆",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市荞麦园美术博物馆 雁塔区 地址 参观 开放 官方",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0145",
+      "name": "西安市曲江丝路遗珍博物馆",
+      "aliases": [],
+      "area_hint": "曲江新区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市曲江丝路遗珍博物馆 曲江新区 地址 参观 开放 官方",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0153",
+      "name": "西安建筑科技大学中国音乐史博物馆",
+      "aliases": [],
+      "area_hint": "碑林区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安建筑科技大学中国音乐史博物馆 碑林区 地址 参观 开放 官方",
+      "reference_ids": [
+        "M"
+      ],
+      "access_note": "名录含大学/专业机构博物馆；须核对校外访问、预约或团队参观条件。"
+    },
+    {
+      "seed_id": "XA-S0155",
+      "name": "西安市新梦想影业博物馆",
+      "aliases": [],
+      "area_hint": "雁塔区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市新梦想影业博物馆 雁塔区 地址 参观 开放 官方",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0158",
+      "name": "西安市团结民俗博物馆",
+      "aliases": [],
+      "area_hint": "未央区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市团结民俗博物馆 未央区 地址 参观 开放 官方",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0165",
+      "name": "西安市太乙面食文化博物馆",
+      "aliases": [],
+      "area_hint": "长安区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市太乙面食文化博物馆 长安区 地址 参观 开放 官方",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0166",
+      "name": "军用航空科技博物馆",
+      "aliases": [],
+      "area_hint": "灞桥区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 军用航空科技博物馆 灞桥区 地址 参观 开放 官方",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0174",
+      "name": "西安市和璞玉文化博物馆",
+      "aliases": [],
+      "area_hint": "长安区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市和璞玉文化博物馆 长安区 地址 参观 开放 官方",
+      "reference_ids": [
+        "M"
+      ]
+    },
+    {
+      "seed_id": "XA-S0179",
+      "name": "西安市鄠邑区非物质文化遗产博物馆",
+      "aliases": [],
+      "area_hint": "鄠邑区",
+      "kind": "博物馆/纪念馆",
+      "priority": 2,
+      "search_query": "西安 西安市鄠邑区非物质文化遗产博物馆 鄠邑区 地址 参观 开放 官方",
+      "reference_ids": [
+        "M"
+      ]
+    }
+  ]
+}

@@ -178,9 +178,9 @@ export interface DelegatedEventMeta {
   title: string;
   category: string;
   venueName: string;
-  startAt: string;
-  endAt: string;
-  suggestedDurationMinutes: number;
+  startAt: string | null;
+  endAt: string | null;
+  suggestedDurationMinutes: number | null;
   budgetMin: number | null;
   budgetMax: number | null;
   currency: string;

@@ -1,0 +1,31 @@
+{
+  "city": "西安市",
+  "keywords": [
+    "西交创新港"
+  ],
+  "engines": [
+    {
+      "name": "xiaohongshu",
+      "enabled": true,
+      "limit": 5
+    },
+    {
+      "name": "deepseek",
+      "enabled": true,
+      "limit": 5
+    }
+  ],
+  "output_dir": ".local-data/xian/unified-runs",
+  "processing": {
+    "enabled": true,
+    "ocr": true,
+    "attraction_duplicate_meters": 10
+  },
+  "budgets": {
+    "model_requests": 80,
+    "map_requests": 60,
+    "level_searches": 10
+  },
+  "database_path": "data/events.db",
+  "publish_root": ".local-data/xian/real-release"
+}

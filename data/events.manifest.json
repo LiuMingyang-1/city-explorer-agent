@@ -1,0 +1,38 @@
+{
+  "schema_version": "city-explorer-database-delivery/1",
+  "created_at": "2026-11-13T04:38:35.808Z",
+  "database": "data/events.db",
+  "sha256": "99c3aedae1608fbdca532828edea658d4eef7791852805de78cf597361a223f3",
+  "bytes": 2023424,
+  "database_id": "5f58de0a-9f15-417b-a64a-4388aa2906d5",
+  "records": 265,
+  "record_types": {
+    "activity": 20,
+    "attraction": 245
+  },
+  "event_columns": 31,
+  "tables": [
+    "_collection_metadata",
+    "events"
+  ],
+  "coordinate_system": "GCJ-02",
+  "integrity_check": "ok",
+  "includes": [
+    "events",
+    "collection provenance and freshness",
+    "batch receipts and time-correction audit"
+  ],
+  "excludes": [
+    "API keys",
+    "login cookies and browser profiles",
+    "raw source and OCR caches",
+    "session databases",
+    "historical database copies"
+  ],
+  "known_limitations": [
+    "Some opening hours are partial, unknown or conflicting; consult time_status and time_note.",
+    "A complete time_status is an extraction result, not a guarantee of current venue hours.",
+    "The latest Xiaohongshu test reported login required; platform login is local and not shipped.",
+    "The Windows scheduled trigger is disabled and has not been installed."
+  ]
+}

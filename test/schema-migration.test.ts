@@ -1,3 +1,4 @@
+import { afterResource } from "./resource-cleanup-fixture.ts";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -30,7 +31,7 @@ const ALL_COLUMNS = `${BASE_COLUMNS},
 
 function tmpDbPath(t: TestContext): string {
   const dir = mkdtempSync(join(tmpdir(), "explorer-schema-"));
-  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  afterResource(t, () => rmSync(dir, { recursive: true, force: true }));
   return join(dir, "events.db");
 }
 
@@ -62,7 +63,7 @@ test("v0 database migrates in place, twice, keeping custom rows and defaults", a
   db.close();
 
   const repo = createSqliteEventRepository(dbPath);
-  t.after(() => repo.close());
+  afterResource(t, () => repo.close());
   const all = await repo.search({});
   assert.equal(all.length, 1); // 不清表、不重新 seed，自定义记录保留
   const ev = all[0];
@@ -90,7 +91,7 @@ test("new fields round-trip via search and getByIds; image order preserved", asy
   db.close();
 
   const repo = createSqliteEventRepository(dbPath);
-  t.after(() => repo.close());
+  afterResource(t, () => repo.close());
   const [ev] = await repo.search({ date: "2026-11-14" });
   assert.equal(ev.budgetMin, 5000);
   assert.equal(ev.budgetMax, 8000);
@@ -116,7 +117,7 @@ test("free (0) vs unknown (null) budgets; omitted columns take defaults", async 
   db.close();
 
   const repo = createSqliteEventRepository(dbPath);
-  t.after(() => repo.close());
+  afterResource(t, () => repo.close());
   const byId = await repo.getByIds(["evt_free", "evt_plain"]);
   const free = byId.get("evt_free");
   assert.equal(free?.budgetMin, 0); // 免费是 0，不是 null
@@ -131,7 +132,7 @@ test("free (0) vs unknown (null) budgets; omitted columns take defaults", async 
 test("constraints reject negative/reversed/non-integer budgets and non-array image_urls", (t) => {
   const dbPath = tmpDbPath(t);
   const db = new DatabaseSync(dbPath);
-  t.after(() => db.close());
+  afterResource(t, () => db.close());
   ensureEventsSchema(db);
   const insert = db.prepare(
     `INSERT INTO events (${ALL_COLUMNS}) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
@@ -158,6 +159,6 @@ test("image_urls elements must be strings, enforced at the read boundary", async
   db.close();
 
   const repo = createSqliteEventRepository(dbPath);
-  t.after(() => repo.close());
+  afterResource(t, () => repo.close());
   assert.throws(() => repo.search({}), /image_urls/);
 });

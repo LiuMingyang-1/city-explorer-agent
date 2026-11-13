@@ -1,8 +1,16 @@
+import type { Schedule, AvailableWindow } from "./schedule.ts";
 /**
  * 一条活动时段记录，对应 SQLite events 表的一行（字段见 docs/architecture/database.md）。
  * TS 侧用 camelCase，数据库列名为 snake_case，由 repository 实现负责映射。
  */
 export interface Event {
+  timeNote?: string | null; timeStatus?: "complete" | "partial" | "unknown" | "conflicting";
+  recordType?: "activity" | "attraction";
+  coordinateSystem?: "GCJ-02";
+  validFrom?: string | null; validTo?: string | null; schedule?: Schedule | null;
+  availableWindows?: AvailableWindow[]; availability?: "open" | "closed" | "unknown";
+  city?: string; amapPoiId?: string | null; status?: string;
+  sourcePublishedAt?: string | null; sourceUpdatedAt?: string | null; fetchedAt?: string | null; updatedAt?: string | null;
   id: string;
   title: string;
   description: string;
@@ -12,10 +20,10 @@ export interface Event {
   latitude: number;
   longitude: number;
   /** 可参加开始时间，本地时间 "YYYY-MM-DDTHH:MM"（不带时区）。 */
-  startAt: string;
+  startAt: string | null;
   /** 可参加结束时间，格式同 startAt。 */
-  endAt: string;
-  suggestedDurationMinutes: number;
+  endAt: string | null;
+  suggestedDurationMinutes: number | null;
   /** 每人预计费用下限，单位分；null 表示未知，免费活动为 0。 */
   budgetMin: number | null;
   /** 每人预计费用上限，单位分；null 表示未知。 */
@@ -40,6 +48,8 @@ export interface Event {
 
 /** search_events 工具参数与 EventRepository.search 共用的查询条件，均可选。 */
 export interface SearchEventsInput {
+  timeNote?: string | null; timeStatus?: "complete" | "partial" | "unknown" | "conflicting";
+  recordType?: "activity" | "attraction";
   /** 出行日期 "YYYY-MM-DD"；匹配该日可参加的活动。 */
   date?: string;
   /**

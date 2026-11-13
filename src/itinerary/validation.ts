@@ -1,3 +1,4 @@
+import { availabilityOnDate } from "../data/schedule.ts";
 import type { Event } from "../data/types.ts";
 import { constraintProblems, isCalendarDate, isClockTime } from "./constraints.ts";
 import type { Itinerary, ItineraryStop, PlanningConstraints } from "./types.ts";
@@ -5,6 +6,7 @@ import type { Itinerary, ItineraryStop, PlanningConstraints } from "./types.ts";
 export type ValidationCode =
   | "invalid_shape" // 不是约定的行程 JSON 结构
   | "invalid_constraints" // 约束本身非法（假日期/假时钟/时段逆序）
+  | "unknown_event_window" // 活动缺少已确认的时间边界，不能自动排入行程
   | "unknown_event" // event_id 不在数据库中
   | "date_mismatch" // 行程或活动日期与要求日期不符
   | "outside_event_window" // 到访时间超出活动可参加时段
@@ -134,14 +136,21 @@ export function validateItinerary(
       fail("unknown_event", `${where} 的活动不存在`, stop.event_id);
       return;
     }
-    // 活动窗口与行程当日有交集才可在该日参加（与 repository.search 一致）。
-    if (event.startAt.slice(0, 10) > itinerary.date || event.endAt.slice(0, 10) < itinerary.date) {
-      fail("date_mismatch", `${where} 的活动时段 ${event.startAt}–${event.endAt} 不覆盖行程日期`, stop.event_id);
-      return;
+    if (event.status && ["paused","cancelled","ended"].includes(event.status)) {
+      fail("unknown_event_window", `${where} 已暂停、取消或结束，不能排程`, stop.event_id); return;
     }
-    if (`${itinerary.date}T${stop.arrive_at}` < event.startAt ||
-        `${itinerary.date}T${stop.leave_at}` > event.endAt) {
-      fail("outside_event_window", `${where} 到访 ${stop.arrive_at}–${stop.leave_at} 超出活动时段 ${event.startAt}–${event.endAt}`, stop.event_id);
+    if (event.recordType || event.schedule !== undefined) {
+      const available = availabilityOnDate(event, itinerary.date);
+      if (available.state === "unknown") { fail("unknown_event_window", `${where} 开放时间未知，不能自动排程`, stop.event_id); return; }
+      if (available.state === "closed") { fail("date_mismatch", `${where} 当天不开放或不在有效日期内`, stop.event_id); return; }
+      const arrival = `${itinerary.date}T${stop.arrive_at}`, leave = `${itinerary.date}T${stop.leave_at}`;
+      if (!available.windows.some(w => arrival >= w.startAt && leave <= w.endAt && (!w.lastEntryAt || arrival <= w.lastEntryAt)))
+        fail("outside_event_window", `${where} 到访不在同一个开放窗口内，或超过停止入场时间`, stop.event_id);
+    } else {
+      if (event.startAt === null || event.endAt === null) { fail("unknown_event_window", `${where} 缺少已确认的可参加起止时间，不能自动排程`, stop.event_id); return; }
+      if (event.startAt.slice(0,10)>itinerary.date || event.endAt.slice(0,10)<itinerary.date) { fail("date_mismatch", `${where} 活动日期不匹配`, stop.event_id); return; }
+      if (`${itinerary.date}T${stop.arrive_at}`<event.startAt || `${itinerary.date}T${stop.leave_at}`>event.endAt)
+        fail("outside_event_window", `${where} 到访超出活动时间窗`, stop.event_id);
     }
     if ((availStart !== undefined && stop.arrive_at < availStart) ||
         (availEnd !== undefined && stop.leave_at > availEnd)) {

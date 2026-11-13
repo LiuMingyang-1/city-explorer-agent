@@ -164,14 +164,18 @@ test("static: traversal, symlink escape, non-whitelist ext and dirs all 404", as
     writeFileSync(outside, "top secret");
     const root = join(dir, "public");
     mkdirSync(root);
-    // 静态根里放一个指出去的符号链接：realpath 复核必须拦住。
-    symlinkSync(outside, join(root, "leak.txt"));
+    // Windows file symlinks require privileges; a directory junction exercises
+    // the same realpath escape check without skipping the assertion.
+    const outsideDir = join(dir, "outside");
+    mkdirSync(outsideDir);
+    writeFileSync(join(outsideDir, "secret.txt"), "top secret");
+    symlinkSync(outsideDir, join(root, "leak-dir"), process.platform === "win32" ? "junction" : "dir");
     writeFileSync(join(root, "index.html"), "<h1>ok</h1>");
 
     const { base, close } = await start(unusedApi, { staticRoot: root });
     try {
       for (const path of [
-        "/leak.txt", // 符号链接越界
+        "/leak-dir/secret.txt", // 符号链接越界
         "/%2e%2e/secret.txt", // 点段越界（目标真实存在）
         "/%2e%2e%2fsecret.txt", // 编码斜杠变体
         "/..%5csecret.txt", // 反斜杠变体（POSIX 下是普通字符，文件不存在）

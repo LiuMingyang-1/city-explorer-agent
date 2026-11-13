@@ -22,6 +22,10 @@ export interface ChatMessage {
  */
 export interface EventView {
   /** 对应 Event.id；itinerary.stops[].event_id 以此关联详情。 */
+  record_type?: "activity" | "attraction";
+  valid_from?: string | null; valid_to?: string | null;
+  available_windows?: import("../data/schedule.ts").AvailableWindow[];
+  coordinate_system?: "GCJ-02";
   event_id: string;
   title: string;
   latitude: number;
@@ -31,9 +35,9 @@ export interface EventView {
   category?: string;
   address?: string;
   /** 本地时间 "YYYY-MM-DDTHH:MM"（不带时区），语义同 Event.startAt/endAt。 */
-  start_at?: string;
-  end_at?: string;
-  suggested_duration_minutes?: number;
+  start_at?: string | null;
+  end_at?: string | null;
+  suggested_duration_minutes?: number | null;
   /** 每人费用区间（分；0=免费、null=未知），语义同 Event 对应字段。 */
   budget_min?: number | null;
   budget_max?: number | null;

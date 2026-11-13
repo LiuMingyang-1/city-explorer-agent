@@ -1,3 +1,4 @@
+import { afterResource } from "./resource-cleanup-fixture.ts";
 import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
 import { test } from "node:test";
@@ -251,7 +252,7 @@ test("a checkpoint that crossed an unclosed batch stays corrupt after results ar
   // 再把缺失的 toolResult 直接插进日志。按最终历史看似闭环，
   // 但检查点只能按它写入时的前缀判定——永远非法。
   const raw = new DatabaseSync(dbPath);
-  t.after(() => raw.close());
+  afterResource(t, () => raw.close());
   const state = raw
     .prepare(
       "SELECT COALESCE(MAX(seq), 0) AS s, COALESCE(MAX(message_seq), 0) AS m FROM session_records WHERE session_id = ?",
@@ -289,7 +290,7 @@ test("a checkpoint that crossed an unclosed batch stays corrupt after results ar
     );
 
   const repo2 = createSqliteSessionRepository(dbPath);
-  t.after(() => repo2.close());
+  afterResource(t, () => repo2.close());
   await assert.rejects(repo2.latestCompaction("u-stale", main.sessionId), (e) =>
     isSessionError(e, "corrupt"),
   );
@@ -375,7 +376,7 @@ test("invalid stored records surface as corrupt, never silently skipped", async 
 
   // 绕过仓库手写一条非法检查点（through 与当时前缀不符）。
   const raw = new DatabaseSync(dbPath);
-  t.after(() => raw.close());
+  afterResource(t, () => raw.close());
   const maxSeq = (
     raw
       .prepare("SELECT COALESCE(MAX(seq), 0) AS s FROM session_records WHERE session_id = ?")
@@ -393,7 +394,7 @@ test("invalid stored records surface as corrupt, never silently skipped", async 
     );
 
   const repo2 = createSqliteSessionRepository(dbPath);
-  t.after(() => repo2.close());
+  afterResource(t, () => repo2.close());
   // 最新一条非法 → 明确报错而非跳过回退到旧检查点。
   await assert.rejects(repo2.latestCompaction("u-corrupt", main.sessionId), (e) =>
     isSessionError(e, "corrupt"),
@@ -413,7 +414,7 @@ test("orphan toolResult inside stored history is reported as corrupt on read", a
 
   // 直接写一条孤立 toolResult 记录（payload 合法但引用不存在的调用）。
   const raw = new DatabaseSync(dbPath);
-  t.after(() => raw.close());
+  afterResource(t, () => raw.close());
   const seq = (
     raw
       .prepare("SELECT COALESCE(MAX(seq), 0) AS s, COALESCE(MAX(message_seq), 0) AS m FROM session_records WHERE session_id = ?")
@@ -441,7 +442,7 @@ test("orphan toolResult inside stored history is reported as corrupt on read", a
     );
 
   const repo2 = createSqliteSessionRepository(dbPath);
-  t.after(() => repo2.close());
+  afterResource(t, () => repo2.close());
   await assert.rejects(repo2.latestCompaction("u-o2", main.sessionId), (e) =>
     isSessionError(e, "corrupt"),
   );

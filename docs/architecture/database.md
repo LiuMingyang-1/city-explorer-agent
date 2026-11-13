@@ -1,5 +1,8 @@
 # Database Design
 
+> 当前实现已升级为活动/景点共表v4，旧版字段/校验描述作为历史记录。以[统一表实现与验收](unified-events-v4.md)为准。
+
+
 本文说明活动库的 Schema、字段语义、查询行为、迁移与种子策略。
 范围限第一版单进程 CLI 的活动数据；架构与模块分工见 [overview.md](overview.md)，
 运行命令见 [development.md](../development.md)。
@@ -26,14 +29,14 @@
 | `id` | TEXT PRIMARY KEY | 否 | — | 活动时段唯一 ID，行程经 `event_id` 引用 | `id` |
 | `title` | TEXT | 否 | — | 活动名称 | `title` |
 | `description` | TEXT | 否 | — | 活动介绍 | `description` |
-| `category` | TEXT | 否 | — | 活动类型（展览/书店活动/市集/演出等） | `category` |
+| `category` | TEXT | 否 | — | 固定 12 类，见 src/data/categories.ts | `category` |
 | `venue_name` | TEXT | 否 | — | 场地名称 | `venueName` |
 | `address` | TEXT | 否 | — | 详细地址 | `address` |
-| `latitude` | REAL | 否 | — | 纬度 | `latitude` |
-| `longitude` | REAL | 否 | — | 经度 | `longitude` |
-| `start_at` | TEXT | 否 | — | 可参加开始时间 | `startAt` |
-| `end_at` | TEXT | 否 | — | 可参加结束时间 | `endAt` |
-| `suggested_duration_minutes` | INTEGER | 否 | — | 建议停留时长（分钟） | `suggestedDurationMinutes` |
+| `latitude` | REAL | 是 | NULL | 纬度；最终发布必须补齐 | `latitude` |
+| `longitude` | REAL | 是 | NULL | 经度；必须与纬度成对 | `longitude` |
+| `start_at` | TEXT | 是 | NULL | 可参加开始时间，未知不等于全天开放 | `startAt` |
+| `end_at` | TEXT | 是 | NULL | 可参加结束时间，未知不能自动排程 | `endAt` |
+| `suggested_duration_minutes` | INTEGER | 是 | NULL | 建议停留时长（分钟），未知留空 | `suggestedDurationMinutes` |
 | `budget_min` | INTEGER | 是 | — | 每人预计费用下限（分） | `budgetMin` |
 | `budget_max` | INTEGER | 是 | — | 每人预计费用上限（分） | `budgetMax` |
 | `currency` | TEXT | 否 | `'CNY'` | 费用币种代码 | `currency` |
@@ -52,7 +55,7 @@
   是建议停留时长（如展览 10:00–18:00 建议停留 90 分钟）。
 - **固定场次活动**：起止即该场次实际开演至散场时间，建议留满全程
   （如演出 19:30 开场、时长 100 分钟，建议值等于场次时长）。
-- 窗口可以跨多日；日期查询按重叠判断，不要求窗口落在单日之内。
+- 采集发布按具体场次/每日开放时段展开，每段不超过 24 小时；不能用整个展期冒充连续开放。日期查询仍按重叠判断，以兼容已有跨日数据。
 
 ## 费用语义
 
@@ -79,7 +82,8 @@ CHECK 覆盖的范围以 `src/data/schema.ts` 实现为准：
 - `image_urls`：CHECK 只保证列值是合法 JSON 数组（`json_valid` 且 `json_type = 'array'`）；
   数组元素全为字符串由 repository 读边界 `parseImageUrls` 检查（CHECK 内不遍历
   `json_each`），库内数据损坏时报错而非静默丢图。
-- 其余文本列只约束 NOT NULL/可空，不设枚举或格式 CHECK。
+- category 使用共享 12 类枚举 CHECK；基础文本禁止纯空白；坐标成对可空、非空时检查范围和数值类型；建议时长为 1–1440 的整数或 NULL。
+- 开放时间的语义、有效性及证据在采集发布边界校验，不由 SQL 推断。
 
 ## 查询语义
 
@@ -109,3 +113,11 @@ Agent 只经 `EventRepository` 取数，不直接编写 SQL；`search` 即 `sear
   的数据，缺省取运行当天。
 - 种子含免费、付费区间、费用未知（模板省略 budget）样例，以及攻略链接、无图、
   单图与多图样例。
+
+## 夜间真实数据补充：兼容约定
+
+本分支保留原 18 列，start_at/end_at/suggested_duration_minutes 显式 DEFAULT NULL；latitude/longitude 放宽为成对可空，最终发布仍必须补齐，普通 search/getByIds 均不会返回缺坐标行。具体采集规则见 [静态采集实施设计](static-events-collection-design.md)。
+
+旧库自动事务重建以更新约束，保留已有行、自定义列、索引、触发器及外部引用，恢复原外键设置。旧库存在不兼容分类则停止并回滚，不擅自改写记录，不运行 seed。来源和时效元数据仍存 provenance sidecar。
+
+不带日期的发现可返回未知时间但坐标完整的活动；date 查询只匹配完整时间边界。规划器拒绝未知时间边界；未知建议时长不伪装成来源事实。collection/freshness.ts 的时效决策尚需后续发布/读库入口接入。

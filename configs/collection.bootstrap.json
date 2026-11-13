@@ -1,0 +1,54 @@
+{
+  "schema_version": "xian-collection-task/1",
+  "mode": "bootstrap",
+  "profile_id": "xian-bootstrap-attractions",
+  "city": "西安市",
+  "keyword_city": "西安",
+  "timezone": "Asia/Shanghai",
+  "engines": [
+    {
+      "name": "deepseek",
+      "enabled": true,
+      "search_method": "seed_list",
+      "limit": 10
+    }
+  ],
+  "collection_defaults": {
+    "output_dir": ".local-data/xian/bootstrap/runs",
+    "publish_root": ".local-data/xian/real-release",
+    "processing": {
+      "enabled": true,
+      "ocr": true,
+      "attraction_duplicate_meters": 10
+    },
+    "budgets": {
+      "model_requests": 80,
+      "map_requests": 60,
+      "level_searches": 10
+    },
+    "database_path": "data/events.db"
+  },
+  "state_file": ".local-data/xian/bootstrap/state.json",
+  "schedule": {
+    "enabled": false,
+    "backend": "windows_task_scheduler",
+    "task_name": "CityExplorerNightlyDiscovery",
+    "poll_minutes": 5,
+    "at": "23:30",
+    "weekdays": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "search_anchor_day_offset": 1,
+    "catch_up_window_minutes": 120,
+    "max_run_minutes": 30
+  },
+  "seed_file": "docs/data/xian-attraction-seeds.json",
+  "batch_size": 5,
+  "results_per_target": 2
+}

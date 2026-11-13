@@ -31,6 +31,7 @@ test("空页面只发 cookie 不建行；首条 POST 懒建对话并回传 sessi
   const ev1 = await exhibition(stack.repository, DAY1);
   const talk = (await stack.repository.search({ date: DAY1, category: "讲座" }))[0];
   assert.ok(talk, "种子库应有讲座活动");
+  assert.ok(talk.startAt !== null && talk.endAt !== null);
   const planA: Itinerary = {
     date: DAY1,
     summary: "初版：单站看展",
