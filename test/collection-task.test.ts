@@ -103,7 +103,7 @@ test("explicit manual force runs a second same-day round against the identical d
 test("shared publication lock prevents concurrent source/browser execution",async()=>{
   const f=fixture();try{let finish!:(v:{status:string;task_completed:boolean})=>void;let entered!:()=>void;const enteredPromise=new Promise<void>(r=>entered=r);
     const first=runTask(f.file,{live:true,manual:true,execute:async()=>{entered();return new Promise(r=>finish=r);}});await enteredPromise;
-    const other=await runTask(f.file,{live:true,manual:true,execute:async()=>{throw new Error("must not run");}});assert.equal((other as any).reason,"TASK_LOCKED");finish({status:"success",task_completed:true});await first;assert(!existsSync(f.c.collection_defaults.database_path!+".task.lock"));
+    const other=await runTask(f.file,{live:true,manual:true,execute:async()=>{throw new Error("must not run");}});assert.equal((other as any).reason,"TASK_LOCKED");finish({status:"success",task_completed:true});await first;assert(existsSync(f.c.collection_defaults.database_path!+".task.lock"));
   }finally{f.clean();}
 });
 test("stale task locks are reclaimed while a live legacy holder is still respected",async()=>{
@@ -114,18 +114,18 @@ test("stale task locks are reclaimed while a live legacy holder is still respect
     assert.equal((await runTask(f.file,{live:true,manual:true,execute:async()=>{throw new Error("must not run");}}) as any).reason,"TASK_LOCKED");
     const dead=spawnSync(process.execPath,["-e",""]).pid;
     writeFileSync(lock,JSON.stringify({pid:dead,started_at:"2026-11-13T00:00:00Z"}));
-    assert.equal((await runTask(f.file,{live:true,manual:true,execute})).status,"complete");assert(!existsSync(lock));
+    assert.equal((await runTask(f.file,{live:true,manual:true,execute})).status,"complete");assert(existsSync(lock));
     // A holder killed with SIGKILL leaves the lock file behind, but the OS released the lock.
     spawnSync(process.execPath,["--input-type=module","-e",`import{DatabaseSync}from"node:sqlite";const d=new DatabaseSync(${JSON.stringify(lock)});d.exec("BEGIN IMMEDIATE");setInterval(()=>{},1e9)`],{killSignal:"SIGKILL",timeout:3000});
     assert(existsSync(lock));
-    assert.equal((await runTask(f.file,{live:true,manual:true,force:true,execute})).status,"complete");assert(!existsSync(lock));
+    assert.equal((await runTask(f.file,{live:true,manual:true,force:true,execute})).status,"complete");assert(existsSync(lock));
   }finally{f.clean();}
 });
 test("partial and crashed supplement attempts do not advance cursors; next day is allowed",async()=>{
   const f=fixture();try{
     await runTask(f.file,{live:true,manual:true,now:()=>"2026-11-13T15:30:00Z",execute:async()=>({status:"partial",task_completed:false})});assert.equal(read(f.c.state_file).rotation.runs,0);
     await assert.rejects(runTask(f.file,{live:true,manual:true,now:()=>"2026-11-14T15:30:00Z",execute:async()=>{throw new Error("must not expose secret");}}));assert.equal(read(f.c.state_file).records[1].status,"failed");assert(!JSON.stringify(read(f.c.state_file)).includes("must not expose"));
-    assert(!existsSync(f.c.collection_defaults.database_path!+".task.lock"));
+    assert(existsSync(f.c.collection_defaults.database_path!+".task.lock"));
   }finally{f.clean();}
 });
 test("bootstrap advances only completed batches and requires explicit retry after failure",async()=>{

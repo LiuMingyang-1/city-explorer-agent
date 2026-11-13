@@ -1,7 +1,8 @@
-import {readFileSync,existsSync,openSync,writeFileSync,closeSync,unlinkSync} from "node:fs";
+import {readFileSync,existsSync} from "node:fs";
 import {resolve,relative,isAbsolute} from "node:path";
 import {correctCollectionTimes,collectionDatabasePath} from "../src/collection/database.ts";
 import type {TimeCorrection} from "../src/collection/database.ts";
+import {acquireExclusiveLock} from "../src/collection/lock.ts";
 
 // Maintenance command for conservative, cached-source audits. Normal collection still
 // goes through model/map validation; this command cannot fill new times or coordinates.
@@ -15,11 +16,10 @@ function main(){
   const database=collectionDatabasePath(manifest.database_path);
   if(!apply){console.log(JSON.stringify({status:"preview",database,corrections:manifest.corrections.length,api_calls:0}));return;}
   if(!existsSync(database))throw new Error("COLLECTION_DATABASE_NOT_INITIALIZED");
-  const lock=database+".task.lock",handle=openSync(lock,"wx");
+  const unlock=acquireExclusiveLock(database+".task.lock","TASK_LOCKED");
   try{
-    writeFileSync(handle,JSON.stringify({pid:process.pid,operation:"cached-source-time-correction"}));
     const receipt=correctCollectionTimes(database,manifest.corrections,{batchId:manifest.batch_id,asOf:new Date().toISOString()});
     console.log(JSON.stringify(receipt,null,2));
-  }finally{closeSync(handle);unlinkSync(lock);}
+  }finally{unlock();}
 }
 try{main();}catch(error){console.error(error instanceof Error?error.message:"TIME_CORRECTION_FAILED");process.exitCode=1;}
