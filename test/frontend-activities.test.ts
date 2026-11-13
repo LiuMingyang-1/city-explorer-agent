@@ -118,3 +118,17 @@ test('a later successful feed response clears the remembered 404 and resumes vie
  h.run("window.dispatchEvent(new Event('wander:viewport'))");await new Promise(resolve=>setImmediate(resolve));
  assert(urls[3]!.startsWith('/api/events?bbox='),'a successful response resumes viewport probing');
 });
+
+test('bubble arrow tips remain on geographic anchors at every scale and both orientations',async()=>{
+ const h=await activitySetup();
+ for(const scale of [.5,1,2,4]){
+  const points=[{id:'middle',x:720,y:450},{id:'top',x:900,y:30},{id:'right',x:1400,y:400}].map(p=>({...p,x:720+(p.x-720)*scale,y:450+(p.y-450)*scale}));
+  const fits=h.activities.layoutBubbles(points,{width:1440,height:900,zoom:15});
+  for(const p of points){const f=fits.get(p.id);if(!f)continue;
+   assert.equal(p.x+f.dx+f.tailX,p.x);assert.equal(p.y+f.dy+f.tailY,p.y);
+   assert(f.tailX>=24&&f.tailX<=220);assert.equal(f.tailY,f.below?0:98);
+  }
+ }
+ const below=h.activities.layoutBubbles([{id:'top',x:720,y:20}],{width:1440,height:900,zoom:15});assert.equal(below.get('top').below,true);
+ const bubble=h.activities.pin(h.groups()[0]);assert(nodes(bubble).some(e=>e.src==='/assets/demo/exhibition.jpg'));assert.equal(find(bubble,'activity-bubble-tip').length,1);
+});

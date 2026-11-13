@@ -28,23 +28,26 @@
   const merged=new Map([...feed,...planEvents].map(e=>[e.event_id,e]));groups=groupEvents([...merged.values()]).filter(group=>currentEvents(group.events).length);renderMap();
  }
  function pin(group){
-  const event=currentEvents(group.events)[0]||group.events[0],wrap=document.createElement('div');wrap.className='activity-bubble-wrap';
+  const event=present(currentEvents(group.events)[0]||group.events[0]),wrap=document.createElement('div');wrap.className='activity-bubble-wrap';
   const button=text('button','activity-bubble','');button.type='button';button.setAttribute('aria-label',event.title+'，查看活动');
-  button.append(text('span','activity-bubble-title',event.title),text('span','activity-bubble-meta',(event.category||'活动')+' · '+window.WanderPlans.price(event)));
-  wrap.append(button);return wrap;
+  const cover=window.WanderPlans.eventCover(event);cover.classList.add('activity-bubble-thumb');
+  const copy=document.createElement('span');copy.className='activity-bubble-copy';
+  copy.append(text('strong','activity-bubble-title',event.title),text('span','activity-bubble-meta',(event.category||'活动')+' · '+window.WanderPlans.price(event)));
+  button.append(cover,copy);const tip=text('span','activity-bubble-tip',''),anchor=text('span','activity-bubble-anchor','');tip.setAttribute('aria-hidden','true');anchor.setAttribute('aria-hidden','true');
+  wrap.append(button,tip,anchor);return wrap;
  }
  function layoutBubbles(items,{width,height,zoom=11,occupied=[]}){
-  const boxes=[...occupied],result=new Map(),max=zoom>=15?20:zoom>=13?12:7,w=190,h=49;
+  const boxes=[...occupied],result=new Map(),max=zoom>=15?20:zoom>=13?12:7,w=244,h=98;
   const overlap=(a,b)=>a.left<b.right+9&&a.right>b.left-9&&a.top<b.bottom+9&&a.bottom>b.top-9;
   const ordered=[...items].sort((a,b)=>Math.hypot(a.x-width/2,a.y-height/2)-Math.hypot(b.x-width/2,b.y-height/2)||String(a.id).localeCompare(String(b.id)));
   for(const item of ordered){
    if(result.size>=max)break;
    if(item.x<8||item.x>width-8||item.y<8||item.y>height-25)continue;
-   const offsets=[[16,-h/2],[-w-16,-h/2],[-w/2,-h-20],[-w/2,20]];
+   const offsets=[[-w/2,-h],[-24,-h],[-w+24,-h],[-w/2,0],[-24,0],[-w+24,0]];
    for(const [dx,dy] of offsets){
     const box={left:item.x+dx,right:item.x+dx+w,top:item.y+dy,bottom:item.y+dy+h};
     if(box.left<10||box.right>width-10||box.top<10||box.bottom>height-25||boxes.some(other=>overlap(box,other)))continue;
-    boxes.push(box);result.set(item.id,{dx,dy,box});break;
+    boxes.push(box);result.set(item.id,{dx,dy,box,tailX:-dx,tailY:dy<0?h:0,below:dy===0});break;
    }
   }return result;
  }
@@ -61,7 +64,7 @@
   const detail=$('activity-detail');if(!detail.hidden)occupied.push(detail.getBoundingClientRect());
   const items=layers.map(item=>{const p=map.latLngToContainerPoint([item.group.lat,item.group.lng]);return {...item,id:item.group.id,x:p.x,y:p.y};});
   const placements=layoutBubbles(items,{width:size.x,height:size.y,zoom:map.getZoom(),occupied});
-  const visible=items.filter(item=>{const fit=placements.get(item.id);if(!fit)return false;item.node.style.setProperty('--bubble-x',fit.dx+'px');item.node.style.setProperty('--bubble-y',fit.dy+'px');return true;});
+  const visible=items.filter(item=>{const fit=placements.get(item.id);if(!fit)return false;item.node.style.setProperty('--bubble-tail-x',fit.tailX+'px');item.node.style.setProperty('--bubble-tail-y',fit.tailY+'px');item.node.classList.toggle('bubble-below',fit.below);item.marker.setIcon(L.divIcon({className:'activity-map-icon',html:item.node,iconSize:[244,98],iconAnchor:[-fit.dx,-fit.dy]}));return true;});
   if(epoch===renderEpoch)leafletLayer=L.layerGroup(visible.map(item=>item.marker)).addTo(map);
  }
  function close(){openEpoch++;const panel=$('activity-detail');panel.hidden=true;window.WanderAMap?.updatePlaces?.();returnFocus?.focus?.({preventScroll:true});}

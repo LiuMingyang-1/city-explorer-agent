@@ -23,6 +23,7 @@ export class Element {
   querySelector() { return new Element(); }
 }
 const historySource = readFileSync(new URL('../frontend/history.js', import.meta.url), 'utf8');
+const mapLayoutSource=readFileSync(new URL('../frontend/map-layout.js',import.meta.url),'utf8');
 const plansSource = readFileSync(new URL('../frontend/plans.js', import.meta.url), 'utf8');
 const transportSource = readFileSync(new URL('../frontend/transport.js', import.meta.url), 'utf8');
 const chatSource = readFileSync(new URL('../frontend/chat.js', import.meta.url), 'utf8');
@@ -55,6 +56,7 @@ export function setup({ entries = [] as ReturnType<typeof saved>[], blocked = fa
         finish: value => resolve({ ok: true, json: async () => value }) }));
     },
   });
+  vm.runInContext(mapLayoutSource,context);
   if (api) { vm.runInContext(plansSource, context);vm.runInContext(transportSource, context);vm.runInContext(chatSource, context); }
   vm.runInContext(historySource, context);
   return { $, state, context, requests, stored: () => JSON.parse(stored), run: (code: string) => vm.runInContext(code, context) };

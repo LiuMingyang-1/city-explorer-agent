@@ -17,7 +17,7 @@
     "typecheck": "tsc --noEmit",
     "test": "node --test \"test/**/*.test.ts\"",
     "check": "npm run typecheck && npm test",
-    "check:frontend": "node --check frontend/activities.js && node --check frontend/amap.js && node --check frontend/app.js && node --check frontend/places.js && node --check frontend/plans.js && node --check frontend/transport.js && node --check frontend/chat.js && node --check frontend/history.js && node --check scripts/frontend-dev.mjs",
+    "check:frontend": "node --check frontend/map-layout.js && node --check frontend/activities.js && node --check frontend/amap.js && node --check frontend/app.js && node --check frontend/places.js && node --check frontend/plans.js && node --check frontend/transport.js && node --check frontend/chat.js && node --check frontend/history.js && node --check scripts/frontend-dev.mjs",
     "mock:events": "node scripts/export-demo-events.ts"
   },
   "dependencies": {

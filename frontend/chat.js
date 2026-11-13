@@ -2,7 +2,7 @@
 let ready=true,activeChatRequest;
 window.addEventListener('wander:reset',()=>{activeChatRequest?.abort();activeChatRequest=null;});
 function scrollMessages(){const list=$('messages');list.scrollTo({top:list.scrollHeight,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}
-function updateChatLayout(){document.querySelector('.glass-card').classList.toggle('has-conversation',Boolean(state.messages.length));}
+function updateChatLayout(){const active=Boolean(state.messages.length);document.querySelector('.glass-card').classList.toggle('has-conversation',active);$('welcome').hidden=active;}
 window.updateChatLayout=updateChatLayout;
 function makeMessage(role){
  $('empty-state')?.remove();const message=document.createElement('div');message.className='message '+role;

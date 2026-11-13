@@ -114,7 +114,7 @@
    if(activityMarkers.length)native.remove(activityMarkers.map(item=>item.marker));
    activityMarkers=prepared.map(({group,position})=>{
     const content=window.WanderActivities.pin(group);content.addEventListener('click',()=>open(group));
-    const marker=new window.AMap.Marker({position,content,anchor:'center',title:group.events[0]?.title||group.name,zIndex:450});return {marker,group,content,position};
+    const marker=new window.AMap.Marker({position,content,anchor:'top-left',title:group.events[0]?.title||group.name,zIndex:450});return {marker,group,content,position};
    });updatePlaces();
   }catch{ /* A feed failure must not tear down the basemap. */ }
  }
@@ -124,7 +124,7 @@
   const fits=window.WanderActivities.layoutBubbles(items,{width,height,occupied,zoom:native.getZoom?.()||11});
   items.forEach(item=>{
    const fit=fits.get(item.id),show=Boolean(fit);
-   if(fit){item.content.style.setProperty('--bubble-x',fit.dx+'px');item.content.style.setProperty('--bubble-y',fit.dy+'px');}
+   if(fit){item.content.style.setProperty('--bubble-tail-x',fit.tailX+'px');item.content.style.setProperty('--bubble-tail-y',fit.tailY+'px');item.content.classList.toggle('bubble-below',fit.below);item.marker.setOffset(new window.AMap.Pixel(fit.dx,fit.dy));}
    item.marker.setMap(show?native:null);
   });
  }
@@ -154,7 +154,7 @@
     if(selected)activeLayers.push(layer);
     layer.on('click',()=>{choose?.(item.plan.plan_id);if(item.type==='dot')window.WanderActivities?.openEvents([item.event],{placeName:item.event.venue_name,coordinateSystem:model.coordinate_system});});return layer;
    });native.add(routes);
-   if(fit&&activeLayers.length){const card=document.querySelector('.glass-card').getBoundingClientRect();native.setFitView(activeLayers,false,innerWidth>700?[70,70,60,card.right+45]:[60,25,card.height+35,25],15);}
+   if(fit&&activeLayers.length){const card=document.querySelector('.glass-card').getBoundingClientRect(),size=native.getSize();const frame=window.WanderMapLayout.routeFrame({width:size.width,height:size.height,card});native.setFitView(activeLayers,false,frame.amap,15);}
   }catch{if(epoch===routeEpoch)showMapStatus('路线坐标转换暂不可用');}
  }
  function backendLocation(location){
