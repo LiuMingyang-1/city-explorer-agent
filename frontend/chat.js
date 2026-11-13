@@ -1,6 +1,6 @@
 'use strict';
 let ready=true,activeChatRequest;
-window.addEventListener('wander:reset',()=>{activeChatRequest?.abort();activeChatRequest=null;});
+window.addEventListener('wander:reset',()=>{activeChatRequest?.abort();activeChatRequest=null;clearEventChip();});
 function scrollMessages(){const list=$('messages');list.scrollTo({top:list.scrollHeight,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}
 function updateChatLayout(){const active=Boolean(state.messages.length);document.querySelector('.glass-card').classList.toggle('has-conversation',active);$('welcome').hidden=active;}
 window.updateChatLayout=updateChatLayout;
@@ -26,11 +26,11 @@ function buildChatBody(text){
  if(typeof state.sessionId==='string'&&state.sessionId)body.session_id=state.sessionId;
  // Legacy /api/chat rejects extra keys: only plans-capable replies enable this field.
  if(state.latestPlan?.kind==='plans'&&typeof state.activePlanId==='string')body.active_plan=state.activePlanId;
- if(typeof state.referencedEventId==='string'&&state.referencedDraft===text)body.referenced_event_id=state.referencedEventId;
+ if(state.eventChip&&typeof state.eventChip.eventId==='string'&&state.eventChip.eventId)body.referenced_event_id=state.eventChip.eventId;
  return body;
 }
 async function deliver(text){
- const generation=window.WanderHistory?.generation(),isCurrent=()=>!window.WanderHistory||generation===window.WanderHistory.generation();
+ const generation=window.WanderHistory?.generation(),isCurrent=()=>!window.WanderHistory||generation===window.WanderHistory.generation(),sentChip=state.eventChip;
  const request=new AbortController();activeChatRequest=request;state.busy=true;updateSendButton();
  const pending=document.createElement('div');pending.className='message assistant';
  const label=document.createElement('span');label.className='message-label';label.textContent=window.WanderTransport.mock?'漫游 · 示例演示':'漫游 · 正在规划';
@@ -48,15 +48,29 @@ async function deliver(text){
   else if(data&&data.kind==='clarification'&&typeof data.question==='string'&&data.question)appendMessage('assistant',data.question);
   else throw new Error('收到的方案格式暂不支持');
  }catch(error){if(!isCurrent())return;pending.remove();showSendError(text,error);}
- finally{clearTimeout(slow);pending.remove();if(isCurrent()){state.referencedEventId=null;state.referencedDraft=null;activeChatRequest=null;state.busy=false;updateSendButton();window.WanderHistory?.capture();$('message-input').focus({preventScroll:true});}}
+ finally{clearTimeout(slow);pending.remove();if(isCurrent()){if(state.eventChip===sentChip)clearEventChip();activeChatRequest=null;state.busy=false;updateSendButton();window.WanderHistory?.capture();$('message-input').focus({preventScroll:true});}}
 }
 async function sendMessage(text){
- text=String(text).trim();if(!text||!ready||state.busy)return;
+ text=String(text).trim();
+ if(!text&&state.eventChip)text=state.eventChip.kind==='add'?'请把「'+state.eventChip.title+'」加入我的行程':'帮我看看「'+state.eventChip.title+'」适不适合加进行程';
+ if(!text||!ready||state.busy)return;
  state.manual=true;window.WanderHistory?.setExpanded(false);appendMessage('user',text);$('message-input').value='';window.WanderHistory?.capture();await deliver(text);
 }
 window.sendMessage=sendMessage;
-function updateSendButton(){$('send-button').disabled=!ready||state.busy||!$('message-input').value.trim();}
-$('message-input').addEventListener('input',()=>{if($('message-input').value!==state.referencedDraft){state.referencedEventId=null;state.referencedDraft=null;}updateSendButton();});
+function updateSendButton(){$('send-button').disabled=!ready||state.busy||(!$('message-input').value.trim()&&!state.eventChip);}
+function clearEventChip(){state.eventChip=null;const slot=$('composer-chips');slot.replaceChildren();slot.hidden=true;updateSendButton();}
+function attachEventChip(event){
+ const slot=$('composer-chips');slot.replaceChildren();
+ state.eventChip={eventId:typeof event.eventId==='string'&&event.eventId?event.eventId:null,title:String(event.title||'').slice(0,200),venue:String(event.venue||'').slice(0,120),kind:event.kind==='add'?'add':'ask'};
+ const chip=document.createElement('span');chip.className='composer-chip';
+ const kind=document.createElement('span');kind.className='composer-chip-kind';kind.textContent=state.eventChip.kind==='add'?'加入行程':'问一问';
+ const title=document.createElement('span');title.className='composer-chip-title';title.textContent=state.eventChip.title;
+ chip.append(kind,title);
+ if(state.eventChip.venue){const venue=document.createElement('span');venue.className='composer-chip-venue';venue.textContent=state.eventChip.venue;chip.append(venue);}
+ const remove=document.createElement('button');remove.type='button';remove.className='composer-chip-remove';remove.textContent='×';remove.setAttribute('aria-label','移除活动引用');remove.addEventListener('click',()=>{clearEventChip();$('message-input').focus({preventScroll:true});});
+ chip.append(remove);chip.title=state.eventChip.title+(state.eventChip.venue?' · '+state.eventChip.venue:'');slot.append(chip);slot.hidden=false;updateSendButton();
+}
+$('message-input').addEventListener('input',updateSendButton);
 $('chat-form').addEventListener('submit',event=>{event.preventDefault();if(!event.isComposing)sendMessage($('message-input').value);});
 $('message-input').addEventListener('keydown',event=>{if(event.key==='Enter'&&event.isComposing)event.preventDefault();});
 updateSendButton();

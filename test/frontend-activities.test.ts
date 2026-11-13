@@ -8,6 +8,9 @@ const sample=JSON.parse(readFileSync(new URL('../frontend/data/demo-events.json'
 const nodes=(root:Element):Element[]=>[root,...root.children.flatMap(nodes)];
 const find=(root:Element,cls:string)=>nodes(root).filter(e=>e.className.split(' ').includes(cls)||e.classes.has(cls));
 const content=(root:Element)=>nodes(root).map(e=>e.textContent).join('\n');
+const detailFooter=(panel:Element)=>find(panel,'activity-detail-footer')[0]!;
+// The fixture's replaceChildren only cleared nodes; real DOM also appends the replacements.
+Element.prototype.replaceChildren=function(...nodes:Element[]){this.children.forEach(n=>{n.parent=null});this.children=[];this.append(...nodes);};
 async function activitySetup(){
  const h=setup({api:true});let rendered:any[]=[];
  h.context.window.WanderAMap={ready:true,clearRoutes(){},async setActivities(groups:any[]){rendered=groups;}};
@@ -25,17 +28,20 @@ test('seed activity feed groups daily repeats at venues and pins open independen
  assert.equal(panel.hidden,false);assert(allText.includes('示例活动'));assert(allText.includes('¥120–150'));assert(allText.includes('学生票半价'));
  assert(allText.includes('10:00'));assert(allText.includes(group.events[0].address));assert.equal(h.state.messages.length,0);
  assert(nodes(panel).some(n=>n.src==='/assets/demo/exhibition.jpg'));
- assert(find(panel,'activity-source')[0]!.href.startsWith('https://github.com/'));
+ assert.equal(find(find(panel,'activity-detail-body')[0]!,'activity-source').length,0);
+ assert(find(detailFooter(panel),'activity-source')[0]!.href.startsWith('https://github.com/'));
  find(panel,'activity-close')[0]!.click();assert.equal(panel.hidden,true);
 });
 
-test('activity details switch free/unknown budgets and only draft a question when asked',async()=>{
+test('activity details switch free/unknown budgets and only attach a question chip when asked',async()=>{
  const h=await activitySetup(),first=sample.events[0];
  const events=[{...first,event_id:'free',title:'免费活动',budget_min:0,budget_max:0},{...first,event_id:'unknown',title:'待确认活动',budget_min:null,budget_max:null}];
  h.activities.openEvents(events,{placeName:'测试地点'});const panel=h.$('activity-detail');assert(content(panel).includes('免费 / 人'));
  find(panel,'activity-choice')[1]!.click();assert(content(panel).includes('票价待确认 / 人'));
  h.$('plan-detail').hidden=false;h.$('card').classList.add('viewing-plan');
- find(panel,'activity-ask')[0]!.click();assert.equal(h.$('plan-detail').hidden,true);assert(h.$('message-input').value.includes('待确认活动'));
+ find(detailFooter(panel),'activity-ask')[0]!.click();assert.equal(h.$('plan-detail').hidden,true);assert.equal(h.$('message-input').value,'');
+ const slot=h.$('composer-chips');assert.equal(slot.hidden,false);assert(content(slot).includes('待确认活动'));
+ assert.equal(h.$('send-button').disabled,false,'an attached chip alone enables the send button');
  assert.equal(h.requests.length,0,'Point selection must not send a chat request without user submission');
 });
 
@@ -58,14 +64,21 @@ test('current activities API uses GCJ contract and map selection passes a real e
  const paths:string[]=[];h.context.fetch=async(url:string)=>{paths.push(url);return new Response(JSON.stringify({events:[event]}))};await h.activities.reload();
  assert.deepEqual(paths,['/api/events']);assert.equal(h.groups()[0].coordinateSystem,'GCJ-02');
  h.context.window.WanderAMap.backendLocation=()=>null;
- h.activities.openEvents([event]);find(h.$('activity-detail'),'activity-ask')[0]!.click();
- const draft=h.$('message-input').value;
- // Return to the fixture's deferred chat transport after loading the event API.
+ const slot=h.$('composer-chips');
+ h.activities.openEvents([event]);find(detailFooter(h.$('activity-detail')),'activity-ask')[0]!.click();
+ assert.equal(h.$('message-input').value,'');assert(content(slot).includes(event.title));
+ // An empty input sends a kind-derived default text; the chip supplies the reference.
  let body:any;h.context.window.WanderTransport.request=async(value:any)=>{body=value;return {kind:'clarification',question:'什么时候去？'}};
- h.context.draft=draft;await h.run('window.sendMessage(draft)');assert.equal(body.referenced_event_id,'real-event');
- h.activities.openEvents([event]);find(h.$('activity-detail'),'activity-ask')[0]!.click();
+ await h.run('window.sendMessage("")');assert.equal(body.referenced_event_id,'real-event');assert(body.message.includes(event.title));
+ assert.equal(slot.hidden,true,'a completed send consumes the chip');
+ // Typing a different message keeps the chip: the reference is decoupled from the text.
+ h.activities.openEvents([event]);find(detailFooter(h.$('activity-detail')),'activity-ask')[0]!.click();
  h.$('message-input').value='改成去看别的';h.$('message-input').listeners.get('input')!();
- await h.run('window.sendMessage("改成去看别的")');assert.equal(body.referenced_event_id,undefined);
+ await h.run('window.sendMessage("改成去看别的")');assert.equal(body.referenced_event_id,'real-event');
+ // Removing the chip with × drops the reference for the next send.
+ h.activities.openEvents([event]);find(detailFooter(h.$('activity-detail')),'activity-ask')[0]!.click();
+ find(slot,'composer-chip-remove')[0]!.click();assert.equal(slot.hidden,true);
+ await h.run('window.sendMessage("只是随便聊聊")');assert.equal(body.referenced_event_id,undefined);
 });
 
 test('activity bubbles carry title and price, stay in view, and avoid card/label collisions',async()=>{
@@ -133,14 +146,15 @@ test('bubble arrow tips remain on geographic anchors at every scale and both ori
  const bubble=h.activities.pin(h.groups()[0]);assert(nodes(bubble).some(e=>e.src==='/assets/demo/exhibition.jpg'));assert.equal(find(bubble,'activity-bubble-tip').length,1);
 });
 
-test('join itinerary fills a distinct draft, preserves active plan and references only real events',async()=>{
+test('join itinerary attaches a distinct chip, preserves active plan and references only real events',async()=>{
  const h=await activitySetup();h.context.window.WanderAMap.backendLocation=()=>null;
  const real={...sample.events[0],event_id:'real-added',is_demo:false,end_at:'2099-12-31T18:00',description:'活动介绍'};
- h.activities.openEvents([real]);let panel=h.$('activity-detail');find(panel,'activity-add')[0]!.click();
- assert(h.$('message-input').value.includes('加入我的行程'));assert.equal(h.requests.length,0);
+ h.activities.openEvents([real]);let panel=h.$('activity-detail');find(detailFooter(panel),'activity-add')[0]!.click();
+ assert.equal(h.$('message-input').value,'');assert.equal(h.requests.length,0);
+ const slot=h.$('composer-chips');assert(content(slot).includes('加入行程'));assert(content(slot).includes(real.title));
  let sent:any;h.context.window.WanderTransport.request=async(body:any)=>{sent=body;return {kind:'clarification',question:'什么时候出发？'}};
- h.context.draft=h.$('message-input').value;h.run('state.latestPlan={kind:"plans"};state.activePlanId="B"');await h.run('window.sendMessage(draft)');
- assert.equal(sent.referenced_event_id,'real-added');assert.equal(sent.active_plan,'B');
- h.activities.openEvents([sample.events[0]]);find(panel,'activity-add')[0]!.click();h.context.draft=h.$('message-input').value;await h.run('window.sendMessage(draft)');
+ h.run('state.latestPlan={kind:"plans"};state.activePlanId="B"');await h.run('window.sendMessage("")');
+ assert.equal(sent.referenced_event_id,'real-added');assert.equal(sent.active_plan,'B');assert(sent.message.includes('加入我的行程'));
+ h.activities.openEvents([sample.events[0]]);find(detailFooter(panel),'activity-add')[0]!.click();await h.run('window.sendMessage("")');
  assert.equal(sent.referenced_event_id,undefined);assert(sent.message.includes('加入我的行程'));
 });

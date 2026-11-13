@@ -39,7 +39,7 @@ npm run dev:frontend
 - 原有 `{kind:'clarification', question}` 继续显示文本追问。
 - 样例 `{kind:'plans', plans, events, active_plan, coordinate_system}` 进入新组件。每条计划使用 `plan_id`、`itinerary`、`legs`，按 `event_id` 关联活动。
 - 本次不依赖 `schema_version`、`revision`、`base_revision`、`request_id` 等扩展字段，也不发送这些字段。
-- 收到 plans 后续聊增加 `active_plan`。地图活动提问在用户确认发送时带 `referenced_event_id`；用户改写草稿或开启新对话时清除引用，模拟活动不发送真实事件引用。主分支已支持这两个字段。
+- 收到 plans 后续聊增加 `active_plan`。地图活动提问以可移除 chip 附带 `referenced_event_id`，引用与输入文本解耦；× 移除、发送完成或开启新对话时清除引用，模拟活动不发送真实事件引用。主分支已支持这两个字段。
 - 默认 `/api/chat/stream` 接收 SSE，仍兼容服务返回 JSON。可显式配置其他同源聊天端点。
 - `progress` 只更新等待区，不保存为正式聊天消息；只有完整的 `result` 提交方案。`error` 或没有最终结果的断流保留旧方案并显示错误，不提交半成品。
 - 新聊天/历史切换会 abort 客户端请求，并隔离迟到回复。历史保存当前激活方案，恢复时重新显示卡片和路线；演示和真实模式的本机历史分开。
@@ -101,4 +101,4 @@ npm run dev:frontend
 
 ## 活动规划快捷入口与偏好（2026-11-13）
 
-活动预览卡新增“加入行程”，与“问问这个活动”并列，二者都只填入草稿。真实活动继续携带引用，demo 不携带；由用户提交后交给 Agent 排期。新增“我的偏好”抽屉，按现有 `/api/memory` 契约读、改、清空，使用同源 cookie，失败保留草稿。预览与真实服务的区别、发布故障证据和恢复流程见 [frontend-alignment.md](../contracts/frontend-alignment.md)。
+活动预览卡新增“加入行程”，与“问问这个活动”并列，二者都改为在输入框上方附可移除活动 chip（不再预填草稿）；空输入发送时按按钮意图补默认文案。真实活动由 chip 携带引用，demo 不携带；由用户提交后交给 Agent 排期。新增“我的偏好”抽屉，按现有 `/api/memory` 契约读、改、清空，使用同源 cookie，失败保留草稿。预览与真实服务的区别、发布故障证据和恢复流程见 [frontend-alignment.md](../contracts/frontend-alignment.md)。

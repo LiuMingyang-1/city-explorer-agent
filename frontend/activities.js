@@ -77,9 +77,10 @@
   if(!available.length){panel.append(text('p','activity-empty','这里暂未收录活动。可以拖动或放大地图，查看附近的活动气泡。'));return;}
   const choices=document.createElement('div');choices.className='activity-choices';choices.setAttribute('aria-label','此地活动');
   const body=document.createElement('div');body.className='activity-detail-body';
+  const footer=document.createElement('footer');footer.className='activity-detail-footer';
   const buttons=available.map((event,index)=>{
    const button=text('button','activity-choice',(event.category||'活动')+' · '+(index+1));button.type='button';button.title=event.title;button.addEventListener('click',()=>show(index));choices.append(button);return button;
-  });if(available.length>1)panel.append(choices);panel.append(body);
+  });if(available.length>1)panel.append(choices);panel.append(body,footer);
   function show(index){
    const e=available[index];body.replaceChildren();buttons.forEach((b,i)=>{b.classList.toggle('active',i===index);b.setAttribute('aria-pressed',String(i===index));});
    const cover=window.WanderPlans.eventCover(e);cover.classList.add('activity-hero');
@@ -96,12 +97,11 @@
    const draftAction=(label,kind)=>{
     const button=text('button',kind==='add'?'activity-add':'activity-ask',label);button.type='button';button.addEventListener('click',()=>{
      if(epoch!==openEpoch)return;window.WanderPlans.closeDetail();window.WanderHistory?.setExpanded(false);
-     const prompt=kind==='add'?'请把「'+e.title+'」（'+e.venue_name+'）加入我的行程，帮我安排合适的时间并检查是否顺路。':'我想了解「'+e.title+'」（'+e.venue_name+'），适合加进我的行程吗？';
-     $('message-input').value=prompt.slice(0,1000);state.referencedEventId=e.is_demo?null:e.event_id;state.referencedDraft=$('message-input').value;updateSendButton();$('message-input').focus({preventScroll:true});
+     attachEventChip({eventId:e.is_demo?null:e.event_id,title:e.title,venue:e.venue_name,kind});$('message-input').focus({preventScroll:true});
     });return button;
    };
    const prompts=document.createElement('div');prompts.className='activity-prompts';prompts.append(draftAction('问问这个活动','ask'),draftAction('加入行程','add'));
-   info.append(links,prompts);body.append(info);body.scrollTo({top:0});
+   footer.replaceChildren(links,prompts);body.append(info);body.scrollTo({top:0});
   }
   show(0);window.WanderAMap?.updatePlaces?.();
  }
