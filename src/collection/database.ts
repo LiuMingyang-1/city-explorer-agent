@@ -1,4 +1,5 @@
-import {existsSync,mkdirSync,openSync,closeSync,unlinkSync} from "node:fs";
+import {existsSync,mkdirSync,readFileSync,statSync,unlinkSync} from "node:fs";
+import {execFileSync} from "node:child_process";
 import {resolve,relative,isAbsolute,dirname} from "node:path";
 import {randomUUID} from "node:crypto";
 import {DatabaseSync,backup} from "node:sqlite";
@@ -36,11 +37,38 @@ function readState(db:DatabaseSync){
   if(JSON.stringify(ids)!==JSON.stringify(Object.keys(sidecar.events).sort()))throw new Error("COLLECTION_DATABASE_METADATA_OUT_OF_SYNC");
   return {sidecar,databaseId};
 }
-function lockFile(database:string){
-  mkdirSync(dirname(database),{recursive:true});const path=database+".collection-write.lock";
-  let fd:number;try{fd=openSync(path,"wx");}catch{throw new Error("COLLECTION_DATABASE_LOCKED");}
-  return ()=>{closeSync(fd);unlinkSync(path);};
+const SQLITE_BUSY=5,SQLITE_NOTADB=26;
+/** The lock file is itself a database: BEGIN IMMEDIATE takes an OS-level lock that dies with the
+ * holder, so a crash or reboot can never leave a permanent stale lock. Throws Error(locked) while
+ * another process holds it; the returned release function removes the file again. */
+export function acquireExclusiveLock(path:string,locked:string){
+  mkdirSync(dirname(path),{recursive:true});
+  const open=()=>{const db=new DatabaseSync(path);try{db.exec("BEGIN IMMEDIATE");return db;}catch(error){db.close();throw error;}};
+  let db:DatabaseSync;
+  try{db=open();}
+  catch(error){
+    const code=(error as {errcode?:number}).errcode;
+    if(code!==SQLITE_NOTADB)throw code===SQLITE_BUSY?new Error(locked):error;
+    if(legacyLockHeld(path))throw new Error(locked);
+    try{unlinkSync(path);}catch{}
+    try{db=open();}catch(retry){throw (retry as {errcode?:number}).errcode===SQLITE_BUSY?new Error(locked):retry;}
+  }
+  return ()=>{try{db.exec("ROLLBACK");}finally{db.close();try{unlinkSync(path);}catch{}}};
 }
+/** Older versions left plain JSON markers behind; respect one while its recorded holder lives. */
+function legacyLockHeld(path:string){
+  let pid:unknown;
+  try{pid=(JSON.parse(readFileSync(path,"utf8")) as {pid?:unknown}).pid;}catch{return false;}
+  if(!Number.isInteger(pid)||(pid as number)<=0)return false;
+  try{process.kill(pid as number,0);}catch(error){if((error as NodeJS.ErrnoException).code==="ESRCH")return false;}
+  // A live pid can still be a reused one: nothing started after the file appeared ever wrote it.
+  try{
+    const started=Date.parse(execFileSync("ps",["-o","lstart=","-p",String(pid)],{encoding:"utf8",windowsHide:true})),birth=statSync(path).birthtimeMs;
+    if(Number.isFinite(started)&&birth>0)return started<=birth;
+    return true;
+  }catch{try{process.kill(pid as number,0);}catch{return false;}return true;}
+}
+function lockFile(database:string){return acquireExclusiveLock(database+".collection-write.lock","COLLECTION_DATABASE_LOCKED");}
 export function inspectCollectionDatabase(path:string){
   const database=collectionDatabasePath(path),db=new DatabaseSync(database,{readOnly:true});
   try{const state=readState(db);return {database,database_id:state.databaseId,sidecar:state.sidecar,batch:state.sidecar.batch_id,records:Number(db.prepare("SELECT count(*) n FROM events").get()!.n)};}finally{db.close();}
