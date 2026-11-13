@@ -40,7 +40,7 @@ if(window.L){
  L.control.zoom({position:'bottomright'}).addTo(map);
  // Curated 4A/5A attractions remain visible, with labels placed to avoid overlap.
  places.forEach(place=>{place.marker=L.marker([place.lat,place.lng],{icon:placeIcon(place),title:(place.officialName||place.name)+(place.rating?' · '+place.rating+'A':''),riseOnHover:true});place.marker.on('click',()=>{state.manual=true;selectLocation(place.lat,place.lng,place.name,14);window.WanderActivities?.openNearby(place);});});
- map.on('moveend zoomend resize',()=>updatePlaceMarkers());
+ map.on('moveend zoomend resize',()=>{updatePlaceMarkers();window.dispatchEvent(new Event('wander:viewport'));});
  updatePlaceMarkers();
  window.dispatchEvent(new Event('wander:map-ready'));
  setTimeout(autoLocate,3000);

@@ -87,12 +87,12 @@
     const event=byId.get(stop.event_id);if(!event)return;
     const lat=event.latitude,lng=event.longitude;
     if(typeof lat!=='number'||typeof lng!=='number'||!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)return;
-    const point=[lat,lng];bounds.push(point);
+    const point=[lat,lng];if(selected)bounds.push(point);
     const dot=L.circleMarker(point,{radius:selected?7:5,color,weight:2,opacity:selected?1:.45,fillColor:selected?color:'#f2f4ef',fillOpacity:selected ? .95 : .5}).bindTooltip(locationLabel('方案 '+(plan.label||index+1)+' · '+(i+1)+'. '+event.title));
     dot.on('click',()=>{onSelect?.(plan.plan_id);window.WanderActivities?.openEvents([event],{placeName:event.venue_name,coordinateSystem:model.coordinate_system});});layers.push(dot);
     if(i===stops.length-1)return;
     const leg=legFor(plan,stop.event_id,stops[i+1].event_id),points=geometry(leg);
-    if(points){bounds.push(...points);const line=L.polyline(points,{color,weight:selected?4:3,opacity:selected ? .9 : .25}).bindTooltip(locationLabel((leg.provider==='mock'?'示例轨迹 · ':'')+'方案 '+(plan.label||index+1)+' · '+commute(leg)));
+    if(points){if(selected)bounds.push(...points);const line=L.polyline(points,{color,weight:selected?4:3,opacity:selected ? .9 : .25}).bindTooltip(locationLabel((leg.provider==='mock'?'示例轨迹 · ':'')+'方案 '+(plan.label||index+1)+' · '+commute(leg)));
      if(onSelect)line.on('click',()=>onSelect(plan.plan_id));layers.push(line);}
    });
   });
@@ -123,7 +123,7 @@
   if(model.plans.length===1)tabs.classList.add('single');
   const panel=document.createElement('div');panel.className='plan-content';panel.id='plan-content-'+(++viewCount);panel.setAttribute('role','tabpanel');
   const scroll=document.createElement('div');scroll.className='plan-detail-scroll';scroll.append(panel);
-  const messageIndex=state.messages.length;state.messages.push({role:'assistant',text:summary(model)});
+  const messageIndex=state.messages.length;state.messages.push({role:'assistant',text:summary(model)});window.updateChatLayout?.();
   const buttons=model.plans.map((plan,index)=>{
    const button=text('button','plan-tab','方案 '+(plan.label||String.fromCharCode(65+index)));button.type='button';button.setAttribute('role','tab');button.id=panel.id+'-tab-'+index;button.setAttribute('aria-controls',panel.id);
    button.addEventListener('click',()=>choose(plan.plan_id));
@@ -131,7 +131,7 @@
    tabs.append(button);return button;
   });
   overlay.append(top,heading,tabs,scroll);
-  function choose(id,{fit=false,capture=true}={}){
+  function choose(id,{fit=true,capture=true}={}){
    if(!model.plans.some(p=>p.plan_id===id))return;model.active_plan=id;
    const plan=active(model),byId=new Map(model.events.map(e=>[e.event_id,e]));panel.replaceChildren();
    buttons.forEach((button,i)=>{const selected=model.plans[i].plan_id===id;button.setAttribute('aria-selected',String(selected));button.tabIndex=selected?0:-1;button.classList.toggle('active',selected);});

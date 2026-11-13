@@ -11,7 +11,7 @@
 | 部署网址和开发地址 | 使用实际网站域名，可沿用现有 Sites 预览域名；本地为 localhost/127.0.0.1 | 用于域名限制及部署配置 |
 | 安全代理地址 `serviceHost` | 当前 Web/开发服务器已提供同源 `/_AMapService`；预览站点由 Worker 提供，服务器注入安全密钥 | 已实现，生产环境通过此代理使用 |
 | Web 服务 Key | 同一应用下再添加一个 Key，服务平台选择 **Web服务** | 后端要调用高德 HTTP 搜索、地理编码或算路时需要；与 JS Key 分开 |
-| 自定义地图样式 ID | 高德自定义地图平台创建、编辑并发布样式后复制 ID | 可选；第一版可以先用 `amap://styles/light`，不必等调色 |
+| 自定义地图样式 ID | 高德自定义地图平台创建、编辑并发布样式后复制 ID | 可选；第一版可以先用 `amap://styles/fresh`，不必等调色 |
 
 已有后端同学申请过 Web 服务 Key 时，先确认其可用性、权限和存放位置，不需要在聊天中转发密钥或重复申请。
 
@@ -34,7 +34,7 @@
 AMAP_JS_KEY=
 AMAP_SECURITY_JSCODE=
 EXPLORER_AMAP_KEY=
-AMAP_STYLE=amap://styles/light
+AMAP_STYLE=amap://styles/fresh
 ```
 
 JS Key 是浏览器 SDK 的公开应用标识；安全密钥留在服务器，前端使用官方 `serviceHost` 代理方式。Web 服务 Key 也只留在后端。额度和商用权限以当前账号控制台为准。
