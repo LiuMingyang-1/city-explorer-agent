@@ -7,14 +7,15 @@
   <meta name="description" content="和漫游一起探索西安。查看实时天气、搜索地点，聊聊你的旅行灵感。">
   <title>漫游 · 西安城市向导</title>
   <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
-  <link rel="stylesheet" href="style.css?v=anchors-4">
-  <script src="map-layout.js?v=anchors-4" defer></script><script src="places.js?v=places-1" defer></script><script src="amap.js?v=anchors-4" defer></script><script src="app.js?v=anchors-4" defer></script><script src="plans.js?v=anchors-4" defer></script><script src="transport.js?v=p0-1" defer></script><script src="chat.js?v=anchors-4" defer></script>
-  <script src="history.js?v=anchors-4" defer></script><script src="activities.js?v=anchors-4" defer></script>
+  <link rel="stylesheet" href="style.css?v=aligned-5">
+  <script src="map-layout.js?v=aligned-5" defer></script><script src="places.js?v=places-1" defer></script><script src="amap.js?v=aligned-5" defer></script><script src="app.js?v=aligned-5" defer></script><script src="plans.js?v=aligned-5" defer></script><script src="transport.js?v=p0-1" defer></script><script src="chat.js?v=aligned-5" defer></script>
+  <script src="history.js?v=aligned-5" defer></script><script src="activities.js?v=aligned-5" defer></script><script src="preferences.js?v=aligned-5" defer></script>
 </head>
 <body>
   <main class="canvas">
     <div id="map" aria-label="西安交互地图"></div>
     <aside class="glass-card" aria-label="城市向导">
+      <button id="preferences-open" class="preferences-open" type="button" aria-label="我的偏好" aria-controls="preferences-panel" aria-expanded="false" title="我的偏好"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg></button>
       <button id="new-chat" class="new-chat" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>新聊天</button>
       <section id="welcome" class="welcome"><h1><span id="greeting">你好</span><span class="greeting-dot">。</span><br>今天想去哪里玩？</h1></section>
       <section class="weather" aria-label="当前地点天气"><div id="weather-icon" class="weather-icon" aria-hidden="true"></div><div class="weather-main"><div class="temperature"><span id="temperature">—</span><span class="degrees">℃</span><span id="weather-description">获取天气中</span></div><form id="search-form" class="location-form" role="search"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><input id="location-input" aria-label="搜索地点，回车定位" placeholder="西安市" autocomplete="off" maxlength="100"><button type="submit" class="search-button" aria-label="搜索地点"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></svg></button></form></div><button id="locate" class="locate-button" aria-label="定位到我的位置" title="定位到我的位置"><svg viewBox="0 0 24 24"><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/></svg></button></section>
@@ -25,6 +26,18 @@
       <section id="plan-detail" class="plan-detail-view" aria-label="完整游玩方案" hidden></section>
     </aside>
     <aside id="activity-detail" class="activity-detail" aria-label="地点活动详情" hidden></aside>
+    <aside id="preferences-panel" class="preferences-panel" aria-label="我的偏好" hidden>
+      <header class="preferences-header"><div><p>让下一次出发，更合心意</p><h2>我的偏好</h2></div><button id="preferences-close" class="activity-close" type="button" aria-label="关闭我的偏好">×</button></header>
+      <p id="preferences-mode" class="preferences-mode">这里是城市向导记住的兴趣与出行习惯，你可以随时修改。</p>
+      <form id="preferences-form" class="preferences-form">
+        <label for="preferences-content">兴趣与出行习惯</label>
+        <textarea id="preferences-content" maxlength="8000" spellcheck="false" placeholder="比如：喜欢美术馆和独立书店，偏好步行，下午出发，行程不要太赶。" disabled></textarea>
+        <div class="preferences-meta"><span id="preferences-updated">尚未加载</span><span id="preferences-count">0 / 8000</span></div>
+        <p id="preferences-status" class="preferences-status" role="status" aria-live="polite"></p>
+        <div class="preferences-actions"><button id="preferences-clear" class="preferences-clear" type="button" disabled>清空偏好</button><button id="preferences-save" class="preferences-save" type="submit" disabled>保存修改</button></div>
+        <button id="preferences-retry" class="preferences-retry" type="button" hidden>重新加载偏好</button>
+      </form>
+    </aside>
     <div id="map-status" class="map-status" role="status" hidden></div>
   </main>
 </body>

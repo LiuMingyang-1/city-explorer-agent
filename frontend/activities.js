@@ -61,7 +61,7 @@
    const marker=L.marker([group.lat,group.lng],{icon:L.divIcon({className:'activity-map-icon',html:node,iconSize:[0,0],iconAnchor:[0,0]}),title:group.events[0].title,zIndexOffset:400});return {marker,group,node};
   });
   const size=map.getSize(),card=document.querySelector('.glass-card').getBoundingClientRect(),occupied=[card];
-  const detail=$('activity-detail');if(!detail.hidden)occupied.push(detail.getBoundingClientRect());
+  for(const id of ['activity-detail','preferences-panel']){const panel=$(id);if(panel&&!panel.hidden&&panel.getBoundingClientRect)occupied.push(panel.getBoundingClientRect());}
   const items=layers.map(item=>{const p=map.latLngToContainerPoint([item.group.lat,item.group.lng]);return {...item,id:item.group.id,x:p.x,y:p.y};});
   const placements=layoutBubbles(items,{width:size.x,height:size.y,zoom:map.getZoom(),occupied});
   const visible=items.filter(item=>{const fit=placements.get(item.id);if(!fit)return false;item.node.style.setProperty('--bubble-tail-x',fit.tailX+'px');item.node.style.setProperty('--bubble-tail-y',fit.tailY+'px');item.node.classList.toggle('bubble-below',fit.below);item.marker.setIcon(L.divIcon({className:'activity-map-icon',html:item.node,iconSize:[244,98],iconAnchor:[-fit.dx,-fit.dy]}));return true;});
@@ -93,10 +93,15 @@
    fact('地点',e.address||e.venue_name);fact('预算',window.WanderPlans.price(e)+' / 人');fact('提示',e.budget_note);info.append(facts);
    const links=document.createElement('div');links.className='activity-actions';const url=window.WanderPlans.safeURL(e.guide_url)||window.WanderPlans.safeURL(e.source_url);
    if(url){const link=text('a','activity-source',e.guide_url?'活动原站 ↗':'示例数据来源 ↗');link.href=url;link.target='_blank';link.rel='noopener noreferrer';links.append(link);}else links.append(text('span','activity-no-link','原站链接待补充'));
-   const ask=text('button','activity-ask','问问这个活动 ↗');ask.type='button';ask.addEventListener('click',()=>{
-    if(epoch!==openEpoch)return;window.WanderPlans.closeDetail();window.WanderHistory?.setExpanded(false);
-    $('message-input').value=('我想了解「'+e.title+'」（'+e.venue_name+'），适合加进我的行程吗？').slice(0,1000);state.referencedEventId=e.is_demo?null:e.event_id;state.referencedDraft=$('message-input').value;updateSendButton();$('message-input').focus({preventScroll:true});
-   });links.append(ask);info.append(links);body.append(info);body.scrollTo({top:0});
+   const draftAction=(label,kind)=>{
+    const button=text('button',kind==='add'?'activity-add':'activity-ask',label);button.type='button';button.addEventListener('click',()=>{
+     if(epoch!==openEpoch)return;window.WanderPlans.closeDetail();window.WanderHistory?.setExpanded(false);
+     const prompt=kind==='add'?'请把「'+e.title+'」（'+e.venue_name+'）加入我的行程，帮我安排合适的时间并检查是否顺路。':'我想了解「'+e.title+'」（'+e.venue_name+'），适合加进我的行程吗？';
+     $('message-input').value=prompt.slice(0,1000);state.referencedEventId=e.is_demo?null:e.event_id;state.referencedDraft=$('message-input').value;updateSendButton();$('message-input').focus({preventScroll:true});
+    });return button;
+   };
+   const prompts=document.createElement('div');prompts.className='activity-prompts';prompts.append(draftAction('问问这个活动','ask'),draftAction('加入行程','add'));
+   info.append(links,prompts);body.append(info);body.scrollTo({top:0});
   }
   show(0);window.WanderAMap?.updatePlaces?.();
  }

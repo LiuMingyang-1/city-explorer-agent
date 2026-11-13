@@ -53,7 +53,7 @@
   if(names!==undefined)currentNames=names;if(!native)return;
   const size=native.getSize(),width=size.getWidth?.()??size.width,height=size.getHeight?.()??size.height;
   const card=document.querySelector('.glass-card').getBoundingClientRect(),occupied=[card];
-  const detail=document.getElementById?.('activity-detail');if(detail&&!detail.hidden)occupied.push(detail.getBoundingClientRect());
+  for(const id of ['activity-detail','preferences-panel']){const detail=document.getElementById?.(id);if(detail&&!detail.hidden)occupied.push(detail.getBoundingClientRect());}
   if(selectedPosition){const p=native.lngLatToContainer(selectedPosition),x=p.getX?.()??p.x,y=p.getY?.()??p.y;occupied.push({left:x-135,right:x+135,top:y-65,bottom:y+12});}
   const overlap=(a,b)=>a.left<b.right+6&&a.right>b.left-6&&a.top<b.bottom+6&&a.bottom>b.top-6;
   [...scenes].sort((a,b)=>Number(currentNames.includes(b.place.name))-Number(currentNames.includes(a.place.name))||(b.place.rating||0)-(a.place.rating||0)).forEach(scene=>{

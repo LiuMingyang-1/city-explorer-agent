@@ -132,3 +132,15 @@ test('bubble arrow tips remain on geographic anchors at every scale and both ori
  const below=h.activities.layoutBubbles([{id:'top',x:720,y:20}],{width:1440,height:900,zoom:15});assert.equal(below.get('top').below,true);
  const bubble=h.activities.pin(h.groups()[0]);assert(nodes(bubble).some(e=>e.src==='/assets/demo/exhibition.jpg'));assert.equal(find(bubble,'activity-bubble-tip').length,1);
 });
+
+test('join itinerary fills a distinct draft, preserves active plan and references only real events',async()=>{
+ const h=await activitySetup();h.context.window.WanderAMap.backendLocation=()=>null;
+ const real={...sample.events[0],event_id:'real-added',is_demo:false,end_at:'2099-12-31T18:00',description:'活动介绍'};
+ h.activities.openEvents([real]);let panel=h.$('activity-detail');find(panel,'activity-add')[0]!.click();
+ assert(h.$('message-input').value.includes('加入我的行程'));assert.equal(h.requests.length,0);
+ let sent:any;h.context.window.WanderTransport.request=async(body:any)=>{sent=body;return {kind:'clarification',question:'什么时候出发？'}};
+ h.context.draft=h.$('message-input').value;h.run('state.latestPlan={kind:"plans"};state.activePlanId="B"');await h.run('window.sendMessage(draft)');
+ assert.equal(sent.referenced_event_id,'real-added');assert.equal(sent.active_plan,'B');
+ h.activities.openEvents([sample.events[0]]);find(panel,'activity-add')[0]!.click();h.context.draft=h.$('message-input').value;await h.run('window.sendMessage(draft)');
+ assert.equal(sent.referenced_event_id,undefined);assert(sent.message.includes('加入我的行程'));
+});
