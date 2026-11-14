@@ -7,17 +7,17 @@
   <meta name="description" content="和漫游一起探索西安。查看实时天气、搜索地点，聊聊你的旅行灵感。">
   <title>漫游 · 西安城市向导</title>
   <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
-  <link rel="stylesheet" href="style.css?v=aligned-5">
-  <link rel="stylesheet" href="motion-plans.css?v=motion-1"><link rel="stylesheet" href="motion-panels.css?v=motion-1"><link rel="stylesheet" href="motion-buttons.css?v=motion-1">
+  <link rel="stylesheet" href="style.css?v=issue20-1">
+  <link rel="stylesheet" href="motion-plans.css?v=motion-1"><link rel="stylesheet" href="motion-panels.css?v=motion-1"><link rel="stylesheet" href="motion-buttons.css?v=issue20-1">
   <script src="map-layout.js?v=aligned-5" defer></script><script src="places.js?v=places-1" defer></script><script src="amap.js?v=aligned-5" defer></script><script src="app.js?v=answer-1" defer></script><script src="plans.js?v=answer-1" defer></script><script src="transport.js?v=answer-1" defer></script><script src="chat.js?v=answer-1" defer></script>
-  <script src="history.js?v=answer-1" defer></script><script src="activities.js?v=aligned-5" defer></script><script src="preferences.js?v=aligned-5" defer></script><script src="auth.js?v=auth-1" defer></script>
+  <script src="history.js?v=answer-1" defer></script><script src="activities.js?v=aligned-5" defer></script><script src="preferences.js?v=aligned-5" defer></script><script src="auth.js?v=auth-2" defer></script>
 </head>
 <body>
   <main class="canvas">
     <div id="map" aria-label="西安交互地图"></div>
-    <aside class="glass-card" aria-label="城市向导">
-      <button id="preferences-open" class="preferences-open" type="button" aria-label="我的偏好" aria-controls="preferences-panel" aria-expanded="false" title="我的偏好"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg></button>
-      <button id="auth-open" class="auth-open" type="button" aria-haspopup="dialog" aria-controls="auth-panel" aria-expanded="false">登录</button>
+    <div class="global-entry">
+      <button id="preferences-open" class="preferences-open" type="button" aria-label="记忆" aria-controls="preferences-panel" aria-expanded="false" title="记忆"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/><path d="M17.599 6.5a3 3 0 0 0 .399-1.375"/><path d="M6.003 5.125A3 3 0 0 0 6.401 6.5"/><path d="M3.477 10.896a4 4 0 0 1 .585-.396"/><path d="M19.938 10.5a4 4 0 0 1 .585.396"/><path d="M6 18a4 4 0 0 1-1.967-.516"/><path d="M19.967 17.484A4 4 0 0 1 18 18"/></svg><span>记忆</span></button>
+      <button id="auth-open" class="auth-open" type="button" aria-haspopup="dialog" aria-controls="auth-panel" aria-expanded="false" aria-label="登录账号"><span id="auth-avatar" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.4" r="3.5"/><path d="M5.9 19.4c1-3.2 3.3-4.9 6.1-4.9s5.1 1.7 6.1 4.9"/></svg></span></button>
       <div id="auth-panel" class="auth-panel" role="dialog" aria-label="账号登录" hidden>
         <form id="auth-form" class="auth-form">
           <label for="auth-username-input">用户名</label>
@@ -32,6 +32,8 @@
         </div>
         <p id="auth-status" class="auth-status" role="status" aria-live="polite"></p>
       </div>
+    </div>
+    <aside class="glass-card" aria-label="城市向导">
       <button id="new-chat" class="new-chat" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>新聊天</button>
       <section id="welcome" class="welcome"><h1><span id="greeting">你好</span><span class="greeting-dot">。</span><br>今天想去哪里玩？</h1></section>
       <section class="weather" aria-label="当前地点天气"><div id="weather-icon" class="weather-icon" aria-hidden="true"></div><div class="weather-main"><div class="temperature"><span id="temperature">—</span><span class="degrees">℃</span><span id="weather-description">获取天气中</span></div><form id="search-form" class="location-form" role="search"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><input id="location-input" aria-label="搜索地点，回车定位" placeholder="西安市" autocomplete="off" maxlength="100"><button type="submit" class="search-button" aria-label="搜索地点"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></svg></button></form></div><button id="locate" class="locate-button" aria-label="定位到我的位置" title="定位到我的位置"><svg viewBox="0 0 24 24"><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/></svg></button></section>

@@ -2,14 +2,38 @@
 // Optional login: anonymous stays fully functional; signing in merges the
 // anonymous cookie identity into the account server-side (see /api/login).
 (() => {
- const openBtn=$('auth-open'),panel=$('auth-panel'),form=$('auth-form'),signedIn=$('auth-signed-in'),statusEl=$('auth-status');
+ const openBtn=$('auth-open'),avatarEl=$('auth-avatar'),panel=$('auth-panel'),form=$('auth-form'),signedIn=$('auth-signed-in'),statusEl=$('auth-status');
  let me={authenticated:false},meEpoch=0,busy=false,returnFocus;
+ // The button hosts #auth-avatar only; its name lives on aria-label, so
+ // render() never rewrites the button's textContent (that would wipe the
+ // span). The stock person glyph is the signed-out face and is restored
+ // whenever no initial can be rendered.
+ const defaultAvatar=avatarEl?avatarEl.innerHTML:'';
+ function displayName(){const user=me&&me.user;return String(user&&(user.display_name||user.username)||'');}
+ function initialOf(text){
+  const trimmed=text.trim();if(!trimmed)return '';
+  try{
+   if(typeof Intl!=='undefined'&&typeof Intl.Segmenter==='function'){
+    const first=new Intl.Segmenter(undefined,{granularity:'grapheme'}).segment(trimmed)[Symbol.iterator]().next();
+    if(!first.done)return first.value.segment;
+   }
+  }catch{}
+  return [...trimmed][0]||'';
+ }
  function render(){
-  const authed=me&&me.authenticated===true&&me.user;
+  const authed=me&&me.authenticated===true&&me.user,name=authed?displayName():'',initial=name?initialOf(name):'';
   form.hidden=Boolean(authed);signedIn.hidden=!authed;
-  openBtn.textContent=authed?String(me.user.username||'账号'):'登录';
+  if(avatarEl){
+   if(initial){avatarEl.textContent=initial;avatarEl.classList.add('is-initial');}
+   else{avatarEl.innerHTML=defaultAvatar;avatarEl.classList.remove('is-initial');}
+  }
+  openBtn.classList.toggle('is-authed',Boolean(authed));
+  openBtn.setAttribute('aria-label',authed?(name?'账号菜单：'+name:'账号菜单'):'登录账号');
   openBtn.setAttribute('aria-expanded',String(!panel.hidden));
-  if(authed)$('auth-username').textContent=String(me.user.display_name||me.user.username||'');
+  openBtn.setAttribute('aria-busy',String(busy));
+  panel.setAttribute('aria-busy',String(busy));
+  panel.setAttribute('aria-label',authed?'账号菜单':'账号登录');
+  if(authed)$('auth-username').textContent=name;
   $('auth-login').disabled=busy;$('auth-login').textContent=busy?'登录中…':'登录';
   $('auth-logout').disabled=busy;
  }
@@ -40,7 +64,9 @@
   applyIdentity();render();
  }
  function open(){returnFocus=document.activeElement;panel.hidden=false;render();(form.hidden?$('auth-logout'):$('auth-username-input')).focus({preventScroll:true});}
- function close(){panel.hidden=true;status('');openBtn.setAttribute('aria-expanded','false');(returnFocus||openBtn).focus({preventScroll:true});}
+ // Outside dismissal drops focus instead of yanking it back to the button;
+ // restoreFocus is for deliberate closes only (toggle, Escape, transitions).
+ function close(restoreFocus=true){panel.hidden=true;status('');openBtn.setAttribute('aria-expanded','false');if(restoreFocus)(returnFocus||openBtn).focus({preventScroll:true});}
  form.addEventListener('submit',async event=>{
   event.preventDefault();if(busy)return;
   const username=$('auth-username-input').value.trim(),password=$('auth-password-input').value;
@@ -74,5 +100,15 @@
  });
  openBtn.addEventListener('click',()=>{if(panel.hidden)open();else close();});
  window.addEventListener('keydown',event=>{if(event.key==='Escape'&&!panel.hidden)close();});
+ window.addEventListener('pointerdown',event=>{
+  const target=event.target;
+  if(panel.hidden||target===panel||target===openBtn||panel.contains?.(target)||openBtn.contains?.(target))return;
+  close(false);
+ });
+ window.addEventListener('focusin',event=>{
+  const target=event.target;
+  if(panel.hidden||target===openBtn||panel.contains?.(target)||openBtn.contains?.(target))return;
+  close(false);
+ });
  refresh();
 })();

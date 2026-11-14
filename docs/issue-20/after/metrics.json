@@ -1,0 +1,835 @@
+{
+  "viewport_note": "pairTopVsCardTop: px delta between entry group top and card top; pairOverlaps*: geometric overlap booleans; *-assert: pass/FAIL entries",
+  "failures": [],
+  "metrics": {
+    "desktop-logged-out": {
+      "vw": 1440,
+      "vh": 900,
+      "auth": {
+        "x": 1372,
+        "y": 28,
+        "w": 40,
+        "h": 40,
+        "hidden": null,
+        "name": "登录账号",
+        "expanded": "false"
+      },
+      "mem": {
+        "x": 1276.2,
+        "y": 28,
+        "w": 83.8,
+        "h": 40,
+        "hidden": null,
+        "name": "记忆",
+        "expanded": "false"
+      },
+      "avatar": {
+        "x": 1373,
+        "y": 29,
+        "w": 38,
+        "h": 38,
+        "hidden": null,
+        "name": null,
+        "expanded": null
+      },
+      "panel": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "hidden": true,
+        "name": "账号登录",
+        "expanded": null
+      },
+      "prefs": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "hidden": true,
+        "name": "我的偏好",
+        "expanded": null
+      },
+      "card": {
+        "x": 28,
+        "y": 28,
+        "w": 460.8,
+        "h": 844
+      },
+      "detail": null,
+      "pairTopVsCardTop": 0,
+      "pairOverflow": false,
+      "pairOverlapsCard": false,
+      "pairOverlapsDetail": null
+    },
+    "desktop-entry-aligned": {
+      "delta": 0,
+      "assert": "pass"
+    },
+    "desktop-entry-clear": {
+      "overflow": false,
+      "overlapsCard": false,
+      "assert": "pass"
+    },
+    "desktop-entry-names": {
+      "auth": "登录账号",
+      "mem": "记忆",
+      "assert": "pass"
+    },
+    "keyboard-focus-trail": {
+      "trail": [
+        "BODY",
+        "map",
+        "DIV",
+        "DIV",
+        "DIV",
+        "DIV",
+        "DIV",
+        "DIV",
+        "DIV",
+        "DIV",
+        "DIV",
+        "DIV",
+        "DIV",
+        "DIV",
+        "DIV",
+        "DIV",
+        "DIV",
+        "DIV",
+        "DIV",
+        "A",
+        "A",
+        "A",
+        "A",
+        "A",
+        "A",
+        "preferences-open",
+        "auth-open"
+      ],
+      "memHit": 25,
+      "authHit": 26,
+      "cardFirst": -1
+    },
+    "keyboard-entries-tabbable": {
+      "memHit": 25,
+      "authHit": 26,
+      "assert": "pass"
+    },
+    "keyboard-enter-opens": {
+      "assert": "pass"
+    },
+    "keyboard-escape-close": {
+      "panelHidden": true,
+      "restoredFocus": "auth-open"
+    },
+    "keyboard-escape-restores": {
+      "panelHidden": true,
+      "restoredFocus": "auth-open",
+      "assert": "pass"
+    },
+    "desktop-login-dialog": {
+      "vw": 1440,
+      "vh": 900,
+      "auth": {
+        "x": 1372,
+        "y": 28,
+        "w": 40,
+        "h": 40,
+        "hidden": null,
+        "name": "登录账号",
+        "expanded": "true"
+      },
+      "mem": {
+        "x": 1276.2,
+        "y": 28,
+        "w": 83.8,
+        "h": 40,
+        "hidden": null,
+        "name": "记忆",
+        "expanded": "false"
+      },
+      "avatar": {
+        "x": 1373,
+        "y": 29,
+        "w": 38,
+        "h": 38,
+        "hidden": null,
+        "name": null,
+        "expanded": null
+      },
+      "panel": {
+        "x": 1182,
+        "y": 78,
+        "w": 230,
+        "h": 222,
+        "hidden": null,
+        "name": "账号登录",
+        "expanded": null
+      },
+      "prefs": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "hidden": true,
+        "name": "我的偏好",
+        "expanded": null
+      },
+      "card": {
+        "x": 28,
+        "y": 28,
+        "w": 460.8,
+        "h": 844
+      },
+      "detail": null,
+      "pairTopVsCardTop": 0,
+      "pairOverflow": false,
+      "pairOverlapsCard": false,
+      "pairOverlapsDetail": null
+    },
+    "desktop-logged-in": {
+      "vw": 1440,
+      "vh": 900,
+      "auth": {
+        "x": 1372,
+        "y": 28,
+        "w": 40,
+        "h": 40,
+        "hidden": null,
+        "name": "账号菜单：明轩",
+        "expanded": "false"
+      },
+      "mem": {
+        "x": 1276.2,
+        "y": 28,
+        "w": 83.8,
+        "h": 40,
+        "hidden": null,
+        "name": "记忆",
+        "expanded": "false"
+      },
+      "avatar": {
+        "x": 1373,
+        "y": 29,
+        "w": 38,
+        "h": 38,
+        "hidden": null,
+        "name": "明",
+        "expanded": null
+      },
+      "panel": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "hidden": true,
+        "name": "账号菜单",
+        "expanded": null
+      },
+      "prefs": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "hidden": true,
+        "name": "我的偏好",
+        "expanded": null
+      },
+      "card": {
+        "x": 28,
+        "y": 28,
+        "w": 460.8,
+        "h": 844
+      },
+      "detail": null,
+      "pairTopVsCardTop": 0,
+      "pairOverflow": false,
+      "pairOverlapsCard": false,
+      "pairOverlapsDetail": null
+    },
+    "signedin-accessible-name": {
+      "name": "账号菜单：明轩",
+      "assert": "pass"
+    },
+    "signedin-avatar-initial": {
+      "avatar": "明",
+      "assert": "pass"
+    },
+    "desktop-account-menu": {
+      "vw": 1440,
+      "vh": 900,
+      "auth": {
+        "x": 1372,
+        "y": 28,
+        "w": 40,
+        "h": 40,
+        "hidden": null,
+        "name": "账号菜单：明轩",
+        "expanded": "true"
+      },
+      "mem": {
+        "x": 1276.2,
+        "y": 28,
+        "w": 83.8,
+        "h": 40,
+        "hidden": null,
+        "name": "记忆",
+        "expanded": "false"
+      },
+      "avatar": {
+        "x": 1373,
+        "y": 29,
+        "w": 38,
+        "h": 38,
+        "hidden": null,
+        "name": "明",
+        "expanded": null
+      },
+      "panel": {
+        "x": 1182,
+        "y": 78,
+        "w": 230,
+        "h": 113,
+        "hidden": null,
+        "name": "账号菜单",
+        "expanded": null
+      },
+      "prefs": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "hidden": true,
+        "name": "我的偏好",
+        "expanded": null
+      },
+      "card": {
+        "x": 28,
+        "y": 28,
+        "w": 460.8,
+        "h": 844
+      },
+      "detail": null,
+      "pairTopVsCardTop": 0,
+      "pairOverflow": false,
+      "pairOverlapsCard": false,
+      "pairOverlapsDetail": null
+    },
+    "desktop-memory-panel": {
+      "vw": 1440,
+      "vh": 900,
+      "auth": {
+        "x": 1372,
+        "y": 28,
+        "w": 40,
+        "h": 40,
+        "hidden": null,
+        "name": "账号菜单：明轩",
+        "expanded": "false"
+      },
+      "mem": {
+        "x": 1276.2,
+        "y": 28,
+        "w": 83.8,
+        "h": 40,
+        "hidden": null,
+        "name": "记忆",
+        "expanded": "true"
+      },
+      "avatar": {
+        "x": 1373,
+        "y": 29,
+        "w": 38,
+        "h": 38,
+        "hidden": null,
+        "name": "明",
+        "expanded": null
+      },
+      "panel": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "hidden": true,
+        "name": "账号菜单",
+        "expanded": null
+      },
+      "prefs": {
+        "x": 982,
+        "y": 86,
+        "w": 430,
+        "h": 786,
+        "hidden": null,
+        "name": "我的偏好",
+        "expanded": null
+      },
+      "card": {
+        "x": 28,
+        "y": 28,
+        "w": 460.8,
+        "h": 844
+      },
+      "detail": null,
+      "pairTopVsCardTop": 0,
+      "pairOverflow": false,
+      "pairOverlapsCard": false,
+      "pairOverlapsDetail": null
+    },
+    "detail-real-open": {
+      "via": ".place-dot",
+      "opened": true,
+      "closed": true
+    },
+    "desktop-detail-open": {
+      "vw": 1440,
+      "vh": 900,
+      "auth": {
+        "x": 1372,
+        "y": 28,
+        "w": 40,
+        "h": 40,
+        "hidden": null,
+        "name": "账号菜单：明轩",
+        "expanded": "false"
+      },
+      "mem": {
+        "x": 1276.2,
+        "y": 28,
+        "w": 83.8,
+        "h": 40,
+        "hidden": null,
+        "name": "记忆",
+        "expanded": "false"
+      },
+      "avatar": {
+        "x": 1373,
+        "y": 29,
+        "w": 38,
+        "h": 38,
+        "hidden": null,
+        "name": "明",
+        "expanded": null
+      },
+      "panel": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "hidden": true,
+        "name": "账号菜单",
+        "expanded": null
+      },
+      "prefs": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "hidden": true,
+        "name": "我的偏好",
+        "expanded": null
+      },
+      "card": {
+        "x": 28,
+        "y": 28,
+        "w": 460.8,
+        "h": 844
+      },
+      "detail": {
+        "x": 1460,
+        "y": 86,
+        "w": 446.4,
+        "h": 441
+      },
+      "pairTopVsCardTop": 0,
+      "pairOverflow": false,
+      "pairOverlapsCard": false,
+      "pairOverlapsDetail": false
+    },
+    "detail-no-entry-overlap": {
+      "overlap": false,
+      "assert": "pass"
+    },
+    "narrow-logged-in": {
+      "vw": 390,
+      "vh": 844,
+      "auth": {
+        "x": 342,
+        "y": 12,
+        "w": 36,
+        "h": 36,
+        "hidden": null,
+        "name": "账号菜单：明轩",
+        "expanded": "false"
+      },
+      "mem": {
+        "x": 257.2,
+        "y": 12,
+        "w": 74.8,
+        "h": 36,
+        "hidden": null,
+        "name": "记忆",
+        "expanded": "false"
+      },
+      "avatar": {
+        "x": 343,
+        "y": 13,
+        "w": 34,
+        "h": 34,
+        "hidden": null,
+        "name": "明",
+        "expanded": null
+      },
+      "panel": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "hidden": true,
+        "name": "账号菜单",
+        "expanded": null
+      },
+      "prefs": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "hidden": true,
+        "name": "我的偏好",
+        "expanded": null
+      },
+      "card": {
+        "x": 12,
+        "y": 367.8,
+        "w": 366,
+        "h": 464.2
+      },
+      "detail": null,
+      "pairTopVsCardTop": -355.8,
+      "pairOverflow": false,
+      "pairOverlapsCard": false,
+      "pairOverlapsDetail": null
+    },
+    "narrow-logged-out": {
+      "vw": 390,
+      "vh": 844,
+      "auth": {
+        "x": 342,
+        "y": 12,
+        "w": 36,
+        "h": 36,
+        "hidden": null,
+        "name": "登录账号",
+        "expanded": "false"
+      },
+      "mem": {
+        "x": 257.2,
+        "y": 12,
+        "w": 74.8,
+        "h": 36,
+        "hidden": null,
+        "name": "记忆",
+        "expanded": "false"
+      },
+      "avatar": {
+        "x": 343,
+        "y": 13,
+        "w": 34,
+        "h": 34,
+        "hidden": null,
+        "name": null,
+        "expanded": null
+      },
+      "panel": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "hidden": true,
+        "name": "账号登录",
+        "expanded": null
+      },
+      "prefs": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "hidden": true,
+        "name": "我的偏好",
+        "expanded": null
+      },
+      "card": {
+        "x": 12,
+        "y": 367.8,
+        "w": 366,
+        "h": 464.2
+      },
+      "detail": null,
+      "pairTopVsCardTop": -355.8,
+      "pairOverflow": false,
+      "pairOverlapsCard": false,
+      "pairOverlapsDetail": null
+    },
+    "narrow-entry-no-overflow": {
+      "overflow": false,
+      "assert": "pass"
+    },
+    "narrow-memory-panel": {
+      "yieldedWhileOpen": {
+        "opacity": 0,
+        "visibility": "hidden",
+        "pe": "none"
+      },
+      "restoredAfterClose": {
+        "opacity": 1,
+        "visibility": "visible"
+      }
+    },
+    "narrow-panel-yields-entry": {
+      "opacity": 0,
+      "visibility": "hidden",
+      "pe": "none",
+      "assert": "pass"
+    },
+    "narrow-panel-close-restores": {
+      "opacity": 1,
+      "visibility": "visible",
+      "assert": "pass"
+    },
+    "narrow-after-memory": {
+      "vw": 390,
+      "vh": 844,
+      "auth": {
+        "x": 342,
+        "y": 12,
+        "w": 36,
+        "h": 36,
+        "hidden": null,
+        "name": "登录账号",
+        "expanded": "false"
+      },
+      "mem": {
+        "x": 257.2,
+        "y": 12,
+        "w": 74.8,
+        "h": 36,
+        "hidden": null,
+        "name": "记忆",
+        "expanded": "false"
+      },
+      "avatar": {
+        "x": 343,
+        "y": 13,
+        "w": 34,
+        "h": 34,
+        "hidden": null,
+        "name": null,
+        "expanded": null
+      },
+      "panel": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "hidden": true,
+        "name": "账号登录",
+        "expanded": null
+      },
+      "prefs": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "hidden": true,
+        "name": "我的偏好",
+        "expanded": null
+      },
+      "card": {
+        "x": 12,
+        "y": 367.8,
+        "w": 366,
+        "h": 464.2
+      },
+      "detail": null,
+      "pairTopVsCardTop": -355.8,
+      "pairOverflow": false,
+      "pairOverlapsCard": false,
+      "pairOverlapsDetail": null
+    },
+    "narrow-memory-focus-restored": {
+      "activeElement": "preferences-open",
+      "assert": "pass"
+    },
+    "narrow-memory-focus-restored-reduced-motion": {
+      "activeElement": "preferences-open",
+      "assert": "pass"
+    },
+    "wideshort-logged-out": {
+      "vw": 1440,
+      "vh": 600,
+      "auth": {
+        "x": 1372,
+        "y": 20,
+        "w": 40,
+        "h": 40,
+        "hidden": null,
+        "name": "登录账号",
+        "expanded": "false"
+      },
+      "mem": {
+        "x": 1276.2,
+        "y": 20,
+        "w": 83.8,
+        "h": 40,
+        "hidden": null,
+        "name": "记忆",
+        "expanded": "false"
+      },
+      "avatar": {
+        "x": 1373,
+        "y": 21,
+        "w": 38,
+        "h": 38,
+        "hidden": null,
+        "name": null,
+        "expanded": null
+      },
+      "panel": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "hidden": true,
+        "name": "账号登录",
+        "expanded": null
+      },
+      "prefs": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "hidden": true,
+        "name": "我的偏好",
+        "expanded": null
+      },
+      "card": {
+        "x": 28,
+        "y": 20,
+        "w": 460.8,
+        "h": 560
+      },
+      "detail": null,
+      "pairTopVsCardTop": 0,
+      "pairOverflow": false,
+      "pairOverlapsCard": false,
+      "pairOverlapsDetail": null
+    },
+    "wideshort-entry-clear": {
+      "overflow": false,
+      "overlapsCard": false,
+      "delta": 0,
+      "assert": "pass"
+    },
+    "detail-actions-open": {
+      "via": "WanderActivities.openEvents(real demo events; 3 real POI clicks yielded no nearby group: AMap convert mocked out)",
+      "dotsTried": 3,
+      "buttons": 2
+    },
+    "short-detail": {
+      "vw": 1280,
+      "vh": 320,
+      "auth": {
+        "x": 1212,
+        "y": 20,
+        "w": 40,
+        "h": 40,
+        "hidden": null,
+        "name": "登录账号",
+        "expanded": "false"
+      },
+      "mem": {
+        "x": 1116.2,
+        "y": 20,
+        "w": 83.8,
+        "h": 40,
+        "hidden": null,
+        "name": "记忆",
+        "expanded": "false"
+      },
+      "avatar": {
+        "x": 1213,
+        "y": 21,
+        "w": 38,
+        "h": 38,
+        "hidden": null,
+        "name": null,
+        "expanded": null
+      },
+      "panel": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "hidden": true,
+        "name": "账号登录",
+        "expanded": null
+      },
+      "prefs": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "hidden": true,
+        "name": "我的偏好",
+        "expanded": null
+      },
+      "card": {
+        "x": 28,
+        "y": 20,
+        "w": 409.6,
+        "h": 280
+      },
+      "detail": {
+        "x": 863.2,
+        "y": 76,
+        "w": 396.8,
+        "h": 224
+      },
+      "pairTopVsCardTop": 0,
+      "pairOverflow": false,
+      "pairOverlapsCard": false,
+      "pairOverlapsDetail": false
+    },
+    "short-detail-actions-in-viewport": {
+      "via": "WanderActivities.openEvents(real demo events; 3 real POI clicks yielded no nearby group: AMap convert mocked out)",
+      "vh": 320,
+      "buttons": [
+        {
+          "y": 246,
+          "bottom": 284,
+          "h": 38
+        },
+        {
+          "y": 246,
+          "bottom": 284,
+          "h": 38
+        }
+      ],
+      "assert": "pass"
+    }
+  },
+  "log": [
+    "shot desktop-logged-out",
+    "shot desktop-login-dialog",
+    "shot desktop-logged-in",
+    "shot desktop-account-menu",
+    "shot desktop-memory-panel",
+    "shot desktop-detail-overlap",
+    "shot narrow-logged-in",
+    "shot narrow-account-menu",
+    "shot narrow-logged-out",
+    "shot narrow-memory-panel",
+    "shot wideshort-logged-out",
+    "shot detail-with-actions",
+    "shot short-detail-actions"
+  ]
+}

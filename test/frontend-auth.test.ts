@@ -27,6 +27,8 @@ function submit(h: Ctx, username: string, password: string) {
 }
 const guestKey = 'wander.chat-history.v1.guest';
 const accountKey = (id: string) => `wander.chat-history.v1.u-${id}`;
+// Issue #20: the avatar-only button carries its state on aria-label, not text.
+const entryName = (h: Ctx) => h.$('auth-open').attrs.get('aria-label');
 const storedAt = (h: Ctx, key: string) => JSON.parse(h.storage.get(key) ?? '[]') as {id: string; messages: {text: string}[]}[];
 
 test('login swaps history to the account bucket and logout restores the guest bucket', async () => {
@@ -48,7 +50,7 @@ test('login swaps history to the account bucket and logout restores the guest bu
   stubAuth(h, {alice: {id: 'acc-a', display_name: 'Alice'}});
   await submit(h, 'alice', 'pw');
 
-  assert.equal(h.$('auth-open').textContent, 'alice');
+  assert.equal(entryName(h), '账号菜单：Alice');
   assert.deepEqual(prefCalls, [[true]]); // identity switch force-reloads the memory doc
   // The account bucket is empty: guest snapshots are not visible to the account.
   assert.equal(h.$('history-list').children.length, 1);
@@ -66,7 +68,7 @@ test('login swaps history to the account bucket and logout restores the guest bu
 
   // Logout returns to the guest bucket; both guest entries are visible again.
   await h.run('($("auth-logout").listeners.get("click"))()') as Promise<void>;
-  assert.equal(h.$('auth-open').textContent, '登录');
+  assert.equal(entryName(h), '登录账号');
   assert.equal(h.$('history-list').children.length, 2);
   assert.equal(h.state.messages.length, 0);
 });
@@ -80,7 +82,7 @@ test('switching directly between accounts re-buckets history each time', async (
 
   // Log in as a different account without logging out first.
   await submit(h, 'bob', 'pw');
-  assert.equal(h.$('auth-open').textContent, 'bob');
+  assert.equal(entryName(h), '账号菜单：B');
   assert.equal(h.$('history-list').children[0]!.className, 'history-empty');
   assert.ok(!(h.storage.get(accountKey('acc-b')) ?? '').includes('A 的行程'));
 
@@ -96,11 +98,11 @@ test('a late /api/me reply cannot overwrite the signed-in state', async () => {
   assert.equal(h.requests.length, 1); // the init refresh() GET is still pending
   stubAuth(h, {alice: {id: 'a1', display_name: 'Alice'}});
   await submit(h, 'alice', 'pw');
-  assert.equal(h.$('auth-open').textContent, 'alice');
+  assert.equal(entryName(h), '账号菜单：Alice');
   // The init refresh resolves late with an anonymous payload — epoch-guarded.
   h.requests[0]!.finish({authenticated: false});
   for (let i = 0; i < 10; i++) await Promise.resolve();
-  assert.equal(h.$('auth-open').textContent, 'alice');
+  assert.equal(entryName(h), '账号菜单：Alice');
   assert.equal(h.$('auth-form').hidden, true);
 });
 
@@ -110,7 +112,7 @@ test('a logged-in reload buckets history under the account once /api/me lands', 
   // re-bucket to the account while guest snapshots stay in the guest bucket.
   h.requests[0]!.finish({authenticated: true, user: {id: 'acc-a', username: 'alice', display_name: 'A'}});
   for (let i = 0; i < 10; i++) await Promise.resolve();
-  assert.equal(h.$('auth-open').textContent, 'alice');
+  assert.equal(entryName(h), '账号菜单：A');
   assert.equal(h.$('history-list').children[0]!.className, 'history-empty');
   assert.ok((h.storage.get(guestKey) ?? '').includes('guest-1'));
 });
