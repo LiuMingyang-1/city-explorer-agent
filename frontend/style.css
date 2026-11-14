@@ -87,3 +87,6 @@
 @media(min-width:1600px){.global-entry{top:36px;right:36px}}
 @media(max-height:700px) and (min-width:701px){.global-entry{top:20px}}
 @media(max-width:700px){.global-entry{top:12px;right:12px;gap:10px}.preferences-open{height:36px;padding:0 14px 0 10px;font-size:12px}.preferences-open svg{width:16px;height:16px}.auth-open{width:36px;height:36px}.auth-panel{width:min(300px,calc(100vw - 24px))}.canvas:has(.activity-detail:not([hidden]):not(.is-leaving)) .global-entry,.canvas:has(.preferences-panel:not([hidden]):not(.is-leaving)) .global-entry{opacity:0;transform:translateY(-8px);visibility:hidden;pointer-events:none;transition:opacity .22s ease,transform .22s ease,visibility 0s linear .22s}}
+
+/* Route widths stay in screen pixels; white casings separate them from roads. */
+.route-station-number.leaflet-tooltip{background:transparent;border:0;box-shadow:none;color:#fff;font-size:11px;font-weight:600;padding:0;pointer-events:none}.route-station-number.leaflet-tooltip:before{display:none}
