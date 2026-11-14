@@ -165,7 +165,7 @@
     if(selected)activeLayers.push(layer);
     layer.on('click',()=>{choose?.(item.plan.plan_id);if(item.type==='dot')window.WanderActivities?.openEvents([item.event],{placeName:item.event.venue_name,coordinateSystem:model.coordinate_system});});return layer;
    });native.add(routes);
-   if(fit&&activeLayers.length){const card=document.querySelector('.glass-card').getBoundingClientRect(),size=native.getSize();const frame=window.WanderMapLayout.routeFrame({width:size.width,height:size.height,card});native.setFitView(activeLayers,false,frame.amap,15);}
+   if(fit&&activeLayers.length){const card=document.querySelector('.glass-card').getBoundingClientRect(),size=native.getSize();const frame=window.WanderMapLayout.routeFrame({width:size.width,height:size.height,card,panels:window.WanderMapLayout.visiblePanels()});native.setFitView(activeLayers,false,frame.amap,15);}
   }catch{if(epoch===routeEpoch)showMapStatus('路线坐标转换暂不可用');}
  }
  function backendLocation(location){
