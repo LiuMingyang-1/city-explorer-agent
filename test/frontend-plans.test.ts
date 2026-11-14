@@ -112,3 +112,28 @@ test('explicit demo mode reads canonical fixture files and preserves selected A 
  preview.click();assert.equal(h.run('state.activePlanId'),'plan_mock_b');
  h.$('new-chat').click();assert.equal(h.$('plan-detail').hidden,true);assert.equal(h.state.messages.length,0);
  });
+
+test('restored plan cards refocus on every open and repeated A/B selection without drawing during hydration',()=>{
+ const h=setup({api:true}),camera:any[]=[];
+ h.context.window.WanderAMap={ready:true,clearRoutes(){},drawPlans(model:any,options:any){camera.push({active:model.active_plan,fit:options.fit})}};
+ h.context.payload=fixture('response-comparison');h.run('window.WanderPlans.append(payload)');
+ assert.equal(camera.length,1,'a newly generated plan is initially fitted');
+ h.context.window.WanderHistory.capture();h.$('new-chat').click();h.$('history-list').children[0]!.click();
+ assert.equal(camera.length,2,'restoring history draws once after hydration');
+ const preview=find(h.$('messages'),'plan-preview')[0]!,tabs=find(h.$('plan-detail'),'plan-tab');
+ preview.click();assert.equal(camera.length,3,'opening a restored preview refocuses the route');
+ tabs[0]!.click();tabs[0]!.click();assert.equal(camera.length,5,'reselecting the same A route always refocuses');
+ tabs[1]!.click();tabs[1]!.click();assert.equal(camera.length,7,'reselecting the same B route always refocuses');
+ assert.equal(camera.at(-1).active,'plan_mock_b');
+ find(h.$('plan-detail'),'plan-back')[0]!.click();preview.click();assert.equal(camera.length,8);assert.equal(camera.at(-1).active,'plan_mock_b');
+ assert(camera.every(c=>c.fit===true));
+ h.context.window.dispatchEvent(new Event('wander:viewport'));assert.equal(camera.length,8,'browsing the map alone does not refocus the route');
+});
+
+test('drawMap false only skips initial hydration; subsequent explicit clicks draw in Leaflet too',()=>{
+ const h=setup({api:true}),camera=leaflet(h);h.context.payload={...fixture('response-comparison'),coordinate_system:'WGS84'};
+ h.run('window.WanderPlans.append(payload,{drawMap:false})');assert.equal(camera.fits(),0);
+ const preview=find(h.$('messages'),'plan-preview')[0]!;preview.click();assert.equal(camera.fits(),1);
+ find(h.$('plan-detail'),'plan-tab')[1]!.click();find(h.$('plan-detail'),'plan-tab')[1]!.click();assert.equal(camera.fits(),3);
+ assert(camera.fitTargets.at(-1).every((p:number[])=>p[1]<108.96));
+});

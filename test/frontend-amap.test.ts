@@ -106,3 +106,12 @@ test('curated attraction markers also avoid redundant same-map attachment',async
  const marker=h.markers.find(m=>m.options.title==='城墙');const initial=marker.mapCalls.length;
  h.instances[0].listeners.get('moveend')();h.provider.updatePlaces();assert.equal(marker.mapCalls.length,initial);
 });
+
+test('native route fitting reserves open detail panels but ignores hidden panels',async()=>{
+ const h=setup();await h.provider.init({places:[],onSelect:()=>{}});h.context.window.WanderPlans={geometry:()=>null};
+ const panel={hidden:false,getBoundingClientRect:()=>({left:966,right:1412,top:86,bottom:528})};
+ h.context.document.getElementById=(id:string)=>id==='activity-detail'?panel:null;
+ const model={coordinate_system:'GCJ-02',active_plan:'A',events:[{event_id:'one',latitude:34.25,longitude:108.96}],plans:[{plan_id:'A',label:'A',itinerary:{stops:[{event_id:'one'}]}}]};
+ await h.provider.drawPlans(model);assert.deepEqual(Array.from(h.paddings[0]!),[60,60,528,498]);
+ panel.hidden=true;await h.provider.drawPlans(model);assert.deepEqual(Array.from(h.paddings[1]!),[60,60,528,48]);
+});
