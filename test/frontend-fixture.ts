@@ -23,6 +23,7 @@ export class Element {
   querySelector() { return new Element(); }
 }
 const historySource = readFileSync(new URL('../frontend/history.js', import.meta.url), 'utf8');
+const routeVisualsSource=readFileSync(new URL('../frontend/route-visuals.js',import.meta.url),'utf8');
 const mapLayoutSource=readFileSync(new URL('../frontend/map-layout.js',import.meta.url),'utf8');
 const plansSource = readFileSync(new URL('../frontend/plans.js', import.meta.url), 'utf8');
 const transportSource = readFileSync(new URL('../frontend/transport.js', import.meta.url), 'utf8');
@@ -60,6 +61,7 @@ export function setup({ entries = [] as ReturnType<typeof saved>[], pending = []
         finish: value => resolve({ ok: true, status: 200, json: async () => value }) }));
     },
   });
+  vm.runInContext(routeVisualsSource,context);
   vm.runInContext(mapLayoutSource,context);
   if (api) { vm.runInContext(plansSource, context);vm.runInContext(transportSource, context);vm.runInContext(chatSource, context); }
   vm.runInContext(historySource, context);

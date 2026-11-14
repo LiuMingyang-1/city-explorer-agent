@@ -1,0 +1,170 @@
+{
+  "amap": {
+    "uncaught_errors": [],
+    "first_leg_only_samples": 3,
+    "second_leg_samples": 81,
+    "out_of_order_samples": 0,
+    "zooms": {
+      "zoom-11": {
+        "actual_zoom": 11,
+        "flow_styles": [
+          {
+            "color": "#8c6717",
+            "width": 5.9
+          },
+          {
+            "color": "#8c6717",
+            "width": 5.9
+          }
+        ]
+      },
+      "zoom-14": {
+        "actual_zoom": 14,
+        "flow_styles": [
+          {
+            "color": "#8c6717",
+            "width": 6.9
+          },
+          {
+            "color": "#8c6717",
+            "width": 6.9
+          }
+        ]
+      },
+      "zoom-16": {
+        "actual_zoom": 16,
+        "flow_styles": [
+          {
+            "color": "#8c6717",
+            "width": 7.6
+          },
+          {
+            "color": "#8c6717",
+            "width": 7.6
+          }
+        ]
+      }
+    },
+    "palette": [
+      [
+        "plan_mock_a",
+        {
+          "color": "#8c6717",
+          "hue": 40.96461758471844,
+          "source": "thumbnail"
+        }
+      ],
+      [
+        "plan_mock_b",
+        {
+          "color": "#137674",
+          "hue": 178.46461758471844,
+          "source": "thumbnail"
+        }
+      ]
+    ],
+    "fallback_palette": [
+      [
+        "plan_mock_a",
+        {
+          "color": "#137671",
+          "hue": 177,
+          "source": "fallback"
+        }
+      ],
+      [
+        "plan_mock_b",
+        {
+          "color": "#ab1c88",
+          "hue": 314.5,
+          "source": "fallback"
+        }
+      ]
+    ],
+    "live_layers_after_switch": 6
+  },
+  "leaflet": {
+    "uncaught_errors": [],
+    "first_leg_only_samples": 17,
+    "second_leg_samples": 66,
+    "out_of_order_samples": 0,
+    "zooms": {
+      "zoom-11": {
+        "actual_zoom": 11,
+        "flow_styles": [
+          {
+            "color": "#8c6717",
+            "width": 5.9
+          },
+          {
+            "color": "#8c6717",
+            "width": 5.9
+          }
+        ]
+      },
+      "zoom-14": {
+        "actual_zoom": 14,
+        "flow_styles": [
+          {
+            "color": "#8c6717",
+            "width": 6.9
+          },
+          {
+            "color": "#8c6717",
+            "width": 6.9
+          }
+        ]
+      },
+      "zoom-16": {
+        "actual_zoom": 16,
+        "flow_styles": [
+          {
+            "color": "#8c6717",
+            "width": 7.6
+          },
+          {
+            "color": "#8c6717",
+            "width": 7.6
+          }
+        ]
+      }
+    },
+    "palette": [
+      [
+        "plan_mock_a",
+        {
+          "color": "#8c6717",
+          "hue": 40.96461758471844,
+          "source": "thumbnail"
+        }
+      ],
+      [
+        "plan_mock_b",
+        {
+          "color": "#137674",
+          "hue": 178.46461758471844,
+          "source": "thumbnail"
+        }
+      ]
+    ],
+    "fallback_palette": [
+      [
+        "plan_mock_a",
+        {
+          "color": "#137671",
+          "hue": 177,
+          "source": "fallback"
+        }
+      ],
+      [
+        "plan_mock_b",
+        {
+          "color": "#ab1c88",
+          "hue": 314.5,
+          "source": "fallback"
+        }
+      ]
+    ],
+    "live_layers_after_switch": 2
+  }
+}
