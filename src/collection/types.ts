@@ -35,5 +35,9 @@ export interface RealDataset {
   schema_version: "xian-events/4"; base_date: string; days: 14;
   events: RealEvent[]; provenance: EventProvenance[];
 }
+export interface ImageSupplement {
+  source:"baidu_images";verified_at:string;poi_id:string|null;record_type:"attraction";
+  images:{url:string;source_url:string;search_url:string;title:string;sha256:string}[];
+}
 export interface ValidationIssue { code: string; event_id?: string; field?: string; }
 export interface ValidationReport { valid: boolean; issues: ValidationIssue[]; stats: {slots: number; projects: number; venues: number; categories: Record<string, number>; dates: Record<string, number>}; }

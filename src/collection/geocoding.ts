@@ -1,10 +1,12 @@
 import { createHash } from "node:crypto";
 import type { Coordinate } from "./coordinates.ts";
+import type {AmapDetails} from "./amap-authority.ts";
 import { readAmapSharedVenue, isAmapShareUrl } from "./amap-share.ts";
 import type { AmapSharedVenue } from "./amap-share.ts";
 
 export interface VenueQuery { venue_name: string; address: string | null; require_entrance?: boolean; }
 export interface VerifiedLocation {
+  amap?:AmapDetails;
   request_key: string; venue_name: string; address: string; poi_id: string | null;
   adcode: string; district: string; latitude: number; longitude: number;
   input_system: "GCJ-02"; system: "GCJ-02"; original: Coordinate;

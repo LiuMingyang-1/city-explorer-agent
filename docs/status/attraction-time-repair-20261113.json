@@ -1,0 +1,798 @@
+{
+  "checked_at": "2026-11-13T10:13:33.063Z",
+  "batch_id": "attraction-time-repair-20261113",
+  "applied": true,
+  "normalized": 58,
+  "skipped_model_failures": [],
+  "source_corrections": [
+    {
+      "title": "曲江寒窑遗址公园",
+      "reason": "移除以优惠票25元充当成人预算上限的错误"
+    },
+    {
+      "title": "红色葛牌景区（葛牌古镇）",
+      "reason": "区分古镇公共区域和馆内时间，不把馆内信息缺失扩大为整个古镇未知"
+    },
+    {
+      "title": "西安常宁宫休闲山庄",
+      "reason": "移除住宿套餐误作参观费用的数值，保留原套餐说明"
+    },
+    {
+      "title": "王府井奥莱·临潼小镇（临潼奥特莱斯景区）",
+      "reason": "原有明确免费说明落实为基础入场0元"
+    },
+    {
+      "title": "易俗社文化旅游景区",
+      "reason": "原有明确免费说明落实为基础入场0元"
+    }
+  ],
+  "before": {
+    "records": 265,
+    "time_statuses": {
+      "complete": 165,
+      "partial": 26,
+      "conflicting": 4,
+      "unknown": 50
+    },
+    "budget_missing": 53
+  },
+  "api": {
+    "requests": 70,
+    "p50_ms": 1735,
+    "p95_ms": 3370
+  },
+  "changes": [
+    {
+      "id": "xa_1c56739039773f3c0b3cbd641c413110",
+      "title": "华清宫（陕西华清宫文化旅游景区）",
+      "old_time_status": "partial",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_e12dd8aaefaea0afb64a5ab90383d8e0",
+      "title": "翠华山景区（陕西翠华山国家地质公园）",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_36df0044a355adf71b9189d298c93438",
+      "title": "曲江海洋极地公园",
+      "old_time_status": "partial",
+      "new_time_status": "partial",
+      "changed_fields": [
+        "time_note",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_901a8106d49e54f67ce1ec86d09b2e99",
+      "title": "西安关中民俗艺术博物院",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_98a7f1c2b407a6ae3239a741fd4b8c79",
+      "title": "西安秦岭野生动物园",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_aff42837479415d97780039c42c4e8af",
+      "title": "西安博物院（小雁塔）",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_d156f8a446c3298934b6a77669d242d3",
+      "title": "西安浐灞国家湿地公园",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_62a31255b274a84884a3c2d7d8b0f067",
+      "title": "朱雀国家森林公园",
+      "old_time_status": "partial",
+      "new_time_status": "partial",
+      "changed_fields": [
+        "time_note",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_ef7a33653f1b8f6f3a96e8d049e49d18",
+      "title": "陕西自然博物馆",
+      "old_time_status": "unknown",
+      "new_time_status": "partial",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_412fd31d580f63073f10b2707a16c201",
+      "title": "白鹿原影视城",
+      "old_time_status": "partial",
+      "new_time_status": "partial",
+      "changed_fields": [
+        "time_note",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_c960ea29e11527c2de5ad7e16cd028e3",
+      "title": "白鹿原·白鹿仓景区",
+      "old_time_status": "unknown",
+      "new_time_status": "partial",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_8e1a3fbb77212a49d138f80f4331cd90",
+      "title": "秦岭国家植物园",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_3e52e5089a3546e6b23ce2d1f4dcf46d",
+      "title": "蓝田猿人遗址（蓝田猿人遗址博物馆）",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_b3c6f2352ddede4989c5bba816dbc1d5",
+      "title": "西安市青龙寺遗址景区",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_c02128b0fc19ee41a6f5ac13433113d3",
+      "title": "王府井奥莱·临潼小镇（临潼奥特莱斯景区）",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at",
+        "budget_min",
+        "budget_max",
+        "budget_note"
+      ]
+    },
+    {
+      "id": "xa_b39c470d2ed3a4ea3c769b53ca0e6973",
+      "title": "吉利汽车西安制造基地旅游景区",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_f9552442082f1d148fbaf68773699ced",
+      "title": "西安碑林博物馆",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_9f582c4f4b77dfc7b064772e5164a17a",
+      "title": "仙游寺博物馆",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_ef5cc5bb9a5b5fe63cc9c97665bbc1b4",
+      "title": "西安大唐西市博物馆",
+      "old_time_status": "unknown",
+      "new_time_status": "partial",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_ac30d26c4c27adebcfc1e22586f8e9fb",
+      "title": "陕西师范大学博物馆",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_495d605d30c4f0dca385fcf4ab275e7a",
+      "title": "西北大学博物馆",
+      "old_time_status": "unknown",
+      "new_time_status": "partial",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_bf2f9d1eb54e010504e851a8b8a2f21c",
+      "title": "长安大学地质博物馆",
+      "old_time_status": "unknown",
+      "new_time_status": "partial",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_c9df2c29af733876f586bb84f51a98a2",
+      "title": "西安建筑科技大学贾平凹文学艺术馆",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_d2e5999bc82a2dabdd39e3afc509fc20",
+      "title": "西安市秦阿房宫遗址博物馆",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_b9d3e1e71e05993273910d7eab45fa88",
+      "title": "陕西汉唐石刻博物馆",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_465ffd07fc343b11c6a56fed1f8aa1b8",
+      "title": "西安美都艺术博物馆",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_32e486d3ab152ff06ce0c31adb042f5c",
+      "title": "陕西唐三彩艺术博物馆",
+      "old_time_status": "partial",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_f4fc9e0367924c79bc3d9c8dd42f6c3b",
+      "title": "西安曲江富陶国际陶艺博物馆",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_0768a5f3ded6b0e15eee9b6122eec7e6",
+      "title": "大明宫遗址博物馆",
+      "old_time_status": "complete",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_69ee06fb336d2b4e60abbdee3d082b2d",
+      "title": "大明宫国家遗址公园丹凤门遗址博物馆",
+      "old_time_status": "complete",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_893834ba3e96f242eb9b13cd37b4446b",
+      "title": "临潼区鸿门宴博物馆",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_1163624f9aa08c41f30ef5dcb324064a",
+      "title": "空军军医大学第三附属医院国际口腔医学博物馆",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_1209c4374b748231659167205753edd9",
+      "title": "西安市大唐青铜镜博物馆",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_f3057996a4fb6c9680cd1138202a12df",
+      "title": "西安交通大学博物馆",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_7539f68cafd2e2850538e56d8810e9bb",
+      "title": "西安市非物质文化遗产博物馆",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_ef3298e12304f10c9b2d24b72216d14c",
+      "title": "西安市水墨长安艺术博物馆",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_249ff8a35d6d05147ff561428580687a",
+      "title": "西安市起良蔡侯纸博物馆",
+      "old_time_status": "complete",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_43874103d0337b6196994fafa96926f0",
+      "title": "西安市明清皮影艺术博物馆",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_b37e28dcb5262730a42aa7270e2809dc",
+      "title": "西安市羊文化博物馆",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_898bfab7557b10ae237b314c3e51384b",
+      "title": "陕西科技大学中国轻工业博物馆",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_b9f6c8b0303ca8e62ef43bf7528e572b",
+      "title": "西安植物园（新区）",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_a0f547689cd8c2a31413cbf71cc658c6",
+      "title": "西安城墙",
+      "old_time_status": "unknown",
+      "new_time_status": "partial",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_987578ed62fb376820397058cbad2d45",
+      "title": "大雁塔（大慈恩寺内）",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_a45abeb750ef7575bdeedf45b5a0717a",
+      "title": "骊山国家森林公园",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_130e7061db782bba5df66aa1578deea6",
+      "title": "楼观台国家森林公园",
+      "old_time_status": "partial",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_54a713be03270a3017cbaba2f40a8663",
+      "title": "阿房宫遗址公园",
+      "old_time_status": "complete",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_43b9671b755aa54768932e6ed0de0952",
+      "title": "杨虎城将军止园别墅（西安事变纪念馆旧址）",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_cfb389f4cf2916a87f012f5da7a40d1b",
+      "title": "长安十二时辰主题街区",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_3fc1bd8305220c2ba583a4bcc3aac482",
+      "title": "西安万象城·生命之树",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_733d2f7c03ebb9582b895feba9923180",
+      "title": "丝路欢乐世界",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_d17a2b8f9f590d2884d7059b0bbe6d5e",
+      "title": "大明宫国家遗址公园",
+      "old_time_status": "unknown",
+      "new_time_status": "partial",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_b81a01740ae47dfcc9f45e8120dc8f90",
+      "title": "秦始皇帝陵博物院（秦始皇兵马俑博物馆·丽山园）",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_e609623d1501dee059c7dce65bebe195",
+      "title": "西安高家大院（高岳崧故居）",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_9c0d1a45888aba116a91fb8afc7f02a6",
+      "title": "陕西体育博物馆",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_876d0e636a13b8c73d819d7d668d4aea",
+      "title": "交大西迁博物馆",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_744dbe7e880b9b65776f9f120ba498b7",
+      "title": "中国唐苑",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_7b36be9e9985596eea23660eee730116",
+      "title": "大唐芙蓉园",
+      "old_time_status": "unknown",
+      "new_time_status": "partial",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_712b5c61bc073240b1785d027a017d7a",
+      "title": "小雁塔（荐福寺塔）",
+      "old_time_status": "unknown",
+      "new_time_status": "partial",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_6af4ef7ba1169f1058b20b62553295e8",
+      "title": "曲江寒窑遗址公园",
+      "old_time_status": "complete",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "updated_at",
+        "budget_min",
+        "budget_max",
+        "budget_note"
+      ]
+    },
+    {
+      "id": "xa_944a121c1808ae4fdcf7ebe172b16e70",
+      "title": "红色葛牌景区（葛牌古镇）",
+      "old_time_status": "unknown",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "time_note",
+        "time_status",
+        "schedule_json",
+        "updated_at"
+      ]
+    },
+    {
+      "id": "xa_9a7500de11c9dc5699bd41009f67e96e",
+      "title": "西安常宁宫休闲山庄",
+      "old_time_status": "complete",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "updated_at",
+        "budget_min",
+        "budget_max",
+        "budget_note"
+      ]
+    },
+    {
+      "id": "xa_fd4167e9ce151793748c81f06c957a46",
+      "title": "易俗社文化旅游景区",
+      "old_time_status": "complete",
+      "new_time_status": "complete",
+      "changed_fields": [
+        "updated_at",
+        "budget_min",
+        "budget_max",
+        "budget_note"
+      ]
+    }
+  ],
+  "after": {
+    "records": 265,
+    "time_statuses": {
+      "complete": 208,
+      "partial": 32,
+      "conflicting": 4,
+      "unknown": 1
+    },
+    "budget_missing": 53
+  },
+  "activities_unchanged": true,
+  "database_sha256": "3df2472e0131ed6f790a4a90cfbf291a5899b1242890023dcfe9bc3a92b107e1"
+}

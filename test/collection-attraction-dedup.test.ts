@@ -45,7 +45,7 @@ test("invalid or missing coordinates are never equated to zero or used for proxi
 });
 
 test("batch dedup removes orphan witnesses and provenance but retains a source audit",async()=>{
-  const {item,asOf}=await locatedFixture();item.facts.record_type="attraction";item.facts.category="等级未知";
+  const {item,asOf}=await locatedFixture();item.facts.record_type="attraction";item.facts.category="暂无评级";
   const other=structuredClone(item);other.source_event_key="another-source";other.document.url="https://www.sxhm.com/another-source";other.facts.time_status="complete";
   const result=prepareCollection([item,other],{asOf,baseDate:"2026-11-12"});
   assert.deepEqual(result.rejected,[]);assert.equal(result.prepared.dataset.events.length,1);
@@ -57,7 +57,7 @@ test("batch dedup removes orphan witnesses and provenance but retains a source a
 test("publication deduplicates across nightly batches and records every merged source",async()=>{
   const folder=mkdtempSync(join(tmpdir(),"attraction-dedup-"));
   try{
-    const {item,asOf}=await locatedFixture();item.facts.record_type="attraction";item.facts.category="等级未知";
+    const {item,asOf}=await locatedFixture();item.facts.record_type="attraction";item.facts.category="暂无评级";
     const first=prepareCollection([item],{asOf,baseDate:"2026-11-12"}).prepared;
     await publishRelease(folder,first,{batchId:"one",asOf});
     const other=structuredClone(item);other.source_event_key="richer-source";other.document.url="https://www.sxhm.com/richer-source";other.facts.time_status="complete";

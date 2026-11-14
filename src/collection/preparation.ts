@@ -52,7 +52,7 @@ export function prepareCollection(items: readonly LocatedActivity[], options: { 
     const age = Date.parse(options.asOf) - Date.parse(location.verified_at);
     let mapValid = location.request_key === requested && location.system === "GCJ-02" && location.input_system === "GCJ-02"
       && location.conversion === null && /^6101\d{2}$/.test(location.adcode) && location.venue_name === facts.venue_name
-      && (["https://restapi.amap.com/v3/place/text", "https://restapi.amap.com/v3/geocode/geo"].includes(location.source_url)
+      && (["https://restapi.amap.com/v3/place/text", "https://restapi.amap.com/v5/place/text", "https://restapi.amap.com/v3/geocode/geo"].includes(location.source_url)
         || location.method === "share" && isAmapShareUrl(location.source_url) && location.share_reference?.source_url === location.source_url
           && location.share_reference.poi_id === location.poi_id && location.share_reference.original.lat === location.original.lat
           && location.share_reference.original.lng === location.original.lng && matchesVenue(facts.venue_name, location.share_reference.name)
@@ -91,7 +91,9 @@ export function prepareCollection(items: readonly LocatedActivity[], options: { 
       title: facts.title, description: facts.description, category: facts.category, venue_name: facts.venue_name,
       address: location.address, latitude: location.latitude, longitude: location.longitude, start_at: facts.start_at, end_at: facts.end_at,
       suggested_duration_minutes: facts.suggested_duration_minutes, budget_min: facts.budget_min, budget_max: facts.budget_max,
-      currency: "CNY" as const, budget_note: facts.budget_note, guide_url: document.url, thumbnail_url: document.image_urls[0] ?? null, image_urls: [...document.image_urls] };
+      currency: "CNY" as const, budget_note: facts.budget_note, guide_url: document.url,
+      thumbnail_url: (!location.amap?.location_only?location.amap?.photos[0]?.url:undefined)??document.image_urls[0]??null,
+      image_urls: location.amap?.photos.length&&!location.amap.location_only?[...new Set(location.amap.photos.map(p=>p.url))]:[...document.image_urls] };
     const documents = new Map(prepared.documents);
     documents.set(digest, { url: document.url, text: document.text });
     documents.set(mapDigest, { url: location.source_url, text: mapText });

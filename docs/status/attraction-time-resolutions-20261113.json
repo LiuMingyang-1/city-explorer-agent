@@ -1,0 +1,93 @@
+{
+  "batch_id": "curated-time-resolutions-20261113",
+  "checked_at": "2026-11-13T11:13:46.065Z",
+  "applied": true,
+  "resolutions": [
+    {
+      "id": "xa_0d04b281d7ef3d2cd834f99bc2544e4d",
+      "title": "西安高陵场畔农耕文化生态观光产业园",
+      "source_url": "https://you.ctrip.com/sight/xian7/2017759.html",
+      "source_title": "携程景点详情：开放时间栏",
+      "source_quote": "全年 09:00-21:00开放",
+      "weekdays": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "start": "09:00",
+      "end": "21:00",
+      "time_status": "complete",
+      "reason": "景点专门维护的开放时间栏明确标注全年，优先于汽车问答页和未注明日期的季节性转述。",
+      "historical_note": "原资料曾列09:00–19:30、春冬09:00–17:00和夏秋09:00–21:00，本次不采用。小吃街09:30–18:30、兑票09:00–17:00属于子项目，不能当作园区整体闭园时间。"
+    },
+    {
+      "id": "xa_776ed7f97a5914518fc327442a5ce952",
+      "title": "西安市吉兆春皮肤医药博物馆",
+      "source_url": "https://22936271.s21i.faiusr.com/95/ABUIABBfGAAg3dnmwAYompDKmQMwgAo4qg0",
+      "source_title": "博物馆公示牌照片",
+      "source_quote": "9:00—17:00；周五和法定节假日闭馆",
+      "supporting_url": "https://www.xa.gov.cn/gk/wtly/ssml/5da81bc9fd850838eff49c3b.html",
+      "weekdays": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7
+      ],
+      "start": "09:00",
+      "end": "17:00",
+      "time_status": "partial",
+      "reason": "直接可读的馆方公示牌清楚给出周五及法定节假日闭馆，政府开放信息也支持此说法，优先于此前正文摘要的周一至周五。",
+      "historical_note": "此前周一至周五开放、周末闭馆的摘要不再采用。免费预约参观；法定节假日闭馆保留为备注，未凭空生成具体节假日日期。",
+      "description_tail": "开放时间采用馆方公示牌：09:00–17:00，周五及法定节假日闭馆，免费预约参观。"
+    },
+    {
+      "id": "xa_ef6e8642555e8bf5aca90895c572c8bf",
+      "title": "西安市古陶瓷博物馆",
+      "source_url": "https://wwj.xa.gov.cn/xxgk/wbxx/62d8ba0ef8fd1c4c210ae016.html",
+      "source_title": "西安市文物局：西安市博物馆信息（2024-05-29）",
+      "source_quote": "8:00-17:00",
+      "weekdays": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "start": "08:00",
+      "end": "17:00",
+      "time_status": "partial",
+      "reason": "采用文物局2024年公开名单的开放钟点，优先于旧试运行表及第三方参观指南；该名单未列闭馆日，Demo暂按每日生成常规窗口，未声称全年无休已获核实。",
+      "historical_note": "旧资料09:30开馆、周二和春节闭馆不再作为当前规则。原地址差异已按高德处理，继续保留高德地址；出发前可确认闭馆日。"
+    },
+    {
+      "id": "xa_a318fb61dba3626bdf92c722029d0d0b",
+      "title": "西安市云之翼航空博物馆",
+      "source_url": "https://xasyzyhkbwg.com/h-nr.html?g=6",
+      "source_title": "馆方2025-09-26国庆延时公告所述常规基准",
+      "source_quote": "原定的8:30—17:30",
+      "weekdays": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "start": "08:30",
+      "end": "17:30",
+      "time_status": "partial",
+      "reason": "馆方较新的公告直接给出了延时前的常规基准，优先于百科和其他汇总资料中的09:00–17:00或18:00。该基准用于当前Demo，不把历史公告核对日期当作2026年新营业公告。",
+      "historical_note": "旧百科09:00–17:00、其他资料18:00闭馆不再采用。2025年国庆临时延至20:00及暑期延时不沿用为常规；节假日以馆方届时公告为准。"
+    }
+  ],
+  "database_sha256": "2b57b042235a4691207f0792ddb429e6bbcc30c3351b380345bb8b3b1a54869a"
+}

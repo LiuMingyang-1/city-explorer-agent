@@ -88,7 +88,7 @@ test("an existing v3 CHECK is replaced atomically without changing legacy coordi
 });
 
 test("new prompts collect activity and attraction schedules without mistaking visitor memories or comments for closure", () => {
-  for (const text of ["record_type", "schedule_json", "等级未知", "评论", "游客", "不添加tags"]) assert(FACT_EXTRACTION_PROMPT.includes(text));
+  for (const text of ["record_type", "schedule_json", "暂无评级", "评论", "游客", "不添加tags"]) assert(FACT_EXTRACTION_PROMPT.includes(text));
   assert(!FACT_EXTRACTION_PROMPT.includes("日常开放规则暂不展开"));
 });
 

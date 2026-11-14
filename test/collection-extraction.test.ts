@@ -6,7 +6,7 @@ import type { ActivityFacts, ExtractionDocument } from "../src/collection/extrac
 import { extractionFixture } from "./collection-downstream-fixture.ts";
 test("long scenic reference URLs use URL limits instead of the short evidence-note limit",async()=>{
  const {facts,document,asOf}=extractionFixture();
- const value={...facts,record_type:"attraction",category:"等级未知",evidence:{scenic_level_source:"https://www.shidicn.com/reference?path="+"x".repeat(650)}};
+ const value={...facts,record_type:"attraction",category:"暂无评级",evidence:{scenic_level_source:"https://www.shidicn.com/reference?path="+"x".repeat(650)}};
  const result=await extractActivities(document,{asOf,structured:{activities:[value]}});
  assert.deepEqual(result.issues,[]);assert.equal(result.activities[0].check.valid,true,JSON.stringify(result.activities[0].check));
  value.evidence.scenic_level_source="x".repeat(8193);

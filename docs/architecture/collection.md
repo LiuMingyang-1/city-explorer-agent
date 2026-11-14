@@ -1,6 +1,39 @@
 # 西安活动与景点数据采集系统
 
-更新日期：2026-11-13。本文是本分支采集模块自己的说明书，供负责数据采集、数据库和主 Agent 的同学共同使用。根目录原 README 仍保留；涉及本采集链路时，以本文和实际代码为准。开发分支为 `feat/xian-nightly-events`，不合并主分支。
+更新日期：2026-11-13。本文是采集模块自己的说明书，供负责数据采集、数据库和主 Agent 的同学共同使用。根目录原 README 仍保留；涉及本采集链路时，以本文和实际代码为准。本次高德补全在独立分支 `feat/amap-attraction-supplement` 实现，不合并主分支。
+
+### 本次更新：高德优先与黄金数据复核
+
+合并原有资料与高德补充后的实际缺项，见[黄金数据分类清单](../status/attraction-golden-classification-20261113.md)，逐条机器数据见[分类JSON](../status/attraction-golden-classification-20261113.json)。此前[高德覆盖清单](../status/amap-attraction-review-20261113.md)的237条并不是实际不合格总数：暂无评级、原有已填写等级、附加消费未知都不单独判失败。景点默认评级已统一为暂无评级，库内175条旧占位值已迁移，70条已有A级保留。本文后续历史实例和批次统计不代表最新覆盖率。
+
+DeepSeek充值后的首批修复已执行，见[时间与现有资料修复报告](../status/attraction-time-repair-20261113.md)：58条高德时间逐条重处理，4条季节区间端点错误已修复。之后按用户最新Demo口径完成[补图与默认规则](../status/demo-attraction-completion-20261113.md)：18条景点补47张图片，245条都有图；53条空预算默认每人20元（2000分），已有0元免费和明确价格保留；百跃羊乳文化景区默认每天09:00–17:00。默认值明确标为项目估算，不宣称已获官方确认。
+
+最后4条时间争议已按用户授权选用更可信的一套，见[时间选择结果](../status/attraction-time-resolutions-20261113.md)与[来源及依据](../data/attraction-time-resolutions-20261113.json)。目前complete=209、partial=36、conflicting=0；partial均有备注并按用户规则保留。三组同核心名称记录具体字段不同，全部保留；丝路欢乐世界也保留，城市明确为咸阳市。最新Demo口径检查未解决项为0，不把该结果解释为默认值、历史官网基准都已获现场实时确认。
+
+部分时间只要time_note非空即可保留并交由主Agent结合备注规划，不独立判失败。15条高德附近定位已接受；4条原暂停、6条未确认正常开放及1条明确内部专用，共11条在time_note写不开放并设status=paused，实际检索排除。不要把“尚未确认开放”解释为已证实永久停业。
+
+百度图片通过景点名检索并核对图像和原页面，排除错馆、AI配图和广告；一条学院博物馆另补馆方官网馆藏展示宣传图，标明不作为当前展期依据。记录[图片来源清单](../data/baidu-attraction-images-20261113.json)，只写image_urls/thumbnail_url，不替换guide_url。人工选择的图片证据存image_supplement；后续同POI空图片来源不会清空它，更高优先的同主体高德图片仍可覆盖。`scripts/audit-attraction-quality.ts`可只读重查剩余项，生成最新分类清单，不调用API、不改数据库。
+
+`scripts/repair-attraction-times.ts`为该批次的缓存维护入口：默认预览，`--apply`在版本校验和相同task/write锁内写回data/events.db。已执行批次不能重复写入。它不发起API调用，使用本机私有规范化结果，入库前再次通过共享高德时间校验器；来源抓取时间不被重处理刷新，另存normalized_at。新采集同样禁止季节区间只列首尾日期、用weekly区间伪造节假日，允许由特殊时段推导常规时段的相邻边界。所有未确认的原文继续保留为time_note。
+
+1. **同一个实体、同一个字段，高德优先。** 已选择并绑定的高德地点，其地址、场馆名、GCJ-02经纬度优先于正文、OCR和模型填写；模型不能自行制造高德证据。高德缺失某字段不等于其他来源错误，旧值保留并在复核清单标注依据不足。
+2. **附近定位与馆内资料分开。** 用户已接受高德附近POI，允许用父校园、游客中心等作定位参考，不因缺独立POI拦截景点。保留景点名称，不把父地点照片、等级和营业时间直接套到馆内。
+3. **A级、评分、费用各有含义。** business.keytag/atag明确标注的1A—5A用于category；business.rating是用户评分，不能转换为A级；cost是人均消费参考，不自动填为门票，避免把永兴坊人均消费误记为入场费。高德未给A级时保留已有等级，未知默认仍是“暂无评级”，清单注明尚未确认，不推断未评级或不适用。
+4. **景点时间和活动时间分开。** 景点主体开放时间以高德为主；临时演出/展览的开始结束日期不会被场馆营业时间覆盖。简单且完整的每周表达本地规范，季节、节假日、分设施等复杂表达交给模型单独理解；对JSON结构、钟点、例外日期再校验。失败时保留高德原文、time_status=unknown，不生成假时间。名称明确“暂停开放”时status=paused，即使详情仍返回营业时间也不恢复active。
+5. **图片与信息源分开。** 新采集优先使用所选高德POI的photos，链接仅允许高德/阿里云相关图片域名并升级HTTPS；无高德图片时回退来源附件。此次存量补全另外做了图片HTTP可用性检查，未通过的高德图片不写入。guide_url仍是原帖/网页信息源，不改成高德URL。
+6. **未来更新不能倒退。** _collection_metadata.state.events[id].amap_authority保存受保护字段、核验时间及原始business/photos。相同POI、相同记录类型的后续弱来源不能覆盖已确认高德字段；新的高德结果优先，缺失字段沿用之前的高德值。POI或记录类型变化时不继承旧保护。时间元数据与events同步，不因保留了旧结束日期而把常设景点误判过期。这里只保证来源优先级，不承诺新数据自动达到全部黄金要求。
+
+此次存量补全工具为 `scripts/supplement-amap.ts`，使用本机 `.local-data/xian/amap-supplement` 已下载的原始高德详情、时间规范结果及图片检查缓存，默认仅预览：
+
+```powershell
+node scripts/supplement-amap.ts
+# 首次预览确认数据版本后，写回同一个数据库：
+node scripts/supplement-amap.ts --apply
+```
+
+这是本次存量补全的缓存回放工具，不是新的联网采集入口。私有缓存不提交，其他机器须先准备相同结构的可信缓存；后续自动采集仍走原collect/collect:task入口。已写入的批次不能直接重复应用：脚本检查数据库SHA256、逐行原值、批次唯一性，并同时持有task/write锁。SQLite同一事务更新events、时间/来源元数据和before/after审计收据，任何一步失败回滚；20条活动和数据库永久ID不变。核验过程中若DeepSeek余额不足，未完成的复杂时间原文保留，并明确列入待核对，不能按成功规范计数。
+
+黄金覆盖检查包括地点本体、可用图片、A级依据、公众参观条件、费用、简介、建议时长，以及未来14天可用的开放规则。A级未提供与真正地点冲突的严重程度不同，报告逐项列明，**报告不是删除清单，也不是全部记录已达黄金标准的声明**。估算时长可作为规划参考，原文依据与估算依据仍在provenance中区分。门票与简介沿用原来源的事实也会注明。
 
 ## 1. 任务、交付物与当前边界
 
@@ -14,7 +47,7 @@
 | 小红书 | 已启用，最新测试需恢复登录 | MediaCrawler、正文和图片OCR；第二轮出现XHS_LOGIN_REQUIRED，不保证登录长期有效 |
 | DeepSeek 网页搜索 | 已启用 | 返回来源文本，再由分析模型提取；不是搜索结果直接写表 |
 | 模型调用高德工具定位 | 已实现 | 分析模型选地点，本地验证地点 ID 与坐标来自本次工具结果 |
-| 景点 A 级补查 | 已实现 | 同一 DeepSeek Key；独立语义核验；无法确认用“等级未知” |
+| 景点 A 级补查 | 已实现 | 同一 DeepSeek Key；独立语义核验；无法确认用“暂无评级” |
 | 活动/景点共表、时间备注降级 | 已实现 | 29个业务字段＋2个兼容列，共31列 |
 | 唯一SQLite工作库、累计更新 | 已实现 | 固定data/events.db，events、来源元信息和写入回执在同一事务提交 |
 | 景点10米去重 | 已实现 | 批次内和同一发布目录跨批次；活动不按坐标合并 |
@@ -129,7 +162,7 @@ powershell.exe -NoProfile -File scripts/collection-scheduled-task.ps1 -Config co
 | `record_type` | TEXT NOT NULL，默认activity | activity/attraction。由模型理解具体主体；是其余分类和时间语义的分界。 |
 | `title` | TEXT NOT NULL | 对象名称，不一定等于文章标题；可忠实概括，不要求是原文连续子串。 |
 | `description` | TEXT NOT NULL | 面向规划的简介，说明游览内容、内部场所或访问限制；不能编造事实填满。 |
-| `category` | TEXT NOT NULL | 活动固定12类；景点1A—5A或等级未知。必填，不把4.6分换算为4A。 |
+| `category` | TEXT NOT NULL，默认暂无评级 | 景点评级为1A—5A或暂无评级；缺失时脚本和SQLite均默认暂无评级。活动仍须显式填写固定12类之一，省略会被CHECK拒绝。不把4.6分换算为4A。暂无评级表示当前库没有可用等级，不等于确认官方未评级，也不单独判为不合格。 |
 | `venue_name` | TEXT NOT NULL | 场馆、分馆或地点名称；内部中厅/展厅可在名称或简介保留。分店身份不能丢失。 |
 | `address` | TEXT NOT NULL | 已选高德结果的地址，按程序加西安市、区县等。原帖文字与高德格式不同，采用确认地点的高德地址。 |
 | `city` | TEXT NOT NULL，默认西安市 | 业务城市。搜索配置本身不保证全部命中来自西安，必须用地图结果确认。 |
@@ -147,8 +180,8 @@ powershell.exe -NoProfile -File scripts/collection-scheduled-task.ps1 -Config co
 | `currency` | TEXT NOT NULL，默认CNY | 当前采集器只发布人民币。不能把其他货币金额当人民币直接写入。 |
 | `budget_note` | TEXT，可NULL | 门票、可选付费项目、费用未知范围等说明。免费公园不代表游船/游乐设施免费。 |
 | `guide_url` | TEXT，可NULL | **原信息源网址**。新采集记录直接复制帖子/网页URL；不是攻略专用，不改成高德或等级补查链接。历史NULL保留兼容。 |
-| `thumbnail_url` | TEXT，可NULL | 当前取来源图片列表第一张；只保存地址。没有图片则NULL，不拿站点图标凑图。 |
-| `image_urls` | TEXT NOT NULL，默认[] | SQLite里是JSON字符串数组；业务JSON里是数组。来自来源附件，可能包含不完全对应某个提取对象的合集图片，尚未做对象级图片精准匹配。 |
+| `thumbnail_url` | TEXT，可NULL | 优先取已选高德POI图片第一张，无高德图片时回退来源附件；只保存地址，没有图片则NULL。 |
+| `image_urls` | TEXT NOT NULL，默认[] | SQLite里是JSON字符串数组；业务JSON里是数组。优先已选高德POI的photos，无高德照片时回退来源附件；来源合集图片仍可能不完全对应具体对象。本次存量补全额外校验高德图片HTTP可用性。 |
 | `status` | TEXT NOT NULL，默认unknown | active/paused/cancelled/ended/unknown，对象是否有效；未知时间不等于paused或ended。 |
 | `source_published_at` | TEXT，可NULL | 来源首次发布时间，UTC ISO时间点；不是活动开始时间。原站无可靠时间则NULL。 |
 | `source_updated_at` | TEXT，可NULL | 来源编辑时间，与首次发布时间分开，不能单靠旧帖刚编辑就推断活动是今年。 |
@@ -159,7 +192,7 @@ powershell.exe -NoProfile -File scripts/collection-scheduled-task.ps1 -Config co
 
 活动12类：展览、音乐现场、演出、市集、节庆活动、书店活动、讲座、工作坊、放映、景点参观、户外活动、体育赛事。“景点参观”是历史活动枚举，不表示长期公园必须归activity；长期主体优先归attraction。
 
-景点分类：1A、2A、3A、4A、5A、等级未知。这是官方景区A级，不是酒店星级、游客评价或模型喜好评分。模型可以补查A级，查不到不删除主体。
+景点分类：1A、2A、3A、4A、5A、暂无评级。这是官方景区A级，不是酒店星级、游客评价或模型喜好评分。模型可以补查A级，查不到不删除主体。
 
 ### 3.3 schedule_json 的内部结构
 
@@ -218,7 +251,7 @@ powershell.exe -NoProfile -File scripts/collection-scheduled-task.ps1 -Config co
   "id": "xa_35c7865387b933d5c7327982efba732b",
   "title": "曲江池遗址公园",
   "description": "位于曲江核心板块的开放式唐文化遗址公园，以700亩湖面为中心，环湖分布仿唐亭台楼阁，可散步环湖、汉服拍照、怀古研学。园内有阅江楼、曲江流饮浮雕长廊、汉武泉鸣、中和广场、蘅芜洲石舫、烟波岛木栈道、明皇栈桥、曲江池历史博物馆等点位，西南侧相连寒窑遗址片区。园区免费开放、无需预约；游船、环湖观光电瓶车（约30元/人）为自费项目。景观灯光夏季19:30-22:00、冬季17:30-21:00，随季节微调。建议游玩2-4小时，推荐16点后入园。地铁4号线曲江池西站C口步行约8分钟至北门，8号线寒窑站B1口可达南岸。",
-  "category": "等级未知",
+  "category": "暂无评级",
   "venue_name": "曲江池遗址公园",
   "address": "西安市雁塔区曲江池西路与曲江池北路交叉口东南角",
   "latitude": 34.20216,
@@ -380,7 +413,7 @@ flowchart TD
 {"name":"amap_search","arguments":{"keywords":"开元大剧院"}}
 ```
 
-本地程序向高德地点搜索接口发送：keywords、city=610100、citylimit=true、offset=10、page=1、extensions=all，Key由程序注入，模型看不到Key。接口URL固定，不允许模型访问任意网络地址。
+本地程序向高德v5地点搜索接口发送：keywords、region=610100、city_limit=true、page_size=10、page_num=1、show_fields=business,photos,navi，Key由程序注入，模型看不到Key。接口URL固定，不允许模型访问任意网络地址。返回GCJ-02坐标，同时保留business中的A级、营业时间、评分、人均消费及photos；这些字段由程序保留，不接受模型伪造高德来源。
 
 工具输出place列表，每项是id/name/address/adcode/district/latitude/longitude。程序只保留西安行政码6101xx、城市名西安市、有效地址和合理坐标；location按经度、纬度拆分，直接使用GCJ-02，不转换WGS-84。
 
@@ -394,7 +427,7 @@ flowchart TD
 
 仅景点可调用search_scenic_level。工具用同一个DeepSeek Key按正式场馆名搜索官方A级材料，每次最多3份结果、每份最多6000字符。模型提出等级后，程序检查材料确有对应A级写法，再用相同模型做专门语义核验，确认是该具体对象、官方有效等级，不是父景区/拟评定/撤销或游客评分。
 
-查不到、请求失败、预算用尽、材料不支持都回退“等级未知”，不会为这个原因删除景点。补查只用于等级，不覆盖原帖的票价、时间和信息源URL。
+查不到、请求失败、预算用尽、材料不支持都回退“暂无评级”，不会为这个原因删除景点。补查只用于等级，不覆盖原帖的票价、时间和信息源URL。
 
 真实回放中，大明宫5A、大唐西市4A、幸福林带3A得到确认；曲江池属于组合景区的材料没有被直接赋成公园自己的5A。这些是历史API材料和模型核验结果，不是我们另行颁发等级。
 
@@ -573,7 +606,7 @@ node scripts/collection-correct-times.ts .local-data/xian/planning/initial-time-
 1. **曲江池历史博物馆**：当次模型没有确认到高德地点，ID/坐标为空，未保留。含义是定位未完成，不证明馆不存在。当前仍需真正返回可绑定POI才可入库。
 2. **“秋日拾趣，好物相逢”野趣跳蚤集**：报道明确“欢乐收官”，模型判past；按NOT_ACTIVE拒绝，不继续当未来市集。
 3. **大明宫国家遗址公园**：时间有矛盾，历史批次保留主体并设conflicting，不能把冲突时间排进主Agent行程；等级补查仍可独立确认5A。
-4. **丰庆公园**：小红书明确免费，但没给开放钟点；保留等级未知、time_status=unknown、schedule=NULL、0分基础游览预算和高德坐标。时间/评级不完整没有导致整条丢弃。
+4. **丰庆公园**：小红书明确免费，但没给开放钟点；保留暂无评级、time_status=unknown、schedule=NULL、0分基础游览预算和高德坐标。时间/评级不完整没有导致整条丢弃。
 
 ## 7. 数据库、发布目录与主Agent对接
 

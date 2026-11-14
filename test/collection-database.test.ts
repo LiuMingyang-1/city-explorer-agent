@@ -13,7 +13,7 @@ import {publishRelease} from "../src/collection/releases.ts";
 function folder(){const root=`.local-data/canonical-test-${randomUUID()}`;mkdirSync(root,{recursive:true});return {root,path:join(root,"events.db"),clean:()=>rmSync(root,{recursive:true,force:true})};}
 async function prepared(key:string,type:"activity"|"attraction"="activity"){
   const {item,asOf}=await locatedFixture();item.source_event_key=key;
-  if(type==="attraction"){item.facts.record_type=type;item.facts.category="等级未知";}
+  if(type==="attraction"){item.facts.record_type=type;item.facts.category="暂无评级";}
   const p=prepareCollection([item],{asOf,baseDate:"2026-11-12"});assert.equal(p.prepared.dataset.events.length,1,JSON.stringify(p.rejected));return {...p,asOf};
 }
 test("two writes keep the same file and database identity and retain the earlier activity",async()=>{

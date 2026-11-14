@@ -12,7 +12,7 @@ const BASE_EVENT_COLUMNS: readonly string[] = [
   "id TEXT PRIMARY KEY",
   "title TEXT NOT NULL",
   "description TEXT NOT NULL",
-  "category TEXT NOT NULL",
+  "category TEXT NOT NULL DEFAULT '暂无评级'",
   "venue_name TEXT NOT NULL",
   "address TEXT NOT NULL",
   "latitude REAL DEFAULT NULL",
@@ -83,7 +83,7 @@ export const EVENTS_TABLE_DDL = `CREATE TABLE IF NOT EXISTS events (
 
 /** Remove the old final CHECK without discarding custom columns/indexes/triggers. */
 function removeOldCollectionCheck(sql: string): string {
-  const at = sql.indexOf("CONSTRAINT events_collection_v3");
+  const at = sql.search(/CONSTRAINT events_collection_v[34]\b/);
   if (at < 0) return sql;
   const open = sql.indexOf("(", at); let depth = 0, end = open;
   for (; end < sql.length; end++) { if (sql[end] === "(") depth++; else if (sql[end] === ")" && --depth === 0) { end++; break; } }
@@ -96,7 +96,8 @@ function removeOldCollectionCheck(sql: string): string {
 /**
  * 保证 db 内 events 表具备完整 v1 结构：表不存在则建表，已存在则
  * 按 PRAGMA table_info 只补齐缺失列（ALTER TABLE ADD COLUMN，默认值
- * 回填既有行）。不清表、不改写已有记录；幂等，单事务执行。
+ * 回填既有行）。不清表；旧景点评级占位值迁移为“暂无评级”，
+ * 其他业务字段保持不变；幂等，单事务执行。
  * repository 打开时调用，也供 seed 写入前复用。
  */
 /** SQLite cannot DROP NOT NULL directly: rebuild only when one of the three
@@ -118,14 +119,18 @@ export function ensureEventsSchema(db: DatabaseSync): void {
       const nullable = ["latitude", "longitude", "start_at", "end_at", "suggested_duration_minutes"];
       const currentSql = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='events'").get()!.sql as string;
       const defaults = db.prepare("PRAGMA table_info(events)").all() as Array<{name:string;notnull:number;dflt_value:string|null}>;
-      if (!currentSql.includes("CONSTRAINT events_collection_v4") || defaults.some(c => nullable.includes(c.name) && (c.notnull === 1 || c.dflt_value?.toUpperCase() !== "NULL"))) {
+      if (!currentSql.includes("CONSTRAINT events_collection_v4") || currentSql.includes("等级未知") || defaults.find(c=>c.name==="category")?.dflt_value!=="'暂无评级'" || defaults.some(c => nullable.includes(c.name) && (c.notnull === 1 || c.dflt_value?.toUpperCase() !== "NULL"))) {
         const temporary = "events__nullable_migration";
         if (db.prepare("SELECT 1 FROM sqlite_master WHERE name=?").get(temporary)) throw new Error("Migration temporary table already exists");
         const schema = removeOldCollectionCheck(currentSql);
-        const unknown = db.prepare(`SELECT id FROM events WHERE category IS NULL OR (record_type='activity' AND category NOT IN (${CATEGORIES.map(() => "?").join(",")})) OR (record_type='attraction' AND category NOT IN (${SCENIC_LEVELS.map(() => "?").join(",")})) LIMIT 1`).get(...CATEGORIES, ...SCENIC_LEVELS);
+        const acceptedLevels=[...SCENIC_LEVELS,"等级未知"];
+        const unknown = db.prepare(`SELECT id FROM events WHERE category IS NULL OR (record_type='activity' AND category NOT IN (${CATEGORIES.map(() => "?").join(",")})) OR (record_type='attraction' AND category NOT IN (${acceptedLevels.map(() => "?").join(",")})) LIMIT 1`).get(...CATEGORIES, ...acceptedLevels);
         if (unknown) throw new Error("UNSUPPORTED_EXISTING_CATEGORY: migration stopped without changing rows");
         const extras = db.prepare("SELECT sql FROM sqlite_master WHERE tbl_name='events' AND type IN ('index','trigger') AND sql IS NOT NULL").all() as {sql: string}[];
         let replacement = schema.replace(/^CREATE TABLE\s+(?:IF NOT EXISTS\s+)?(?:"events"|`events`|\[events\]|events)(?=\s*\()/i, `CREATE TABLE "${temporary}"`);
+        const categoryDeclaration=/((?:"category"|category)\s+TEXT)(?:\s+NOT\s+NULL)?(?:\s+DEFAULT\s+(?:NULL|'(?:[^']|'')*'))?/i;
+        if(!categoryDeclaration.test(replacement))throw new Error("Unsupported category declaration");
+        replacement=replacement.replace(categoryDeclaration,"$1 NOT NULL DEFAULT '暂无评级'");
         for (const name of nullable) {
           const declaration = new RegExp(`((?:"${name}"|${name})\\s+(?:TEXT|INTEGER|REAL))(?:\\s+NOT\\s+NULL)?(?:\\s+DEFAULT\\s+(?:NULL|[-+]?\\d+(?:\\.\\d+)?|'(?:[^']|'')*'))?`, "i");
           if (!declaration.test(replacement)) throw new Error(`Unsupported legacy column declaration: ${name}`);
@@ -139,7 +144,8 @@ export function ensureEventsSchema(db: DatabaseSync): void {
         const migrated = db.prepare(`PRAGMA table_info("${temporary}")`).all() as Array<{name:string;notnull:number;dflt_value:string|null}>;
         if (migrated.some(c => nullable.includes(c.name) && (c.notnull === 1 || c.dflt_value?.toUpperCase() !== "NULL"))) throw new Error("Unsupported legacy column declaration");
         const names = columns.map(c => `"${c.name.replaceAll('"','""')}"`).join(",");
-        db.exec(`INSERT INTO "${temporary}" (${names}) SELECT ${names} FROM events`);
+        const selections=columns.map(c=>c.name==="category"?`CASE WHEN record_type='attraction' AND category='等级未知' THEN '暂无评级' ELSE category END`:`"${c.name.replaceAll('"','""')}"`).join(",");
+        db.exec(`INSERT INTO "${temporary}" (${names}) SELECT ${selections} FROM events`);
         db.exec(`DROP TABLE events`);
         db.exec(`ALTER TABLE "${temporary}" RENAME TO events`);
         for (const extra of extras) db.exec(extra.sql);
