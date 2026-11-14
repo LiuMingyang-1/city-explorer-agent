@@ -1,0 +1,283 @@
+{
+ "A": {
+  "preReverse": {
+   "o": 0.753666,
+   "ty": 2.96,
+   "y": 492,
+   "n": 1,
+   "cls": "history-entry history-exit",
+   "t": "西安城墙骑行"
+  },
+  "series": [
+   {
+    "t": "西安城墙骑行",
+    "o": 0.753666,
+    "ty": 2.96,
+    "y": 492,
+    "n": 1,
+    "cls": "history-entry"
+   },
+   {
+    "t": "西安城墙骑行",
+    "o": 0.822023,
+    "ty": 2.14,
+    "y": 491.1,
+    "n": 1,
+    "cls": "history-entry"
+   },
+   {
+    "t": "西安城墙骑行",
+    "o": 0.876683,
+    "ty": 1.48,
+    "y": 490.5,
+    "n": 1,
+    "cls": "history-entry"
+   },
+   {
+    "t": "西安城墙骑行",
+    "o": 0.945052,
+    "ty": 0.66,
+    "y": 489.7,
+    "n": 1,
+    "cls": "history-entry"
+   },
+   {
+    "t": "西安城墙骑行",
+    "o": 0.976361,
+    "ty": 0.28,
+    "y": 489.3,
+    "n": 1,
+    "cls": "history-entry"
+   },
+   {
+    "t": "西安城墙骑行",
+    "o": 0.984896,
+    "ty": 0.18,
+    "y": 489.2,
+    "n": 1,
+    "cls": "history-entry"
+   },
+   {
+    "t": "西安城墙骑行",
+    "o": 0.994685,
+    "ty": 0.06,
+    "y": 489.1,
+    "n": 1,
+    "cls": "history-entry"
+   },
+   {
+    "t": "西安城墙骑行",
+    "o": 0.998852,
+    "ty": 0.01,
+    "y": 489,
+    "n": 1,
+    "cls": "history-entry"
+   },
+   {
+    "t": "西安城墙骑行",
+    "o": 0.999996,
+    "ty": 0,
+    "y": 489,
+    "n": 1,
+    "cls": "history-entry"
+   },
+   {
+    "t": "西安城墙骑行",
+    "o": 1,
+    "ty": 0,
+    "y": 489,
+    "n": 1,
+    "cls": "history-entry"
+   },
+   {
+    "t": "西安城墙骑行",
+    "o": 1,
+    "ty": 0,
+    "y": 489,
+    "n": 1,
+    "cls": "history-entry"
+   },
+   {
+    "t": "西安城墙骑行",
+    "o": 1,
+    "ty": 0,
+    "y": 489,
+    "n": 1,
+    "cls": "history-entry"
+   },
+   {
+    "t": "西安城墙骑行",
+    "o": 1,
+    "ty": 0,
+    "y": 489,
+    "n": 1,
+    "cls": "history-entry"
+   },
+   {
+    "t": "西安城墙骑行",
+    "o": 1,
+    "ty": 0,
+    "y": 489,
+    "n": 1,
+    "cls": "history-entry"
+   },
+   {
+    "t": "西安城墙骑行",
+    "o": 1,
+    "ty": 0,
+    "y": 489,
+    "n": 1,
+    "cls": "history-entry"
+   }
+  ]
+ },
+ "B": {
+  "preExit": {
+   "o": 0.828525,
+   "ty": 2.4,
+   "y": 549.4,
+   "n": 1,
+   "cls": "history-entry history-enter",
+   "t": "兵马俑华清池"
+  },
+  "series": [
+   {
+    "t": "兵马俑华清池",
+    "o": 0.828525,
+    "ty": 2.4,
+    "y": 549.4,
+    "n": 1,
+    "cls": "history-entry history-exit"
+   },
+   {
+    "t": "兵马俑华清池",
+    "o": 0.828525,
+    "ty": 2.4,
+    "y": 549.4,
+    "n": 1,
+    "cls": "history-entry history-exit"
+   },
+   {
+    "t": "兵马俑华清池",
+    "o": 0.828525,
+    "ty": 2.4,
+    "y": 549.4,
+    "n": 1,
+    "cls": "history-entry history-exit"
+   },
+   {
+    "t": "兵马俑华清池",
+    "o": 0.812516,
+    "ty": 2.59,
+    "y": 549.6,
+    "n": 1,
+    "cls": "history-entry history-exit"
+   },
+   {
+    "t": "兵马俑华清池",
+    "o": 0.751704,
+    "ty": 3.29,
+    "y": 550.3,
+    "n": 1,
+    "cls": "history-entry history-exit"
+   },
+   {
+    "t": "兵马俑华清池",
+    "o": 0.712186,
+    "ty": 3.75,
+    "y": 550.7,
+    "n": 1,
+    "cls": "history-entry history-exit"
+   },
+   {
+    "t": "兵马俑华清池",
+    "o": 0.607501,
+    "ty": 4.96,
+    "y": 552,
+    "n": 1,
+    "cls": "history-entry history-exit"
+   },
+   {
+    "t": "兵马俑华清池",
+    "o": 0.475982,
+    "ty": 6.49,
+    "y": 553.5,
+    "n": 1,
+    "cls": "history-entry history-exit"
+   },
+   {
+    "t": "兵马俑华清池",
+    "o": 0.331383,
+    "ty": 8.16,
+    "y": 555.2,
+    "n": 1,
+    "cls": "history-entry history-exit"
+   },
+   {
+    "t": "兵马俑华清池",
+    "o": 0.258911,
+    "ty": 9,
+    "y": 556,
+    "n": 1,
+    "cls": "history-entry history-exit"
+   },
+   {
+    "t": "兵马俑华清池",
+    "o": 0.0840727,
+    "ty": 11.03,
+    "y": 558,
+    "n": 1,
+    "cls": "history-entry history-exit"
+   },
+   {
+    "t": "兵马俑华清池",
+    "o": 0,
+    "ty": 12,
+    "y": 559,
+    "n": 1,
+    "cls": "history-entry history-exit"
+   },
+   {
+    "t": "兵马俑华清池",
+    "o": 0,
+    "ty": 12,
+    "y": 559,
+    "n": 1,
+    "cls": "history-entry history-exit"
+   },
+   {
+    "t": "兵马俑华清池",
+    "o": 0,
+    "ty": 12,
+    "y": 559,
+    "n": 1,
+    "cls": "history-entry history-exit"
+   },
+   {
+    "t": "兵马俑华清池",
+    "o": 0,
+    "ty": 12,
+    "y": 559,
+    "n": 1,
+    "cls": "history-entry history-exit"
+   }
+  ]
+ },
+ "C": {
+  "before": [
+   "西安城墙骑行",
+   "回民街半日吃逛",
+   "兵马俑华清池",
+   "大雁塔夜游",
+   "碑林书院门",
+   "华山两日"
+  ],
+  "sync": {
+   "rows": [],
+   "expanded": false,
+   "hidden": false
+  },
+  "syncMs": 3,
+  "at100": []
+ }
+}

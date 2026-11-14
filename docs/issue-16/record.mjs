@@ -101,26 +101,39 @@ const SEED = `(() => {
 
 let frames = []; let recording = false;
 on('Page.screencastFrame', p => {
-  if (recording) frames.push({data: p.data, ts: p.metadata?.timestamp ?? Date.now() / 1000});
+  if (recording) frames.push({data: p.data, ts: p.metadata?.timestamp ?? Date.now() / 1000, wall: Date.now()});
   cdp('Page.screencastFrameAck', {sessionId: p.sessionId}).catch(() => {});
 });
 
 // Frames -> ffconcat (durations from real timestamps) -> mp4 + optional gif.
+// Timing is honest: each frame displays for exactly the delta to the next
+// frame's compositor timestamp. Gaps above MAXGAP are clamped but counted
+// and written to <name>.frames.json — with the screencast warmed up and a
+// headed compositor, real gaps stay under ~300ms, so clampedGaps>0 means
+// the recording itself was sparse, not that encoding cheated.
+const MAXGAP = 1.0;
 const buildVideo = (name, w, gifSecs = 0) => {
   if (frames.length < 8) {console.log(`skip ${name}: only ${frames.length} frames`); return;}
-  writeFileSync(join(outDir, name + '.frames.json'), JSON.stringify(frames.map(f => f.ts)));
   const dir = join(outDir, '.frames-' + name); mkdirSync(dir, {recursive: true});
   const t0 = frames[0].ts;
+  let clamped = 0, maxDelta = 0;
   let concat = 'ffconcat version 1.0\n';
   frames.forEach((f, i) => {
     const file = join(dir, `f${String(i).padStart(4, '0')}.jpg`); writeFileSync(file, Buffer.from(f.data, 'base64'));
     const next = frames[i + 1];
-    // Compositor timestamps are true paint times. Idle gaps stay long so
-    // dwell reads honestly; 2s cap keeps the tail from ballooning.
-    const dur = next ? Math.min(Math.max(next.ts - f.ts, 1 / 120), 2.0) : 0.5;
+    const raw = next ? next.ts - f.ts : 0.5;
+    if (raw > MAXGAP) clamped++;
+    if (next) maxDelta = Math.max(maxDelta, raw);
+    const dur = Math.min(Math.max(raw, 1 / 120), MAXGAP);
     concat += `file '${file}'\nduration ${dur.toFixed(4)}\n`;
   });
   concat += `file '${join(dir, `f${String(frames.length - 1).padStart(4, '0')}.jpg`)}'\n`;
+  writeFileSync(join(outDir, name + '.frames.json'), JSON.stringify({
+    frameCount: frames.length, spanSecs: +(frames.at(-1).ts - t0).toFixed(3),
+    maxGapSecs: +maxDelta.toFixed(3), clampedGaps: clamped, clampSecs: MAXGAP,
+    wallSpanSecs: +((frames.at(-1).wall - frames[0].wall) / 1000).toFixed(3),
+    note: 'ffconcat per-frame durations = real compositor timestamp deltas; fps=30 resamples (duplicates) to CFR — no frames are fabricated beyond duplication',
+    ts: frames.map(f => +f.ts.toFixed(4))}, null, 1));
   const list = join(dir, 'list.txt'); writeFileSync(list, concat);
   const mp4 = join(outDir, name + '.mp4');
   execFileSync(FFMPEG, ['-y', '-f', 'concat', '-safe', '0', '-i', list,
@@ -134,12 +147,21 @@ const buildVideo = (name, w, gifSecs = 0) => {
       '-loop', '0', gif], {stdio: 'pipe'});
   }
   rmSync(dir, {recursive: true, force: true});
-  console.log(`video ${mp4} (${frames.length} frames, ${secs}s)`);
+  console.log(`video ${mp4} (${frames.length} frames, ${secs}s span, clampedGaps=${clamped})`);
 };
 const startRec = async () => {frames = []; recording = true;
   await cdp('Page.startScreencast', {format: 'jpeg', quality: 82, everyNthFrame: 1});};
 const stopRec = async () => {await sleep(250); recording = false;
   await cdp('Page.stopScreencast').catch(() => {});};
+// Warm the screencast/compositor pipeline with one throwaway expand+collapse
+// so the recorded clip has continuous frames from the very first action —
+// a cold pipeline used to emit one frame then a multi-second gap.
+const warmup = async () => {
+  await startRec(); await sleep(300);
+  await clickMore(); await sleep(700);
+  await clickMore(); await sleep(700);
+  await stopRec();
+};
 
 mkdirSync(outDir, {recursive: true});
 try {
@@ -150,6 +172,7 @@ try {
   await cdp('Page.navigate', {url: `http://127.0.0.1:${port}/`});
   await waitFor(`document.readyState==='complete' && document.getElementById('more-history')`, 15000);
   await sleep(1400);
+  await warmup();
   await startRec();
   await sleep(500);                       // establish collapsed state
   await clickMore(); await sleep(1400);   // expand: slide-up fade-in
@@ -167,6 +190,7 @@ try {
   await cdp('Page.navigate', {url: `http://127.0.0.1:${port}/`});
   await waitFor(`document.readyState==='complete' && document.getElementById('more-history')`, 15000);
   await sleep(1400);
+  await warmup();
   await startRec();
   await sleep(500);
   await clickMore(); await sleep(1400);

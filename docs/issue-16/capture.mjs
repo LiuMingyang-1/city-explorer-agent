@@ -132,7 +132,8 @@ const HIST = `(() => {
   const areaS = area ? getComputedStyle(area) : null;
   const listS = list ? getComputedStyle(list) : null;
   const listB = list ? list.getBoundingClientRect() : null;
-  const probed = rows.map(probe);
+  const probed = rows.map(r => Object.assign(probe(r), {n: (r.dataset && r.dataset.p2n) || null,
+    exit: r.classList.contains('history-exit'), enter: r.classList.contains('history-enter')}));
   const visCount = probed.filter(r => r.h > 1 && r.vis === 'visible' && r.disp !== 'none' && r.o > 0.05).length;
   return {expanded: card ? card.classList.contains('history-expanded') : null,
     aria: btn.getAttribute('aria-expanded'), label: btn.textContent, disabled: btn.disabled,
@@ -151,22 +152,26 @@ const sample = async (ms, step = 50) => {const t0 = Date.now(), out = [];
   while (Date.now() - t0 <= ms) {out.push({t: Date.now() - t0, v: await evaluate(HIST)}); await sleep(step);} return out;};
 // Motion signatures extracted from a sample series.
 const sig = series => {
-  let fade = null, slide = null, grow = null;
+  let fade = null, slide = null, grow = null, sink = null;
   for (let i = 1; i < series.length; i++) {
     const a = series[i - 1].v, b = series[i].v;
     // fade: any row (or the list/area container) observed strictly mid-alpha
     const mid = r => r && r.o > 0.05 && r.o < 0.95;
     if (a.rows.some(mid) || b.rows.some(mid) || mid(a.list) || mid(b.list) || mid(a.area) || mid(b.area)) fade = {at: series[i].t, rows: b.rows.map(r => r.o), list: b.list?.o, area: b.area?.o};
-    // slide: same-index row moving upward (y decreasing) or container
-    // translateY shrinking toward 0, or the list box growing
-    for (let k = 0; k < Math.min(a.rows.length, b.rows.length); k++) {
+    // slide: same-index row moving upward (y decreasing); sink: downward
+    // (y increasing) — the collapse must visibly travel DOWN, not just fade.
+    // Only compare samples in the same layout state: the teardown sample
+    // re-renders collapsed rows at different y and would report a fake
+    // 200+px "motion" instead of the genuine ~12px exit sink.
+    if (a.expanded === b.expanded) for (let k = 0; k < Math.min(a.rows.length, b.rows.length); k++) {
       const dy = b.rows[k].y - a.rows[k].y;
       if (dy < -1.5) {slide = {at: series[i].t, row: k, dy: +dy.toFixed(1)};}
+      if (dy > 1.5) {sink = {at: series[i].t, row: k, dy: +dy.toFixed(1)};}
     }
     if (a.list && b.list && b.list.h - a.list.h > 1.5) grow = {at: series[i].t, dh: +(b.list.h - a.list.h).toFixed(1)};
     if (a.list && b.list && Math.abs(b.list.ty - a.list.ty) > 1.5) slide = slide || {at: series[i].t, containerTy: [a.list.ty, b.list.ty]};
   }
-  return {fade, slide, grow};
+  return {fade, slide, grow, sink};
 };
 const consistent = (v, wantExpanded, wantRows) => {
   if (!v) return false;
@@ -211,6 +216,16 @@ try {
   // rows must linger (visible >2) past ~80ms — an instant hide fails here
   expect('collapse-lingers-before-hide', firstHidden !== undefined && firstHidden.t > 80, {firstHiddenAt: firstHidden?.t});
   expect('collapse-fade-observed', cSig.fade !== null, cSig.fade || {note: 'no mid-alpha sample during collapse'});
+  // direction: exiting rows must visibly move DOWN (y increasing), not just
+  // fade in place — a pure fade would satisfy fade+linger but miss 下滑.
+  expect('collapse-slide-down', cSig.sink !== null, cSig.sink || {note: 'no downward row motion sampled'});
+  // unmount order: exiting rows may only be removed AFTER the fade completes.
+  // Require a sample where extra rows are still mounted but already invisible
+  // (o<=0.05), occurring before the first 2-row sample.
+  const fadedMounted = sCollapse.findIndex(s => s.v.rowCount > 2 && s.v.rows.slice(2).every(r => r.o <= 0.05));
+  const tornDown = sCollapse.findIndex(s => s.v.rowCount <= 2);
+  expect('collapse-unmount-after-fade', fadedMounted >= 0 && tornDown > fadedMounted,
+    {fadedMountedAt: fadedMounted >= 0 ? sCollapse[fadedMounted].t : null, tornDownAt: tornDown >= 0 ? sCollapse[tornDown].t : null});
   // mid-flight frame as visual evidence of the fade-out in progress
   const midT = sCollapse.findIndex(s => s.t > 60 && s.v.visCount > 2);
   if (midT >= 0) metrics['collapse-midframe'] = {t: sCollapse[midT].t, rows: sCollapse[midT].v.rows.map(r => ({o: r.o, y: r.y}))};
@@ -229,9 +244,100 @@ try {
   const rOdd = metrics['rapid-odd-end'];
   expect('rapid-odd-consistent', consistent(rOdd, true, 6), {expanded: rOdd.expanded, visCount: rOdd.visCount, rowCount: rOdd.rowCount, aria: rOdd.aria});
 
+  // ---- p2-A reversal: collapse 200ms -> re-open, same nodes, continuous ---
+  // Frame-level contract (p2-evidence.json section A): the exiting rows are
+  // reversed IN PLACE — same DOM nodes, no opacity/translateY jump at the
+  // reversal instant, then a monotonic convergence to o=1/ty=0 that holds
+  // through each row's stagger delay window (row5's delay ~110ms).
+  await clickMore(); await sleep(200);            // collapse exit in flight
+  await evaluate(`[...document.querySelectorAll('#history-list .history-entry')].forEach((r,i)=>{r.dataset.p2n='n'+i})`);
+  const preRev = await evaluate(HIST);
+  metrics['p2A-preReverse'] = preRev;
+  await clickMore();                              // re-open mid-exit
+  const sRev = await sample(900, 40);
+  metrics['p2A-reversal-series'] = sRev;
+  // same nodes: every mounted row after re-open still carries its p2n mark
+  const sameNode = sRev.every(s => s.v.rows.length === 0 || s.v.rows.every(r => r.n !== null));
+  expect('p2-reversal-same-node', sameNode && preRev.rowCount > 0 && preRev.rows.some(r => r.exit),
+    {preExitRows: preRev.rows.filter(r => r.exit).length, postUnmarked: sRev.flatMap(s => s.v.rows).filter(r => r.n === null).length});
+  // reversal instant: first post-click sample per row must equal the pre
+  // frame (no opacity drop to 0, no ty reset toward the enter offset)
+  const instBad = sRev.length ? preRev.rows.map((pre, k) => {
+    const cur = sRev[0].v.rows[k]; if (!cur) return null;
+    const dO = cur.o - pre.o, dTy = cur.ty - pre.ty;
+    return (dO < -0.08 || dO > 0.35 || Math.abs(dTy) > 5) ? {row: k, dO: +dO.toFixed(3), dTy: +dTy.toFixed(2), pre: {o: pre.o, ty: pre.ty}} : null;
+  }).filter(Boolean) : [{noSamples: true}];
+  expect('p2-reversal-instant', instBad.length === 0, {violations: instBad, pre: preRev.rows.map(r => ({o: r.o, ty: r.ty, n: r.n}))});
+  // monotonic convergence incl. the ~110ms stagger-delay hold: o never drops,
+  // ty never rises (noise tolerance 0.03 / 1px)
+  const revBad = [];
+  for (let i = 1; i < sRev.length; i++) {
+    const a = sRev[i - 1].v.rows, b = sRev[i].v.rows;
+    for (let k = 0; k < Math.min(a.length, b.length); k++) {
+      if (b[k].o < a[k].o - 0.03) revBad.push({t: sRev[i].t, row: k, oDrop: [a[k].o, b[k].o]});
+      if (Math.abs(b[k].ty) > Math.abs(a[k].ty) + 1) revBad.push({t: sRev[i].t, row: k, tyAway: [a[k].ty, b[k].ty]});
+    }
+  }
+  const revEnd = sRev.at(-1).v;
+  expect('p2-reversal-monotonic', revBad.length === 0 && revEnd.expanded === true && revEnd.rows.every(r => r.o === 1 && r.ty === 0),
+    {violations: revBad.slice(0, 4), end: revEnd.rows.map(r => ({o: r.o, ty: r.ty}))});
+
+  // ---- p2-B: collapse mid-enter — per-row monotonic fade/sink -------------
+  // Collapse ~170ms into the staggered enter (rows still climbing). Per
+  // p2-evidence.json section B every exiting row must leave from its live
+  // frame: opacity MONOTONICALLY falls AND translateY converges MONOTONICALLY
+  // toward the +12 exit target — rows captured below +12 sink down to it,
+  // rows captured above +12 (e.g. an enter row at ty=14 that never left its
+  // delay) settle down to it; distance-to-target may only shrink or hold,
+  // never grow, and the stagger delay may only hold values (fill:both),
+  // never continue the enter or bounce back.
+  // (Pre-fix measurement: row3 o .772->.876->.772 under the exit delay.)
+  await clickMore(); await sleep(1000);           // finish the reversal's expand, then collapse & settle
+  await waitFor(`!document.querySelector('.glass-card').classList.contains('history-expanded')`);
+  await clickMore(); await sleep(170);            // expand, mid-enter
+  const preB = await evaluate(HIST);
+  metrics['p2B-preExit'] = preB;
+  await clickMore();                              // collapse mid-enter
+  const sB = await sample(700, 40);
+  metrics['p2B-enterExit-series'] = sB;
+  const exitBad = [];
+  for (let i = 1; i < sB.length; i++) {
+    // Teardown boundary: once the expanded layout is gone the rebuilt
+    // collapsed rows legitimately rise in — flight checks end there.
+    if (sB[i].v.expanded === false) break;
+    const a = sB[i - 1].v.rows, b = sB[i].v.rows;
+    for (let k = 0; k < Math.min(a.length, b.length); k++) {
+      if (b[k].o > a[k].o + 0.03) exitBad.push({t: sB[i].t, row: k, oRise: [a[k].o, b[k].o]});
+      if (Math.abs(b[k].ty - 12) > Math.abs(a[k].ty - 12) + 0.6) exitBad.push({t: sB[i].t, row: k, tyAway: [a[k].ty, b[k].ty]});
+    }
+  }
+  const lastFlight = sB.filter(s => s.v.expanded).at(-1);
+  expect('p2-enterexit-monotonic', exitBad.length === 0,
+    {violations: exitBad.slice(0, 5), pre: {o: preB.rows.map(r => r.o), ty: preB.rows.map(r => r.ty)},
+     flightEnd: lastFlight ? lastFlight.v.rows.map(r => ({o: r.o, ty: r.ty, exit: r.exit})) : null});
+  await sleep(800);                               // let the collapse settle
+
+  // ---- p2-C: setIdentity on settled expanded — sync removal of old titles -
+  // The old bucket's titles must not linger for even a frame: check the
+  // synchronous state AND a +100ms resample (p2-evidence.json section C).
+  await clickMore(); await sleep(900);            // expanded settled
+  const oldTitles = (await evaluate(HIST)).rows.map(r => r.t);
+  await evaluate(`window.WanderHistory.setIdentity('u-u-demo')`);
+  await snap('p2C-identity-sync');
+  const iei = metrics['p2C-identity-sync'];
+  await sleep(100);
+  const idAt100 = await evaluate(HIST);
+  metrics['p2C-identity-at100'] = idAt100;
+  expect('p2-identity-sync', iei.expanded === false && iei.visCount === 2 && iei.msgsHidden === false
+    && iei.rows.length > 0 && iei.rows.every(r => !oldTitles.includes(r.t))
+    && idAt100.rows.every(r => !oldTitles.includes(r.t)),
+    {old: oldTitles, sync: iei.rows.map(r => r.t), at100: idAt100.rows.map(r => r.t)});
+  await evaluate(`window.WanderHistory.setIdentity('guest')`); await sleep(300);
+
   // ---- history selection restores the conversation synchronously ---------
   // open() calls collapseNow(): the expanded DOM is torn down and the
   // restored messages are visible in the SAME task — no 400ms exit wait.
+  await clickMore(); await sleep(900);            // expanded (guest bucket)
   const title = rOdd.rows[2]?.t;
   await evaluate(`document.querySelectorAll('#history-list .history-entry')[2].click()`);
   await snap('select-immediate');
