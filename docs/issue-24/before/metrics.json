@@ -1,0 +1,341 @@
+{
+  "profile": "before",
+  "failures": [],
+  "metrics": {
+    "desktop-plan-card": {
+      "count": 1,
+      "rect": {
+        "x": 73,
+        "y": 371,
+        "w": 370.8,
+        "h": 116
+      },
+      "vw": 1440,
+      "vh": 900,
+      "parentCls": "bubble plan-bubble",
+      "bubbleCls": "bubble plan-bubble",
+      "bubblePadding": "13px",
+      "bubbleBg": "rgba(255, 255, 255, 0.3)",
+      "bubbleBorder": "1px",
+      "radius": "15px",
+      "display": "flex",
+      "hasIcon": false,
+      "iconCls": null,
+      "iconRect": null,
+      "iconFlex": null,
+      "iconW": null,
+      "overflowX": 0,
+      "docScrollW": 1440,
+      "title": "Mock 曲江看展阅读线",
+      "expanded": "false",
+      "disabled": false
+    },
+    "card-present": {
+      "count": 1,
+      "assert": "pass"
+    },
+    "card-in-viewport": {
+      "rect": {
+        "x": 73,
+        "y": 371,
+        "w": 370.8,
+        "h": 116
+      },
+      "vw": 1440,
+      "assert": "pass"
+    },
+    "card-no-text-overflow": {
+      "overflowX": 0,
+      "docScrollW": 1440,
+      "assert": "pass"
+    },
+    "desktop-detail-open": {
+      "rect": {
+        "x": 29,
+        "y": 29,
+        "w": 458.8,
+        "h": 842
+      },
+      "vw": 1440,
+      "vh": 900,
+      "expanded": "true",
+      "tabs": [
+        {
+          "sel": "true",
+          "cls": "plan-tab active"
+        },
+        {
+          "sel": "false",
+          "cls": "plan-tab"
+        }
+      ]
+    },
+    "detail-opens": {
+      "expanded": "true",
+      "assert": "pass"
+    },
+    "ab-switch": {
+      "active": null,
+      "sel": [
+        "false",
+        "true"
+      ],
+      "summary": "Mock 城南艺术市集线；活动与道路均为虚构 Mock。"
+    },
+    "ab-switch-selects-b": {
+      "active": null,
+      "sel": [
+        "false",
+        "true"
+      ],
+      "summary": "Mock 城南艺术市集线；活动与道路均为虚构 Mock。",
+      "assert": "pass"
+    },
+    "escape-restores-focus": {
+      "active": "plan-preview",
+      "assert": "pass"
+    },
+    "back-button-returns": {
+      "active": "plan-preview",
+      "assert": "pass"
+    },
+    "desktop-plan-card-long": {
+      "count": 2,
+      "rect": {
+        "x": 73,
+        "y": 609.5,
+        "w": 370.8,
+        "h": 140
+      },
+      "vw": 1440,
+      "vh": 900,
+      "parentCls": "bubble plan-bubble",
+      "bubbleCls": "bubble plan-bubble",
+      "bubblePadding": "13px",
+      "bubbleBg": "rgba(255, 255, 255, 0.3)",
+      "bubbleBorder": "1px",
+      "radius": "15px",
+      "display": "flex",
+      "hasIcon": false,
+      "iconCls": null,
+      "iconRect": null,
+      "iconFlex": null,
+      "iconW": null,
+      "overflowX": 0,
+      "docScrollW": 1440,
+      "title": "XianHeritageTrailXianHeritageTrailXianHeritageTrailXianHeritageTrailXianHeritageTrailXianHeritageTrailWithoutAnySpacesAtAllForOverflowTesting",
+      "expanded": "false",
+      "disabled": false
+    },
+    "long-title-in-viewport": {
+      "rect": {
+        "x": 73,
+        "y": 609.5,
+        "w": 370.8,
+        "h": 140
+      },
+      "vw": 1440,
+      "assert": "pass"
+    },
+    "long-title-no-text-overflow": {
+      "overflowX": 0,
+      "docScrollW": 1440,
+      "assert": "pass"
+    },
+    "more-history": {
+      "before": {
+        "expanded": "false",
+        "rows": 2,
+        "styles": [
+          {
+            "transition": "0.18s, 0.18s",
+            "animation": "none",
+            "transform": "none",
+            "opacity": "1"
+          },
+          {
+            "transition": "0.18s, 0.18s",
+            "animation": "none",
+            "transform": "none",
+            "opacity": "1"
+          }
+        ]
+      },
+      "after": {
+        "rows": 3,
+        "msgsHidden": true,
+        "cardExpanded": true
+      }
+    },
+    "more-history-expands": {
+      "before": 2,
+      "after": 3,
+      "assert": "pass"
+    },
+    "more-history-collapsed": {
+      "msgsHidden": false,
+      "expanded": "false"
+    },
+    "more-history-collapses": {
+      "msgsHidden": false,
+      "expanded": "false",
+      "assert": "pass"
+    },
+    "desktop-plan-restored": {
+      "count": 1,
+      "rect": {
+        "x": 73,
+        "y": 502.4,
+        "w": 370.8,
+        "h": 140
+      },
+      "vw": 1440,
+      "vh": 900,
+      "parentCls": "bubble plan-bubble",
+      "bubbleCls": "bubble plan-bubble",
+      "bubblePadding": "13px",
+      "bubbleBg": "rgba(255, 255, 255, 0.3)",
+      "bubbleBorder": "1px",
+      "radius": "15px",
+      "display": "flex",
+      "hasIcon": false,
+      "iconCls": null,
+      "iconRect": null,
+      "iconFlex": null,
+      "iconW": null,
+      "overflowX": 0,
+      "docScrollW": 1440,
+      "title": "XianHeritageTrailXianHeritageTrailXianHeritageTrailXianHeritageTrailXianHeritageTrailXianHeritageTrailWithoutAnySpacesAtAllForOverflowTesting",
+      "expanded": "false",
+      "disabled": false
+    },
+    "history-restore-card": {
+      "count": 1,
+      "assert": "pass"
+    },
+    "restored-in-viewport": {
+      "rect": {
+        "x": 73,
+        "y": 502.4,
+        "w": 370.8,
+        "h": 140
+      },
+      "vw": 1440,
+      "assert": "pass"
+    },
+    "restored-no-text-overflow": {
+      "overflowX": 0,
+      "docScrollW": 1440,
+      "assert": "pass"
+    },
+    "desktop-plan-card-single": {
+      "count": 1,
+      "rect": {
+        "x": 73,
+        "y": 377,
+        "w": 370.8,
+        "h": 116
+      },
+      "vw": 1440,
+      "vh": 900,
+      "parentCls": "bubble plan-bubble",
+      "bubbleCls": "bubble plan-bubble",
+      "bubblePadding": "13px",
+      "bubbleBg": "rgba(255, 255, 255, 0.3)",
+      "bubbleBorder": "1px",
+      "radius": "15px",
+      "display": "flex",
+      "hasIcon": false,
+      "iconCls": null,
+      "iconRect": null,
+      "iconFlex": null,
+      "iconW": null,
+      "overflowX": 0,
+      "docScrollW": 1440,
+      "title": "Mock 城南艺术市集线",
+      "expanded": "false",
+      "disabled": false
+    },
+    "single-in-viewport": {
+      "rect": {
+        "x": 73,
+        "y": 377,
+        "w": 370.8,
+        "h": 116
+      },
+      "vw": 1440,
+      "assert": "pass"
+    },
+    "single-no-text-overflow": {
+      "overflowX": 0,
+      "docScrollW": 1440,
+      "assert": "pass"
+    },
+    "narrow-plan-card": {
+      "count": 1,
+      "rect": {
+        "x": 47,
+        "y": 522.8,
+        "w": 296,
+        "h": 108
+      },
+      "vw": 390,
+      "vh": 844,
+      "parentCls": "bubble plan-bubble",
+      "bubbleCls": "bubble plan-bubble",
+      "bubblePadding": "13px",
+      "bubbleBg": "rgba(255, 255, 255, 0.3)",
+      "bubbleBorder": "1px",
+      "radius": "15px",
+      "display": "flex",
+      "hasIcon": false,
+      "iconCls": null,
+      "iconRect": null,
+      "iconFlex": null,
+      "iconW": null,
+      "overflowX": 0,
+      "docScrollW": 390,
+      "title": "Mock 城南艺术市集线",
+      "expanded": "false",
+      "disabled": false
+    },
+    "narrow-no-overflow": {
+      "docScrollW": 390,
+      "rect": {
+        "x": 47,
+        "y": 522.8,
+        "w": 296,
+        "h": 108
+      },
+      "vw": 390,
+      "assert": "pass"
+    },
+    "narrow-detail": {
+      "rect": {
+        "x": 13,
+        "w": 364
+      },
+      "vw": 390
+    },
+    "narrow-detail-fits": {
+      "rect": {
+        "x": 13,
+        "w": 364
+      },
+      "vw": 390,
+      "assert": "pass"
+    }
+  },
+  "log": [
+    "shot desktop-plan-card",
+    "shot desktop-plan-detail",
+    "shot desktop-plan-card-long",
+    "shot desktop-history-expanded",
+    "shot desktop-plan-restored",
+    "shot desktop-plan-card-single",
+    "shot narrow-plan-card",
+    "shot narrow-plan-detail",
+    "shot narrow-plan-card",
+    "shot narrow-plan-detail"
+  ]
+}
