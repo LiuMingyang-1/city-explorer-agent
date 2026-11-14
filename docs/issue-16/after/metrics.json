@@ -1,0 +1,5072 @@
+{
+  "note": "sig(): fade=mid-alpha sample, slide=row y decreasing or container ty moving, grow=list height increasing; consistent(): expanded+aria+visCount+msgsHidden+extraKids+all-visible-rows(o===1,ty===0); *-assert pass/FAIL",
+  "failures": [],
+  "metrics": {
+    "desktop-collapsed": {
+      "expanded": false,
+      "aria": "false",
+      "label": "更多历史规划",
+      "disabled": false,
+      "msgsHidden": false,
+      "msgsKids": 0,
+      "rowCount": 2,
+      "visCount": 2,
+      "rows": [
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 758,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "西安城墙骑行"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 787,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "回民街半日吃逛"
+        }
+      ],
+      "area": {
+        "o": 1,
+        "ty": 0
+      },
+      "list": {
+        "o": 1,
+        "ty": 0,
+        "h": 58
+      },
+      "extraKids": 0,
+      "focus": "BODY"
+    },
+    "seed-initial-collapsed": {
+      "rowCount": 2,
+      "visCount": 2,
+      "expanded": false,
+      "assert": "pass"
+    },
+    "expand-series": [
+      {
+        "t": 0,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 0,
+          "rows": [
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 503,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 532,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 561,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "兵马俑华清池一日"
+            },
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 590,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 619,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 648,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 322
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 53,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 1,
+          "rows": [
+            {
+              "o": 0.383431,
+              "ty": 8.6,
+              "y": 497.6,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 0.0496061,
+              "ty": 13.3,
+              "y": 531.3,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 561,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "兵马俑华清池一日"
+            },
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 590,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 619,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 648,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 322
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 106,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 3,
+          "rows": [
+            {
+              "o": 0.74165,
+              "ty": 3.6,
+              "y": 492.6,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 0.559403,
+              "ty": 6.2,
+              "y": 524.2,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 0.2796,
+              "ty": 10.1,
+              "y": 557.1,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "兵马俑华清池一日"
+            },
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 590,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 619,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 648,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 322
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 157,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 5,
+          "rows": [
+            {
+              "o": 0.897066,
+              "ty": 1.4,
+              "y": 490.4,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 0.820259,
+              "ty": 2.5,
+              "y": 520.5,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 0.690758,
+              "ty": 4.3,
+              "y": 551.3,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "兵马俑华清池一日"
+            },
+            {
+              "o": 0.477055,
+              "ty": 7.3,
+              "y": 583.3,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 0.167516,
+              "ty": 11.7,
+              "y": 616.7,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 648,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 322
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 210,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 0.963263,
+              "ty": 0.5,
+              "y": 489.5,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 0.930362,
+              "ty": 1,
+              "y": 519,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 0.875789,
+              "ty": 1.7,
+              "y": 548.7,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "兵马俑华清池一日"
+            },
+            {
+              "o": 0.784518,
+              "ty": 3,
+              "y": 579,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 0.630608,
+              "ty": 5.2,
+              "y": 610.2,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 0.383747,
+              "ty": 8.6,
+              "y": 642.6,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 322
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 262,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 0.994897,
+              "ty": 0.1,
+              "y": 489.1,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 0.985138,
+              "ty": 0.2,
+              "y": 518.2,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 0.967337,
+              "ty": 0.5,
+              "y": 547.5,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "兵马俑华清池一日"
+            },
+            {
+              "o": 0.93715,
+              "ty": 0.9,
+              "y": 576.9,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 0.887053,
+              "ty": 1.6,
+              "y": 606.6,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 0.803462,
+              "ty": 2.8,
+              "y": 636.8,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 322
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 315,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 489,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 0.998316,
+              "ty": 0,
+              "y": 518,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 0.992436,
+              "ty": 0.1,
+              "y": 547.1,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "兵马俑华清池一日"
+            },
+            {
+              "o": 0.980429,
+              "ty": 0.3,
+              "y": 576.3,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 0.959212,
+              "ty": 0.6,
+              "y": 605.6,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 0.923629,
+              "ty": 1.1,
+              "y": 635.1,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 322
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 368,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 489,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 518,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 0.999857,
+              "ty": 0,
+              "y": 547,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "兵马俑华清池一日"
+            },
+            {
+              "o": 0.997097,
+              "ty": 0,
+              "y": 576,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 0.989659,
+              "ty": 0.1,
+              "y": 605.1,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 0.975339,
+              "ty": 0.3,
+              "y": 634.3,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 322
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 420,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 489,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 518,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 547,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "兵马俑华清池一日"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 576,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 0.999363,
+              "ty": 0,
+              "y": 605,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 0.995248,
+              "ty": 0.1,
+              "y": 634.1,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 322
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 474,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 489,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 518,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 547,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "兵马俑华清池一日"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 576,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 605,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 634,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 322
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 526,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 489,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 518,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 547,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "兵马俑华清池一日"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 576,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 605,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 634,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 322
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 579,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 489,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 518,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 547,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "兵马俑华清池一日"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 576,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 605,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 634,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 322
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 632,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 489,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 518,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 547,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "兵马俑华清池一日"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 576,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 605,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 634,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 322
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 686,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 489,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 518,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 547,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "兵马俑华清池一日"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 576,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 605,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 634,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 322
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 739,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 489,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 518,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 547,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "兵马俑华清池一日"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 576,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 605,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 634,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 322
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 791,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 489,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 518,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 547,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "兵马俑华清池一日"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 576,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 605,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 634,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 322
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 845,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 489,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 518,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 547,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "兵马俑华清池一日"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 576,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 605,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 634,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 322
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 900,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 489,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 518,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 547,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "兵马俑华清池一日"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 576,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 605,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 634,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 322
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      }
+    ],
+    "desktop-expanded": {
+      "expanded": true,
+      "aria": "true",
+      "label": "收起历史规划",
+      "disabled": false,
+      "msgsHidden": true,
+      "msgsKids": 0,
+      "rowCount": 6,
+      "visCount": 6,
+      "rows": [
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 489,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "西安城墙骑行"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 518,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "回民街半日吃逛"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 547,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "兵马俑华清池一日"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 576,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "大雁塔夜游"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 605,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "碑林书院门"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 634,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "华山两日"
+        }
+      ],
+      "area": {
+        "o": 1,
+        "ty": 0
+      },
+      "list": {
+        "o": 1,
+        "ty": 0,
+        "h": 322
+      },
+      "extraKids": 0,
+      "focus": "BODY"
+    },
+    "expand-final-state": {
+      "rowCount": 6,
+      "visCount": 6,
+      "aria": "true",
+      "label": "收起历史规划",
+      "assert": "pass"
+    },
+    "expand-fade-observed": {
+      "at": 368,
+      "rows": [
+        1,
+        1,
+        0.999857,
+        0.997097,
+        0.989659,
+        0.975339
+      ],
+      "list": 1,
+      "area": 1,
+      "assert": "pass"
+    },
+    "expand-slide-observed": {
+      "slide": {
+        "at": 315,
+        "row": 5,
+        "dy": -1.7
+      },
+      "grow": null,
+      "assert": "pass"
+    },
+    "collapse-series": [
+      {
+        "t": 0,
+        "v": {
+          "expanded": true,
+          "aria": "false",
+          "label": "更多历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 489,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 518,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 547,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "兵马俑华清池一日"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 576,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 605,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 634,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 322
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 53,
+        "v": {
+          "expanded": true,
+          "aria": "false",
+          "label": "更多历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 0.925467,
+              "ty": 0.9,
+              "y": 489.9,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 0.973308,
+              "ty": 0.3,
+              "y": 518.3,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 0.998156,
+              "ty": 0,
+              "y": 547,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "兵马俑华清池一日"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 576,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 605,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 634,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 322
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 105,
+        "v": {
+          "expanded": true,
+          "aria": "false",
+          "label": "更多历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 0.755595,
+              "ty": 2.9,
+              "y": 491.9,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 0.839258,
+              "ty": 1.9,
+              "y": 519.9,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 0.909159,
+              "ty": 1.1,
+              "y": 548.1,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "兵马俑华清池一日"
+            },
+            {
+              "o": 0.96228,
+              "ty": 0.5,
+              "y": 576.5,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 0.994062,
+              "ty": 0.1,
+              "y": 605.1,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 634,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 322
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 158,
+        "v": {
+          "expanded": true,
+          "aria": "false",
+          "label": "更多历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 0.524693,
+              "ty": 5.7,
+              "y": 494.7,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 0.632765,
+              "ty": 4.4,
+              "y": 522.4,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 0.730969,
+              "ty": 3.2,
+              "y": 550.2,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "兵马俑华清池一日"
+            },
+            {
+              "o": 0.817954,
+              "ty": 2.2,
+              "y": 578.2,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 0.891816,
+              "ty": 1.3,
+              "y": 606.3,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 0.949831,
+              "ty": 0.6,
+              "y": 634.6,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 322
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 211,
+        "v": {
+          "expanded": true,
+          "aria": "false",
+          "label": "更多历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 0.246866,
+              "ty": 9,
+              "y": 498,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 0.374485,
+              "ty": 7.5,
+              "y": 525.5,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 0.493805,
+              "ty": 6.1,
+              "y": 553.1,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "兵马俑华清池一日"
+            },
+            {
+              "o": 0.604378,
+              "ty": 4.7,
+              "y": 580.7,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 0.705373,
+              "ty": 3.5,
+              "y": 608.5,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 0.795562,
+              "ty": 2.5,
+              "y": 636.5,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 322
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 264,
+        "v": {
+          "expanded": true,
+          "aria": "false",
+          "label": "更多历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 5,
+          "rows": [
+            {
+              "o": 0,
+              "ty": 12,
+              "y": 501,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 0.0721323,
+              "ty": 11.1,
+              "y": 529.1,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 0.210628,
+              "ty": 9.5,
+              "y": 556.5,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "兵马俑华清池一日"
+            },
+            {
+              "o": 0.340494,
+              "ty": 7.9,
+              "y": 583.9,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 0.462104,
+              "ty": 6.5,
+              "y": 611.5,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 0.57513,
+              "ty": 5.1,
+              "y": 639.1,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 322
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 317,
+        "v": {
+          "expanded": true,
+          "aria": "false",
+          "label": "更多历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 2,
+          "rows": [
+            {
+              "o": 0,
+              "ty": 12,
+              "y": 501,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 0,
+              "ty": 12,
+              "y": 530,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 0,
+              "ty": 12,
+              "y": 559,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "兵马俑华清池一日"
+            },
+            {
+              "o": 0.0325795,
+              "ty": 11.6,
+              "y": 587.6,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 0.173759,
+              "ty": 9.9,
+              "y": 614.9,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 0.305892,
+              "ty": 8.3,
+              "y": 642.3,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 322
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 371,
+        "v": {
+          "expanded": true,
+          "aria": "false",
+          "label": "更多历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 0,
+          "rows": [
+            {
+              "o": 0,
+              "ty": 12,
+              "y": 501,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 0,
+              "ty": 12,
+              "y": 530,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 0,
+              "ty": 12,
+              "y": 559,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "兵马俑华清池一日"
+            },
+            {
+              "o": 0,
+              "ty": 12,
+              "y": 588,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 0,
+              "ty": 12,
+              "y": 617,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 0,
+              "ty": 12,
+              "y": 646,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 322
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 426,
+        "v": {
+          "expanded": false,
+          "aria": "false",
+          "label": "更多历史规划",
+          "disabled": false,
+          "msgsHidden": false,
+          "msgsKids": 0,
+          "rowCount": 2,
+          "visCount": 1,
+          "rows": [
+            {
+              "o": 0.196899,
+              "ty": 11.2,
+              "y": 769.2,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 801,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 58
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 478,
+        "v": {
+          "expanded": false,
+          "aria": "false",
+          "label": "更多历史规划",
+          "disabled": false,
+          "msgsHidden": false,
+          "msgsKids": 0,
+          "rowCount": 2,
+          "visCount": 2,
+          "rows": [
+            {
+              "o": 0.63407,
+              "ty": 5.1,
+              "y": 763.1,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 0.388987,
+              "ty": 8.6,
+              "y": 795.6,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 58
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 532,
+        "v": {
+          "expanded": false,
+          "aria": "false",
+          "label": "更多历史规划",
+          "disabled": false,
+          "msgsHidden": false,
+          "msgsKids": 0,
+          "rowCount": 2,
+          "visCount": 2,
+          "rows": [
+            {
+              "o": 0.853012,
+              "ty": 2.1,
+              "y": 760.1,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 0.7461,
+              "ty": 3.6,
+              "y": 790.6,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 58
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 586,
+        "v": {
+          "expanded": false,
+          "aria": "false",
+          "label": "更多历史规划",
+          "disabled": false,
+          "msgsHidden": false,
+          "msgsKids": 0,
+          "rowCount": 2,
+          "visCount": 2,
+          "rows": [
+            {
+              "o": 0.961638,
+              "ty": 0.5,
+              "y": 758.5,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 0.927659,
+              "ty": 1,
+              "y": 788,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 58
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 640,
+        "v": {
+          "expanded": false,
+          "aria": "false",
+          "label": "更多历史规划",
+          "disabled": false,
+          "msgsHidden": false,
+          "msgsKids": 0,
+          "rowCount": 2,
+          "visCount": 2,
+          "rows": [
+            {
+              "o": 0.99046,
+              "ty": 0.1,
+              "y": 758.1,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 0.976788,
+              "ty": 0.3,
+              "y": 787.3,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 58
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 695,
+        "v": {
+          "expanded": false,
+          "aria": "false",
+          "label": "更多历史规划",
+          "disabled": false,
+          "msgsHidden": false,
+          "msgsKids": 0,
+          "rowCount": 2,
+          "visCount": 2,
+          "rows": [
+            {
+              "o": 0.999406,
+              "ty": 0,
+              "y": 758,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 0.995382,
+              "ty": 0.1,
+              "y": 787.1,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 58
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 748,
+        "v": {
+          "expanded": false,
+          "aria": "false",
+          "label": "更多历史规划",
+          "disabled": false,
+          "msgsHidden": false,
+          "msgsKids": 0,
+          "rowCount": 2,
+          "visCount": 2,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 758,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 787,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 58
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 802,
+        "v": {
+          "expanded": false,
+          "aria": "false",
+          "label": "更多历史规划",
+          "disabled": false,
+          "msgsHidden": false,
+          "msgsKids": 0,
+          "rowCount": 2,
+          "visCount": 2,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 758,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 787,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 58
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 856,
+        "v": {
+          "expanded": false,
+          "aria": "false",
+          "label": "更多历史规划",
+          "disabled": false,
+          "msgsHidden": false,
+          "msgsKids": 0,
+          "rowCount": 2,
+          "visCount": 2,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 758,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 787,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 58
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 909,
+        "v": {
+          "expanded": false,
+          "aria": "false",
+          "label": "更多历史规划",
+          "disabled": false,
+          "msgsHidden": false,
+          "msgsKids": 0,
+          "rowCount": 2,
+          "visCount": 2,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 758,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 787,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 58
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      },
+      {
+        "t": 963,
+        "v": {
+          "expanded": false,
+          "aria": "false",
+          "label": "更多历史规划",
+          "disabled": false,
+          "msgsHidden": false,
+          "msgsKids": 0,
+          "rowCount": 2,
+          "visCount": 2,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 758,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 787,
+              "h": 29,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 58
+          },
+          "extraKids": 0,
+          "focus": "BODY"
+        }
+      }
+    ],
+    "desktop-collapsed-after": {
+      "expanded": false,
+      "aria": "false",
+      "label": "更多历史规划",
+      "disabled": false,
+      "msgsHidden": false,
+      "msgsKids": 0,
+      "rowCount": 2,
+      "visCount": 2,
+      "rows": [
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 758,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "西安城墙骑行"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 787,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "回民街半日吃逛"
+        }
+      ],
+      "area": {
+        "o": 1,
+        "ty": 0
+      },
+      "list": {
+        "o": 1,
+        "ty": 0,
+        "h": 58
+      },
+      "extraKids": 0,
+      "focus": "BODY"
+    },
+    "collapse-final-state": {
+      "rowCount": 2,
+      "visCount": 2,
+      "aria": "false",
+      "assert": "pass"
+    },
+    "collapse-lingers-before-hide": {
+      "firstHiddenAt": 317,
+      "assert": "pass"
+    },
+    "collapse-fade-observed": {
+      "at": 640,
+      "rows": [
+        0.99046,
+        0.976788
+      ],
+      "list": 1,
+      "area": 1,
+      "assert": "pass"
+    },
+    "collapse-midframe": {
+      "t": 105,
+      "rows": [
+        {
+          "o": 0.755595,
+          "y": 491.9
+        },
+        {
+          "o": 0.839258,
+          "y": 519.9
+        },
+        {
+          "o": 0.909159,
+          "y": 548.1
+        },
+        {
+          "o": 0.96228,
+          "y": 576.5
+        },
+        {
+          "o": 0.994062,
+          "y": 605.1
+        },
+        {
+          "o": 1,
+          "y": 634
+        }
+      ]
+    },
+    "rapid-even-end": {
+      "expanded": false,
+      "aria": "false",
+      "label": "更多历史规划",
+      "disabled": false,
+      "msgsHidden": false,
+      "msgsKids": 0,
+      "rowCount": 2,
+      "visCount": 2,
+      "rows": [
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 758,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "西安城墙骑行"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 787,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "回民街半日吃逛"
+        }
+      ],
+      "area": {
+        "o": 1,
+        "ty": 0
+      },
+      "list": {
+        "o": 1,
+        "ty": 0,
+        "h": 58
+      },
+      "extraKids": 0,
+      "focus": "BODY"
+    },
+    "rapid-even-consistent": {
+      "expanded": false,
+      "visCount": 2,
+      "rowCount": 2,
+      "aria": "false",
+      "assert": "pass"
+    },
+    "rapid-odd-end": {
+      "expanded": true,
+      "aria": "true",
+      "label": "收起历史规划",
+      "disabled": false,
+      "msgsHidden": true,
+      "msgsKids": 0,
+      "rowCount": 6,
+      "visCount": 6,
+      "rows": [
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 489,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "西安城墙骑行"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 518,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "回民街半日吃逛"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 547,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "兵马俑华清池一日"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 576,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "大雁塔夜游"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 605,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "碑林书院门"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 634,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "华山两日"
+        }
+      ],
+      "area": {
+        "o": 1,
+        "ty": 0
+      },
+      "list": {
+        "o": 1,
+        "ty": 0,
+        "h": 322
+      },
+      "extraKids": 0,
+      "focus": "BODY"
+    },
+    "rapid-odd-consistent": {
+      "expanded": true,
+      "visCount": 6,
+      "rowCount": 6,
+      "aria": "true",
+      "assert": "pass"
+    },
+    "select-immediate": {
+      "expanded": false,
+      "aria": "false",
+      "label": "更多历史规划",
+      "disabled": false,
+      "msgsHidden": false,
+      "msgsKids": 2,
+      "rowCount": 2,
+      "visCount": 2,
+      "rows": [
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 301,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "西安城墙骑行"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 330,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "回民街半日吃逛"
+        }
+      ],
+      "area": {
+        "o": 1,
+        "ty": 0
+      },
+      "list": {
+        "o": 1,
+        "ty": 0,
+        "h": 58
+      },
+      "extraKids": 0,
+      "focus": "message-input"
+    },
+    "select-sync-restore": {
+      "msgsKids": 2,
+      "expanded": false,
+      "assert": "pass"
+    },
+    "after-select": {
+      "expanded": false,
+      "aria": "false",
+      "label": "更多历史规划",
+      "disabled": false,
+      "msgsHidden": false,
+      "msgsKids": 2,
+      "rowCount": 2,
+      "visCount": 2,
+      "rows": [
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 764,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "西安城墙骑行"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 793,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "回民街半日吃逛"
+        }
+      ],
+      "area": {
+        "o": 1,
+        "ty": 0
+      },
+      "list": {
+        "o": 1,
+        "ty": 0,
+        "h": 58
+      },
+      "extraKids": 0,
+      "focus": "message-input"
+    },
+    "select-restores-conversation": {
+      "msgsKids": 2,
+      "assert": "pass"
+    },
+    "select-collapses-clean": {
+      "visCount": 2,
+      "rowCount": 2,
+      "assert": "pass"
+    },
+    "select-excludes-active": {
+      "opened": "兵马俑华清池一日",
+      "rows": [
+        "西安城墙骑行",
+        "回民街半日吃逛"
+      ],
+      "assert": "pass"
+    },
+    "select-focus-input": {
+      "focus": "message-input",
+      "assert": "pass"
+    },
+    "midexit-inflight": {
+      "expanded": true,
+      "aria": "false",
+      "label": "更多历史规划",
+      "disabled": false,
+      "msgsHidden": true,
+      "msgsKids": 2,
+      "rowCount": 5,
+      "visCount": 5,
+      "rows": [
+        {
+          "o": 0.61312,
+          "ty": 4.6,
+          "y": 293.6,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "西安城墙骑行"
+        },
+        {
+          "o": 0.713272,
+          "ty": 3.4,
+          "y": 321.4,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "回民街半日吃逛"
+        },
+        {
+          "o": 0.802498,
+          "ty": 2.4,
+          "y": 349.4,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "大雁塔夜游"
+        },
+        {
+          "o": 0.879012,
+          "ty": 1.5,
+          "y": 377.5,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "碑林书院门"
+        },
+        {
+          "o": 0.940273,
+          "ty": 0.7,
+          "y": 405.7,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "华山两日"
+        }
+      ],
+      "area": {
+        "o": 1,
+        "ty": 0
+      },
+      "list": {
+        "o": 1,
+        "ty": 0,
+        "h": 533
+      },
+      "extraKids": 0,
+      "focus": "message-input"
+    },
+    "newchat-midexit-immediate": {
+      "expanded": false,
+      "aria": "false",
+      "label": "更多历史规划",
+      "disabled": false,
+      "msgsHidden": false,
+      "msgsKids": 0,
+      "rowCount": 2,
+      "visCount": 2,
+      "rows": [
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 758,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "西安一日游"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 787,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "西安城墙骑行"
+        }
+      ],
+      "area": {
+        "o": 1,
+        "ty": 0
+      },
+      "list": {
+        "o": 1,
+        "ty": 0,
+        "h": 58
+      },
+      "extraKids": 0,
+      "focus": "message-input"
+    },
+    "newchat-midexit-sync": {
+      "inflightRows": 5,
+      "visCount": 2,
+      "focus": "message-input",
+      "assert": "pass"
+    },
+    "after-new-chat": {
+      "expanded": false,
+      "aria": "false",
+      "label": "更多历史规划",
+      "disabled": false,
+      "msgsHidden": false,
+      "msgsKids": 0,
+      "rowCount": 2,
+      "visCount": 2,
+      "rows": [
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 758,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "西安一日游"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 787,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "西安城墙骑行"
+        }
+      ],
+      "area": {
+        "o": 1,
+        "ty": 0
+      },
+      "list": {
+        "o": 1,
+        "ty": 0,
+        "h": 58
+      },
+      "extraKids": 0,
+      "focus": "message-input"
+    },
+    "newchat-collapses-clean": {
+      "visCount": 2,
+      "assert": "pass"
+    },
+    "identity-midexit-immediate": {
+      "expanded": false,
+      "aria": "false",
+      "label": "更多历史规划",
+      "disabled": false,
+      "msgsHidden": false,
+      "msgsKids": 0,
+      "rowCount": 2,
+      "visCount": 2,
+      "rows": [
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 758,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "账号·大唐芙蓉园"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 787,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "账号·曲江池"
+        }
+      ],
+      "area": {
+        "o": 1,
+        "ty": 0
+      },
+      "list": {
+        "o": 1,
+        "ty": 0,
+        "h": 58
+      },
+      "extraKids": 0,
+      "focus": "message-input"
+    },
+    "identity-midexit-teardown": {
+      "visCount": 2,
+      "titles": [
+        "账号·大唐芙蓉园",
+        "账号·曲江池"
+      ],
+      "assert": "pass"
+    },
+    "identity-back-guest": {
+      "expanded": false,
+      "aria": "false",
+      "label": "更多历史规划",
+      "disabled": false,
+      "msgsHidden": false,
+      "msgsKids": 0,
+      "rowCount": 2,
+      "visCount": 2,
+      "rows": [
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 758,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "西安一日游"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 787,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "西安城墙骑行"
+        }
+      ],
+      "area": {
+        "o": 1,
+        "ty": 0
+      },
+      "list": {
+        "o": 1,
+        "ty": 0,
+        "h": 58
+      },
+      "extraKids": 0,
+      "focus": "message-input"
+    },
+    "identity-restores-guest": {
+      "titles": [
+        "西安一日游",
+        "西安城墙骑行"
+      ],
+      "assert": "pass"
+    },
+    "after-login": {
+      "expanded": false,
+      "aria": "false",
+      "label": "更多历史规划",
+      "disabled": false,
+      "msgsHidden": false,
+      "msgsKids": 0,
+      "rowCount": 2,
+      "visCount": 2,
+      "rows": [
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 758,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "账号·大唐芙蓉园"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 787,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "账号·曲江池"
+        }
+      ],
+      "area": {
+        "o": 1,
+        "ty": 0
+      },
+      "list": {
+        "o": 1,
+        "ty": 0,
+        "h": 58
+      },
+      "extraKids": 0,
+      "focus": "message-input"
+    },
+    "login-collapses-and-switches": {
+      "visCount": 2,
+      "titles": [
+        "账号·大唐芙蓉园",
+        "账号·曲江池"
+      ],
+      "assert": "pass"
+    },
+    "after-logout": {
+      "expanded": false,
+      "aria": "false",
+      "label": "更多历史规划",
+      "disabled": false,
+      "msgsHidden": false,
+      "msgsKids": 0,
+      "rowCount": 2,
+      "visCount": 2,
+      "rows": [
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 758,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "西安一日游"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 787,
+          "h": 29,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "西安城墙骑行"
+        }
+      ],
+      "area": {
+        "o": 1,
+        "ty": 0
+      },
+      "list": {
+        "o": 1,
+        "ty": 0,
+        "h": 58
+      },
+      "extraKids": 0,
+      "focus": "message-input"
+    },
+    "logout-collapses-and-restores": {
+      "visCount": 2,
+      "titles": [
+        "西安一日游",
+        "西安城墙骑行"
+      ],
+      "assert": "pass"
+    },
+    "narrow-collapsed": {
+      "expanded": false,
+      "aria": "false",
+      "label": "更多历史规划",
+      "disabled": false,
+      "msgsHidden": false,
+      "msgsKids": 0,
+      "rowCount": 2,
+      "visCount": 2,
+      "rows": [
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 739,
+          "h": 25,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "西安一日游"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 764,
+          "h": 25,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "西安城墙骑行"
+        }
+      ],
+      "area": {
+        "o": 1,
+        "ty": 0
+      },
+      "list": {
+        "o": 1,
+        "ty": 0,
+        "h": 50
+      },
+      "extraKids": 0,
+      "focus": "message-input"
+    },
+    "narrow-expand-series": [
+      {
+        "t": 0,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 0,
+          "rows": [
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 639.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安一日游"
+            },
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 664.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 689.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 714.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 739.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 764.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 158.3
+          },
+          "extraKids": 0,
+          "focus": "message-input"
+        }
+      },
+      {
+        "t": 52,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 1,
+          "rows": [
+            {
+              "o": 0.376247,
+              "ty": 8.7,
+              "y": 634.4,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安一日游"
+            },
+            {
+              "o": 0.0409213,
+              "ty": 13.4,
+              "y": 664.1,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 689.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 714.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 739.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 764.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 158.3
+          },
+          "extraKids": 0,
+          "focus": "message-input"
+        }
+      },
+      {
+        "t": 104,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 3,
+          "rows": [
+            {
+              "o": 0.73825,
+              "ty": 3.7,
+              "y": 629.3,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安一日游"
+            },
+            {
+              "o": 0.553819,
+              "ty": 6.2,
+              "y": 656.9,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 0.271723,
+              "ty": 10.2,
+              "y": 685.9,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 714.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 739.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 764.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 158.3
+          },
+          "extraKids": 0,
+          "focus": "message-input"
+        }
+      },
+      {
+        "t": 157,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 5,
+          "rows": [
+            {
+              "o": 0.895641,
+              "ty": 1.5,
+              "y": 627.1,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安一日游"
+            },
+            {
+              "o": 0.817871,
+              "ty": 2.5,
+              "y": 653.2,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 0.686727,
+              "ty": 4.4,
+              "y": 680,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 0.470658,
+              "ty": 7.4,
+              "y": 708.1,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 0.159157,
+              "ty": 11.8,
+              "y": 737.4,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 0,
+              "ty": 14,
+              "y": 764.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 158.3
+          },
+          "extraKids": 0,
+          "focus": "message-input"
+        }
+      },
+      {
+        "t": 211,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 0.974925,
+              "ty": 0.4,
+              "y": 626,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安一日游"
+            },
+            {
+              "o": 0.949874,
+              "ty": 0.7,
+              "y": 651.4,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 0.908141,
+              "ty": 1.3,
+              "y": 676.9,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 0.838786,
+              "ty": 2.3,
+              "y": 702.9,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 0.722061,
+              "ty": 3.9,
+              "y": 729.5,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 0.52738,
+              "ty": 6.6,
+              "y": 757.3,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 158.3
+          },
+          "extraKids": 0,
+          "focus": "message-input"
+        }
+      },
+      {
+        "t": 264,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 0.995091,
+              "ty": 0.1,
+              "y": 625.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安一日游"
+            },
+            {
+              "o": 0.985523,
+              "ty": 0.2,
+              "y": 650.9,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 0.968008,
+              "ty": 0.4,
+              "y": 676.1,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 0.93827,
+              "ty": 0.9,
+              "y": 701.5,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 0.88891,
+              "ty": 1.6,
+              "y": 727.2,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 0.806581,
+              "ty": 2.7,
+              "y": 753.4,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 158.3
+          },
+          "extraKids": 0,
+          "focus": "message-input"
+        }
+      },
+      {
+        "t": 317,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 625.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安一日游"
+            },
+            {
+              "o": 0.998383,
+              "ty": 0,
+              "y": 650.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 0.992599,
+              "ty": 0.1,
+              "y": 675.8,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 0.980733,
+              "ty": 0.3,
+              "y": 700.9,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 0.959733,
+              "ty": 0.6,
+              "y": 726.2,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 0.924494,
+              "ty": 1.1,
+              "y": 751.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 158.3
+          },
+          "extraKids": 0,
+          "focus": "message-input"
+        }
+      },
+      {
+        "t": 371,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 625.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安一日游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 650.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 0.999825,
+              "ty": 0,
+              "y": 675.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 0.996941,
+              "ty": 0,
+              "y": 700.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 0.989324,
+              "ty": 0.1,
+              "y": 725.8,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 0.974736,
+              "ty": 0.4,
+              "y": 751,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 158.3
+          },
+          "extraKids": 0,
+          "focus": "message-input"
+        }
+      },
+      {
+        "t": 425,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 625.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安一日游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 650.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 675.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 700.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 0.999983,
+              "ty": 0,
+              "y": 725.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 0.99797,
+              "ty": 0,
+              "y": 750.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 158.3
+          },
+          "extraKids": 0,
+          "focus": "message-input"
+        }
+      },
+      {
+        "t": 478,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 625.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安一日游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 650.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 675.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 700.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 725.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 750.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 158.3
+          },
+          "extraKids": 0,
+          "focus": "message-input"
+        }
+      },
+      {
+        "t": 532,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 625.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安一日游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 650.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 675.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 700.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 725.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 750.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 158.3
+          },
+          "extraKids": 0,
+          "focus": "message-input"
+        }
+      },
+      {
+        "t": 586,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 625.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安一日游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 650.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 675.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 700.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 725.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 750.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 158.3
+          },
+          "extraKids": 0,
+          "focus": "message-input"
+        }
+      },
+      {
+        "t": 640,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 625.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安一日游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 650.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 675.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 700.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 725.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 750.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 158.3
+          },
+          "extraKids": 0,
+          "focus": "message-input"
+        }
+      },
+      {
+        "t": 694,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 625.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安一日游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 650.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 675.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 700.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 725.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 750.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 158.3
+          },
+          "extraKids": 0,
+          "focus": "message-input"
+        }
+      },
+      {
+        "t": 748,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 625.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安一日游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 650.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 675.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 700.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 725.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 750.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 158.3
+          },
+          "extraKids": 0,
+          "focus": "message-input"
+        }
+      },
+      {
+        "t": 802,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 625.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安一日游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 650.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 675.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 700.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 725.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 750.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 158.3
+          },
+          "extraKids": 0,
+          "focus": "message-input"
+        }
+      },
+      {
+        "t": 855,
+        "v": {
+          "expanded": true,
+          "aria": "true",
+          "label": "收起历史规划",
+          "disabled": false,
+          "msgsHidden": true,
+          "msgsKids": 0,
+          "rowCount": 6,
+          "visCount": 6,
+          "rows": [
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 625.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安一日游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 650.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "西安城墙骑行"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 675.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "回民街半日吃逛"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 700.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "大雁塔夜游"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 725.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "碑林书院门"
+            },
+            {
+              "o": 1,
+              "ty": 0,
+              "y": 750.7,
+              "h": 25,
+              "disp": "flex",
+              "vis": "visible",
+              "t": "华山两日"
+            }
+          ],
+          "area": {
+            "o": 1,
+            "ty": 0
+          },
+          "list": {
+            "o": 1,
+            "ty": 0,
+            "h": 158.3
+          },
+          "extraKids": 0,
+          "focus": "message-input"
+        }
+      }
+    ],
+    "narrow-expand-final": {
+      "visCount": 6,
+      "overflow": false,
+      "assert": "pass"
+    },
+    "narrow-expand-animated": {
+      "fade": {
+        "at": 371,
+        "rows": [
+          1,
+          1,
+          0.999825,
+          0.996941,
+          0.989324,
+          0.974736
+        ],
+        "list": 1,
+        "area": 1
+      },
+      "slide": {
+        "at": 317,
+        "row": 5,
+        "dy": -1.7
+      },
+      "grow": null,
+      "assert": "pass"
+    },
+    "narrow-collapsed-after": {
+      "expanded": false,
+      "aria": "false",
+      "label": "更多历史规划",
+      "disabled": false,
+      "msgsHidden": false,
+      "msgsKids": 0,
+      "rowCount": 2,
+      "visCount": 2,
+      "rows": [
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 739,
+          "h": 25,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "西安一日游"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 764,
+          "h": 25,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "西安城墙骑行"
+        }
+      ],
+      "area": {
+        "o": 1,
+        "ty": 0
+      },
+      "list": {
+        "o": 1,
+        "ty": 0,
+        "h": 50
+      },
+      "extraKids": 0,
+      "focus": "message-input"
+    },
+    "narrow-collapse-final": {
+      "visCount": 2,
+      "assert": "pass"
+    },
+    "rm-expanded": {
+      "expanded": true,
+      "aria": "true",
+      "label": "收起历史规划",
+      "disabled": false,
+      "msgsHidden": true,
+      "msgsKids": 0,
+      "rowCount": 6,
+      "visCount": 6,
+      "rows": [
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 625.7,
+          "h": 25,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "西安一日游"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 650.7,
+          "h": 25,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "西安城墙骑行"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 675.7,
+          "h": 25,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "回民街半日吃逛"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 700.7,
+          "h": 25,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "大雁塔夜游"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 725.7,
+          "h": 25,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "碑林书院门"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 750.7,
+          "h": 25,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "华山两日"
+        }
+      ],
+      "area": {
+        "o": 1,
+        "ty": 0
+      },
+      "list": {
+        "o": 1,
+        "ty": 0,
+        "h": 158.3
+      },
+      "extraKids": 0,
+      "focus": "message-input"
+    },
+    "rm-expand-consistent": {
+      "visCount": 6,
+      "assert": "pass"
+    },
+    "rm-collapsed": {
+      "expanded": false,
+      "aria": "false",
+      "label": "更多历史规划",
+      "disabled": false,
+      "msgsHidden": false,
+      "msgsKids": 0,
+      "rowCount": 2,
+      "visCount": 2,
+      "rows": [
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 739,
+          "h": 25,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "西安一日游"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 764,
+          "h": 25,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "西安城墙骑行"
+        }
+      ],
+      "area": {
+        "o": 1,
+        "ty": 0
+      },
+      "list": {
+        "o": 1,
+        "ty": 0,
+        "h": 50
+      },
+      "extraKids": 0,
+      "focus": "message-input"
+    },
+    "rm-collapse-consistent": {
+      "visCount": 2,
+      "assert": "pass"
+    },
+    "rm-rapid-end": {
+      "expanded": false,
+      "aria": "false",
+      "label": "更多历史规划",
+      "disabled": false,
+      "msgsHidden": false,
+      "msgsKids": 0,
+      "rowCount": 2,
+      "visCount": 2,
+      "rows": [
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 739,
+          "h": 25,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "西安一日游"
+        },
+        {
+          "o": 1,
+          "ty": 0,
+          "y": 764,
+          "h": 25,
+          "disp": "flex",
+          "vis": "visible",
+          "t": "西安城墙骑行"
+        }
+      ],
+      "area": {
+        "o": 1,
+        "ty": 0
+      },
+      "list": {
+        "o": 1,
+        "ty": 0,
+        "h": 50
+      },
+      "extraKids": 0,
+      "focus": "message-input"
+    },
+    "rm-rapid-consistent": {
+      "visCount": 2,
+      "expanded": false,
+      "assert": "pass"
+    }
+  },
+  "log": [
+    "shot desktop-collapsed",
+    "shot desktop-expanded",
+    "shot desktop-collapsed-after",
+    "shot rapid-even-end",
+    "shot rapid-odd-end",
+    "shot after-select",
+    "shot after-login",
+    "shot narrow-collapsed",
+    "shot narrow-expanded",
+    "shot rm-collapsed"
+  ]
+}
