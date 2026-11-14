@@ -158,3 +158,17 @@ test('join itinerary attaches a distinct chip, preserves active plan and referen
  h.activities.openEvents([sample.events[0]]);find(detailFooter(panel),'activity-add')[0]!.click();await h.run('window.sendMessage("")');
  assert.equal(sent.referenced_event_id,undefined);assert(sent.message.includes('加入我的行程'));
 });
+
+test('viewport data updates a bubble in place without replacing its unchanged image',async()=>{
+ const h=await activitySetup(),original=h.groups()[0],bubble=h.activities.pin(original);
+ const button=find(bubble,'activity-bubble')[0]!,title=find(bubble,'activity-bubble-title')[0]!,cover=find(bubble,'activity-bubble-thumb')[0]!;
+ const latest={...original,events:[{...original.events[0],title:'更新后的展览',budget_min:0,budget_max:0}]};
+ h.activities.updatePin(bubble,latest);
+ assert.equal(find(bubble,'activity-bubble')[0],button);assert.equal(find(bubble,'activity-bubble-title')[0],title);
+ assert.equal(title.textContent,'更新后的展览');assert(content(bubble).includes('免费'));
+ assert.equal(button.attrs.get('aria-label'),'更新后的展览，查看活动');
+ const updatedCover=find(bubble,'activity-bubble-thumb')[0]!;assert.notEqual(updatedCover,cover,'a changed title refreshes image alternative text');
+ h.activities.updatePin(bubble,structuredClone(latest));assert.equal(find(bubble,'activity-bubble-thumb')[0],updatedCover,'unchanged viewport data keeps the image loaded');
+ h.activities.updatePin(bubble,{...latest,events:[{...latest.events[0],budget_min:50,budget_max:50}]});
+ assert.equal(find(bubble,'activity-bubble-thumb')[0],updatedCover,'a price-only update keeps the image loaded');assert(content(bubble).includes(h.context.window.WanderPlans.price({budget_min:50,budget_max:50})));
+});

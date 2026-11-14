@@ -7,6 +7,7 @@
  const valid=(lat,lng)=>typeof lat==='number'&&typeof lng==='number'&&Number.isFinite(lat)&&Number.isFinite(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180;
  const key=p=>p[0].toFixed(7)+','+p[1].toFixed(7);
  const point=p=>[typeof p.getLng==='function'?p.getLng():p.lng,typeof p.getLat==='function'?p.getLat():p.lat];
+ function visibility(item,show){if(item.visible!==show){item.marker.setMap(show?native:null);item.visible=show;}}
  function call(invoke,{errorFirst=false}={}){return new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('高德地图服务超时')),10000);try{invoke((status,result)=>{clearTimeout(timer);if(errorFirst?status==null:status==='complete')resolve(result);else reject(new Error('高德地图服务暂不可用'));});}catch{clearTimeout(timer);reject(new Error('高德地图服务暂不可用'));}});}
  function loadSDK(jsKey,serviceHost){return new Promise((resolve,reject)=>{
   window._AMapSecurityConfig={serviceHost:new URL(serviceHost,window.location.href).href};
@@ -64,11 +65,11 @@
   [...scenes].sort((a,b)=>Number(currentNames.includes(b.place.name))-Number(currentNames.includes(a.place.name))||(b.place.rating||0)-(a.place.rating||0)).forEach(scene=>{
    const p=native.lngLatToContainer(scene.position),x=p.getX?.()??p.x,y=p.getY?.()??p.y;
    const show=(scene.place.rating>=4||currentNames.includes(scene.place.name))&&scene.place.name!==selectedName&&x>=-25&&x<=width+25&&y>=-25&&y<=height+25;
-   scene.marker.setMap(show?native:null);if(!show)return;
+   visibility(scene,show);if(!show)return;
    const w=Array.from(scene.place.name).length*11+50,h=29;
    const positions=[['right',{left:x+17,right:x+17+w,top:y-h/2,bottom:y+h/2}],['left',{left:x-17-w,right:x-17,top:y-h/2,bottom:y+h/2}],['top',{left:x-w/2,right:x+w/2,top:y-18-h,bottom:y-18}],['bottom',{left:x-w/2,right:x+w/2,top:y+18,bottom:y+18+h}]];
    const fit=positions.find(([,r])=>r.left>8&&r.right<width-8&&r.top>8&&r.bottom<height-25&&!occupied.some(other=>overlap(r,other)));
-   scene.content.className='place-wrap direction-'+(fit?.[0]||'right')+(fit?'':' label-hidden');if(fit)occupied.push(fit[1]);
+   const cls='place-wrap direction-'+(fit?.[0]||'right')+(fit?'':' label-hidden');if(scene.content.className!==cls)scene.content.className=cls;if(fit)occupied.push(fit[1]);
   });
   updateActivityBubbles({width,height,occupied});
  }
@@ -92,7 +93,7 @@
    const name=document.createElement('span');name.className='place-name';name.textContent=place.name;
    if(place.rating){const rating=document.createElement('span');rating.className='place-rating';rating.textContent=place.rating+'A';name.append(rating);}content.append(dot,name);
    const position=positions[index+1],marker=new window.AMap.Marker({position,content,anchor:'center',title:place.officialName||place.name,zIndex:150});
-   marker.on('click',()=>{state.manual=true;select(place.lat,place.lng,place.name,14).catch(()=>showMapStatus('地点暂不可用'));window.WanderActivities?.openNearby(place);});scenes.push({place,position,marker,content});
+   marker.on('click',()=>{state.manual=true;select(place.lat,place.lng,place.name,14).catch(()=>showMapStatus('地点暂不可用'));window.WanderActivities?.openNearby(place);});scenes.push({place,position,marker,content,visible:false});
   });
   ready=true;const moved=()=>{updatePlaces();window.dispatchEvent(new Event('wander:viewport'));};native.on('moveend',moved);native.on('zoomend',moved);native.on('resize',moved);updatePlaces();
   onSelect({lat:positions[0][1],lng:positions[0][0],name:'西安市',coordinateSystem:'GCJ02',wgs84:{lat:34.27,lng:108.95}});
@@ -122,21 +123,34 @@
     subset.forEach((group,index)=>prepared.push({group,position:positions[index]}));
    }
    if(epoch!==activitiesEpoch||!ready)return;
-   if(activityMarkers.length)native.remove(activityMarkers.map(item=>item.marker));
+   // Viewport responses commonly contain the same points. Retain their DOM and
+   // SDK markers so the response does not replay the bubbles' entrance animation.
+   const previous=new Map(activityMarkers.map(item=>[item.group.id,item]));
    activityMarkers=prepared.map(({group,position})=>{
-    const content=window.WanderActivities.pin(group);content.addEventListener('click',()=>open(group));
-    const marker=new window.AMap.Marker({position,content,anchor:'top-left',title:group.events[0]?.title||group.name,zIndex:450});return {marker,group,content,position};
-   });updatePlaces();
+    let item=previous.get(group.id);previous.delete(group.id);
+    if(item){
+     window.WanderActivities.updatePin?.(item.content,group);
+     if(key(item.position)!==key(position))item.marker.setPosition(position);
+     item.group=group;item.position=position;item.open=open;
+    }else{
+     const content=window.WanderActivities.pin(group),marker=new window.AMap.Marker({position,content,anchor:'top-left',title:group.events[0]?.title||group.name,zIndex:450});
+     item={marker,group,content,position,open,visible:false};content.addEventListener('click',()=>item.open(item.group));
+    }
+    return item;
+   });previous.forEach(item=>visibility(item,false));updatePlaces();
   }catch{ /* A feed failure must not tear down the basemap. */ }
  }
  function updateActivityBubbles({width,height,occupied}){
   if(!window.WanderActivities?.layoutBubbles)return;
-  const items=activityMarkers.map(item=>{const p=native.lngLatToContainer(item.position);return {...item,id:item.group.id,x:p.getX?.()??p.x,y:p.getY?.()??p.y};});
+  const items=activityMarkers.map(item=>{const p=native.lngLatToContainer(item.position);return {id:item.group.id,x:p.getX?.()??p.x,y:p.getY?.()??p.y};});
   const fits=window.WanderActivities.layoutBubbles(items,{width,height,occupied,zoom:native.getZoom?.()||11});
-  items.forEach(item=>{
-   const fit=fits.get(item.id),show=Boolean(fit);
-   if(fit){item.content.style.setProperty('--bubble-tail-x',fit.tailX+'px');item.content.style.setProperty('--bubble-tail-y',fit.tailY+'px');item.content.classList.toggle('bubble-below',fit.below);item.marker.setOffset(new window.AMap.Pixel(fit.dx,fit.dy));}
-   item.marker.setMap(show?native:null);
+  activityMarkers.forEach(item=>{
+   const fit=fits.get(item.group.id),show=Boolean(fit);
+   if(fit){
+    const layout=[fit.dx,fit.dy,fit.tailX,fit.tailY,fit.below].join(',');
+    if(item.layout!==layout){item.content.style.setProperty('--bubble-tail-x',fit.tailX+'px');item.content.style.setProperty('--bubble-tail-y',fit.tailY+'px');item.content.classList.toggle('bubble-below',fit.below);item.marker.setOffset(new window.AMap.Pixel(fit.dx,fit.dy));item.layout=layout;}
+   }
+   visibility(item,show);
   });
  }
  function getViewport(){
