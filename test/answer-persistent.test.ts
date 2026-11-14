@@ -130,6 +130,7 @@ test("comparison 选中 B 后 answer/重开：选择上下文仍注入修改轮�
     summary: "改后：B 线换成室内安排",
     stops: [stopsAt(ev.id)("14:00", "15:00")],
   };
+  let sawAnswerTurnSelection = false;
   first.faux.setResponses([
     fauxAssistantMessage(
       comparisonEnvelope(
@@ -140,7 +141,13 @@ test("comparison 选中 B 后 answer/重开：选择上下文仍注入修改轮�
         constraintsV1,
       ),
     ),
-    fauxAssistantMessage(answerEnvelope(bookingText)),
+    (context) => {
+      const systemText = JSON.stringify(
+        (context.messages as Array<{ role?: string }>).filter((m) => m.role === "system"),
+      );
+      sawAnswerTurnSelection = systemText.includes("用户当前选中的方案：B");
+      return fauxAssistantMessage(answerEnvelope(bookingText));
+    },
   ]);
 
   // 1) comparison 轮：首个 plan 提交为当前行程指针。
@@ -151,9 +158,11 @@ test("comparison 选中 B 后 answer/重开：选择上下文仍注入修改轮�
   assert.ok(pointerA);
   assert.equal((pointerA.plan.itinerary as { summary?: string }).summary, "A：上午看展");
 
-  // 2) 界面选中 B 后问答：只追加聊天，指针不动。
+  // 2) 界面选中 B 后问答：runPrompt 每轮 reload 重建 latestTurn，answer 轮
+  //    本身仍注入 B 的选择节；只追加聊天，指针不动。
   const t2 = await first.session.prompt("B 方案需要预约吗", { activePlan: "B" });
   assert.equal(t2.kind, "answer", JSON.stringify(t2));
+  assert.ok(sawAnswerTurnSelection, "同实例 answer 轮也应注入 B 的界面选择节");
   const pointerAfterAnswer = await sessions.getCurrentItinerary("u-test", sid);
   assert.equal(pointerAfterAnswer?.record.recordId, pointerA.record.recordId);
   await first.session.close();

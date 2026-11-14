@@ -27,6 +27,8 @@ import type { PlannerTurn, ToolCallRecord } from "../src/agent/session.ts";
 import { loadConfig } from "../src/config.ts";
 import { createSqliteEventRepository } from "../src/data/sqlite.ts";
 import { createSqliteSessionRepository } from "../src/session/sqlite.ts";
+import { verdict } from "./issue19-verdict.ts";
+import type { StepExpectation } from "./issue19-verdict.ts";
 
 interface StepResult {
   prompt: string;
@@ -83,15 +85,14 @@ async function pointerId(): Promise<string | null> {
   return current?.record.recordId ?? null;
 }
 
-async function step(prompt: string, expect: "plan" | "answer"): Promise<PlannerTurn> {
+async function step(prompt: string, expect: StepExpectation): Promise<PlannerTurn> {
   const before = await pointerId();
   const toolsBefore = session.toolCalls.length;
   const turn = await session.prompt(prompt);
   const after = await pointerId();
   const newCalls = session.toolCalls.slice(toolsBefore);
   const tools = newCalls.map(describeCall);
-  const isPlan = turn.kind === "itinerary" || turn.kind === "comparison";
-  const ok = expect === "plan" ? isPlan && before !== after : turn.kind === "answer" && before !== after;
+  const ok = verdict(expect, turn.kind, before, after);
   if (!ok) failures += 1;
   results.push({
     prompt,

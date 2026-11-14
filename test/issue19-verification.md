@@ -30,7 +30,7 @@
 - SSE：`/api/chat/stream` 中 answer 经 `meta → result` 回传，无
   `error`/`progress` 副作用。
 
-### C3 前端 VM — `test/frontend-answer.test.ts`（8 例，全过）
+### C3 前端 VM — `test/frontend-answer.test.ts`（7 例，全过）
 
 基于 `test/frontend-fixture.ts` 的行为断言（非代码字符串）：
 
@@ -70,8 +70,14 @@
 
 `.env` 实配：provider=deepseek（model=deepseek-flash）、web_search/amap
 均已配置、`data/events.db` 为真实活动库。会话库放系统临时目录，运行结束
-即清理，不写仓库数据，输出不含密钥。本机 2026-11-14 执行一次，PASS；
-此后真实重跑未获审批，脚本只做离线断言增强、未再执行。
+即清理，不写仓库数据，输出不含密钥。本机 2026-11-14 执行一次，PASS。
+
+⚠️ 版本区分：当时实测通过的是该脚本的**原始版本**；其后为留档/脱敏
+做过离线增强，且增强中曾把 answer 指针断言写反（`before !== after`，
+已由纯判定 `verdict` 抽离到 `issue19-verdict.ts` 修复并有离线单测
+兜底）——**增强后版本从未真实执行**，"PASS"结论只归属原始版本。
+工具名/isError 只证明调用发生且未报错，**不证明返回内容真实**；
+工具 args/结果当时未留档。
 
 **证据分层（区分自动断言与人工观察）**：
 
@@ -102,7 +108,7 @@
 
     node --test test/answer-protocol.test.ts test/answer-session.test.ts \
       test/answer-persistent.test.ts test/web-e2e-answer.test.ts \
-      test/frontend-answer.test.ts        # 23/23 通过
+      test/frontend-answer.test.ts        # answer 定向共 22 例全过
     npm test                              # 827+ 全过（含既有套件无回归）
     npm run typecheck                     # 通过（tsc --noEmit 无错误）
     npm run check:frontend                # 通过
@@ -128,8 +134,4 @@
   作复现证据。
 - `src/compaction/{compact,summary}.ts` 一度残留 `console.error` 调试输出
   污染全部测试 stderr；当前工作树已清除，提交前请再确认未混入。
-- 观察（非本 issue 回归）：`PersistentRuntime.latestTurn` 仅在实例初始化时
-  从 runs 重建，同实例内 comparison 之后未重开的 `active_plan` 注入不生效
-  ——即"选 B"上下文必须经重开/新实例才进入提示词。为既有行为边界，
-  是否收窄由主控裁决。
 - 其余既有套件（澄清、单方案、比选、修改、SSE、租约、压缩、历史）无回归。
