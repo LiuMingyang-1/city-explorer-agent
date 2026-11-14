@@ -89,8 +89,11 @@
     rows.forEach((row,index)=>{
      row.classList.remove('history-exit');
      if(typeof getComputedStyle==='function'){
-      const from=getComputedStyle(row);
-      row.animate?.([{opacity:from.opacity,transform:from.transform==='none'?'translateY(0)':from.transform},{opacity:1,transform:'translateY(0)'}],{duration:220,delay:Math.min(index,5)*22,easing:'cubic-bezier(.22,.8,.32,1)',fill:'forwards'});
+      // getComputedStyle's CSSStyleDeclaration is live — materialize the
+      // captured frame before cancelling the in-flight exit animation.
+      const cs=getComputedStyle(row),from={opacity:cs.opacity,transform:cs.transform==='none'?'translateY(0)':cs.transform};
+      row.getAnimations?.().forEach(a=>a.cancel());
+      row.animate?.([from,{opacity:1,transform:'translateY(0)'}],{duration:220,delay:Math.min(index,5)*22,easing:'cubic-bezier(.22,.8,.32,1)',fill:'both'});
      }
     });
     $('more-history').textContent='收起历史规划';$('more-history').disabled=!past.length;return;
@@ -104,15 +107,25 @@
   // The exit is driven by WAAPI from each row's live computed style, so a row
   // caught mid-enter keeps fading down from its in-flight opacity/transform —
   // swapping animation/transition classes here would snap back to opaque
-  // first. Without WAAPI the teardown still defers on the timer; the rows
-  // simply stay static until it lands.
+  // first. Old animations are cancelled and fill:'both' pins the captured
+  // frame through the stagger delay, so nothing drifts back upward. Without
+  // WAAPI the teardown still defers on the timer; rows stay static until then.
   closing=true;render();
   rows.forEach((row,index)=>{
-   row.classList.add('history-exit');
-   const from=getComputedStyle(row);
-   row.animate?.([{opacity:from.opacity,transform:from.transform==='none'?'translateY(0)':from.transform},{opacity:0,transform:'translateY(12px)'}],{duration:240,delay:Math.min(index,5)*22,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'});
+   const cs=typeof getComputedStyle==='function'?getComputedStyle(row):null;
+   const from=cs?{opacity:cs.opacity,transform:cs.transform==='none'?'translateY(0)':cs.transform}:{opacity:1,transform:'translateY(0)'};
+   row.classList.remove('history-enter');row.classList.add('history-exit');
+   row.getAnimations?.().forEach(a=>a.cancel());
+   row.animate?.([from,{opacity:0,transform:'translateY(12px)'}],{duration:240,delay:Math.min(index,5)*22,easing:'cubic-bezier(.4,0,1,1)',fill:'both'});
   });
   closeTimer=setTimeout(finishClose,400);
+ }
+ // Programmatic resets (open/newChat/setIdentity) always tear down
+ // synchronously — only the footer toggle plays the animated exit.
+ function collapseNow(){
+  closing=false;clearTimeout(closeTimer);expanded=false;
+  document.querySelector('.glass-card').classList.toggle('history-expanded',false);
+  $('more-history').setAttribute('aria-expanded','false');$('messages').hidden=false;render();
  }
  function clearConversation(){
   epoch++;window.dispatchEvent(new Event('wander:reset'));
@@ -125,7 +138,7 @@
   updateSendButton();window.updateChatLayout?.();
  }
  function newChat(){
-  capture();clearConversation();activeId=makeId();createdAt=Date.now();setExpanded(false);
+  capture();clearConversation();activeId=makeId();createdAt=Date.now();collapseNow();
   $('message-input').focus({preventScroll:true});
  }
  function open(id){
@@ -145,7 +158,7 @@
    if(entry.latestPlan&&window.WanderPlans){
     state.latestPlan=window.WanderPlans.normalize(entry.latestPlan);state.activePlanId=state.latestPlan?.active_plan;window.WanderPlans.draw(state.latestPlan);
    }else if(Array.isArray(entry.routeNames)&&entry.routeNames.length&&typeof drawRoute==='function')drawRoute(entry.routeNames);
-   setExpanded(false);scrollMessages();$('message-input').focus({preventScroll:true});
+   collapseNow();scrollMessages();$('message-input').focus({preventScroll:true});
   }
   const locationJob=entry.location&&Number.isFinite(entry.location.lat)&&Number.isFinite(entry.location.lng)?selectLocation(entry.location.lat,entry.location.lng,String(entry.location.name||'西安市'),13,false,entry.location.coordinateSystem||'WGS84',entry.location.wgs84):null;
   if(locationJob?.then)return locationJob.then(finish);finish();
@@ -196,7 +209,7 @@
    if(nextKey===BASE_KEY+'.guest'){render();return;}
   }
   clearConversation();
-  activeId=makeId();createdAt=Date.now();setExpanded(false);
+  activeId=makeId();createdAt=Date.now();collapseNow();
  }
  window.WanderHistory={capture,newChat,open,setExpanded,generation:()=>epoch,setIdentity};
  $('new-chat').addEventListener('click',newChat);
