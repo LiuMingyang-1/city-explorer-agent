@@ -150,9 +150,12 @@
   const {message,bubble}=makeMessage('assistant');bubble.classList.add('plan-bubble');
   bubble.append(text('p','plan-reply',model.plans.length>1?'为你整理了两种出发方式，看看哪一种更合心意。':'行程已经整理好了，点开看看这一路的安排。'));
   const preview=text('button','plan-preview','');preview.type='button';preview.setAttribute('aria-expanded','false');preview.setAttribute('aria-controls','plan-detail');
+  const icon=document.createElement('span');icon.className='plan-preview-icon';icon.setAttribute('aria-hidden','true');
+  icon.innerHTML='<svg viewBox="0 0 24 24"><path d="M6.7 17.8c4.8 0 4.8-11.6 10.6-11.6"/><circle cx="6.4" cy="18" r="2.3"/><circle class="accent" cx="17.6" cy="6" r="2.3"/></svg>';
   const previewMeta=text('span','plan-preview-meta',model.plans.length>1?'两种提案 · A / B':'你的专属规划');
   const previewTitle=text('strong','plan-preview-title',model.plans.length>1?'这一次，想怎样漫游？':active(model).itinerary.summary||'查看游玩规划');
-  const previewFooter=text('span','plan-preview-footer','查看完整行程  ↗');preview.append(previewMeta,previewTitle,previewFooter);bubble.append(preview);
+  const previewFooter=text('span','plan-preview-footer','查看完整行程  ↗');
+  const previewText=text('span','plan-preview-text','');previewText.append(previewMeta,previewTitle,previewFooter);preview.append(icon,previewText);bubble.append(preview);
   if(isExample(model))bubble.append(text('span','example-badge','示例行程 · 非真实活动'));
   const overlay=$('plan-detail');overlay.replaceChildren();overlay.hidden=true;
   const top=document.createElement('header');top.className='plan-detail-top';
