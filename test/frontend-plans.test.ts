@@ -9,7 +9,7 @@ function content(root: Element): string{return nodes(root).map(e=>e.textContent)
 function leaflet(h:ReturnType<typeof setup>){
  const created: {type:string;points:unknown;options:Record<string,unknown>}[]=[],groups:unknown[]=[],fitTargets:any[]=[];let fits=0;
  const make=(type:string,points:unknown,options:Record<string,unknown>)=>{
-  const value={type,points,options,bindTooltip(){return this},on(){return this}};created.push(value);return value;
+  const value={type,points,options,setLatLngs(part:unknown){this.points=part},setStyle(style:Record<string,unknown>){Object.assign(this.options,style)},bindTooltip(){return this},on(){return this}};created.push(value);return value;
  };
  h.context.map={removeLayer(){},getSize(){return {x:1440,y:900}},fitBounds(bounds:unknown){fits++;fitTargets.push(bounds)}};
  h.context.locationLabel=(s:string)=>s;h.context.innerWidth=1440;
@@ -37,11 +37,11 @@ test('rich event cards handle price ranges, free/unknown prices, venue, reason, 
 
 test('A/B switching draws both supplied road geometries and highlights the selected route and fits its own bounds',()=>{
  const h=setup({api:true}),map=leaflet(h);h.context.payload={...fixture('response-comparison'),coordinate_system:'WGS84'};h.run('window.WanderPlans.append(payload)');
- let lines=map.created.filter(l=>l.type==='line');assert.equal(lines.length,2);assert.equal((lines[0]!.points as unknown[]).length,4);
+ let lines=map.created.filter(l=>l.type==='line'&&l.options.className==='route-track');assert.equal(lines.length,2);assert.equal((lines[0]!.points as unknown[]).length,4);
  assert.deepEqual(Array.from((lines[0]!.points as number[][])[0]!),[34.249,108.94]);
- assert.equal(lines[1]!.options.opacity,.9);assert.equal(map.fits(),1);
+ assert.equal(lines[1]!.options.opacity,.28);assert.notEqual(lines[0]!.options.color,lines[1]!.options.color);assert.equal(map.fits(),1);
  find(h.$('plan-detail'),'plan-tab')[1]!.click();
- lines=map.created.filter(l=>l.type==='line');assert.equal(lines.at(-1)!.options.color,'#64859a');assert.equal(lines.at(-1)!.options.opacity,.9);assert.equal(map.fits(),2);
+ const bColor=lines[0]!.options.color;lines=map.created.filter(l=>l.type==='line'&&l.options.className==='route-flow');assert.equal(lines.at(-1)!.options.color,bColor);assert.equal(lines.at(-1)!.options.opacity,1);assert.equal(map.fits(),2);
  assert(map.fitTargets[0].every((p:number[])=>p[1]>=108.96),'A focuses the eastern route');assert(map.fitTargets[1].every((p:number[])=>p[1]<108.96),'B focuses the western route');
  assert(content(h.$('plan-detail')).includes('12 分钟'));assert(content(h.$('plan-detail')).includes('另预留 5 分钟'));
 });
@@ -112,3 +112,12 @@ test('explicit demo mode reads canonical fixture files and preserves selected A 
  preview.click();assert.equal(h.run('state.activePlanId'),'plan_mock_b');
  h.$('new-chat').click();assert.equal(h.$('plan-detail').hidden,true);assert.equal(h.state.messages.length,0);
  });
+
+test('late thumbnail palettes cannot resurrect a cleared route or overwrite a newer selection',async()=>{
+ const h=setup({api:true}),camera=leaflet(h),visuals=h.context.window.WanderRouteVisuals,data={...fixture('response-comparison'),coordinate_system:'WGS84'};
+ const colors=visuals.palette(data),pending:((value:any)=>void)[]=[];visuals.palette=()=>new Promise(resolve=>pending.push(resolve));
+ const abandoned=h.context.window.WanderPlans.draw(data);h.$('new-chat').click();pending.shift()!(colors);await abandoned;assert.equal(camera.groups.length,0);
+ const old=h.context.window.WanderPlans.draw(data),latest=h.context.window.WanderPlans.draw({...data,active_plan:'plan_mock_b'});
+ pending[1]!(colors);await latest;pending[0]!(colors);await old;
+ assert.equal(camera.groups.length,1);assert.equal(camera.fits(),1);assert(camera.fitTargets[0].every((p:number[])=>p[1]<108.96));
+});

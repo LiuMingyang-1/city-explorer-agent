@@ -2,7 +2,8 @@
 // Presentational adapter for legacy itineraries and the Day 0 single/comparison samples.
 (() => {
  let currentView=null,viewCount=0,detailEpoch=0,openRect=null,detailFocus=true;
- const colorFor=index=>index===0?'#b67a55':'#64859a';
+ let routeRun=0,stopRouteAnimation,stopRouteZoom;
+ function stopRouteEffects(){routeRun++;stopRouteAnimation?.();stopRouteAnimation=null;stopRouteZoom?.();stopRouteZoom=null;}
  const text=(tag,className,value)=>{const node=document.createElement(tag);node.className=className;node.textContent=String(value??'');return node;};
  function safeURL(value){try{const u=new URL(String(value));return ['http:','https:'].includes(u.protocol)?u.href:null;}catch{return null;}}
  function money(value){return (value/100).toLocaleString('zh-CN',{maximumFractionDigits:2});}
@@ -76,28 +77,44 @@
  }
  function compatibleCoordinates(model){if(window.WanderAMap?.ready)return ['WGS84','WGS-84','GCJ02','GCJ-02'].includes(String(model.coordinate_system||'WGS84').toUpperCase());return ['WGS84','WGS-84'].includes(String(model.coordinate_system||'WGS84').toUpperCase());}
  function draw(data,{fit=true,onSelect}={}){
-  const model=normalize(data);if(!model)return;if(window.WanderAMap?.ready){window.WanderAMap.drawPlans(model,{fit,onSelect});return;}if(!map)return;
-  if(routeLayer){map.removeLayer(routeLayer);routeLayer=null;}
-  if(!compatibleCoordinates(model))return;
-  const byId=new Map(model.events.map(e=>[e.event_id,e])),layers=[],bounds=[];
-  // Inactive routes are drawn first so the selected route remains on top.
-  [...model.plans].sort((a,b)=>Number(a.plan_id===model.active_plan)-Number(b.plan_id===model.active_plan)).forEach(plan=>{
-   const selected=plan.plan_id===model.active_plan,index=model.plans.indexOf(plan),color=colorFor(plan.label==='B'?1:index),stops=plan.itinerary.stops;
-   stops.forEach((stop,i)=>{
-    const event=byId.get(stop.event_id);if(!event)return;
-    const lat=event.latitude,lng=event.longitude;
-    if(typeof lat!=='number'||typeof lng!=='number'||!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)return;
-    const point=[lat,lng];if(selected)bounds.push(point);
-    const dot=L.circleMarker(point,{radius:selected?7:5,color,weight:2,opacity:selected?1:.45,fillColor:selected?color:'#f2f4ef',fillOpacity:selected ? .95 : .5}).bindTooltip(locationLabel('方案 '+(plan.label||index+1)+' · '+(i+1)+'. '+event.title));
-    dot.on('click',()=>{onSelect?.(plan.plan_id);window.WanderActivities?.openEvents([event],{placeName:event.venue_name,coordinateSystem:model.coordinate_system});});layers.push(dot);
-    if(i===stops.length-1)return;
-    const leg=legFor(plan,stop.event_id,stops[i+1].event_id),points=geometry(leg);
-    if(points){if(selected)bounds.push(...points);const line=L.polyline(points,{color,weight:selected?4:3,opacity:selected ? .9 : .25}).bindTooltip(locationLabel((leg.provider==='mock'?'示例轨迹 · ':'')+'方案 '+(plan.label||index+1)+' · '+commute(leg)));
-     if(onSelect)line.on('click',()=>onSelect(plan.plan_id));layers.push(line);}
+  const model=normalize(data);if(!model)return;stopRouteEffects();
+  if(window.WanderAMap?.ready){return window.WanderAMap.drawPlans(model,{fit,onSelect});}if(!map)return;
+  const epoch=routeRun,visuals=window.WanderRouteVisuals;
+  function render(palette){
+   if(epoch!==routeRun)return;
+   if(routeLayer){routeLayer.off?.('remove',stopRouteEffects);map.removeLayer(routeLayer);routeLayer=null;}
+   if(!compatibleCoordinates(model))return;
+   const byId=new Map(model.events.map(e=>[e.event_id,e])),layers=[],bounds=[],strokes=[],segments=[];
+   // Keep complete, faint tracks underneath the ordered reveal, and fit those
+   // full tracks rather than the moving animation endpoint.
+   [...model.plans].sort((a,b)=>Number(a.plan_id===model.active_plan)-Number(b.plan_id===model.active_plan)).forEach(plan=>{
+    const selected=plan.plan_id===model.active_plan,index=model.plans.indexOf(plan),color=palette.get(plan.plan_id).color,stops=plan.itinerary.stops;
+    stops.forEach((stop,i)=>{
+     const event=byId.get(stop.event_id);if(!event)return;
+     const lat=event.latitude,lng=event.longitude;
+     if(typeof lat!=='number'||typeof lng!=='number'||!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)return;
+     const point=[lat,lng];if(selected)bounds.push(point);
+     const number=text('span','',String(i+1));number.title='方案 '+(plan.label||index+1)+' · '+(i+1)+'. '+event.title;
+     const dot=L.circleMarker(point,{radius:selected?10:8,color:'#ffffff',weight:2,opacity:1,fillColor:color,fillOpacity:selected?1:.72}).bindTooltip(number,{permanent:true,direction:'center',className:'route-station-number',opacity:1});
+     dot.on('click',()=>{onSelect?.(plan.plan_id);window.WanderActivities?.openEvents([event],{placeName:event.venue_name,coordinateSystem:model.coordinate_system});});layers.push(dot);
+     if(i===stops.length-1)return;
+     const leg=legFor(plan,stop.event_id,stops[i+1].event_id),geometry=window.WanderPlans.geometry(leg),next=byId.get(stops[i+1].event_id);
+     if(!geometry)return;
+     const path=visuals.orient(geometry.map(p=>[p[1],p[0]]),[lng,lat],next?[next.longitude,next.latitude]:null),points=path.map(p=>[p[1],p[0]]),style=visuals.stroke(map.getZoom?.()||11,selected);
+     if(selected)bounds.push(...points);
+     const casing=L.polyline(points,{color:'#ffffff',weight:style.width+style.border*2,opacity:.95,interactive:false,className:'route-casing'}),track=L.polyline(points,{color,weight:style.width,opacity:selected ? .28 : .7,className:'route-track'}).bindTooltip(locationLabel((leg.provider==='mock'?'示例轨迹 · ':'')+'方案 '+(plan.label||index+1)+' · '+commute(leg)));
+     if(onSelect)track.on('click',()=>onSelect(plan.plan_id));layers.push(casing,track);const colored=[track];
+     if(selected){const flow=L.polyline(points,{color,weight:style.width,opacity:1,interactive:false,className:'route-flow'});layers.push(flow);colored.push(flow);segments.push({path,show:part=>flow.setLatLngs(part.map(p=>[p[1],p[0]]))});}
+     strokes.push({selected,casing,colored,width:style.width});
+    });
    });
-  });
-  if(!layers.length)return;routeLayer=L.layerGroup(layers).addTo(map);
-  if(fit&&bounds.length){const card=document.querySelector('.glass-card').getBoundingClientRect(),size=map.getSize();const frame=window.WanderMapLayout.routeFrame({width:size.x,height:size.y,card});map.fitBounds(L.latLngBounds(bounds),{paddingTopLeft:frame.paddingTopLeft,paddingBottomRight:frame.paddingBottomRight,maxZoom:15,animate:true});}
+   if(!layers.length)return;routeLayer=L.layerGroup(layers).addTo(map);routeLayer.on?.('remove',stopRouteEffects);
+   const widths=()=>strokes.forEach(item=>{const style=visuals.stroke(map.getZoom?.()||11,item.selected);if(style.width===item.width)return;item.width=style.width;item.casing.setStyle({weight:style.width+style.border*2});item.colored.forEach(line=>line.setStyle({weight:style.width}));});
+   map.on?.('zoom',widths);stopRouteZoom=()=>map.off?.('zoom',widths);
+   if(fit&&bounds.length){const card=document.querySelector('.glass-card').getBoundingClientRect(),size=map.getSize();const frame=window.WanderMapLayout.routeFrame({width:size.x,height:size.y,card});map.fitBounds(L.latLngBounds(bounds),{paddingTopLeft:frame.paddingTopLeft,paddingBottomRight:frame.paddingBottomRight,maxZoom:15,animate:true});}
+   stopRouteAnimation=visuals.animate(segments);
+  }
+  const palette=visuals.palette(model);if(palette?.then)return palette.then(render);render(palette);
  }
  const reduceMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
  // Where the detail view shrinks to / grows from: the preview rect while it is on screen, else the card center.
@@ -196,7 +213,7 @@
   window.WanderActivities?.addPlanEvents(model);
   scrollMessages();return message;
  }
- window.addEventListener('wander:reset',()=>{closeDetail({focus:false});currentView=null;state.activePlanId=null;});
+ window.addEventListener('wander:reset',()=>{stopRouteEffects();closeDetail({focus:false});currentView=null;state.activePlanId=null;});
  window.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('plan-detail').hidden)closeDetail();});
  window.WanderPlans={normalize,active,summary,price,geometry,commute,safeURL,eventCover,draw,append,closeDetail};
 })();

@@ -5,11 +5,12 @@ import test from 'node:test';
 import {Element} from './frontend-fixture.ts';
 function setup(){
  const calls:number[]=[],scripts:string[]=[],maps:Record<string,unknown>[]=[],lines:Record<string,unknown>[]=[],selections:Record<string,unknown>[]=[],fits:any[][]=[],paddings:any[][]=[],markers:any[]=[],instances:any[]=[];
- class Marker {options:Record<string,unknown>;attachedMap:unknown;constructor(options:Record<string,unknown>){this.options=options;markers.push(this)}on(){}setOffset(offset:any){this.options.offset=offset}setMap(map:unknown){this.attachedMap=map}}
- class MapMock {shiftX=0;listeners=new Map<string,Function>();constructor(options:Record<string,unknown>){maps.push(options);instances.push(this)}addControl(){}add(){}remove(){}on(name:string,callback:Function){this.listeners.set(name,callback)}destroy(){}setZoomAndCenter(){}setFitView(layers:any[],_immediate:boolean,padding:any[]){fits.push(layers);paddings.push(padding)}getSize(){return {width:1440,height:900}}lngLatToContainer(p:number[]){return {x:800+(p[0]!-108.95)*20000+this.shiftX,y:400-(p[1]!-34.27)*20000}}}
+ class Marker {options:Record<string,unknown>;attachedMap:unknown;pathCalls:unknown[]=[];constructor(options:Record<string,unknown>){this.options=options;markers.push(this)}on(){}setPath(path:unknown){this.options.path=path;this.pathCalls.push(path)}setOptions(options:Record<string,unknown>){Object.assign(this.options,options)}setOffset(offset:any){this.options.offset=offset}setMap(map:unknown){this.attachedMap=map}}
+ class MapMock {shiftX=0;zoom=11;getZoom(){return this.zoom};listeners=new Map<string,Function>();constructor(options:Record<string,unknown>){maps.push(options);instances.push(this)}addControl(){}add(){}remove(){}on(name:string,callback:Function){this.listeners.set(name,callback)}destroy(){}setZoomAndCenter(){}setFitView(layers:any[],_immediate:boolean,padding:any[]){fits.push(layers);paddings.push(padding)}getSize(){return {width:1440,height:900}}lngLatToContainer(p:number[]){return {x:800+(p[0]!-108.95)*20000+this.shiftX,y:400-(p[1]!-34.27)*20000}}}
  const sdk={convertFrom(batch:number[][],_type:string,callback:(s:string,r:object)=>void){calls.push(batch.length);const locations=batch.map(p=>({lng:p[0]!+.006,lat:p[1]!+.004}));locations.forEach((p,i)=>{(batch as unknown[])[i]=p;});callback('complete',{locations})},plugin(_p:unknown,done:()=>void){done()},Pixel:class{x:number;y:number;constructor(x:number,y:number){this.x=x;this.y=y}},Map:class extends MapMock{constructor(_id:string,options:Record<string,unknown>){super(options)}},ToolBar:class{constructor(o:{position:object}){assert.equal(typeof o.position,'object')}},Marker,Polyline:class extends Marker{constructor(o:Record<string,unknown>){super(o);lines.push(o)}},Geocoder:class{getAddress(_point:unknown,cb:(s:string,r:object)=>void){cb('complete',{regeocode:{addressComponent:{adcode:'610100',district:'雁塔区'}}})}},Weather:class{getLive(_city:string,cb:(s:string|null,r:object)=>void){cb(null,{temperature:'22',weather:'晴'})}}};
  const document={createElement:()=>new Element(),head:{append(script:Element&{onload:()=>void}){scripts.push(script.src);queueMicrotask(script.onload)}},querySelector:()=>({getBoundingClientRect:()=>({left:28,right:450,top:28,bottom:872,height:844})})};
  const context=vm.createContext({window:{dispatchEvent(){},AMap:sdk,location:{href:'https://city.example/'}},document,URL,console,Event,innerWidth:1440,setTimeout:()=>0,clearTimeout(){},fetch:async()=>({ok:true,json:async()=>({enabled:true,jsKey:'test-js-key',serviceHost:'/_AMapService',style:'amap://styles/light',backendCoordinateSystem:'WGS84'})}),showMapStatus(){},state:{},});
+ vm.runInContext(readFileSync(new URL('../frontend/route-visuals.js',import.meta.url),'utf8'),context);
  vm.runInContext(readFileSync(new URL('../frontend/map-layout.js',import.meta.url),'utf8'),context);
  vm.runInContext(readFileSync(new URL('../frontend/amap.js',import.meta.url),'utf8'),context);
  return {context,calls,scripts,maps,lines,selections,fits,paddings,markers,instances,provider:context.window.WanderAMap};
@@ -76,4 +77,20 @@ test('native activity overlays are relaid out when panning, without removing att
  assert(near.attachedMap);assert.equal(east.attachedMap,null);assert.equal(near.options.anchor,'top-left');assert.equal(near.options.offset.x,-122);assert.equal(near.options.offset.y,-98);
  h.instances[0].shiftX=-50000;h.instances[0].listeners.get('moveend')();
  assert.equal(near.attachedMap,null);assert(east.attachedMap);
+});
+
+test('native ordered flow keeps a complete fit target, resizes without recoloring, and cancels on switching',async()=>{
+ const h=setup();await h.provider.init({places:[],onSelect:()=>{}});const frames=new Map<number,Function>();let frameId=0;
+ h.context.requestAnimationFrame=(fn:Function)=>{frames.set(++frameId,fn);return frameId};h.context.cancelAnimationFrame=(id:number)=>frames.delete(id);
+ h.context.window.WanderPlans={geometry:(leg:any)=>leg?.geometry?.coordinates.map((p:number[])=>[p[1],p[0]])||null};
+ const leg=(from:string,to:string,path:number[][])=>({from_event_id:from,to_event_id:to,status:'ok',geometry:{type:'LineString',coordinates:path}});
+ const model={coordinate_system:'GCJ-02',active_plan:'A',events:[{event_id:'one',latitude:34.2,longitude:108.9},{event_id:'two',latitude:34.2,longitude:108.91},{event_id:'three',latitude:34.21,longitude:108.91}],plans:[{plan_id:'A',label:'A',itinerary:{stops:[{event_id:'one'},{event_id:'two'},{event_id:'three'}]},legs:[leg('one','two',[[108.9,34.2],[108.91,34.2]]),leg('two','three',[[108.91,34.2],[108.91,34.21]])]},{plan_id:'B',label:'B',itinerary:{stops:[{event_id:'two'},{event_id:'three'}]},legs:[leg('two','three',[[108.91,34.2],[108.91,34.21]])]}]};
+ await h.provider.drawPlans(model);const flows=h.lines.filter(l=>(l.extData as any)?.role==='flow');assert.equal(flows.length,2);
+ assert.deepEqual(JSON.parse(JSON.stringify(flows[1]!.path)),[[108.91,34.2],[108.91,34.2]],'later legs wait at their own first station');
+ assert.equal(h.fits[0]!.length,5,'full tracks and all stops determine camera fit, not partial flow paths');
+ const color=flows[0]!.strokeColor,width=flows[0]!.strokeWeight;
+ h.instances[0].zoom=17;h.instances[0].listeners.get('zoomchange')();assert((flows[0]!.strokeWeight as number)>(width as number));assert.equal(flows[0]!.strokeColor,color);
+ const oldFlow=h.markers.find(m=>m.options===flows[0]),stale=[...frames.values()][0]!;model.active_plan='B';await h.provider.drawPlans(model);
+ const count=oldFlow.pathCalls.length;stale(1500);assert.equal(oldFlow.pathCalls.length,count,'an obsolete animation cannot touch removed route layers');
+ h.provider.clearRoutes();assert.equal(frames.size,0);
 });
