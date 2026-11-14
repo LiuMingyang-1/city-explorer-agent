@@ -42,18 +42,6 @@ export function saved(id: string, day: number) {
 export function setup({ entries = [] as ReturnType<typeof saved>[], pending = [] as ReturnType<typeof saved>[], blocked = false, api = false, mock = null as string | null, auth = false } = {}) {
   const elements = new Map<string, Element>();
   const $ = (id: string) => { if (!elements.has(id)) elements.set(id, new Element()); return elements.get(id)!; };
-  // Named regions resolve to their own stub so selectors other than
-  // '.glass-card' stay observable; anything else falls back to the card.
-  const namedSelector = (selector: string): Element | null => {
-    const s = String(selector);
-    if (s.includes('history-area')) return $('history-area');
-    if (s.includes('history-list')) return $('history-list');
-    if (s.includes('more-history')) return $('more-history');
-    if (s.includes('message-input')) return $('message-input');
-    if (s.includes('messages')) return $('messages');
-    if (s.includes('glass-card')) return $('card');
-    return null;
-  };
   const historyBase = 'wander.chat-history.v1' + (mock ? '.demo' : '');
   const storage = new Map<string, string>([[historyBase, JSON.stringify(entries)]]);
   if (pending.length) storage.set(historyBase + '.pending', JSON.stringify(pending));
@@ -72,7 +60,7 @@ export function setup({ entries = [] as ReturnType<typeof saved>[], pending = []
     sessionId: null as string | null, latestPlan: null, routeNames: [], location: { lat: 34.27, lng: 108.95, name: '西安市' } };
   const requests: { url: string; body: Record<string, unknown>; signal: AbortSignal; finish: (value: object) => void }[] = [];
   const context = vm.createContext({ window, state, $, Event, AbortController, console, URL, URLSearchParams, TextDecoder, DOMException,
-    document: { createElement: () => new Element(), querySelector: (selector: string) => namedSelector(selector) ?? $('card') },
+    document: { createElement: () => new Element(), querySelector: () => $('card') },
     map: null, routeLayer: null, updatePlaceMarkers() {}, updateSendButton() {},
     selectLocation() {}, scrollMessages() {}, matchMedia: () => media,
     // Microtask timers keep async settling deterministic; clearTimeout really

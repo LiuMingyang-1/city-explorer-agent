@@ -225,6 +225,79 @@ test('an identity switch mid-exit tears down the old account list at once', asyn
   assert.deepEqual(residue(h), []);
 });
 
+test('an identity switch while expanded swaps the list synchronously', async () => {
+  const h = setup({ entries: entries3() });
+  animate(h);
+  h.storage.set('wander.chat-history.v1.u-alice', JSON.stringify([saved('acct-c', 3), saved('acct-b', 2), saved('acct-a', 1)]));
+  h.$('more-history').click();
+  await ticks(); // expanded and settled
+  const stale = historyRows(h)[0]!;
+  h.run('window.WanderHistory.setIdentity("u-alice")');
+  // A programmatic reset rebuilds the collapsed footer at once: the new
+  // identity's titles appear now and the old account's rows are detached —
+  // they must not linger through an exit fade.
+  assert.equal(historyRows(h).length, 2);
+  assert.equal(historyRows(h)[0]!.children[1]!.textContent, '规划 3');
+  assert.equal(stale.parent, null);
+  assert.equal(h.$('messages').hidden, false);
+  assert(!h.$('card').classes.has('history-expanded'));
+  assert.equal(h.$('more-history').attrs.get('aria-expanded'), 'false');
+  stale.click(); // a detached stale row must not resurrect old-account state
+  assert.equal(h.state.sessionId, null);
+  await ticks();
+  assert.equal(historyRows(h).length, 2);
+  assert.equal(historyRows(h)[0]!.children[1]!.textContent, '规划 3');
+  assert.deepEqual(residue(h), []);
+});
+
+test('new chat while expanded restores the conversation view synchronously', async () => {
+  const h = setup({ entries: entries3() });
+  animate(h);
+  h.state.messages.push({ role: 'user', text: '正在规划' }, { role: 'assistant', text: '安排中' });
+  h.$('more-history').click();
+  await ticks();
+  h.$('new-chat').click();
+  assert.equal(h.$('messages').hidden, false);
+  assert(!h.$('card').classes.has('history-expanded'));
+  assert.equal(historyRows(h).length, 2);
+  await ticks();
+  assert.equal(h.$('messages').hidden, false);
+  assert.equal(historyRows(h).length, 2);
+  assert.deepEqual(residue(h), []);
+});
+
+test('opening a saved entry while expanded restores the conversation synchronously', async () => {
+  const h = setup({ entries: entries3() });
+  animate(h);
+  h.$('more-history').click();
+  await ticks();
+  historyRows(h)[0]!.click();
+  assert.equal(h.state.sessionId, 'c');
+  assert.equal(h.state.messages[0]!.text, '出游 11');
+  assert.equal(h.$('messages').hidden, false);
+  assert.equal(historyRows(h).length, 2);
+  assert(!h.$('card').classes.has('history-expanded'));
+  await ticks();
+  assert.equal(h.$('messages').hidden, false);
+  assert.equal(historyRows(h).length, 2);
+  assert.deepEqual(residue(h), []);
+});
+
+test('a programmatic reset leaves no pending timer to corrupt the next expansion', async () => {
+  const h = setup({ entries: entries3() });
+  animate(h);
+  h.$('more-history').click();
+  await ticks();
+  h.$('new-chat').click();          // programmatic reset while expanded
+  h.$('more-history').click();      // expand again immediately
+  await ticks();                    // a stale close timer would tear this down
+  assert.equal(historyRows(h).length, 3);
+  assert(h.$('card').classes.has('history-expanded'));
+  assert.equal(h.$('messages').hidden, true);
+  assert.equal(h.$('more-history').attrs.get('aria-expanded'), 'true');
+  assert.deepEqual(residue(h), []);
+});
+
 test('with reduced motion, expand and collapse settle instantly', () => {
   const h = setup({ entries: entries3() }); // media.matches stays true
   h.$('more-history').click();
