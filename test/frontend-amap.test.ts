@@ -5,7 +5,7 @@ import test from 'node:test';
 import {Element} from './frontend-fixture.ts';
 function setup(){
  const calls:number[]=[],scripts:string[]=[],maps:Record<string,unknown>[]=[],lines:Record<string,unknown>[]=[],selections:Record<string,unknown>[]=[],fits:any[][]=[],paddings:any[][]=[],markers:any[]=[],instances:any[]=[];
- class Marker {options:Record<string,unknown>;attachedMap:unknown;constructor(options:Record<string,unknown>){this.options=options;markers.push(this)}on(){}setOffset(offset:any){this.options.offset=offset}setMap(map:unknown){this.attachedMap=map}}
+ class Marker {options:Record<string,unknown>;attachedMap:unknown=null;mapCalls:unknown[]=[];offsetCalls:any[]=[];listeners=new Map<string,Function>();constructor(options:Record<string,unknown>){this.options=options;markers.push(this)}on(name:string,callback:Function){this.listeners.set(name,callback)}setPosition(position:unknown){this.options.position=position}setOffset(offset:any){this.offsetCalls.push(offset);this.options.offset=offset}setMap(map:unknown){this.mapCalls.push(map);this.attachedMap=map}}
  class MapMock {shiftX=0;listeners=new Map<string,Function>();constructor(options:Record<string,unknown>){maps.push(options);instances.push(this)}addControl(){}add(){}remove(){}on(name:string,callback:Function){this.listeners.set(name,callback)}destroy(){}setZoomAndCenter(){}setFitView(layers:any[],_immediate:boolean,padding:any[]){fits.push(layers);paddings.push(padding)}getSize(){return {width:1440,height:900}}lngLatToContainer(p:number[]){return {x:800+(p[0]!-108.95)*20000+this.shiftX,y:400-(p[1]!-34.27)*20000}}}
  const sdk={convertFrom(batch:number[][],_type:string,callback:(s:string,r:object)=>void){calls.push(batch.length);const locations=batch.map(p=>({lng:p[0]!+.006,lat:p[1]!+.004}));locations.forEach((p,i)=>{(batch as unknown[])[i]=p;});callback('complete',{locations})},plugin(_p:unknown,done:()=>void){done()},Pixel:class{x:number;y:number;constructor(x:number,y:number){this.x=x;this.y=y}},Map:class extends MapMock{constructor(_id:string,options:Record<string,unknown>){super(options)}},ToolBar:class{constructor(o:{position:object}){assert.equal(typeof o.position,'object')}},Marker,Polyline:class extends Marker{constructor(o:Record<string,unknown>){super(o);lines.push(o)}},Geocoder:class{getAddress(_point:unknown,cb:(s:string,r:object)=>void){cb('complete',{regeocode:{addressComponent:{adcode:'610100',district:'雁塔区'}}})}},Weather:class{getLive(_city:string,cb:(s:string|null,r:object)=>void){cb(null,{temperature:'22',weather:'晴'})}}};
  const document={createElement:()=>new Element(),head:{append(script:Element&{onload:()=>void}){scripts.push(script.src);queueMicrotask(script.onload)}},querySelector:()=>({getBoundingClientRect:()=>({left:28,right:450,top:28,bottom:872,height:844})})};
@@ -76,4 +76,33 @@ test('native activity overlays are relaid out when panning, without removing att
  assert(near.attachedMap);assert.equal(east.attachedMap,null);assert.equal(near.options.anchor,'top-left');assert.equal(near.options.offset.x,-122);assert.equal(near.options.offset.y,-98);
  h.instances[0].shiftX=-50000;h.instances[0].listeners.get('moveend')();
  assert.equal(near.attachedMap,null);assert(east.attachedMap);
+});
+
+test('visible bubbles survive moveend plus an unchanged viewport response without remount or offset replay',async()=>{
+ const h=setup();await h.provider.init({places:[],onSelect:()=>{}});let created=0,dx=-122;
+ h.context.window.WanderActivities={pin:()=>{created++;return new Element()},layoutBubbles:(items:any[])=>new Map(items.map(i=>[i.id,{dx,dy:-98,tailX:-dx,tailY:98,below:false}]))};
+ const groups=[{id:'unchanged-poi',lat:34.27,lng:108.95,coordinateSystem:'GCJ-02',events:[{event_id:'poi',title:'永兴坊'}]}];
+ await h.provider.setActivities(groups,()=>{});const bubble=h.markers.find(m=>m.options.title==='永兴坊');
+ h.instances[0].listeners.get('moveend')();
+ await h.provider.setActivities(structuredClone(groups),()=>{});
+ assert.equal(created,1,'viewport results retain existing bubble DOM');assert.equal(h.markers.filter(m=>m.options.title==='永兴坊').length,1);
+ assert.equal(bubble.mapCalls.length,1,'visible marker is not reattached to the same map');assert.equal(bubble.offsetCalls.length,1,'unchanged offset is not reapplied');
+ dx=-24;h.provider.updatePlaces();assert.equal(bubble.offsetCalls.length,2,'collision avoidance can still move a retained bubble');assert.equal(bubble.mapCalls.length,1);assert.equal(bubble.options.offset.x,-24);
+});
+
+test('retained bubbles show fresh response data and only disappeared points are removed',async()=>{
+ const h=setup();await h.provider.init({places:[],onSelect:()=>{}});const updated:any[]=[];const opened:any[]=[];
+ h.context.window.WanderActivities={pin:()=>new Element(),updatePin:(_node:unknown,group:any)=>updated.push(group),layoutBubbles:(items:any[])=>new Map(items.map(i=>[i.id,{dx:-122,dy:-98,tailX:122,tailY:98,below:false}]))};
+ const make=(id:string,price:number)=>({id,lat:34.27,lng:108.95,coordinateSystem:'GCJ-02',events:[{event_id:id,title:id,budget_min:price}]});
+ await h.provider.setActivities([make('kept',100),make('gone',200)],(group:any)=>opened.push(group));
+ const kept=h.markers.find(m=>m.options.title==='kept'),gone=h.markers.find(m=>m.options.title==='gone');
+ await h.provider.setActivities([make('kept',300)],(group:any)=>opened.push(group));
+ assert.equal(h.markers.filter(m=>m.options.title==='kept').length,1);assert.equal(kept.mapCalls.length,1);assert.equal(gone.attachedMap,null);
+ kept.options.content.listeners.get('click')();assert.equal(opened[0].events[0].budget_min,300);assert.equal(updated.at(-1).events[0].budget_min,300);
+});
+
+test('curated attraction markers also avoid redundant same-map attachment',async()=>{
+ const h=setup();await h.provider.init({places:[{lat:34.25,lng:108.94,name:'城墙',rating:5}],onSelect:()=>{}});
+ const marker=h.markers.find(m=>m.options.title==='城墙');const initial=marker.mapCalls.length;
+ h.instances[0].listeners.get('moveend')();h.provider.updatePlaces();assert.equal(marker.mapCalls.length,initial);
 });
