@@ -111,7 +111,7 @@
    if(!layers.length)return;routeLayer=L.layerGroup(layers).addTo(map);routeLayer.on?.('remove',stopRouteEffects);
    const widths=()=>strokes.forEach(item=>{const style=visuals.stroke(map.getZoom?.()||11,item.selected);if(style.width===item.width)return;item.width=style.width;item.casing.setStyle({weight:style.width+style.border*2});item.colored.forEach(line=>line.setStyle({weight:style.width}));});
    map.on?.('zoom',widths);stopRouteZoom=()=>map.off?.('zoom',widths);
-   if(fit&&bounds.length){const card=document.querySelector('.glass-card').getBoundingClientRect(),size=map.getSize();const frame=window.WanderMapLayout.routeFrame({width:size.x,height:size.y,card});map.fitBounds(L.latLngBounds(bounds),{paddingTopLeft:frame.paddingTopLeft,paddingBottomRight:frame.paddingBottomRight,maxZoom:15,animate:true});}
+   if(fit&&bounds.length){const card=document.querySelector('.glass-card').getBoundingClientRect(),size=map.getSize();const frame=window.WanderMapLayout.routeFrame({width:size.x,height:size.y,card,panels:window.WanderMapLayout.visiblePanels()});map.fitBounds(L.latLngBounds(bounds),{paddingTopLeft:frame.paddingTopLeft,paddingBottomRight:frame.paddingBottomRight,maxZoom:15,animate:true});}
    stopRouteAnimation=visuals.animate(segments);
   }
   const palette=visuals.palette(model);if(palette?.then)return palette.then(render);render(palette);
@@ -167,9 +167,12 @@
   const {message,bubble}=makeMessage('assistant');bubble.classList.add('plan-bubble');
   bubble.append(text('p','plan-reply',model.plans.length>1?'为你整理了两种出发方式，看看哪一种更合心意。':'行程已经整理好了，点开看看这一路的安排。'));
   const preview=text('button','plan-preview','');preview.type='button';preview.setAttribute('aria-expanded','false');preview.setAttribute('aria-controls','plan-detail');
+  const icon=document.createElement('span');icon.className='plan-preview-icon';icon.setAttribute('aria-hidden','true');
+  icon.innerHTML='<svg viewBox="0 0 24 24"><path d="M6.7 17.8c4.8 0 4.8-11.6 10.6-11.6"/><circle cx="6.4" cy="18" r="2.3"/><circle class="accent" cx="17.6" cy="6" r="2.3"/></svg>';
   const previewMeta=text('span','plan-preview-meta',model.plans.length>1?'两种提案 · A / B':'你的专属规划');
   const previewTitle=text('strong','plan-preview-title',model.plans.length>1?'这一次，想怎样漫游？':active(model).itinerary.summary||'查看游玩规划');
-  const previewFooter=text('span','plan-preview-footer','查看完整行程  ↗');preview.append(previewMeta,previewTitle,previewFooter);bubble.append(preview);
+  const previewFooter=text('span','plan-preview-footer','查看完整行程  ↗');
+  const previewText=text('span','plan-preview-text','');previewText.append(previewMeta,previewTitle,previewFooter);preview.append(icon,previewText);bubble.append(preview);
   if(isExample(model))bubble.append(text('span','example-badge','示例行程 · 非真实活动'));
   const overlay=$('plan-detail');overlay.replaceChildren();overlay.hidden=true;
   const top=document.createElement('header');top.className='plan-detail-top';
@@ -187,7 +190,7 @@
    tabs.append(button);return button;
   });
   overlay.append(top,heading,tabs,scroll);
-  function choose(id,{fit=true,capture=true}={}){
+  function choose(id,{fit=true,capture=true,drawMap=true}={}){
    if(!model.plans.some(p=>p.plan_id===id))return;model.active_plan=id;
    const plan=active(model),byId=new Map(model.events.map(e=>[e.event_id,e]));panel.replaceChildren();
    buttons.forEach((button,i)=>{const selected=model.plans[i].plan_id===id;button.setAttribute('aria-selected',String(selected));button.tabIndex=selected?0:-1;button.classList.toggle('active',selected);});
@@ -209,7 +212,9 @@
    if(capture)window.WanderHistory?.capture();
   }
   preview.addEventListener('click',()=>{openDetail(overlay,preview);choose(model.active_plan,{fit:true,capture:false});scroll.scrollTo({top:0});back.focus({preventScroll:true});});
-  currentView={buttons,preview};choose(model.active_plan,{fit:true,capture:false});
+  // History hydration suppresses only this initial draw; explicit clicks must
+  // always restore the selected route, even when its selection hasn't changed.
+  currentView={buttons,preview};choose(model.active_plan,{fit:true,capture:false,drawMap});
   window.WanderActivities?.addPlanEvents(model);
   scrollMessages();return message;
  }

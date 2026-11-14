@@ -22,3 +22,17 @@ test('conversation reading order puts messages above input and history below inp
  assert(html.indexOf('id="messages"')<html.indexOf('id="chat-form"'));
  assert(html.indexOf('id="chat-form"')<html.indexOf('id="history-list"'));
 });
+
+test('route frame avoids expanded right panels and remains unchanged for offscreen panels',()=>{
+ const view={width:1440,height:900,card:{right:488,height:844}};
+ const panel={left:966,right:1412,top:86,bottom:528};
+ const f=frame({...view,panels:[panel]});
+ assert(f.left>=528);assert(f.left<1440-f.right);assert(f.top<900-f.bottom);
+ assert(1440-f.right<=panel.left-24||f.top>=panel.bottom+24||900-f.bottom<=panel.top-24);
+ assert.deepEqual(JSON.parse(JSON.stringify(frame({...view,panels:[{left:1450,right:1900,top:0,bottom:500}]}))),JSON.parse(JSON.stringify(frame(view))));
+});
+
+test('compact route frame can use map space below a right panel instead of a sliver beside it',()=>{
+ const panel={left:440,right:803,top:60,bottom:460},f=frame({width:823,height:880,card:{right:370,height:824},panels:[panel]});
+ assert(f.top>=484);assert(f.left>370);assert(823-f.left-f.right>300);assert(f.top+f.bottom<880);
+});

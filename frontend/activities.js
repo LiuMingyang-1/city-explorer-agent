@@ -29,14 +29,27 @@
  function refresh(){
   const merged=new Map([...feed,...planEvents].map(e=>[e.event_id,e]));groups=groupEvents([...merged.values()]).filter(group=>currentEvents(group.events).length);renderMap();
  }
+ const pinViews=new WeakMap();
+ function updatePin(wrap,group){
+  const view=pinViews.get(wrap);if(!view)return;
+  const event=present(currentEvents(group.events)[0]||group.events[0]),label=event.title+'，查看活动',meta=(event.category||'活动')+' · '+window.WanderPlans.price(event);
+  if(view.title.textContent!==event.title)view.title.textContent=event.title;
+  if(view.meta.textContent!==meta)view.meta.textContent=meta;
+  if(view.label!==label){view.button.setAttribute('aria-label',label);view.label=label;}
+  const coverKey=JSON.stringify([event.title,event.category,event.thumbnail_url,event.image_urls]);
+  if(view.coverKey!==coverKey){
+   const cover=window.WanderPlans.eventCover(event);cover.classList.add('activity-bubble-thumb');
+   view.cover.replaceChildren(cover);view.coverKey=coverKey;
+  }
+ }
  function pin(group){
-  const event=present(currentEvents(group.events)[0]||group.events[0]),wrap=document.createElement('div');wrap.className='activity-bubble-wrap';
-  const button=text('button','activity-bubble','');button.type='button';button.setAttribute('aria-label',event.title+'，查看活动');
-  const cover=window.WanderPlans.eventCover(event);cover.classList.add('activity-bubble-thumb');
+  const wrap=document.createElement('div');wrap.className='activity-bubble-wrap';
+  const button=text('button','activity-bubble','');button.type='button';
+  const cover=document.createElement('span');
   const copy=document.createElement('span');copy.className='activity-bubble-copy';
-  copy.append(text('strong','activity-bubble-title',event.title),text('span','activity-bubble-meta',(event.category||'活动')+' · '+window.WanderPlans.price(event)));
+  const title=text('strong','activity-bubble-title',''),meta=text('span','activity-bubble-meta','');copy.append(title,meta);
   button.append(cover,copy);const tip=text('span','activity-bubble-tip',''),anchor=text('span','activity-bubble-anchor','');tip.setAttribute('aria-hidden','true');anchor.setAttribute('aria-hidden','true');
-  wrap.append(button,tip,anchor);return wrap;
+  wrap.append(button,tip,anchor);pinViews.set(wrap,{button,cover,title,meta});updatePin(wrap,group);return wrap;
  }
  function layoutBubbles(items,{width,height,zoom=11,occupied=[]}){
   const boxes=[...occupied],result=new Map(),max=zoom>=15?20:zoom>=13?12:7,w=244,h=98;
@@ -172,5 +185,5 @@
  window.addEventListener('wander:viewport',viewportChanged);
  window.addEventListener('wander:reset',()=>{close();planEvents=[];refresh();});
  window.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('activity-detail').hidden)close();});
- window.WanderActivities={openEvents,openNearby,addPlanEvents,groupEvents,currentEvents,pin,layoutBubbles,close,reload:load};load();
+ window.WanderActivities={openEvents,openNearby,addPlanEvents,groupEvents,currentEvents,pin,updatePin,layoutBubbles,close,reload:load};load();
 })();
