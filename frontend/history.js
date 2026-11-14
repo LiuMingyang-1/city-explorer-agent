@@ -22,8 +22,12 @@
    window.localStorage.removeItem(BASE_KEY);
   }
  }catch{}
- let entries=loadEntries(),epoch=0,expanded=false;
+ let entries=loadEntries(),epoch=0,expanded=false,closing=false,closeTimer=0;
  const makeId=()=>window.crypto?.randomUUID?.()||Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
+ const still=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+ // Which entry each rendered row stands for — lets an interrupted exit run in
+ // reverse on the same nodes instead of rebuilding from scratch.
+ const rowMeta=new WeakMap();
  let activeId=makeId(),createdAt=Date.now();
  function safeMessages(messages){return (Array.isArray(messages)?messages:[]).filter(m=>m&&['user','assistant'].includes(m.role)&&typeof m.text==='string').slice(-60).map(m=>({role:m.role,text:m.text.slice(0,4000)}));}
  function loadEntries(){
@@ -59,9 +63,56 @@
   entries=[entry,...entries.filter(s=>s.id!==activeId)].sort((a,b)=>b.updatedAt-a.updatedAt).slice(0,MAX_SESSIONS);
   write();render();
  }
+ // Collapse keeps the expanded layout mounted while the rows sink and fade
+ // out; only after the exit settles is the class dropped and the collapsed
+ // list rebuilt. A fast re-expand reverses the same rows in place — they rise
+ // back from wherever they faded to, never vanishing mid-motion.
+ function finishClose(){
+  if(!closing)return;
+  closing=false;clearTimeout(closeTimer);
+  document.querySelector('.glass-card').classList.toggle('history-expanded',false);
+  $('messages').hidden=false;render(true);
+ }
  function setExpanded(value){
-  expanded=Boolean(value);document.querySelector('.glass-card').classList.toggle('history-expanded',expanded);
-  $('messages').hidden=expanded;$('more-history').setAttribute('aria-expanded',String(expanded));render();
+  value=Boolean(value);
+  // A programmatic collapse (open/newChat/setIdentity) abandons an in-flight
+  // exit immediately rather than waiting for the exit timer.
+  if(closing&&!value)return finishClose();
+  if(value===expanded)return render();
+  const card=document.querySelector('.glass-card');
+  expanded=value;$('more-history').setAttribute('aria-expanded',String(value));
+  if(value){
+   const list=$('history-list'),rows=list?[...list.children]:[],past=entries.filter(s=>s.id!==activeId);
+   const reversible=closing&&!still()&&rows.length===past.length&&past.every((e,i)=>{const m=rowMeta.get(rows[i]);return m?.id===e.id&&m?.title===e.title;});
+   closing=false;clearTimeout(closeTimer);card.classList.toggle('history-expanded',true);$('messages').hidden=true;
+   if(reversible){
+    rows.forEach((row,index)=>{
+     row.classList.remove('history-exit');
+     if(typeof getComputedStyle==='function'){
+      const from=getComputedStyle(row);
+      row.animate?.([{opacity:from.opacity,transform:from.transform==='none'?'translateY(0)':from.transform},{opacity:1,transform:'translateY(0)'}],{duration:220,delay:Math.min(index,5)*22,easing:'cubic-bezier(.22,.8,.32,1)',fill:'forwards'});
+     }
+    });
+    $('more-history').textContent='收起历史规划';$('more-history').disabled=!past.length;return;
+   }
+   render(!still());return;
+  }
+  const list=$('history-list'),rows=list?[...list.children]:[];
+  if(!rows.length||still()){
+   card.classList.toggle('history-expanded',false);$('messages').hidden=false;render();return;
+  }
+  // The exit is driven by WAAPI from each row's live computed style, so a row
+  // caught mid-enter keeps fading down from its in-flight opacity/transform —
+  // swapping animation/transition classes here would snap back to opaque
+  // first. Without WAAPI the teardown still defers on the timer; the rows
+  // simply stay static until it lands.
+  closing=true;render();
+  rows.forEach((row,index)=>{
+   row.classList.add('history-exit');
+   const from=getComputedStyle(row);
+   row.animate?.([{opacity:from.opacity,transform:from.transform==='none'?'translateY(0)':from.transform},{opacity:0,transform:'translateY(12px)'}],{duration:240,delay:Math.min(index,5)*22,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'});
+  });
+  closeTimer=setTimeout(finishClose,400);
  }
  function clearConversation(){
   epoch++;window.dispatchEvent(new Event('wander:reset'));
@@ -99,17 +150,24 @@
   const locationJob=entry.location&&Number.isFinite(entry.location.lat)&&Number.isFinite(entry.location.lng)?selectLocation(entry.location.lat,entry.location.lng,String(entry.location.name||'西安市'),13,false,entry.location.coordinateSystem||'WGS84',entry.location.wgs84):null;
   if(locationJob?.then)return locationJob.then(finish);finish();
  }
- function render(){
+ function render(animate=false){
   const list=$('history-list');if(!list)return;
-  list.replaceChildren();const past=entries.filter(s=>s.id!==activeId),visible=expanded?past:past.slice(0,2);
+  const past=entries.filter(s=>s.id!==activeId);
+  // While a collapse animation runs the exiting rows stay mounted; only the
+  // toggle's label and disabled state track the new (collapsed) state.
+  if(closing){$('more-history').textContent='更多历史规划';$('more-history').disabled=!past.length;return;}
+  list.replaceChildren();const visible=expanded?past:past.slice(0,2);
   if(!visible.length){const empty=document.createElement('p');empty.className='history-empty';empty.textContent='暂无历史规划';list.append(empty);}
   visible.forEach(entry=>{
    const row=document.createElement('button');row.type='button';row.className='history-entry';
    const date=new Date(entry.createdAt),time=document.createElement('span');time.className='history-date';
    time.textContent=String(date.getMonth()+1).padStart(2,'0')+'.'+String(date.getDate()).padStart(2,'0');
    const name=document.createElement('span');name.className='history-title';name.textContent=entry.title;
-   row.title=time.textContent+' '+entry.title;row.append(time,name);row.addEventListener('click',()=>open(entry.id));list.append(row);
+   row.title=time.textContent+' '+entry.title;row.append(time,name);row.addEventListener('click',()=>open(entry.id));rowMeta.set(row,{id:entry.id,title:entry.title});list.append(row);
   });
+  // Entering rows rise from below and fade in with a capped stagger — the
+  // whole visible list reads as one sheet springing up from the footer.
+  if(animate)[...list.children].forEach((row,index)=>{row.classList.add('history-enter');row.style.setProperty('--i',Math.min(index,6));});
   $('more-history').textContent=expanded?'收起历史规划':'更多历史规划';$('more-history').disabled=!past.length;
  }
  /**
