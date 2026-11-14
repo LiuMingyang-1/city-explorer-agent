@@ -1,9 +1,10 @@
 import type { DatabaseSync } from "node:sqlite";
 
 /**
- * 会话库表结构：users / sessions / session_records / runs / user_memory
- * 五表一次建齐，语义见 docs/architecture/sessions.md。全部 CREATE IF NOT
- * EXISTS，幂等；不做列迁移。
+ * 会话库表结构：users / sessions / session_records / runs / user_memory /
+ * auth_credentials / auth_sessions 七表一次建齐，语义见
+ * docs/architecture/sessions.md。全部 CREATE IF NOT EXISTS，幂等；
+ * 列变更走下方幂等 ALTER。
  *
  * 约束要点：
  * - kind='main' 是用户面对话会话（每用户可有多个，对话即 main）；
@@ -101,10 +102,34 @@ CREATE TABLE IF NOT EXISTS user_memory (
   version INTEGER NOT NULL DEFAULT 0,
   updated_at TEXT NOT NULL
 );
+
+-- 可选登录：username 大小写不敏感唯一；password_hash 为
+-- scrypt$N$r$p$salt$hash 编码（node:crypto scrypt，见 src/web/auth.ts）。
+CREATE TABLE IF NOT EXISTS auth_credentials (
+  user_id TEXT PRIMARY KEY REFERENCES users(user_id),
+  username TEXT NOT NULL UNIQUE COLLATE NOCASE,
+  password_hash TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+-- 登录会话：cookie 携带随机 token，库里只存其 sha256；过期即无效，
+-- 读路径惰性清理（见 src/web/auth.ts resolveSession）。
+CREATE TABLE IF NOT EXISTS auth_sessions (
+  token_hash TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(user_id),
+  expires_at TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_auth_sessions_user
+  ON auth_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_auth_sessions_expiry
+  ON auth_sessions(expires_at);
 `;
 
 /**
- * 幂等建齐五表与索引；单事务，失败回滚。
+ * 幂等建齐七表与索引；单事务，失败回滚。
  * 老库兼容：历史版本在 sessions(user_id) WHERE kind='main' 上有
  * idx_sessions_main 部分唯一索引（且 users 带 main_session_id 死列，
  * SQLite 不易 DROP COLUMN，保留无害、代码不再引用）；这里 DROP 掉

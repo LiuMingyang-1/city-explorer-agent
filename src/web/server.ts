@@ -126,9 +126,9 @@ export interface WebServerParts {
 }
 
 /**
- * 同源组合：/api/chat 前缀与 /api/events、/api/memory → apiHandler
- * （http.ts 自带路由/方法/CORS 判断）；其余路径 → 静态文件。
- * URL 解析失败的畸形请求回 400。
+ * 同源组合：/api/chat 前缀与 /api/events、/api/memory、/api/login、
+ * /api/logout、/api/me → apiHandler（http.ts 自带路由/方法/CORS 判断）；
+ * 其余路径 → 静态文件。URL 解析失败的畸形请求回 400。
  */
 export function createWebRequestListener(parts: WebServerParts): RequestListener {
   const staticHandler = createStaticFileHandler(parts.staticRoot ?? FRONTEND_ROOT);
@@ -147,7 +147,10 @@ export function createWebRequestListener(parts: WebServerParts): RequestListener
     if (
       pathname.startsWith("/api/chat") ||
       pathname === "/api/events" ||
-      pathname === "/api/memory"
+      pathname === "/api/memory" ||
+      pathname === "/api/login" ||
+      pathname === "/api/logout" ||
+      pathname === "/api/me"
     ) {
       try {
         await parts.apiHandler(req, res);

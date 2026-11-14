@@ -45,6 +45,8 @@
 ```text
 users
   ├─ user_memory         （每用户一行：长期记忆文档 + 蒸馏游标）
+  ├─ auth_credentials    （可选登录：username UNIQUE NOCASE + scrypt 口令散列）
+  ├─ auth_sessions       （可选登录：token sha256 + expires_at，30 天惰性清理）
   └─ sessions            （kind=main 对话会话，每用户可有多个）
                            ├─ session_records （统一追加日志：message | compaction）
                            ├─ sessions        （kind=child，parent_session_id 递归成树）
@@ -379,7 +381,8 @@ first_kept 不小于上一条有效检查点的边界。**每条检查点都按�
 **本期（任务 02–04 + 评审修复）实现：**
 
 - `node:sqlite` 持久仓库：users/sessions/session_records/runs/user_memory
-  五表（user_memory 存跨会话蒸馏的长期记忆文档与游标）、
+  五表（user_memory 存跨会话蒸馏的长期记忆文档与游标；另有
+  auth_credentials/auth_sessions 两张可选登录表，见 src/web/auth.ts）、
   幂等建表（含老库 `idx_sessions_main` 索引 DROP 兼容）、
   全方法 userId 归属校验、`createUser` 幂等初始化与
   `createConversation` 多对话会话创建（对话即 main，每用户可有多个）、

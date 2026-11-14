@@ -13,15 +13,34 @@
  * - GET  /api/memory       → {content, updated_at}（无记录 content 空串、updated_at null）
  * - PUT  /api/memory       → {content, updated_at}（严格 {content} 入参，覆盖式更新）
  * - DELETE /api/memory     → 204（清除该 cookie 用户的记忆，幂等）
+ * - POST /api/login        → {user:{id,username,display_name}}（严格
+ *   {username,password} 入参；成功设 chat_session 登录会话 cookie，
+ *   请求附带的匿名 chat_uid 数据并入账号；400 参数非法、401 凭据错误
+ *   ——统一"用户名或密码错误"不区分哪一项、429 触发 IP+username 滑窗限流）
+ * - POST /api/logout       → 204（删服务端会话行并清 cookie，幂等）
+ * - GET  /api/me           → {authenticated:false} | {authenticated:true,user:{…}}
+ *   （登录探测，只读不签发任何 cookie）
  * - 会话不存在/跨用户/child → 404（stream 转为 error 事件），归档/租约忙 →
  *   409（stream 同转 error 事件）；其他路径 404，方法不符 405 + Allow，
  *   非 2xx 一律 {error:string}
  *
- * 安全边界见 identity.ts 顶部注释：匿名 cookie 是 bearer 凭证而非登录；
- * POST 校验 Origin 同源（或显式白名单），错误只回通用文案不泄内部细节。
+ * 身份解析顺序：有效 chat_session token → 登录账号 userId；否则 chat_uid
+ * 匿名 cookie（现状逻辑不变）。安全边界见 identity.ts 顶部注释：两类
+ * cookie 都是 bearer 凭证；POST 校验 Origin 同源（或显式白名单），
+ * 错误只回通用文案不泄内部细节。
  */
 import type { IncomingMessage, RequestListener, ServerResponse } from "node:http";
-import { CHAT_COOKIE_NAME, mintUserId, readUserIdCookie, userIdSetCookie } from "./identity.ts";
+import { createLoginRateLimiter, parseLoginBody } from "./auth.ts";
+import type { AuthAccount, AuthStore } from "./auth.ts";
+import {
+  CHAT_COOKIE_NAME,
+  mintUserId,
+  readSessionCookie,
+  readUserIdCookie,
+  sessionClearCookie,
+  sessionSetCookie,
+  userIdSetCookie,
+} from "./identity.ts";
 import {
   BODY_TOO_LARGE,
   isChatHistory,
@@ -46,6 +65,9 @@ const CHAT_PATH = "/api/chat";
 const STREAM_PATH = "/api/chat/stream";
 const EVENTS_PATH = "/api/events";
 const MEMORY_PATH = "/api/memory";
+const LOGIN_PATH = "/api/login";
+const LOGOUT_PATH = "/api/logout";
+const ME_PATH = "/api/me";
 const DEFAULT_MAX_BODY_BYTES = 16 * 1024;
 const MAX_MESSAGE_CHARS = 1000;
 
@@ -66,6 +88,15 @@ export interface WebChatOptions {
   onError?: (error: unknown, req: IncomingMessage) => void;
   /** SSE `: ping` 心跳间隔（毫秒）；默认 15_000，0 关闭。 */
   sseHeartbeatMs?: number;
+  /**
+   * 可选登录存储（./auth.ts 的 createAuthStore）。缺省时 /api/login 回
+   * 503，/api/logout 幂等清 cookie，/api/me 恒 authenticated:false，其余接口不变。
+   */
+  auth?: AuthStore;
+  /** 登录会话 cookie 加 Secure（https 部署）；默认不加（本地 http）。 */
+  secureCookie?: boolean;
+  /** 登录限流参数（IP+username 内存滑窗）；默认 10 次失败 / 5 分钟。 */
+  loginRateLimit?: { windowMs?: number; maxFailures?: number };
 }
 
 /**
@@ -94,6 +125,9 @@ const ROUTES: Record<string, readonly string[]> = {
   [STREAM_PATH]: ["POST"],
   [EVENTS_PATH]: ["GET"],
   [MEMORY_PATH]: ["GET", "PUT", "DELETE"],
+  [LOGIN_PATH]: ["POST"],
+  [LOGOUT_PATH]: ["POST"],
+  [ME_PATH]: ["GET"],
 };
 
 export function createChatHandler(
@@ -106,6 +140,9 @@ export function createChatHandler(
   const mint = options.mintUserId ?? mintUserId;
   const onError = options.onError ?? ((error: unknown) => console.error("[web/chat]", error));
   const sseHeartbeatMs = options.sseHeartbeatMs ?? 15_000;
+  const auth = options.auth;
+  const secureCookie = options.secureCookie ?? false;
+  const loginLimiter = createLoginRateLimiter(options.loginRateLimit);
   // StreamSendOptions 相对契约参数只多可选字段 ⇒ service 可直接按
   // StreamService 使用（扩展字段在真实实现里生效，stub 忽略亦无碍）。
   const streamService: StreamService = service;
@@ -139,6 +176,9 @@ export function createChatHandler(
     if (pathname === CHAT_PATH) return chat(req, res);
     if (pathname === STREAM_PATH) return chatStream(req, res);
     if (pathname === EVENTS_PATH) return events(req, res);
+    if (pathname === LOGIN_PATH) return login(req, res);
+    if (pathname === LOGOUT_PATH) return logout(req, res);
+    if (pathname === ME_PATH) return me(req, res);
     return memory(req, res);
   }
 
@@ -381,8 +421,98 @@ export function createChatHandler(
     }
   }
 
-  /** 取 cookie 里的合法 userId，否则铸新值并挂 Set-Cookie（先于响应发出）。 */
+  /**
+   * POST /api/login：校验凭据 → 并入匿名身份 → 发登录会话 cookie。
+   * 校验链与 /api/chat 同序：Origin → media-type → body 上限 → 严格入参；
+   * 之后限流（IP+username 滑窗，只看失败次数）→ 凭据。401 统一文案不
+   * 区分"无此用户"与"密码错"（auth 层也对时间侧信道做了拉平）。
+   */
+  async function login(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    if (!isSameOriginRequest(req, allowedOrigins)) {
+      return fail(req, res, 403, "origin not allowed");
+    }
+    if (mediaType(req) !== "application/json") {
+      return fail(req, res, 415, "content type must be application/json");
+    }
+    try {
+      const body = await readRequestBody(req, maxBodyBytes);
+      if (body === BODY_TOO_LARGE) return fail(req, res, 413, "request body too large");
+      const parsed = parseLoginBody(body);
+      if ("error" in parsed) return fail(req, res, 400, parsed.error);
+      if (auth === undefined) return fail(req, res, 503, "authentication unavailable");
+      if (res.destroyed) return;
+      const limitKey = `${req.socket.remoteAddress ?? "unknown"}\n${parsed.username.toLowerCase()}`;
+      if (!loginLimiter.allow(limitKey)) {
+        return fail(req, res, 429, "too many attempts, try again later");
+      }
+      const account = auth.verifyLogin(parsed.username, parsed.password);
+      if (account === undefined) {
+        loginLimiter.recordFailure(limitKey);
+        return fail(req, res, 401, "用户名或密码错误");
+      }
+      loginLimiter.clear(limitKey);
+      // 匿名身份并入：请求附带的 chat_uid 名下数据整体归到登录账号。
+      const anonymousId = readUserIdCookie(req.headers.cookie, cookieName);
+      if (anonymousId !== undefined && anonymousId !== account.userId) {
+        auth.mergeAnonymousUser(anonymousId, account.userId);
+      }
+      // 重复登录替换旧会话：旧 token 行即删，不等到期惰性清理。
+      const oldToken = readSessionCookie(req.headers.cookie);
+      if (oldToken !== undefined) auth.deleteSession(oldToken);
+      const { token } = auth.createSession(account.userId);
+      sendJson(req, res, 200, { user: accountView(account) }, {
+        "Set-Cookie": sessionSetCookie(token, secureCookie),
+      });
+    } catch (error) {
+      failServiceError(req, res, error);
+    }
+  }
+
+  /**
+   * POST /api/logout：删当前 token 的会话行并清 cookie，幂等——
+   * 未登录/无 token 也回 204（结果状态一致）。只清登录会话，chat_uid
+   * 匿名 cookie 原样保留（登出后回落匿名身份）。
+   */
+  function logout(req: IncomingMessage, res: ServerResponse): void {
+    if (!isSameOriginRequest(req, allowedOrigins)) {
+      return fail(req, res, 403, "origin not allowed");
+    }
+    req.resume(); // 无 body 接口：附带了也丢弃，保持连接可复用（同 deleteMemory）。
+    const token = readSessionCookie(req.headers.cookie);
+    if (token !== undefined && auth !== undefined) auth.deleteSession(token);
+    sendNoContent(req, res, 204, { "Set-Cookie": sessionClearCookie(secureCookie) });
+  }
+
+  /** GET /api/me：登录探测，只读——不签发任何 cookie、不建任何行。 */
+  function me(req: IncomingMessage, res: ServerResponse): void {
+    const account = resolveSessionUser(req);
+    if (account === undefined) return sendJson(req, res, 200, { authenticated: false });
+    sendJson(req, res, 200, { authenticated: true, user: accountView(account) });
+  }
+
+  /** chat_session token → 登录账号；未配置 auth/无 token/无效过期 → undefined。 */
+  function resolveSessionUser(req: IncomingMessage): AuthAccount | undefined {
+    if (auth === undefined) return undefined;
+    const token = readSessionCookie(req.headers.cookie);
+    return token === undefined ? undefined : auth.resolveSession(token);
+  }
+
+  /** 登录账号的线上契约视图（snake_case）。 */
+  function accountView(account: AuthAccount): {
+    id: string;
+    username: string;
+    display_name: string | null;
+  } {
+    return { id: account.userId, username: account.username, display_name: account.displayName };
+  }
+
+  /**
+   * 身份解析：有效 chat_session → 登录 userId；否则取 cookie 里的合法
+   * 匿名 userId，仍无则铸新值并挂 Set-Cookie（先于响应发出）。
+   */
   function ensureUser(req: IncomingMessage, res: ServerResponse): string {
+    const account = resolveSessionUser(req);
+    if (account !== undefined) return account.userId;
     const existing = readUserIdCookie(req.headers.cookie, cookieName);
     if (existing !== undefined) return existing;
     const userId = mint();
@@ -455,12 +585,18 @@ export function createChatHandler(
   }
 
   /** 204 响应：无 body 故无 Content-Type；缓存/嗅探/CORS 头与 JSON 响应同口径。 */
-  function sendNoContent(req: IncomingMessage, res: ServerResponse, status: number): void {
+  function sendNoContent(
+    req: IncomingMessage,
+    res: ServerResponse,
+    status: number,
+    headers: Record<string, string> = {},
+  ): void {
     if (res.destroyed) return;
     res.writeHead(status, {
       "Cache-Control": "no-store",
       "X-Content-Type-Options": "nosniff",
       ...corsHeaders(req),
+      ...headers,
     });
     res.end();
   }
