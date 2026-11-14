@@ -56,7 +56,10 @@ npm run check:frontend # 前端脚本语法检查
 `opacity`/`transform`/高度，以及 `expanded`/`aria-expanded`/
 `#messages.hidden`。采样序列原样写入 `metrics.json`（`expand-series`、
 `collapse-series`、`p2A-reversal-series`、`p2B-enterExit-series`、
-`narrow-expand-series` 等），签名提取：
+`narrow-expand-series` 等）。逐样本行比较一律带双截止：`expanded`
+边界（`expanded===false` 即退出阶段结束）+ `dataset.p2n` **同节点门限**
+（样本对节点标记不一致即跳过 —— 旧版无门限曾把 teardown 后重建行
+的正常入场上升 0→.197 误判为回跳）。签名提取：
 
 - `fade`：任一行或容器出现 0.05<opacity<0.95 的采样；
 - `slide`：同序号行的 bounding y 逐样本下降（展开上移）；

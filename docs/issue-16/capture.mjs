@@ -264,6 +264,7 @@ try {
   // frame (no opacity drop to 0, no ty reset toward the enter offset)
   const instBad = sRev.length ? preRev.rows.map((pre, k) => {
     const cur = sRev[0].v.rows[k]; if (!cur) return null;
+    if (cur.n !== pre.n) return {row: k, nodeChanged: [pre.n, cur.n]}; // different node = not a reversal frame
     const dO = cur.o - pre.o, dTy = cur.ty - pre.ty;
     return (dO < -0.08 || dO > 0.35 || Math.abs(dTy) > 5) ? {row: k, dO: +dO.toFixed(3), dTy: +dTy.toFixed(2), pre: {o: pre.o, ty: pre.ty}} : null;
   }).filter(Boolean) : [{noSamples: true}];
@@ -274,6 +275,7 @@ try {
   for (let i = 1; i < sRev.length; i++) {
     const a = sRev[i - 1].v.rows, b = sRev[i].v.rows;
     for (let k = 0; k < Math.min(a.length, b.length); k++) {
+      if (a[k].n == null || a[k].n !== b[k].n) continue; // same-node gate
       if (b[k].o < a[k].o - 0.03) revBad.push({t: sRev[i].t, row: k, oDrop: [a[k].o, b[k].o]});
       if (Math.abs(b[k].ty) > Math.abs(a[k].ty) + 1) revBad.push({t: sRev[i].t, row: k, tyAway: [a[k].ty, b[k].ty]});
     }
@@ -295,6 +297,11 @@ try {
   await clickMore(); await sleep(1000);           // finish the reversal's expand, then collapse & settle
   await waitFor(`!document.querySelector('.glass-card').classList.contains('history-expanded')`);
   await clickMore(); await sleep(170);            // expand, mid-enter
+  // Mark the exiting rows so per-index comparisons can prove SAME NODE —
+  // rebuilt collapsed rows carry no mark and are never compared (the old
+  // unmarked loop once flagged a rebuilt row's enter rise 0->.197 as a
+  // "bounce" at the teardown boundary).
+  await evaluate(`[...document.querySelectorAll('#history-list .history-entry')].forEach((r,i)=>{r.dataset.p2n='e'+i})`);
   const preB = await evaluate(HIST);
   metrics['p2B-preExit'] = preB;
   await clickMore();                              // collapse mid-enter
@@ -307,6 +314,9 @@ try {
     if (sB[i].v.expanded === false) break;
     const a = sB[i - 1].v.rows, b = sB[i].v.rows;
     for (let k = 0; k < Math.min(a.length, b.length); k++) {
+      // Same-node gate: only compare when both samples name the same
+      // marked element; a different/new node is outside the exit flight.
+      if (a[k].n == null || a[k].n !== b[k].n) continue;
       if (b[k].o > a[k].o + 0.03) exitBad.push({t: sB[i].t, row: k, oRise: [a[k].o, b[k].o]});
       if (Math.abs(b[k].ty - 12) > Math.abs(a[k].ty - 12) + 0.6) exitBad.push({t: sB[i].t, row: k, tyAway: [a[k].ty, b[k].ty]});
     }
