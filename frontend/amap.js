@@ -1,7 +1,7 @@
 'use strict';
 // Native AMap provider. Existing GPS/OSM samples retain their source coordinates.
 (() => {
- let native,config,onSelect,selectedMarker,ready=false,selectionEpoch=0,routeEpoch=0,searchEpoch=0;
+ let native,config,onSelect,selectedMarker,ready=false,selectionEpoch=0,routeEpoch=0,searchEpoch=0,restoreScreen=null;
  let routes=[],scenes=[],currentNames=[],selectedPosition=null,selectedName='',activityMarkers=[],activitiesEpoch=0;
  const converted=new Map(),addresses=new Map();
  const valid=(lat,lng)=>typeof lat==='number'&&typeof lng==='number'&&Number.isFinite(lat)&&Number.isFinite(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180;
@@ -10,6 +10,11 @@
  function call(invoke,{errorFirst=false}={}){return new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('高德地图服务超时')),10000);try{invoke((status,result)=>{clearTimeout(timer);if(errorFirst?status==null:status==='complete')resolve(result);else reject(new Error('高德地图服务暂不可用'));});}catch{clearTimeout(timer);reject(new Error('高德地图服务暂不可用'));}});}
  function loadSDK(jsKey,serviceHost){return new Promise((resolve,reject)=>{
   window._AMapSecurityConfig={serviceHost:new URL(serviceHost,window.location.href).href};
+ // The SDK misdetects WebGL on capable browsers (e.g. Retina DPR quirks, GPU blocklist) and would rasterize the basemap; this forces the vector path so features/showLabel still apply.
+ window.forceWebGL=true;
+ // Safari's check also rejects screens whose long edge×DPR exceeds 4096, which forceWebGL cannot bypass; lend the SDK a small screen until the renderer is chosen.
+ try{const ua=typeof navigator==='undefined'?'':navigator.userAgent,safariUA=/safari/i.test(ua)&&!/chrom(e|ium)|android|edg/i.test(ua);
+ if(safariUA&&Math.max(screen.width,screen.height)*Math.min(2,devicePixelRatio||1)>4096){const real=window.screen;window.screen=Object.create(real,{width:{value:1024},height:{value:640},availWidth:{value:1024},availHeight:{value:640}});restoreScreen=()=>{window.screen=real;restoreScreen=null;};}}catch{}
   const script=document.createElement('script'),timer=setTimeout(()=>reject(new Error('高德组件加载超时')),15000);
   script.src='https://webapi.amap.com/maps?v=2.0&key='+encodeURIComponent(jsKey);script.async=true;
   script.onerror=()=>{clearTimeout(timer);reject(new Error('高德组件加载失败'));};
@@ -72,7 +77,13 @@
   if(!config.enabled)return false;onSelect=callback;
   await loadSDK(config.jsKey,config.serviceHost);
   const inputs=[[108.95,34.27],...places.map(p=>[p.lng,p.lat])],positions=await convert(inputs);
-  native=new window.AMap.Map('map',{center:positions[0],zoom:11,viewMode:'2D',mapStyle:config.style,features:['bg','road'],showLabel:false,resizeEnable:true});
+  native=new window.AMap.Map('map',{center:positions[0],zoom:11,viewMode:'2D',mapStyle:config.style,features:['bg','road'],showLabel:false,showBuildingBlock:false,isHotspot:false,resizeEnable:true});
+  restoreScreen?.();
+  // The DOM fallback renderer bakes labels into raster tiles and ignores features/showLabel/mapStyle; the quiet basemap serves those browsers instead.
+  if(native.isDOMMode?.()||native.baseRender==='d'){try{native.destroy();}catch{}native=null;return false;}
+  // A style applied asynchronously can reset constructor flags; re-assert them when the basemap or its style finishes loading.
+  const quiet=()=>{try{native.setFeatures?.(['bg','road']);native.set?.('showLabel',false);}catch{}};quiet();
+  native.on('complete',quiet);native.on('styleChanged',quiet);native.on('styleLoaded',quiet);
   // JS API 2 uses CSS positions. A control failure must not discard the map.
   try{native.addControl(new window.AMap.ToolBar({position:{right:'28px',bottom:'65px'}}));}catch{}
   places.forEach((place,index)=>{

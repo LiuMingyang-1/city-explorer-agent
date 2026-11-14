@@ -27,38 +27,46 @@ const mapLayoutSource=readFileSync(new URL('../frontend/map-layout.js',import.me
 const plansSource = readFileSync(new URL('../frontend/plans.js', import.meta.url), 'utf8');
 const transportSource = readFileSync(new URL('../frontend/transport.js', import.meta.url), 'utf8');
 const chatSource = readFileSync(new URL('../frontend/chat.js', import.meta.url), 'utf8');
+const authSource = readFileSync(new URL('../frontend/auth.js', import.meta.url), 'utf8');
 export function saved(id: string, day: number) {
   return { id, createdAt: new Date(2026, 10, day).getTime(), updatedAt: day, title: `规划 ${day}`,
     messages: [{ role: 'user', text: `出游 ${day}` }, { role: 'assistant', text: '已安排' }], sessionId: id };
 }
-export function setup({ entries = [] as ReturnType<typeof saved>[], blocked = false, api = false, mock = null as string | null } = {}) {
+export function setup({ entries = [] as ReturnType<typeof saved>[], pending = [] as ReturnType<typeof saved>[], blocked = false, api = false, mock = null as string | null, auth = false } = {}) {
   const elements = new Map<string, Element>();
   const $ = (id: string) => { if (!elements.has(id)) elements.set(id, new Element()); return elements.get(id)!; };
-  let stored = JSON.stringify(entries);
+  const historyBase = 'wander.chat-history.v1' + (mock ? '.demo' : '');
+  const storage = new Map<string, string>([[historyBase, JSON.stringify(entries)]]);
+  if (pending.length) storage.set(historyBase + '.pending', JSON.stringify(pending));
   const window = Object.assign(new EventTarget(), {
     crypto: { randomUUID }, location: {search: mock ? '?mock='+mock : ''}, WANDER_CONFIG: {mockDelay:0},
     localStorage: {
-      getItem() { if (blocked) throw new Error('blocked'); return stored; },
-      setItem(_key: string, value: string) { if (blocked) throw new Error('blocked'); stored = value; },
+      getItem(key: string) { if (blocked) throw new Error('blocked'); return storage.get(key) ?? null; },
+      setItem(key: string, value: string) { if (blocked) throw new Error('blocked'); storage.set(key, value); },
+      removeItem(key: string) { storage.delete(key); },
     },
   });
   const state = { messages: [] as { role: string; text: string }[], busy: false,
     sessionId: null as string | null, latestPlan: null, routeNames: [], location: { lat: 34.27, lng: 108.95, name: '西安市' } };
-  const requests: { body: Record<string, unknown>; signal: AbortSignal; finish: (value: object) => void }[] = [];
+  const requests: { url: string; body: Record<string, unknown>; signal: AbortSignal; finish: (value: object) => void }[] = [];
   const context = vm.createContext({ window, state, $, Event, AbortController, console, URL, URLSearchParams, TextDecoder, DOMException,
     document: { createElement: () => new Element(), querySelector: () => $('card') },
     map: null, routeLayer: null, updatePlaceMarkers() {}, updateSendButton() {},
     selectLocation() {}, scrollMessages() {}, matchMedia: () => ({ matches: true }),
     setTimeout: (callback: () => void, ms: number) => {if(ms<=500)queueMicrotask(callback);return 0;}, clearTimeout() {},
     appendMessage(role: string, text: string) { state.messages.push({ role, text }); },
-    fetch(_url: string, options: { body: string; signal: AbortSignal }) {
-      return new Promise(resolve => requests.push({ body: JSON.parse(options.body), signal: options.signal,
-        finish: value => resolve({ ok: true, json: async () => value }) }));
+    fetch(url: string, options: { body?: string; signal?: AbortSignal } = {}) {
+      return new Promise(resolve => requests.push({ url, body: options.body === undefined ? {} : JSON.parse(options.body), signal: options.signal as AbortSignal,
+        finish: value => resolve({ ok: true, status: 200, json: async () => value }) }));
     },
   });
   vm.runInContext(mapLayoutSource,context);
   if (api) { vm.runInContext(plansSource, context);vm.runInContext(transportSource, context);vm.runInContext(chatSource, context); }
   vm.runInContext(historySource, context);
-  return { $, state, context, requests, stored: () => JSON.parse(stored), run: (code: string) => vm.runInContext(code, context) };
+  if (auth) vm.runInContext(authSource, context);
+  // Without the auth module nothing resolves identity: settle to guest like
+  // an instantly-answered anonymous /api/me, flushing the pending bucket.
+  else vm.runInContext('window.WanderHistory.setIdentity("guest")', context);
+  return { $, state, context, requests, storage, stored: (key = historyBase + '.guest') => JSON.parse(storage.get(key) ?? '[]'), run: (code: string) => vm.runInContext(code, context) };
 }
 

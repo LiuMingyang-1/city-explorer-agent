@@ -5,7 +5,7 @@ import { pathToFileURL } from "node:url";
 import { createPersistentPlanner } from "../agent/session.ts";
 import type { PlannerSession } from "../agent/session.ts";
 import { loadConfig } from "../config.ts";
-import { createSqliteEventRepository } from "../data/sqlite.ts";
+import { createEventRepository } from "../data/delivery.ts";
 import { createSqliteSessionRepository } from "../session/sqlite.ts";
 import type { CliIO } from "./loop.ts";
 import { runTurns } from "./loop.ts";
@@ -60,7 +60,7 @@ export async function main(): Promise<void> {
       `活动库不存在：${config.dbPath}\n先运行 \`npm run seed\` 生成模拟活动数据。`,
     );
   }
-  const repository = createSqliteEventRepository(config.dbPath);
+  const repository = createEventRepository(config.dbPath);
   const sessions = createSqliteSessionRepository(
     config.sessionDbPath ?? resolve("data/sessions.db"),
   );
@@ -69,7 +69,9 @@ export async function main(): Promise<void> {
     const probe = await repository.search({});
     if (probe.length === 0) {
       throw new Error(
-        `活动库为空：${config.dbPath}\n运行 \`npm run seed\` 写入模拟活动（会重建 events 表数据）。`,
+        repository.collectionDelivery
+          ? `采集交付库当前没有可发现的活动（全部未通过新鲜度核验）：${config.dbPath}`
+          : `活动库为空：${config.dbPath}\n运行 \`npm run seed\` 写入模拟活动（会重建 events 表数据）。`,
       );
     }
     planner = await createPersistentPlanner({
@@ -86,7 +88,8 @@ export async function main(): Promise<void> {
     io.err(
       `已连接 ${config.provider}/${config.model}；活动库 ${config.dbPath}、` +
         `会话库 ${config.sessionDbPath ?? "data/sessions.db"}` +
-        `（内容为模拟数据；本地用户 ${config.userId ?? "local"}）。`,
+        `（${repository.collectionDelivery ? "采集交付的真实数据" : "内容为模拟数据"}；` +
+          `本地用户 ${config.userId ?? "local"}）。`,
     );
     io.err(
       config.sessionId

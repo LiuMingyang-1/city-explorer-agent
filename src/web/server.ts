@@ -19,8 +19,9 @@ import { createServer } from "node:http";
 import { dirname, extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { ExplorerConfig } from "../config.ts";
+import { createEventRepository } from "../data/delivery.ts";
+import type { ReadableEventRepository } from "../data/delivery.ts";
 import type { EventRepository } from "../data/repository.ts";
-import { createSqliteEventRepository } from "../data/sqlite.ts";
 
 /** 默认静态根：仓库内 frontend/（按本文件位置推导，与 cwd 无关）。 */
 export const FRONTEND_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../../frontend");
@@ -125,9 +126,9 @@ export interface WebServerParts {
 }
 
 /**
- * 同源组合：/api/chat 前缀与 /api/events、/api/memory → apiHandler
- * （http.ts 自带路由/方法/CORS 判断）；其余路径 → 静态文件。
- * URL 解析失败的畸形请求回 400。
+ * 同源组合：/api/chat 前缀与 /api/events、/api/memory、/api/login、
+ * /api/logout、/api/me → apiHandler（http.ts 自带路由/方法/CORS 判断）；
+ * 其余路径 → 静态文件。URL 解析失败的畸形请求回 400。
  */
 export function createWebRequestListener(parts: WebServerParts): RequestListener {
   const staticHandler = createStaticFileHandler(parts.staticRoot ?? FRONTEND_ROOT);
@@ -146,7 +147,10 @@ export function createWebRequestListener(parts: WebServerParts): RequestListener
     if (
       pathname.startsWith("/api/chat") ||
       pathname === "/api/events" ||
-      pathname === "/api/memory"
+      pathname === "/api/memory" ||
+      pathname === "/api/login" ||
+      pathname === "/api/logout" ||
+      pathname === "/api/me"
     ) {
       try {
         await parts.apiHandler(req, res);
@@ -209,23 +213,27 @@ export function webListenOptions(env: NodeJS.ProcessEnv = process.env): WebListe
 }
 
 /** 打开活动库（fail-fast）：文件缺失只提示 npm run seed，绝不自动写入。 */
-export function openEventsRepository(config: Pick<ExplorerConfig, "dbPath">): EventRepository {
+export function openEventsRepository(
+  config: Pick<ExplorerConfig, "dbPath">,
+): ReadableEventRepository {
   if (!existsSync(config.dbPath)) {
     throw new Error(
       `活动库不存在：${config.dbPath}\n先运行 \`npm run seed\` 生成模拟活动数据。`,
     );
   }
-  return createSqliteEventRepository(config.dbPath);
+  return createEventRepository(config.dbPath);
 }
 
-/** 启动探活：库里一条活动都没有时提示 seed（与 CLI 入口同口径）。 */
+/** 启动探活：库里一条可发现活动都没有时拒绝启动；交付库不提示 seed（seed 对其拒绝执行）。 */
 export async function assertEventsNonEmpty(
-  repository: EventRepository,
+  repository: EventRepository & { collectionDelivery?: boolean },
   dbPath: string,
 ): Promise<void> {
   if ((await repository.search({})).length === 0) {
     throw new Error(
-      `活动库为空：${dbPath}\n运行 \`npm run seed\` 写入模拟活动（会重建 events 表数据）。`,
+      repository.collectionDelivery
+        ? `采集交付库当前没有可发现的活动（全部未通过新鲜度核验）：${dbPath}`
+        : `活动库为空：${dbPath}\n运行 \`npm run seed\` 写入模拟活动（会重建 events 表数据）。`,
     );
   }
 }

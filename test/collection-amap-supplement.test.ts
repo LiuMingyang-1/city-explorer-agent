@@ -1,7 +1,7 @@
 import{test}from"node:test";import assert from"node:assert/strict";
-import{mkdirSync,rmSync,readFileSync,existsSync}from"node:fs";import{randomUUID,createHash}from"node:crypto";import{DatabaseSync}from"node:sqlite";
+import{mkdirSync,rmSync,readFileSync}from"node:fs";import{randomUUID,createHash}from"node:crypto";import{DatabaseSync}from"node:sqlite";
 import{locatedFixture}from"./collection-downstream-fixture.ts";import{prepareCollection}from"../src/collection/preparation.ts";
-import{initializeCollectionDatabase,writeCollectionDatabase,inspectCollectionDatabase}from"../src/collection/database.ts";
+import{initializeCollectionDatabase,writeCollectionDatabase,inspectCollectionDatabase,acquireExclusiveLock}from"../src/collection/database.ts";
 import{planAmapSupplement,applyAmapSupplement,planAmapTimeRepairs}from"../src/collection/amap-supplement.ts";
 test("AMap supplement preserves activities, journals changes and rolls back on failure",async()=>{
   const root=`.local-data/amap-supplement-test-${randomUUID()}`,path=root+"/events.db";mkdirSync(root,{recursive:true});
@@ -15,7 +15,8 @@ test("AMap supplement preserves activities, journals changes and rolls back on f
     const raw={id:item.location.poi_id,name:"文化展厅",location:"108.95,34.23",pname:"陕西省",cityname:"西安市",adname:"雁塔区",address:"高德新址",business:{keytag:"4A景区",opentime_week:"周一至周日 09:00-17:00",cost:"99"},photos:[{url:"http://store.is.autonavi.com/test"}]};
     const plan=planAmapSupplement({baseline:{sha256:before,rows},pois:[raw],hours:{},images:{"https://store.is.autonavi.com/test":{ok:true,url:"https://store.is.autonavi.com/test"}},asOf});
     assert.equal(plan.updates[0].after.category,"4A");assert.equal(plan.updates[0].after.budget_min,2000);assert.equal(plan.updates[0].after.time_status,"complete");
-    assert.throws(()=>applyAmapSupplement(path,plan,{batchId:"failed",beforeCommit:()=>{throw Error("injected");}}),/injected/);assert.equal(hash(),before);assert(!existsSync(path+".task.lock"));
+    assert.throws(()=>applyAmapSupplement(path,plan,{batchId:"failed",beforeCommit:()=>{throw Error("injected");}}),/injected/);assert.equal(hash(),before);
+    for(const suffix of [".task.lock",".collection-write.lock"])acquireExclusiveLock(path+suffix,"HELD")();
     const result=applyAmapSupplement(path,plan,{batchId:"enriched"});assert.equal(result.records,1);
     const check=new DatabaseSync(path,{readOnly:true});try{
       assert.deepEqual({...check.prepare("SELECT * FROM events WHERE record_type='activity'").get()},{...rows.find(r=>r.record_type==="activity")});

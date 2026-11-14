@@ -77,6 +77,18 @@ export interface ExplorerConfig {
    * ≤ 阈值选 walking 算路，否则 transit。手工构造的 config 可省略。
    */
   routeTransitThresholdM?: number;
+  /**
+   * DeepSeek 联网搜索 key（EXPLORER_WEB_SEARCH_KEY；缺省回退夜间采集共用的
+   * DEEPSEEK_API_KEY，字段本身独立）。缺省/空白 → undefined，不挂
+   * web_search 工具，不影响规划。手工构造的 config 可省略。
+   */
+  webSearchKey?: string;
+  /**
+   * https 部署时为登录会话 cookie 加 Secure（EXPLORER_SECURE_COOKIE=1）；
+   * 本地 http 开发缺省不加（http 下浏览器不保存 Secure cookie）。
+   * 手工构造的 config 可省略（按不加处理）。
+   */
+  secureCookie?: boolean;
 }
 
 /** 读取 EXPLORER_* 环境配置并做基本检查；不发起模型请求。 */
@@ -141,6 +153,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ExplorerConfig
       "EXPLORER_ROUTE_TRANSIT_THRESHOLD_M",
       3000,
     ),
+    webSearchKey: env.EXPLORER_WEB_SEARCH_KEY?.trim() || env.DEEPSEEK_API_KEY?.trim() || undefined,
+    secureCookie: env.EXPLORER_SECURE_COOKIE?.trim() === "1",
   };
 }
 

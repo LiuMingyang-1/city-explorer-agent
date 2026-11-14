@@ -2,9 +2,11 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {mkdirSync,rmSync,statSync,existsSync} from "node:fs";
 import {randomUUID} from "node:crypto";
-import {join} from "node:path";
+import {spawnSync} from "node:child_process";
+import {join,resolve} from "node:path";
 import {DatabaseSync} from "node:sqlite";
 import {initializeCollectionDatabase,inspectCollectionDatabase,writeCollectionDatabase,collectionDatabasePath,correctCollectionTimes} from "../src/collection/database.ts";
+import {acquireExclusiveLock} from "../src/collection/lock.ts";
 import {locatedFixture} from "./collection-downstream-fixture.ts";
 import {prepareCollection} from "../src/collection/preparation.ts";
 import {publishRelease} from "../src/collection/releases.ts";
@@ -39,8 +41,32 @@ test("failed transactions roll back events, metadata and receipts together",asyn
   const f=folder();try{
     await initializeCollectionDatabase(f.path);const a=await prepared("atomic:a"),b=await prepared("atomic:b");writeCollectionDatabase(f.path,a.prepared,{batchId:"first",asOf:a.asOf});const before=inspectCollectionDatabase(f.path);
     assert.throws(()=>writeCollectionDatabase(f.path,b.prepared,{batchId:"failed",asOf:b.asOf,beforeCommit:()=>{assert.equal(inspectCollectionDatabase(f.path).records,1);throw new Error("injected");}}),/injected/);
-    assert.deepEqual(inspectCollectionDatabase(f.path),before);assert(!existsSync(f.path+".collection-write.lock"));
+    assert.deepEqual(inspectCollectionDatabase(f.path),before);assert(existsSync(f.path+".collection-write.lock"));
     const db=new DatabaseSync(f.path,{readOnly:true});try{assert.equal(db.prepare("SELECT value FROM _collection_metadata WHERE key='batch:failed'").get(),undefined);}finally{db.close();}
+  }finally{f.clean();}
+});
+test("stale write locks are reclaimed and a live holder still fails fast",async()=>{
+  const f=folder();try{
+    await initializeCollectionDatabase(f.path);const a=await prepared("lock:a"),lock=resolve(f.path+".collection-write.lock");
+    const held=new DatabaseSync(lock);held.exec("BEGIN IMMEDIATE");
+    assert.throws(()=>writeCollectionDatabase(f.path,a.prepared,{batchId:"blocked",asOf:a.asOf}),/COLLECTION_DATABASE_LOCKED/);
+    held.exec("ROLLBACK");held.close();
+    // A holder killed with SIGKILL leaves the file behind, but the OS released the lock.
+    spawnSync(process.execPath,["--input-type=module","-e",`import{DatabaseSync}from"node:sqlite";const d=new DatabaseSync(${JSON.stringify(lock)});d.exec("BEGIN IMMEDIATE");setInterval(()=>{},1e9)`],{killSignal:"SIGKILL",timeout:3000});
+    assert(existsSync(lock));
+    const receipt=writeCollectionDatabase(f.path,a.prepared,{batchId:"reclaimed",asOf:a.asOf});assert.equal(receipt.records_after,1);assert(existsSync(lock));
+  }finally{f.clean();}
+});
+test("a released lock keeps its inode so racing acquirers still serialize on one file",()=>{
+  const f=folder();try{
+    const lock=resolve(f.path+".collection-write.lock"),first=acquireExclusiveLock(lock,"LOCKED"),inode=statSync(lock).ino;
+    assert.throws(()=>acquireExclusiveLock(lock,"LOCKED"),/LOCKED/);first();
+    // Deleting the file here is what let a second holder and a third contender lock two inodes.
+    const second=acquireExclusiveLock(lock,"LOCKED");
+    assert.equal(statSync(lock).ino,inode);assert.throws(()=>acquireExclusiveLock(lock,"LOCKED"),/LOCKED/);
+    second();
+    const third=acquireExclusiveLock(lock,"LOCKED");assert.equal(statSync(lock).ino,inode);third();
+    assert(existsSync(lock));
   }finally{f.clean();}
 });
 test("cross-run attraction coordinate dedup updates the same file and provenance",async()=>{

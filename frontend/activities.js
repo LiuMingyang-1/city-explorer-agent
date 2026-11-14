@@ -1,8 +1,10 @@
 'use strict';
 // Read-only event feed. Demo data comes from the repository's seed templates.
 (() => {
- let feed=[],planEvents=[],groups=[],leafletLayer,renderEpoch=0,openEpoch=0,returnFocus,feedEpoch=0,feedRequest,viewportTimer,lastViewportKey,feedMissing=false;
+ let feed=[],planEvents=[],groups=[],leafletLayer,renderEpoch=0,openEpoch=0,returnFocus,feedEpoch=0,feedRequest,viewportTimer,lastViewportKey,feedMissing=false,slideTimer=0,slideDone;
  const text=(tag,cls,value)=>{const n=document.createElement(tag);n.className=cls;n.textContent=String(value??'');return n;};
+ const still=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const refreshMap=()=>{if(window.WanderAMap?.ready)window.WanderAMap.updatePlaces?.();else renderMap();};
  const valid=e=>e&&typeof e.event_id==='string'&&typeof e.title==='string'&&typeof e.latitude==='number'&&typeof e.longitude==='number'&&Number.isFinite(e.latitude)&&Number.isFinite(e.longitude)&&Math.abs(e.latitude)<=90&&Math.abs(e.longitude)<=180;
  function present(event){
   if(!event.is_demo&&!/^mock_/i.test(event.event_id))return event;
@@ -67,19 +69,50 @@
   const visible=items.filter(item=>{const fit=placements.get(item.id);if(!fit)return false;item.node.style.setProperty('--bubble-tail-x',fit.tailX+'px');item.node.style.setProperty('--bubble-tail-y',fit.tailY+'px');item.node.classList.toggle('bubble-below',fit.below);item.marker.setIcon(L.divIcon({className:'activity-map-icon',html:item.node,iconSize:[244,98],iconAnchor:[-fit.dx,-fit.dy]}));return true;});
   if(epoch===renderEpoch)leafletLayer=L.layerGroup(visible.map(item=>item.marker)).addTo(map);
  }
- function close(){openEpoch++;const panel=$('activity-detail');panel.hidden=true;window.WanderAMap?.updatePlaces?.();returnFocus?.focus?.({preventScroll:true});}
+ function slideIn(panel){
+  const wasHidden=panel.hidden;
+  if(!wasHidden&&!panel.classList.contains?.('is-leaving'))return;
+  clearTimeout(slideTimer);panel.removeEventListener?.('transitionend',slideDone);panel.hidden=false;
+  const done=event=>{
+   if(event&&(event.propertyName!=='transform'||event.target!==panel))return;
+   panel.removeEventListener?.('transitionend',done);clearTimeout(slideTimer);refreshMap();
+  };
+  if(panel.classList.contains?.('is-leaving'))panel.classList.remove('is-leaving');
+  else if(still()){refreshMap();return;}
+  else{panel.classList.add('is-off');void panel.offsetWidth;panel.classList.remove('is-off');}
+  panel.addEventListener('transitionend',slideDone=done);slideTimer=setTimeout(done,340);
+ }
+ function slideOut(panel){
+  if(panel.hidden)return;
+  if(panel.classList.contains?.('is-leaving')){
+   if(!still())return;
+   panel.removeEventListener?.('transitionend',slideDone);clearTimeout(slideTimer);panel.classList.remove('is-leaving');panel.hidden=true;refreshMap();return;
+  }
+  clearTimeout(slideTimer);panel.removeEventListener?.('transitionend',slideDone);
+  if(still()){panel.hidden=true;refreshMap();return;}
+  panel.classList.add('is-leaving');
+  const done=event=>{
+   if(event&&(event.propertyName!=='transform'||event.target!==panel))return;
+   panel.removeEventListener?.('transitionend',done);clearTimeout(slideTimer);
+   if(!panel.classList.contains?.('is-leaving'))return;
+   panel.classList.remove('is-leaving');panel.hidden=true;refreshMap();
+  };
+  panel.addEventListener('transitionend',slideDone=done);slideTimer=setTimeout(done,380);
+ }
+ function close(){openEpoch++;slideOut($('activity-detail'));window.WanderAMap?.updatePlaces?.();returnFocus?.focus?.({preventScroll:true});}
  function openEvents(events,{placeName='地点活动',coordinateSystem='GCJ-02'}={}){
   const panel=$('activity-detail'),epoch=++openEpoch;returnFocus=document.activeElement;
-  const available=currentEvents(events.filter(valid).map(present));panel.replaceChildren();panel.hidden=false;
+  const available=currentEvents(events.filter(valid).map(present));panel.replaceChildren();slideIn(panel);
   const header=document.createElement('header');header.className='activity-detail-header';
   const titles=document.createElement('div');titles.append(text('p','activity-eyebrow','此地，值得停留'),text('h2','activity-place',placeName));
   const dismiss=text('button','activity-close','×');dismiss.type='button';dismiss.setAttribute('aria-label','关闭活动详情');dismiss.addEventListener('click',close);header.append(titles,dismiss);panel.append(header);
   if(!available.length){panel.append(text('p','activity-empty','这里暂未收录活动。可以拖动或放大地图，查看附近的活动气泡。'));return;}
   const choices=document.createElement('div');choices.className='activity-choices';choices.setAttribute('aria-label','此地活动');
   const body=document.createElement('div');body.className='activity-detail-body';
+  const footer=document.createElement('footer');footer.className='activity-detail-footer';
   const buttons=available.map((event,index)=>{
    const button=text('button','activity-choice',(event.category||'活动')+' · '+(index+1));button.type='button';button.title=event.title;button.addEventListener('click',()=>show(index));choices.append(button);return button;
-  });if(available.length>1)panel.append(choices);panel.append(body);
+  });if(available.length>1)panel.append(choices);panel.append(body,footer);
   function show(index){
    const e=available[index];body.replaceChildren();buttons.forEach((b,i)=>{b.classList.toggle('active',i===index);b.setAttribute('aria-pressed',String(i===index));});
    const cover=window.WanderPlans.eventCover(e);cover.classList.add('activity-hero');
@@ -95,13 +128,12 @@
    if(url){const link=text('a','activity-source',e.guide_url?'活动原站 ↗':'示例数据来源 ↗');link.href=url;link.target='_blank';link.rel='noopener noreferrer';links.append(link);}else links.append(text('span','activity-no-link','原站链接待补充'));
    const draftAction=(label,kind)=>{
     const button=text('button',kind==='add'?'activity-add':'activity-ask',label);button.type='button';button.addEventListener('click',()=>{
-     if(epoch!==openEpoch)return;window.WanderPlans.closeDetail();window.WanderHistory?.setExpanded(false);
-     const prompt=kind==='add'?'请把「'+e.title+'」（'+e.venue_name+'）加入我的行程，帮我安排合适的时间并检查是否顺路。':'我想了解「'+e.title+'」（'+e.venue_name+'），适合加进我的行程吗？';
-     $('message-input').value=prompt.slice(0,1000);state.referencedEventId=e.is_demo?null:e.event_id;state.referencedDraft=$('message-input').value;updateSendButton();$('message-input').focus({preventScroll:true});
+     if(epoch!==openEpoch)return;close();window.WanderPlans.closeDetail({focus:false});window.WanderHistory?.setExpanded(false);
+     attachEventChip({eventId:e.is_demo?null:e.event_id,title:e.title,venue:e.venue_name,kind});$('message-input').focus({preventScroll:true});
     });return button;
    };
    const prompts=document.createElement('div');prompts.className='activity-prompts';prompts.append(draftAction('问问这个活动','ask'),draftAction('加入行程','add'));
-   info.append(links,prompts);body.append(info);body.scrollTo({top:0});
+   footer.replaceChildren(links,prompts);body.append(info);body.scrollTo({top:0});
   }
   show(0);window.WanderAMap?.updatePlaces?.();
  }

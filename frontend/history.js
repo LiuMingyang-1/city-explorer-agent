@@ -1,16 +1,39 @@
 'use strict';
 // Local navigation for both the static demo and the repository's API-backed chat.
 (() => {
- const STORAGE_KEY='wander.chat-history.v1'+(window.WanderTransport?.mock?'.demo':''),MAX_SESSIONS=20;
- let entries=[],epoch=0,expanded=false;
+ const MAX_SESSIONS=20;
+ // History is bucketed per identity: account buckets are 'u-<userId>', the
+ // anonymous identity is 'guest'. localStorage is shared browser-wide, so a
+ // single bucket would leak one identity's snapshots to the next after a
+ // login/logout switch. The anonymous userId lives in an HttpOnly cookie and
+ // is unreadable here, but the browser's anonymous identity is stable.
+ const BASE_KEY='wander.chat-history.v1'+(window.WanderTransport?.mock?'.demo':'');
+ // Between page load and the first /api/me reply the identity is unresolved:
+ // captures land in a 'pending' bucket, and setIdentity flushes it into the
+ // resolved bucket — writes made in that window can never fall into the
+ // wrong identity.
+ let storageKey=BASE_KEY+'.pending';
+ // One-time migration: the pre-bucket key folds into the guest bucket —
+ // legacy data predates the login feature, so it can only be anonymous.
+ try{
+  const legacy=window.localStorage.getItem(BASE_KEY),guestKey=BASE_KEY+'.guest';
+  if(legacy!==null){
+   if(window.localStorage.getItem(guestKey)===null)window.localStorage.setItem(guestKey,legacy);
+   window.localStorage.removeItem(BASE_KEY);
+  }
+ }catch{}
+ let entries=loadEntries(),epoch=0,expanded=false;
  const makeId=()=>window.crypto?.randomUUID?.()||Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
  let activeId=makeId(),createdAt=Date.now();
  function safeMessages(messages){return (Array.isArray(messages)?messages:[]).filter(m=>m&&['user','assistant'].includes(m.role)&&typeof m.text==='string').slice(-60).map(m=>({role:m.role,text:m.text.slice(0,4000)}));}
- try{
-  const saved=JSON.parse(window.localStorage.getItem(STORAGE_KEY)||'[]');
-  if(Array.isArray(saved))entries=saved.filter(s=>s&&typeof s.id==='string'&&Number.isFinite(s.createdAt)&&Number.isFinite(s.updatedAt)).slice(0,MAX_SESSIONS).map(s=>({...s,messages:safeMessages(s.messages),title:String(s.title||'西安游玩规划').slice(0,60)})).filter(s=>s.messages.length);
- }catch{}
- function write(){try{window.localStorage.setItem(STORAGE_KEY,JSON.stringify(entries));}catch{ /* Storage may be blocked or full; history stays available in this page. */ }}
+ function loadEntries(){
+  try{
+   const saved=JSON.parse(window.localStorage.getItem(storageKey)||'[]');
+   if(Array.isArray(saved))return saved.filter(s=>s&&typeof s.id==='string'&&Number.isFinite(s.createdAt)&&Number.isFinite(s.updatedAt)).slice(0,MAX_SESSIONS).map(s=>({...s,messages:safeMessages(s.messages),title:String(s.title||'西安游玩规划').slice(0,60)})).filter(s=>s.messages.length);
+  }catch{}
+  return [];
+ }
+ function write(){try{window.localStorage.setItem(storageKey,JSON.stringify(entries));}catch{ /* Storage may be blocked or full; history stays available in this page. */ }}
  function title(){
   const first=state.messages.find(m=>m.role==='user')?.text||'';
   if(/半天|半日|下午|上午/.test(first))return '西安半日游';
@@ -32,7 +55,7 @@
  }
  function clearConversation(){
   epoch++;window.dispatchEvent(new Event('wander:reset'));
-  state.messages=[];state.busy=false;state.sessionId=null;state.latestPlan=null;state.activePlanId=null;state.routeNames=[];state.referencedEventId=null;state.referencedDraft=null;
+  state.messages=[];state.busy=false;state.sessionId=null;state.latestPlan=null;state.activePlanId=null;state.routeNames=[];state.eventChip=null;
   $('messages').replaceChildren();$('message-input').value='';
   window.WanderAMap?.cancelPending?.();
   window.WanderAMap?.clearRoutes();
@@ -74,7 +97,35 @@
   });
   $('more-history').textContent=expanded?'收起历史规划':'更多历史规划';$('more-history').disabled=!past.length;
  }
- window.WanderHistory={capture,newChat,open,setExpanded,generation:()=>epoch};
+ /**
+  * Identity switch: capture the current conversation into the CURRENT bucket,
+  * then swap storageKey and load the resolved identity's bucket — buckets
+  * never cross. When leaving 'pending', its entries merge into the resolved
+  * bucket and the pending key is cleared. clearConversation keeps the
+  * generation/epoch semantics (in-flight replies from the old identity die
+  * on the bumped epoch). Same-bucket calls are a no-op.
+  */
+ function setIdentity(identity){
+  let clean=String(identity||'').replace(/[^A-Za-z0-9_-]/g,'').slice(0,64)||'guest';
+  if(clean==='pending')clean='guest'; // 'pending' is internal-only
+  const nextKey=BASE_KEY+'.'+clean;
+  if(nextKey===storageKey)return;
+  capture();
+  const flushing=storageKey===BASE_KEY+'.pending',carried=flushing?entries:null;
+  storageKey=nextKey;
+  entries=loadEntries();
+  if(flushing){
+   if(carried.length){entries=[...carried,...entries].sort((a,b)=>b.updatedAt-a.updatedAt).slice(0,MAX_SESSIONS);write();}
+   try{window.localStorage.removeItem(BASE_KEY+'.pending');}catch{}
+   // Resolving to guest only confirms the assumed anonymous identity: the live
+   // conversation (and an in-flight request) carries on in the guest bucket
+   // instead of being reset mid-window.
+   if(nextKey===BASE_KEY+'.guest'){render();return;}
+  }
+  clearConversation();
+  activeId=makeId();createdAt=Date.now();setExpanded(false);
+ }
+ window.WanderHistory={capture,newChat,open,setExpanded,generation:()=>epoch,setIdentity};
  $('new-chat').addEventListener('click',newChat);
  $('more-history').addEventListener('click',()=>setExpanded(!expanded));
  render();

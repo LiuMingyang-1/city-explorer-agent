@@ -1,7 +1,7 @@
-import {readFileSync,openSync,closeSync,unlinkSync} from "node:fs";
+import {readFileSync} from "node:fs";
 import {createHash} from "node:crypto";
 import {DatabaseSync} from "node:sqlite";
-import {collectionDatabasePath} from "./database.ts";
+import {collectionDatabasePath,acquireExclusiveLock} from "./database.ts";
 import {amapDetails,amapGrade,subjectProblem,simpleAmapHours,captureAmapAuthority,normalizeAmapHours} from "./amap-authority.ts";
 import type {AmapHours,AmapAuthoritySnapshot} from "./amap-authority.ts";
 import {parseSchedule,availabilityOnDate} from "../data/schedule.ts";
@@ -132,9 +132,9 @@ export function planAmapSupplement(input:SupplementInput):SupplementPlan {
  * and the same locks used by nightly collection. No activity rows are changed. */
 export function applyAmapSupplement(path:string,plan:SupplementPlan,options:{batchId:string;beforeCommit?:()=>void}){
   if(!/^[A-Za-z0-9_-]{1,80}$/.test(options.batchId)||!plan.updates.length)throw Error("INVALID_SUPPLEMENT_PLAN");
-  const database=collectionDatabasePath(path),locks:{path:string;fd:number}[]=[];let db:DatabaseSync|undefined;
+  const database=collectionDatabasePath(path),unlocks:(()=>void)[]=[];let db:DatabaseSync|undefined;
   try{
-    for(const suffix of [".task.lock",".collection-write.lock"]){const lock=database+suffix;let fd:number;try{fd=openSync(lock,"wx");}catch{throw Error("COLLECTION_DATABASE_LOCKED");}locks.push({path:lock,fd});}
+    for(const suffix of [".task.lock",".collection-write.lock"])unlocks.push(acquireExclusiveLock(database+suffix,"COLLECTION_DATABASE_LOCKED"));
     if(createHash("sha256").update(readFileSync(database)).digest("hex")!==plan.expected_sha256)throw Error("SUPPLEMENT_BASELINE_CHANGED");
     db=new DatabaseSync(database);db.exec("PRAGMA busy_timeout=5000; BEGIN IMMEDIATE");
     try{
@@ -167,5 +167,5 @@ export function applyAmapSupplement(path:string,plan:SupplementPlan,options:{bat
       if(db.prepare("PRAGMA integrity_check").get()!.integrity_check!=="ok")throw Error("DATABASE_INTEGRITY_FAILED");
       options.beforeCommit?.();db.exec("COMMIT");return {batch_id:options.batchId,records:plan.updates.length,pending:plan.reviews.filter(r=>!r.golden).length};
     }catch(e){db.exec("ROLLBACK");throw e;}
-  }finally{db?.close();for(const lock of locks.reverse()){closeSync(lock.fd);unlinkSync(lock.path);}}
+  }finally{db?.close();for(const unlock of unlocks.reverse())unlock();}
 }

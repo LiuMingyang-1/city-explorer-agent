@@ -1,4 +1,4 @@
-import {existsSync,readFileSync,mkdirSync,writeFileSync,renameSync,openSync,closeSync,unlinkSync} from "node:fs";
+import {existsSync,readFileSync,mkdirSync,writeFileSync,renameSync} from "node:fs";
 import {resolve,relative,isAbsolute,dirname,join} from "node:path";
 import {randomUUID} from "node:crypto";
 import {parseTaskConfig,compileTask,dueDate,shanghaiDate,initialRotation,planFingerprint} from "./task-plan.ts";
@@ -6,7 +6,7 @@ import type {TaskConfig,RotationState,CompiledTask,KeywordLibrary,SeedList} from
 import {buildCollectionPlan} from "./collector.ts";
 import {createDefaultCollectionEngines} from "./source-adapters.ts";
 import {runCollection} from "./run.ts";
-import {collectionDatabasePath} from "./database.ts";
+import {collectionDatabasePath,acquireExclusiveLock} from "./database.ts";
 
 interface TaskRecord {id:string;date:string;fingerprint:string;status:"running"|"complete"|"partial"|"failed";started_at:string;finished_at?:string;plan:CompiledTask;result?:unknown;}
 interface State {schema_version:"xian-task-state/1";profile_id:string;rotation:RotationState;records:TaskRecord[];}
@@ -40,9 +40,8 @@ export async function runTask(configFile:string,options:TaskRunOptions={}) {
   const finished=(state:State)=>({status:"complete",reason:"BOOTSTRAP_EXHAUSTED",processed_targets:state.rotation.completed_seeds.length,api_calls:0});
   if(!options.live){const state=stateFor(config);try{const plan=compile(state);return {status:"preview",api_calls:0,schedule_enabled:config.schedule.enabled,plan};}catch(error){if(config.mode==="bootstrap"&&error instanceof Error&&error.message==="BOOTSTRAP_COMPLETE")return finished(state);throw error;}}
   // One lock covers both profiles if they publish into the same collection.
-  mkdirSync(dirname(database),{recursive:true});let handle:number;
-  const lock=database+".task.lock";
-  try{handle=openSync(lock,"wx");writeFileSync(handle,JSON.stringify({pid:process.pid,started_at:instant,profile_id:config.profile_id}));}catch(error){if((error as NodeJS.ErrnoException).code==="EEXIST")return {status:"skipped",reason:"TASK_LOCKED"};throw error;}
+  let unlock:()=>void;
+  try{unlock=acquireExclusiveLock(database+".task.lock","TASK_LOCKED");}catch(error){if(error instanceof Error&&error.message==="TASK_LOCKED")return {status:"skipped",reason:"TASK_LOCKED"};throw error;}
   try{
     const state=stateFor(config),last=state.records.at(-1);
     if(config.mode==="supplement"&&!options.force&&state.records.some(r=>r.date===date))return {status:"skipped",reason:"ALREADY_ATTEMPTED_SCHEDULED_DAY"};
@@ -58,5 +57,5 @@ export async function runTask(configFile:string,options:TaskRunOptions={}) {
       if(result.task_completed){state.rotation=plan.next;state.rotation.completed_seeds=[...new Set([...state.rotation.completed_seeds,...plan.seed_ids])];}
       atomicJson(privateFile(config.state_file),state);return {status:record.status,record_id:record.id,result};
     }catch(error){record.status="failed";record.finished_at=now();record.result={error:"TASK_EXECUTION_FAILED"};atomicJson(privateFile(config.state_file),state);throw error;}
-  }finally{closeSync(handle!);unlinkSync(lock);}
+  }finally{unlock();}
 }

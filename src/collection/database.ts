@@ -1,5 +1,5 @@
-import {existsSync,mkdirSync,openSync,closeSync,unlinkSync} from "node:fs";
-import {resolve,relative,isAbsolute,dirname} from "node:path";
+import {existsSync} from "node:fs";
+import {resolve,relative,isAbsolute} from "node:path";
 import {randomUUID} from "node:crypto";
 import {DatabaseSync,backup} from "node:sqlite";
 import {ensureEventsSchema} from "../data/schema.ts";
@@ -7,6 +7,8 @@ import {inspectRelease,validatePublication,applyPublication} from "./releases.ts
 import type {Sidecar,PublicationOptions} from "./releases.ts";
 import type {PreparedCollection} from "./preparation.ts";
 import {parseSchedule} from "../data/schedule.ts";
+import {acquireExclusiveLock} from "./lock.ts";
+export {acquireExclusiveLock};
 
 export interface TimeCorrection {
   id:string;
@@ -36,11 +38,7 @@ function readState(db:DatabaseSync){
   if(JSON.stringify(ids)!==JSON.stringify(Object.keys(sidecar.events).sort()))throw new Error("COLLECTION_DATABASE_METADATA_OUT_OF_SYNC");
   return {sidecar,databaseId};
 }
-function lockFile(database:string){
-  mkdirSync(dirname(database),{recursive:true});const path=database+".collection-write.lock";
-  let fd:number;try{fd=openSync(path,"wx");}catch{throw new Error("COLLECTION_DATABASE_LOCKED");}
-  return ()=>{closeSync(fd);unlinkSync(path);};
-}
+function lockFile(database:string){return acquireExclusiveLock(database+".collection-write.lock","COLLECTION_DATABASE_LOCKED");}
 export function inspectCollectionDatabase(path:string){
   const database=collectionDatabasePath(path),db=new DatabaseSync(database,{readOnly:true});
   try{const state=readState(db);return {database,database_id:state.databaseId,sidecar:state.sidecar,batch:state.sidecar.batch_id,records:Number(db.prepare("SELECT count(*) n FROM events").get()!.n)};}finally{db.close();}

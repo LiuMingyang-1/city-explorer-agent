@@ -21,7 +21,8 @@ export function createDeepSeekExtractor(options: ApiOptions & { model?: string }
 export interface PipelineDocument { document: ExtractionDocument; structured?: unknown; }
 export interface ProcessingOptions {
   target?:CollectionTarget;
-  asOf: string; baseDate: string; invoke?: Extractor; identities?: readonly SlotIdentity[];
+  /** Tool-backed extractors may expose per-source execution failures for diagnostics. */
+  asOf: string; baseDate: string; invoke?: Extractor & { locationFailuresFor?: (url: string) => readonly string[] }; identities?: readonly SlotIdentity[];
   /** Live clock is evaluated after awaited IO; fixed asOf is for deterministic replay. */
   now?: () => string;
   geocoder: { resolve(query: VenueQuery): Promise<GeoResult> };
@@ -51,6 +52,7 @@ export async function processCollection(input: readonly PipelineDocument[], opti
     metrics.model_calls++;
     return options.invoke!(...args);
   } : undefined;
+  if (invoke && options.invoke?.beginDocument) invoke.beginDocument = options.invoke.beginDocument.bind(options.invoke);
   for (const original of input) {
     const candidate = { ...original, document: { ...original.document } };
     if (options.ocr && candidate.document.image_urls.length) {
@@ -62,8 +64,9 @@ export async function processCollection(input: readonly PipelineDocument[], opti
     }
     if (located.length >= (options.eventLimit ?? 10)) break;
     const result = await extractActivities(candidate.document, { asOf: clock(), structured: candidate.structured, invoke,target:options.target });
-    if (result.issues.length) { rejected.push({ source_url: candidate.document.url, reasons: result.issues }); continue; }
-    for (const extracted of result.activities) {
+    const boundBefore = located.length;
+    if (result.issues.length) rejected.push({ source_url: candidate.document.url, reasons: result.issues });
+    else for (const extracted of result.activities) {
       if(options.target && (extracted.facts.record_type!=="attraction"||extracted.facts.target_match!==true||extracted.facts.visitable!==true)){
         rejected.push({source_url:candidate.document.url,reasons:[extracted.facts.record_type!=="attraction"?"TARGET_RECORD_TYPE_MISMATCH":extracted.facts.target_match!==true?"TARGET_NOT_CONFIRMED":"TARGET_NOT_VISITABLE"]});continue;
       }
@@ -95,7 +98,8 @@ export async function processCollection(input: readonly PipelineDocument[], opti
       try {
         if (options.invoke?.locationFor) {
           const selected = options.invoke.locationFor(doc.url, facts);
-          location = selected ? {ok:true,location:selected,cached:false} : {ok:false,reason:"MODEL_LOCATION_NOT_BOUND"};
+          const failed = selected ? [] : options.invoke.locationFailuresFor?.(doc.url) ?? [];
+          location = selected ? {ok:true,location:selected,cached:false} : {ok:false,reason:failed.length ? "LOCATION_LOOKUP_FAILED" : "MODEL_LOCATION_NOT_BOUND"};
         } else location = await options.geocoder.resolve(locationQueryForFacts(facts));
       }
       catch { location = { ok: false, reason: "LOCATION_LOOKUP_FAILED" }; }
@@ -103,6 +107,14 @@ export async function processCollection(input: readonly PipelineDocument[], opti
       located.push({ facts, document: doc, location: location.location,
         source_event_key: `source:${textHash(candidate.document.url + "\n" + canonical(facts.title))}`,
         first_seen_at: candidate.document.fetched_at });
+    }
+    // An empty activity list or early rejection can still hide a blocked lookup:
+    // tool failures that left the document unbound are execution failures to retry,
+    // not "nothing found". A bound activity resolves them, so recovery is preserved.
+    if (located.length === boundBefore) {
+      const failed = options.invoke?.locationFailuresFor?.(candidate.document.url) ?? [];
+      if (failed.length && !rejected.some(r => r.source_url === candidate.document.url && r.reasons.includes("LOCATION_LOOKUP_FAILED")))
+        rejected.push({ source_url: candidate.document.url, reasons: ["LOCATION_LOOKUP_FAILED", ...failed] });
     }
   }
   const built = prepareCollection(located, { asOf: clock(), baseDate: options.baseDate, identities: options.identities, attractionDuplicateMeters: options.attractionDuplicateMeters });

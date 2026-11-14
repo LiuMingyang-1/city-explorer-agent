@@ -64,7 +64,8 @@ export function createAmapSearch(options: { key: string; fetch?: typeof fetch; r
 
 /** Registry is scoped to this extraction, never trusting model-provided coordinates.
  * A result selected under another document cannot be borrowed. */
-export function createToolAnalysisExtractor(options: ApiOptions & {model?: string; map: MapSearch; now?: () => string; maxRounds?: number; maxToolCalls?: number; scenicSearchLimit?: number}): Extractor {
+export type ToolAnalysisExtractor = Extractor & { locationFailuresFor?: (url: string) => readonly string[] };
+export function createToolAnalysisExtractor(options: ApiOptions & {model?: string; map: MapSearch; now?: () => string; maxRounds?: number; maxToolCalls?: number; scenicSearchLimit?: number}): ToolAnalysisExtractor {
   const api = createPilotApi(options);
   // Separate search budget from chat calls; use exactly the same DeepSeek key.
   const scenicApi=createPilotApi({...options,searchLimit:options.scenicSearchLimit ?? 10,searchResultCount:3});
@@ -72,10 +73,13 @@ export function createToolAnalysisExtractor(options: ApiOptions & {model?: strin
   const scenicCache=new Map<string,ReturnType<typeof documentsFrom>>();
   const verifiedLevels=new Map<string,{category:string;reason:string}>();
   const registry = new Map<string, Map<string, MapPlace>>();
+  const toolFailures = new Map<string, Set<string>>();
   const clock = options.now ?? (() => new Date().toISOString());
   const hoursCache=new Map<string,import("./amap-authority.ts").AmapHours>();
-  const invoke: Extractor = async (system, input) => {
+  const invoke: ToolAnalysisExtractor = async (system, input) => {
     const places = new Map<string, MapPlace>(); registry.set(input.source_url, places);
+    // Failures persist across a document's structural retries; beginDocument resets them.
+    const failures = toolFailures.get(input.source_url) ?? new Set<string>(); toolFailures.set(input.source_url, failures);
     const levelSources=new Map<string,string>();let levelCalls=0;
     const messages: any[] = [{role:"system",content:system},{role:"user",content:JSON.stringify(input)}];
     let calls = 0;
@@ -166,7 +170,11 @@ export function createToolAnalysisExtractor(options: ApiOptions & {model?: strin
             for (const p of found) places.set(p.id, p);
             result = {places:found};
           }else throw new Error("UNKNOWN_TOOL");
-        } catch (error) { result = {error:error instanceof Error && /^[A-Z_]+$/.test(error.message) ? error.message : "ANALYSIS_TOOL_FAILED",default_category:"暂无评级"}; }
+        } catch (error) {
+          const code = error instanceof Error && /^[A-Z_]+$/.test(error.message) ? error.message : "ANALYSIS_TOOL_FAILED";
+          if (call.function?.name === "amap_search" && code !== "INVALID_MAP_KEYWORDS") failures.add(code);
+          result = {error: code, default_category: "暂无评级"};
+        }
         messages.push({role:"tool",tool_call_id:call.id,content:JSON.stringify(result)});
       }
     }
@@ -177,5 +185,9 @@ export function createToolAnalysisExtractor(options: ApiOptions & {model?: strin
     if (!p || facts.latitude !== p.latitude || facts.longitude !== p.longitude) return null;
     return {request_key:venueRequestKey(locationQueryForFacts(facts)),venue_name:facts.venue_name,address:p.address,poi_id:p.id,adcode:p.adcode,district:p.district,latitude:p.latitude,longitude:p.longitude,original:{lat:p.latitude,lng:p.longitude},input_system:"GCJ-02",system:"GCJ-02",conversion:null,source_url:p.amap?AMAP_SOURCE:"https://restapi.amap.com/v3/place/text",verified_at:clock(),method:"poi",...(p.amap?{amap:structuredClone(p.amap)}:{})};
   };
+  /** Tool execution failures (rate limits, network, budgets) that may have prevented binding. */
+  invoke.locationFailuresFor = (url: string): readonly string[] => [...(toolFailures.get(url) ?? [])];
+  /** A new document lifecycle never borrows another document's places or failures. */
+  invoke.beginDocument = (url: string): void => { toolFailures.delete(url); registry.delete(url); };
   return invoke;
 }
