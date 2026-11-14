@@ -406,6 +406,16 @@ export function createDelegateTaskTool(
                 question: turn.question,
               });
             }
+            if (turn.kind === "answer") {
+              // 子任务把派发当成普通问答处理：如实回报为失败并附回答摘要，
+              // 父 Agent 按既有降级准则改用 search_events 自行兜底。
+              return toResult({
+                status: "failed",
+                sessionId: childSession.sessionId,
+                runId,
+                error: `子任务返回普通回答而非行程：${turn.text.slice(0, 200)}`,
+              });
+            }
             // child 也可能产出 comparison：委派结果统一取首个（active）
             // plan，父 Agent 汇总阶段再决定是否输出双方案。
             const itinerary =

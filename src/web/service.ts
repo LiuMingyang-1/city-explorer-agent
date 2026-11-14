@@ -158,6 +158,7 @@ function runTurn(run: Run): PlannerTurn | undefined {
       return turn;
     }
     if (turn.kind === "clarification" && typeof turn.question === "string") return turn;
+    if (turn.kind === "answer" && typeof turn.text === "string") return turn;
     if (turn.kind === "error" && typeof turn.message === "string") return turn;
     return undefined;
   } catch {
@@ -165,9 +166,10 @@ function runTurn(run: Run): PlannerTurn | undefined {
   }
 }
 
-/** 一轮结果里用户可见的 assistant 文本：追问原文、行程摘要或方案标题串。 */
+/** 一轮结果里用户可见的 assistant 文本：追问原文、普通回答、行程摘要或方案标题串。 */
 function assistantText(turn: PlannerTurn): string | undefined {
   if (turn.kind === "clarification") return turn.question;
+  if (turn.kind === "answer") return turn.text;
   if (turn.kind === "itinerary") return turn.itinerary.summary;
   if (turn.kind === "comparison") {
     return turn.plans.map((p) => `方案 ${p.label}：${p.title}`).join("；");
@@ -546,6 +548,16 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
       if (turn.kind === "clarification") {
         return { kind: "clarification", session_id: sessionId, question: turn.question };
       }
+      if (turn.kind === "answer") {
+        // 普通问答：只回回答文本——不装配方案、不触发 legs 算路，
+        // 当前行程指针与前端卡片保持原样。
+        return {
+          kind: "answer",
+          session_id: sessionId,
+          text: turn.text,
+          ...topWarnings(turn),
+        };
+      }
       if (turn.kind === "comparison") {
         // 双方案：首个 plan 是已提交指针的 active 方案。
         const { plans, events, warnings } = await assemblePlans(
@@ -605,8 +617,10 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
     // 产生当前行程的那个 run：其 assistant 文本由独立行程卡片替代，不进 messages。
     const producingRunId = current?.record.runId ?? undefined;
     const messages: ChatMessage[] = [];
-    // 会话最近一轮产出（列表升序，最后定义的 turn 即最新一轮）：
-    // 为 comparison 时 history 额外还原 plans/mode/active_plan。
+    // 会话最近一轮改变方案可见状态的产出（列表升序，最后定义的非 answer
+    // turn 即最新一轮）：为 comparison/itinerary 时 history 额外还原
+    // plans/mode/active_plan。answer 轮只追加聊天、不改写方案状态，
+    // 对 plans 还原判定透明——普通回答后当前行程卡片仍是此前有效方案。
     let latestTurn: PlannerTurn | undefined;
     for (const run of runs) {
       // 只看 completed：中断/失败/排队中的 run 对用户不可见，连同输入一起忽略。
@@ -614,7 +628,7 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
       const text = runInputText(run);
       const turn = runTurn(run);
       if (text === undefined && turn === undefined) continue; // 非对话 run
-      if (turn !== undefined) latestTurn = turn;
+      if (turn !== undefined && turn.kind !== "answer") latestTurn = turn;
       if (text !== undefined) messages.push({ role: "user", text });
       // 一轮内的工具消息、模型纠错文本不还原——只有终态 turn 可见。
       if (turn !== undefined && run.runId !== producingRunId) {

@@ -47,14 +47,15 @@ https://wlj.xa.gov.cn/wlml/lyjq/1.html 。坐标来自 OpenStreetMap/Nominatim�
 ## P0 组件与样例联调
 
 活动卡、A/B 对比、提供的道路轨迹与通勤时间、SSE 阶段接收已接入。
-运行 `npm run dev:frontend` 后访问 `http://127.0.0.1:5173/?mock=comparison`，发送一条需求即可使用 `docs/mocks/day0/` 的样例演示，无需模型密钥。更多样例、API 兼容与未完成联调项见 [P0 前端交付](../docs/status/p0-frontend.md)。
+运行 `npm run dev:frontend` 后访问 `http://127.0.0.1:5173/?mock=comparison`，发送一条需求即可使用 `docs/mocks/day0/` 的样例演示，无需模型密钥；`?mock=answer` 演示普通回答（只出气泡、不动行程）。更多样例、API 兼容与未完成联调项见 [P0 前端交付](../docs/status/p0-frontend.md)。
 
 ## Agent 接口
 
 对话逻辑在 `chat.js`：发送默认走 `POST /api/chat/stream`（body 为 `{message}`，带 `location` 与既有
-`session_id` 时一并发送），成功返回 `{kind:'clarification',session_id,question}` 或
-`{kind:'itinerary',session_id,itinerary,events}`，前端记下 `session_id` 续用同一对话，
-非 2xx 返回 `{error}`；`GET /api/chat/history?session_id=…` 可显式还原指定对话
+`session_id` 时一并发送），成功返回 `{kind:'clarification',session_id,question}`、
+`{kind:'answer',session_id,text}` 或 `{kind:'plans',session_id,mode,plans,events,…}`；
+answer 是普通回答，只渲染聊天气泡，不产生行程卡片、不改动当前方案与地图。前端记下 `session_id`
+续用同一对话，非 2xx 返回 `{error}`；`GET /api/chat/history?session_id=…` 可显式还原指定对话
 （不带参数返回空历史，不产生任何服务端记录）。接口为同源相对路径，依赖同源 cookie 会话。
 
 ## 检查

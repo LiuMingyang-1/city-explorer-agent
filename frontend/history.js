@@ -42,7 +42,17 @@
  }
  function capture(){
   const messages=safeMessages(state.messages);if(!messages.length)return;
-  const entry={id:activeId,createdAt,updatedAt:Date.now(),title:title(),messages,
+  // The card-carrying message is identified by position only — never by
+  // summary text, which a plain answer can quote verbatim. planMessageIndex
+  // is the live index shifted into the trimmed window; a card scrolled out
+  // of the window records null ("not in this snapshot") instead of guessing.
+  const planText=window.WanderPlans?.summary(state.latestPlan);
+  let planIndex=null;
+  if(planText){
+   const live=typeof state.planMessageIndex==='number'?state.planMessageIndex-(state.messages.length-messages.length):-1;
+   if(live>=0&&messages[live]?.role==='assistant')planIndex=live;
+  }
+  const entry={id:activeId,createdAt,updatedAt:Date.now(),title:title(),messages,planIndex,
    sessionId:typeof state.sessionId==='string'?state.sessionId:null,
    latestPlan:state.latestPlan||null,routeNames:Array.isArray(state.routeNames)?state.routeNames:[],
    location:state.location?{lat:state.location.lat,lng:state.location.lng,name:state.location.name,coordinateSystem:state.location.coordinateSystem,wgs84:state.location.wgs84}:null};
@@ -55,7 +65,7 @@
  }
  function clearConversation(){
   epoch++;window.dispatchEvent(new Event('wander:reset'));
-  state.messages=[];state.busy=false;state.sessionId=null;state.latestPlan=null;state.activePlanId=null;state.routeNames=[];state.eventChip=null;
+  state.messages=[];state.busy=false;state.sessionId=null;state.latestPlan=null;state.activePlanId=null;state.routeNames=[];state.eventChip=null;state.planMessageIndex=null;
   $('messages').replaceChildren();$('message-input').value='';
   window.WanderAMap?.cancelPending?.();
   window.WanderAMap?.clearRoutes();
@@ -72,7 +82,12 @@
   capture();clearConversation();activeId=entry.id;createdAt=entry.createdAt;
   const restoreEpoch=epoch;
   state.sessionId=typeof entry.sessionId==='string'?entry.sessionId:null;
-  const planText=window.WanderPlans?.summary(entry.latestPlan),planIndex=planText?entry.messages.map(m=>m.role==='assistant'&&m.text===planText).lastIndexOf(true):-1;
+  // Snapshots written after this change carry an authoritative planIndex:
+  // an integer locates the card, null means the card scrolled out of the
+  // message window — never re-match by summary text in that case. Only
+  // snapshots predating the field fall back to the legacy text match.
+  const planText=window.WanderPlans?.summary(entry.latestPlan),isPlan=m=>m?.role==='assistant'&&m.text===planText;
+  const planIndex=planText?('planIndex' in entry?(Number.isInteger(entry.planIndex)&&entry.messages[entry.planIndex]?.role==='assistant'?entry.planIndex:-1):entry.messages.map(isPlan).lastIndexOf(true)):-1;
   entry.messages.forEach((m,index)=>{if(index===planIndex)window.WanderPlans.append(entry.latestPlan,{drawMap:false});else appendMessage(m.role,m.text);});
   function finish(){
    if(restoreEpoch!==epoch)return;

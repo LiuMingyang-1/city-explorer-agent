@@ -273,6 +273,10 @@
     `search_events` 即可核对时间窗、对比预算并合成最终通过校验的行程。
   - `turn.kind === "clarification"`：返回 `{ status: "completed",
     kind: "clarification", sessionId, runId, question }`（`isError: false`）。
+  - `turn.kind === "answer"`：子任务把派发当成普通问答处理——按未完成
+    回报 `{ status: "failed", sessionId, runId, error }`（error 附回答
+    摘要，`isError: true`），父 Agent 按既有降级准则改用 search_events
+    自行兜底。
   - `turn.kind === "error"` 或超时/取消：**不 `throw`**，返回
     `{ status: "failed" | "cancelled", sessionId, runId, error }` 且显式置
     **`isError: true`**——既遵循 `pi-agent-core` 工具契约（让 `toolCalls`

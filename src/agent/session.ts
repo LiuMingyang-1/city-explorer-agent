@@ -37,10 +37,12 @@ export interface ComparisonPlan {
 }
 
 /**
- * 一轮规划的结果：新行程 / 双方案比选 / 追问 / 失败（当前行程不变）。
+ * 一轮规划的结果：新行程 / 双方案比选 / 追问 / 普通回答 / 失败（当前行程不变）。
  * comparison 仅在两个 plan 都过校验时产生（active=首个 plan，其 itinerary
  * 同时提交 current_itinerary 指针）；只过一个时在 performTurn 内降级为
  * itinerary 单方案并附 warning。
+ * answer 是普通问答/讨论：只追加聊天记录，不更新当前行程、已确认约束与
+ * 规划历史，也不触发校验、提交或算路。
  */
 export type PlannerTurn =
   | { kind: "itinerary"; itinerary: Itinerary; constraints: PlanningConstraints; warning?: string }
@@ -51,6 +53,7 @@ export type PlannerTurn =
       warning?: string;
     }
   | { kind: "clarification"; question: string; warning?: string }
+  | { kind: "answer"; text: string; warning?: string }
   | { kind: "error"; message: string; code?: string };
 
 /** PlannerTurn 的失败分支；abortedTurn 与错误路径返回。 */
@@ -222,7 +225,7 @@ interface TurnProgress {
  * 规划会话：包着 Pi Agent，代 CLI 做"自然语言进 → 行程 JSON 出"。
  * 无 runtime 时是纯内存会话（退出即结束）；挂上 PersistentRuntime 后
  * 每轮在会话租约内执行、消息落 SQLite、校验通过的行程提交指针。
- * 每轮：prompt → 解析 envelope → clarify 直接回传追问；
+ * 每轮：prompt → 解析 envelope → clarify/answer 直接回传追问或普通回答；
  * itinerary 则把模型上报的约束补丁合并到已确认约束（缺省字段沿用、
  * null 显式清除、显式值覆盖），取活动详情、跑 validateItinerary，
  * **只通过才更新当前行程与已确认约束**。
@@ -407,6 +410,11 @@ export class PlannerSession {
         const parsed = parsePlannerResponse(reply.text);
         if (parsed.type === "clarify") {
           return { kind: "clarification", question: parsed.question };
+        }
+        if (parsed.type === "answer") {
+          // 普通问答：只回传文本——不合并约束、不查活动、不校验、不提交
+          // 行程指针，当前行程与规划历史保持原样。
+          return { kind: "answer", text: parsed.text };
         }
         // 补丁合并到已确认约束：纠正回复漏带字段不会放宽已确认的限制。
         const effective = mergeConstraints(this.confirmed, parsed.constraints);

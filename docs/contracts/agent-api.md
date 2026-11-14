@@ -39,6 +39,7 @@
 ```ts
 type ChatResult =
   | { kind: "clarification"; session_id: string; question: string }
+  | { kind: "answer"; session_id: string; text: string; warnings?: string[] }
   | {
       kind: "plans";
       session_id: string;
@@ -74,14 +75,22 @@ interface PlanLeg {
 }
 ```
 
+- `kind:"answer"` 是普通问答/讨论（Issue #19）：只携带 `text` 回答文本；
+  服务端不装配方案、不触发 legs 算路与校验、不更新当前行程
+  （committed itinerary 指针）与已确认约束；前端渲染为普通聊天气泡，
+  不新增行程卡片、不重绘地图。
 - `mode:"single"` 时 plans 恰 1 条（label "A"，title 可取 itinerary.summary）。
 - 原 `kind:"itinerary"` 响应形态废弃，统一走 `kind:"plans"`。
 - legs 由服务端在模型输出校验通过后计算（模型不输出 legs）；算路失败
   不阻塞响应：该 leg `status:"error"`、`provider:"none"`、geometry null，
   并在 plan.warnings / 顶层 warnings 说明。
 - GET /api/chat/history 扩展：`{messages, itinerary, plans?, mode?, active_plan?, events?}`。
-  最近一轮若为 comparison，额外返回 `plans`/`mode`/`active_plan`；
-  `itinerary` 仍为当前生效（committed）行程，保持向后兼容。
+  `itinerary` 始终为当前生效（committed）行程，保持向后兼容；
+  `plans`/`mode`/`active_plan` 由会话最近一个**非 answer** 轮决定——
+  该轮为 comparison 或 itinerary 时还原方案视图（为 clarification 等
+  其他终态时不还原，与既有行为一致）。answer 轮以普通 assistant
+  消息进入 `messages` 照常持久化恢复，不参与上述判定——普通回答后
+  当前行程仍是此前有效方案。
 
 ## 3. 模型输出契约（envelope）扩展
 
@@ -106,6 +115,25 @@ interface PlanLeg {
   current_itinerary 指针，保证“当前行程”始终有定义；用户后续轮次收敛为
   single 后正常覆盖。
 
+Issue #19 起新增第四形态 answer（普通问答）：
+
+```json
+{"type":"answer","text":"用中文完整回答"}
+```
+
+- 意图选择：询问信息、解释原因、讨论现有方案 → answer；明确要求生成、
+  修改或替换行程 → itinerary/comparison；意图不清、无法判断是否要求
+  修改行程 → clarify。历史上生成过行程不代表后续每轮都必须出卡片。
+- answer 轮可先调用 web_search / search_events 等工具核实再答（天气、
+  营业、预约等实时问题先查再答，`text` 给出必要来源）；联网未配置、
+  查询失败或无可靠结果时如实说明无法核实，不编造、不借机输出新行程。
+- 执行边界由代码保证：answer 只追加聊天记录，不更新当前行程、已确认
+  约束与规划历史，不新增方案卡片/规划条目，不触发算路与地图重定位；
+  该轮照常持久化，刷新/重开会话可恢复；后续修改行程仍基于原方案上下文。
+- PlannerTurn 新增 `{kind:"answer", text, warning?}`；委派子任务返回
+  answer 视为未完成（按 failed 回报并附回答摘要），父 Agent 按既有
+  降级准则自行兜底。
+
 ## 4. POST /api/chat/stream（SSE）
 
 请求体与 POST /api/chat 完全相同；响应 `Content-Type: text/event-stream`，
@@ -124,7 +152,8 @@ event: error     data: {"error":{"code":"…","message":"…","retryable":false}
 - stage 枚举：`searching_events` | `exploring_plans` | `routing` | `validating_schedule`。
   由服务端从 Agent 工具执行事件推导：search_events 首次调用 → searching_events；
   delegate_task 执行中 → exploring_plans；行程校验/纠正 → validating_schedule；
-  legs 算路 → routing。clarification 轮可不发 progress。
+  legs 算路 → routing。clarification/answer 轮可不发 progress；轮内
+  工具调用仍按上表推导（web_search 无对应 stage）。
 - 心跳：每 15s 一行 `: ping` 注释。
 - 客户端断连 → 与 /api/chat 相同的 abort 语义；正常 result/error 事件后关闭流。
 - POST /api/chat 旧端点保留不变（前端可择一接入）。

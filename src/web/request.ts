@@ -424,6 +424,9 @@ export function isChatResult(value: unknown): value is ChatResult {
   if (v.kind === "clarification") {
     return typeof (value as { question?: unknown }).question === "string";
   }
+  if (v.kind === "answer") {
+    return typeof (value as { text?: unknown }).text === "string";
+  }
   if (v.kind === "plans") {
     const p = value as {
       mode?: unknown;

@@ -27,9 +27,10 @@ npm run dev:frontend
 | http://127.0.0.1:5173/?mock=single | 单方案 B |
 | http://127.0.0.1:5173/?mock=partial | 轨迹查询失败、通勤待确认 |
 | http://127.0.0.1:5173/?mock=clarification | 追问 |
+| http://127.0.0.1:5173/?mock=answer | 普通回答（只出气泡、不动行程） |
 | http://127.0.0.1:5173/?mock=error | 规划失败与重试 |
 
-所有样例直接来自 `docs/mocks/day0/`。开发服务器只通过 `/__mocks/day0/` 暴露预先列出的 JSON/SSE 文件，不复制一套易漂移的数据到前端。演示中的 SSE 阶段按样例短暂停顿播放；真实模式按服务器事件到达即时更新。当前演示明确标识“示例行程 · 非真实活动”。
+方案类样例直接来自 `docs/mocks/day0/`；answer 样例内置在 `frontend/data/mock-answer.json`（前端自管，不经 `mockBase`）。开发服务器只通过 `/__mocks/day0/` 暴露预先列出的 JSON/SSE 文件，不复制一套易漂移的数据到前端。演示中的 SSE 阶段按样例短暂停顿播放；真实模式按服务器事件到达即时更新。当前演示明确标识“示例行程 · 非真实活动”。
 
 不带 `?mock=` 时默认调用同源 `/api/chat/stream`；旧 JSON 服务可通过 `WANDER_CONFIG.chatEndpoint = "/api/chat"` 配置。开发静态服务器不提供真实 Agent 接口，真实对话需要由后端同源托管。页面配置也可显式设 `window.WANDER_CONFIG = {mock:'comparison', mockBase:'/__mocks/day0/'}`，仅供静态演示部署；代码中不放密钥。
 
@@ -37,6 +38,7 @@ npm run dev:frontend
 
 - 原有 `{kind:'itinerary', itinerary, events}` 继续显示完整活动卡。没有 legs 时只画活动点，不编造道路轨迹与通勤时间。
 - 原有 `{kind:'clarification', question}` 继续显示文本追问。
+- `{kind:'answer', text}` 显示为普通聊天气泡：不新增行程卡片、不改当前方案与地图，照常进本机历史快照可恢复。
 - 样例 `{kind:'plans', plans, events, active_plan, coordinate_system}` 进入新组件。每条计划使用 `plan_id`、`itinerary`、`legs`，按 `event_id` 关联活动。
 - 本次不依赖 `schema_version`、`revision`、`base_revision`、`request_id` 等扩展字段，也不发送这些字段。
 - 收到 plans 后续聊增加 `active_plan`。地图活动提问以可移除 chip 附带 `referenced_event_id`，引用与输入文本解耦；× 移除、发送完成或开启新对话时清除引用，模拟活动不发送真实事件引用。主分支已支持这两个字段。

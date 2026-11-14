@@ -120,13 +120,16 @@ export interface Plan {
 }
 
 /**
- * POST /api/chat 成功（200）的响应体：要么追问，要么方案列表；
+ * POST /api/chat 成功（200）的响应体：追问、普通回答或方案列表；
  * session_id 回传本轮对话。kind:"plans" 统一承载单/双方案：
  * mode "single" 时 plans 恰 1 条（label "A"）；"comparison" 时 2 条，
  * active_plan 为当前生效 plan_id（首个=committed plan）。
+ * kind:"answer" 是普通问答/讨论：只带 text 回答文本，不携带方案、
+ * 不改变当前行程——前端按普通聊天消息展示，不更新行程卡片与地图。
  */
 export type ChatResult =
   | { kind: "clarification"; session_id: string; question: string }
+  | { kind: "answer"; session_id: string; text: string; warnings?: string[] }
   | {
       kind: "plans";
       session_id: string;

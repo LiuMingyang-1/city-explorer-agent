@@ -31,10 +31,14 @@ Agent 经它取数，不直接写 SQL；返回活动 JSON 含 id、时间窗、�
 
 ## 模型回复 envelope（内部契约）
 
-模型每轮只回一个 JSON 对象（系统提示约定），两种形态：
+模型每轮只回一个 JSON 对象（系统提示约定），四种形态：
 
 - 追问：`{"type":"clarify","question":"…"}`——缺日期等关键条件时使用。
+- 普通回答：`{"type":"answer","text":"…"}`——询问信息、解释或讨论
+  现有方案时使用；不改行程与约束，回答照常持久化恢复。
 - 行程：`{"type":"itinerary","constraints":{…},"itinerary":{…}}`
+- 双方案：`{"type":"comparison","constraints":{…},"plans":[A,B]}`——
+  开放式多方向比选时使用。
 
 `constraints` 是补丁：`date` 每轮必填；`availableStart`/`availableEnd`
 填字符串为更新、`null` 为用户明确放开（清除）、省略为沿用已确认值。

@@ -116,6 +116,7 @@ function parseStoredTurn(result: string | null): PlannerTurn | undefined {
       return turn;
     }
     if (turn.kind === "clarification" && typeof turn.question === "string") return turn;
+    if (turn.kind === "answer" && typeof turn.text === "string") return turn;
     if (turn.kind === "error" && typeof turn.message === "string") return turn;
     return undefined;
   } catch {
@@ -124,16 +125,18 @@ function parseStoredTurn(result: string | null): PlannerTurn | undefined {
 }
 
 /**
- * 会话最近一轮产出的 PlannerTurn：倒序找首个 completed 且 result 可解析
- * 为 turn 的 run（run 列表按 (created_at, run_id) 升序传入）；全部失败/
- * 无对话 run → undefined。用于"最近一轮是否为 comparison"等消费判定。
+ * 会话最近一轮改变方案可见状态的产出：倒序找首个 completed 且 result
+ * 可解析为非 answer turn 的 run（run 列表按 (created_at, run_id) 升序
+ * 传入）；全部失败/无对话 run → undefined。answer 轮只追加聊天，不改写
+ * 方案状态，对"最近一轮是否为 comparison"这类方案判定透明——它既不
+ * 替代也不清除此前已产出的方案。
  */
 export function latestProducedTurn(runs: Run[]): PlannerTurn | undefined {
   for (let i = runs.length - 1; i >= 0; i--) {
     const run = runs[i];
     if (run.status !== "completed") continue;
     const turn = parseStoredTurn(run.result);
-    if (turn !== undefined) return turn;
+    if (turn !== undefined && turn.kind !== "answer") return turn;
   }
   return undefined;
 }
