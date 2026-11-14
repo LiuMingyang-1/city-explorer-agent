@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {setup,saved} from './frontend-fixture.ts';
 
-test('history shows the newest two entries and expands inline; selection restores its session', () => {
+test('history shows the newest two entries and expands inline; selection restores its session', async () => {
   const h = setup({ entries: [saved('third', 9), saved('second', 10), saved('first', 11)].reverse() });
   assert.equal(h.$('history-list').children.length, 2);
   assert.equal(h.$('history-list').children[0]!.children[0]!.textContent, '11.11');
@@ -10,6 +10,7 @@ test('history shows the newest two entries and expands inline; selection restore
   assert.equal(h.$('history-list').children.length, 3);
   assert.equal(h.$('messages').hidden, true);
   h.$('history-list').children[0]!.click();
+  for (let i = 0; i < 12; i++) await Promise.resolve(); // settle any collapse transition
   assert.equal(h.state.sessionId, 'first');
   assert.equal(h.state.messages[0]!.text, '出游 11');
   assert.equal(h.$('messages').hidden, false);
