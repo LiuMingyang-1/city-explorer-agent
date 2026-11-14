@@ -233,13 +233,15 @@ test("web_search without key or empty query returns structured error, never thro
 test("explorer agent mounts web_search only when search is configured", async () => {
   const repo = stubRepository();
 
-  // 无 key：不挂工具，提示词不含 web_search 段落。
+  // 无 key：不挂工具，提示词不含 web_search（实时问答规则也在挂载段内，
+  // 未挂载时连工具名都不出现）。
   const plain = await createExplorerAgent({ config: CONFIG, repository: repo, currentDate: BASE });
   assert.deepEqual(
     plain.state.tools.map((t) => t.name),
     [SEARCH_EVENTS_TOOL],
   );
   assert.ok(!plain.state.systemPrompt.includes(WEB_SEARCH_TOOL));
+  assert.ok(!plain.state.systemPrompt.includes("联网补盲"));
 
   // 有 key：挂工具，提示词附联网补盲边界。
   const keyed = await createExplorerAgent({
@@ -278,6 +280,7 @@ test("explorer agent mounts web_search only when search is configured", async ()
     [SEARCH_EVENTS_TOOL],
   );
   assert.ok(!disabled.state.systemPrompt.includes(WEB_SEARCH_TOOL));
+  assert.ok(!disabled.state.systemPrompt.includes("联网补盲"));
 
   // 两个降级链可叠加：算路 + 联网搜索同时挂载。
   const both = await createExplorerAgent({

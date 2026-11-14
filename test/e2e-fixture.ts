@@ -50,6 +50,11 @@ export function comparisonEnvelope(
   return JSON.stringify({ type: "comparison", constraints, plans });
 }
 
+/** 普通回答 envelope（Issue #19 契约）：{"type":"answer","text":"…"}。 */
+export function answerEnvelope(text: string): string {
+  return JSON.stringify({ type: "answer", text });
+}
+
 export async function makeRepo(t: TestContext): Promise<EventRepository> {
   const dir = mkdtempSync(join(tmpdir(), "explorer-e2e-"));
   afterResource(t, () => rmSync(dir, { recursive: true, force: true }));

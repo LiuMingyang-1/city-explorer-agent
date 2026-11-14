@@ -16,7 +16,7 @@ function appendItinerary(itinerary,events){return window.WanderPlans.append({iti
 function showSendError(text,error,chip){
  const {message,bubble}=makeMessage('assistant');
  const detail=error?.name==='AbortError'?'请求超时':error?.message||'网络异常';
- const note=document.createElement('span');note.textContent='本次规划未完成（'+detail+'）。';bubble.append(note);
+ const note=document.createElement('span');note.textContent='本次回复未完成（'+detail+'）。';bubble.append(note);
  if(error?.retryable!==false){const retry=document.createElement('button');retry.type='button';retry.className='retry-button';retry.textContent='重试';retry.addEventListener('click',()=>{if(state.busy)return;message.remove();deliver(text,chip);});bubble.append(retry);}
  scrollMessages();
 }
@@ -46,6 +46,7 @@ async function deliver(text,chip,retried=false){
   if(data&&typeof data.session_id==='string'&&data.session_id)state.sessionId=data.session_id;
   if(data&&(data.kind==='plans'||data.kind==='itinerary'))window.WanderPlans.append(data);
   else if(data&&data.kind==='clarification'&&typeof data.question==='string'&&data.question)appendMessage('assistant',data.question);
+  else if(data&&data.kind==='answer'&&typeof data.text==='string'&&data.text)appendMessage('assistant',data.text);
   else throw new Error('收到的方案格式暂不支持');
  }catch(error){if(!isCurrent())return;pending.remove();
   // A stale session (different anonymous cookie/browser, wiped session db) is unrecoverable for the backend; drop it and continue as a fresh conversation instead of dead-ending every later message.

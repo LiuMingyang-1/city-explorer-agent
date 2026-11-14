@@ -11,14 +11,16 @@ export interface ComparisonPlanCandidate {
 
 /**
  * 模型每轮回复的 envelope（见 prompt.ts 的输出契约）：
- * clarify 表示信息不足在追问；itinerary 携带约束补丁与候选行程；
- * comparison 携带共享的约束补丁与 A/B 两个候选方案（逐 plan 独立校验）。
+ * clarify 表示信息不足在追问；answer 是普通问答/讨论，不携带也不改动
+ * 任何规划状态；itinerary 携带约束补丁与候选行程；comparison 携带共享的
+ * 约束补丁与 A/B 两个候选方案（逐 plan 独立校验）。
  * constraints 是 ConstraintsPatch：字符串设置字段、null 显式清除、
  * 缺省沿用会话已确认值（由 PlannerSession 合并后再校验）。
  * candidate 保持未校验的原始值，交给 validateItinerary 做结构检查。
  */
 export type PlannerResponse =
   | { type: "clarify"; question: string }
+  | { type: "answer"; text: string }
   | { type: "itinerary"; constraints: ConstraintsPatch; candidate: unknown }
   | { type: "comparison"; constraints: ConstraintsPatch; plans: ComparisonPlanCandidate[] };
 
@@ -92,6 +94,13 @@ export function parsePlannerResponse(text: string): PlannerResponse {
     }
     return { type: "clarify", question: q.trim() };
   }
+  if (type === "answer") {
+    const t = (raw as Record<string, unknown>).text;
+    if (typeof t !== "string" || !t.trim()) {
+      throw new PlannerResponseError('answer 形态必须带非空 "text" 字符串');
+    }
+    return { type: "answer", text: t.trim() };
+  }
   if (type === "itinerary") {
     const obj = raw as Record<string, unknown>;
     if (!("itinerary" in obj)) {
@@ -107,7 +116,7 @@ export function parsePlannerResponse(text: string): PlannerResponse {
       plans: parseComparisonPlans(obj.plans),
     };
   }
-  throw new PlannerResponseError('"type" 必须是 "clarify"、"itinerary" 或 "comparison"');
+  throw new PlannerResponseError('"type" 必须是 "clarify"、"answer"、"itinerary" 或 "comparison"');
 }
 
 /**

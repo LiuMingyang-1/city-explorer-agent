@@ -1,7 +1,7 @@
 'use strict';
 // JSON and SSE use the same existing /api/chat endpoint. Mocks are an explicit opt-in.
 (() => {
- const presets=new Set(['comparison','single','partial','clarification','error']);
+ const presets=new Set(['comparison','single','partial','clarification','answer','error']);
  const requested=new URLSearchParams(window.location?.search||'').get('mock');
  const selected=presets.has(requested)?requested:window.WANDER_CONFIG?.mock;
  const mock=presets.has(selected)?selected:null;
@@ -54,8 +54,10 @@
  });}
  async function mockRequest(body,options){
   const base=window.WANDER_CONFIG?.mockBase||'/__mocks/day0/';
-  const file={comparison:'stream.sse',single:'response-single.json',partial:'response-partial.json',clarification:'response-clarification.json',error:'stream-error.sse'}[mock];
-  const response=await fetch(base+file,{signal:options.signal});if(!response.ok)throw new Error('示例数据加载失败');
+  // Day 0 plan/clarification samples live under docs/mocks/day0; the answer
+  // sample ships inside frontend/data so this directory stays self-contained.
+  const file={comparison:'stream.sse',single:'response-single.json',partial:'response-partial.json',clarification:'response-clarification.json',answer:'/data/mock-answer.json',error:'stream-error.sse'}[mock];
+  const response=await fetch(file.startsWith('/')?file:base+file,{signal:options.signal});if(!response.ok)throw new Error('示例数据加载失败');
   let data;
   if(file.endsWith('.sse')){
    const frames=[],events=parser((event,value)=>frames.push({event,value}));events.push(await response.text(),true);

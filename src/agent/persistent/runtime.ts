@@ -231,7 +231,8 @@ export class PersistentRuntime implements PlannerRuntime {
    */
   private memoryText: string | undefined;
   /**
-   * 会话最近一轮产出的 PlannerTurn（reload 时从最新 completed run 恢复）；
+   * 会话最近一轮改变方案可见状态的产出（reload 时从最新 completed run
+   * 恢复；answer 轮只追加聊天不计入，见 latestProducedTurn）；
    * 仅用于判定本轮透传的 active_plan 是否有意义（最近一轮须为 comparison）。
    */
   private latestTurn: PlannerTurn | undefined;

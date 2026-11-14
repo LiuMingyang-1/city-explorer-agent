@@ -162,7 +162,7 @@
   if(model.plans.length===1)tabs.classList.add('single');
   const panel=document.createElement('div');panel.className='plan-content';panel.id='plan-content-'+(++viewCount);panel.setAttribute('role','tabpanel');
   const scroll=document.createElement('div');scroll.className='plan-detail-scroll';scroll.append(panel);
-  const messageIndex=state.messages.length;state.messages.push({role:'assistant',text:summary(model)});window.updateChatLayout?.();
+  const messageIndex=state.messages.length;state.planMessageIndex=messageIndex;state.messages.push({role:'assistant',text:summary(model)});window.updateChatLayout?.();
   const buttons=model.plans.map((plan,index)=>{
    const button=text('button','plan-tab','方案 '+(plan.label||String.fromCharCode(65+index)));button.type='button';button.setAttribute('role','tab');button.id=panel.id+'-tab-'+index;button.setAttribute('aria-controls',panel.id);
    button.addEventListener('click',()=>choose(plan.plan_id));

@@ -1,7 +1,7 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const DEFAULT = {lat:34.27, lng:108.95, name:'西安市'};
-const state = {location:{...DEFAULT}, revision:0, manual:false, weather:null, messages:[], busy:false};
+const state = {location:{...DEFAULT}, revision:0, manual:false, weather:null, messages:[], busy:false, planMessageIndex:null};
 const icons = {
  sun:'<circle cx="28" cy="28" r="10"/><path d="M28 8v5m0 30v5M8 28h5m30 0h5M14 14l4 4m20 20 4 4m0-28-4 4M18 38l-4 4"/>',
  moon:'<path d="M39 35A18 18 0 0 1 21 11a18 18 0 1 0 18 24Z"/><path d="M40 10v8m-4-4h8"/>',

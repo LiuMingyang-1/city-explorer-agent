@@ -46,6 +46,8 @@ const WEB_SEARCH_SECTION = [
   "- 本地库查不到的长尾需求、或用户问排队/预约/临时闭馆/口碑避雷等实时主观信息时，",
   "  用 web_search 联网补盲；发现活动、挑选行程站点仍一律用 search_events，",
   "  搜索结果不得当作活动编进 itinerary（event_id 只能来自 search_events）。",
+  "- 天气、营业、预约等实时问题先查再答，answer 的 text 里给出必要来源；",
+  "  查询失败或无可靠结果时如实说明无法核实，不编造，也不借机输出新行程。",
 ];
 
 /** 挂了 estimate_travel 时的算路准则：真实耗时核实 + 失败降级口径。 */
@@ -97,7 +99,12 @@ export function buildSystemPrompt(currentDate: string, options?: SystemPromptOpt
     "- 地图点选的活动：用户正在关注的具体活动，相关诉求优先考虑，但不等于必须排入行程。",
     "",
     "输出契约（每一轮回复都必须遵守）：",
-    "回复只能是**一个 JSON 对象**，不要 markdown 代码围栏，不要任何额外文字。三种形态：",
+    "回复只能是**一个 JSON 对象**，不要 markdown 代码围栏，不要任何额外文字。四种形态：",
+    "",
+    "意图选择（按诉求选形态）：",
+    "- 询问信息、解释或讨论现有方案 → answer；可查工具核实，不因查询自动重排。",
+    "- 明确要求生成或修改行程 → itinerary/comparison；意图不清 → clarify。",
+    "- 生成过行程不代表每轮都出卡片；没要求改就保留现有方案；无把握的如实说明，不编造。",
     "",
     '1) 追问：{"type":"clarify","question":"用中文简短追问缺失的关键信息"}',
     "   用户没有给出出行日期等关键条件时必须用这种形态追问，不要自行发明日期。",
@@ -117,7 +124,9 @@ export function buildSystemPrompt(currentDate: string, options?: SystemPromptOpt
     '   plans 恒 2 条、label 恰为 "A"/"B" 各一（首个为推荐/当前方案）、共享同一 constraints。',
     "   用户诉求明确时仍用 2) 的单 itinerary 形态，不要强凑双方案。",
     "",
-    "- 三种形态共用以下规则；comparison 的每个 plan.itinerary 结构同 2)，校验逐一独立进行。",
+    '4) 普通回答：{"type":"answer","text":"用中文完整回答"}',
+    "",
+    "- itinerary/comparison 两种形态共用以下规则；comparison 的每个 plan.itinerary 结构同 2)，校验逐一独立进行。",
     "- constraints 填**当前生效**的全部用户约束，每轮都要带全（校验以它为准）：",
     "  本轮新给或修改的字段照实更新；之前已确认、用户没改动的字段继续沿用。",
     "  用户明确放开某个时段限制（如“全天都行”）时把该字段填 null 清除，否则不要写 null。",

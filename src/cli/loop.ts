@@ -85,6 +85,9 @@ export async function runTurns(
       io.out(JSON.stringify({ mode: "comparison", plans: turn.plans }));
     } else if (turn.kind === "clarification") {
       io.out(JSON.stringify({ question: turn.question }));
+    } else if (turn.kind === "answer") {
+      // 普通问答：stdout 单行 JSON，不动当前行程。
+      io.out(JSON.stringify({ answer: turn.text }));
     } else {
       io.err(`[error] ${turn.message}`);
     }
