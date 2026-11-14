@@ -104,9 +104,10 @@ npm run check:frontend # 前端脚本语法检查
   t≈423ms 才 `finishClose` 移除类并重建折叠列表；重建的 2 行同样以
   rise 动画入场（o 0.51→1、y 772→758）。首隐藏样本 t=316ms > 80ms 阈值。
 - **退出动画取自实时样式**：`history-exit` 的 WAAPI keyframe 从每行
-  当前 computed opacity/transform 起播，且先 `getAnimations().cancel()`
-  再 `fill:'both'` —— 入场途中被收起的行从半途透明度继续下沉，
-  既不闪回不透明也不在阶梯 delay 内回漂（针对闪烁/回弹的设计点）。
+  当前 computed opacity/transform 起播；起帧先把样式**物化**进普通
+  对象再 `getAnimations().cancel()`（`CSSStyleDeclaration` 是活对象，
+  取消后读会拿到终值）、`fill:'both'` 钉住截获帧 —— 入场途中被
+  收起的行从半途透明度继续下沉，不闪回不透明、不在阶梯 delay 内回漂。
 - **快速连点**：收起中途再展开走 `reversible` 路径 —— 同一批行节点
   （`rowMeta` 比对 id+title）移除 `history-exit` 并从当前透明度
   原地回升，不重建 DOM。10/9 连点两组终态均一致，`visCount`/aria/
@@ -170,6 +171,7 @@ damage —— 实测 headless screencast 在整个编排中只交付 4 帧/6.7s�
 - [x] 桌面+窄屏录屏，真实中间帧已抽帧复核
 - [x] 快速连点（10/9/8 三组风暴）、历史选择同步恢复、**收起渐隐途中**
       新会话/身份切换同步拆除、reduced-motion 边界全部覆盖
-- 验证对象 = `49e53f8` + `7d44e9e` + 未提交产品增量（`collapseNow`/
-  `rowMeta`/`cancel()+fill:'both'`）；`ec5d0e1` 系中间 amend。
-  若产品增量另有提交，其内容与本文已验证状态一致（同一工作树）
+- 验证对象 = `49e53f8` + `7d44e9e` + `acdb250` + 未提交产品增量
+  （`collapseNow`/`rowMeta`/活样式物化+`cancel()`+`fill:'both'`）；
+  `ec5d0e1` 系中间 amend。`after/` 与 `video/` 为最终文件状态
+  （history.js `407d4a8`）重跑结果；若产品增量再有改动需重跑两脚本
