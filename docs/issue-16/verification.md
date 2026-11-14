@@ -155,19 +155,24 @@ npm run check:frontend # 前端脚本语法检查
 
 | 文件 | 内容 | 规格 |
 |---|---|---|
-| expand-collapse-desktop.mp4 | 1440×900：展开→收起→10 连点风暴→展开选第 3 条恢复 | 415 帧 / 6.9s, 30fps, 1280 宽, 88KB |
-| expand-collapse-desktop.gif | 桌面录屏前 ~4.2s（一个完整展开/收起循环） | 760 宽, 12fps, 218KB |
-| expand-collapse-narrow.mp4 | 390×844：展开→收起→8 连点 | 281 帧 / 4.7s, 30fps, 48KB |
+| expand-collapse-desktop.mp4 | 1440×900：展开→收起→10 连点风暴→展开选第 3 条恢复 | 原始 415 帧/跨度 6.90s；编码播放 7.87s；30fps, 1280 宽, 88KB |
+| expand-collapse-desktop.gif | 桌面录屏前段（一个完整展开/收起循环） | 编码播放 4.16s；760 宽, 12fps, 218KB |
+| expand-collapse-narrow.mp4 | 390×844：展开→收起→8 连点 | 原始 281 帧/跨度 4.67s；编码播放 5.63s；30fps, 48KB |
 | *.frames.json | 各段 screencast 帧时间戳+间隔统计（节奏可复核） | — |
 
 合成方式：`Page.startScreencast` 原始帧 → ffconcat 按**真实 compositor
 时间戳**逐帧还原节奏（帧时长 = 相邻帧时间戳差，截断上限 1.0s 并计数）
 → `fps=30,scale≤1280` → libx264(crf28,yuv420p)。每条剪辑录制前先跑一段
 **预热展开/收起**（丢弃），消除管线冷启动造成的首帧大间隔 —— 本次录制
-`maxGap≈22ms`、`clampedGaps=0`、帧时间戳跨度与 MP4 时长一致（桌面
-6.95s/418 帧），即真实连续帧而非补帧拉伸。fps=30 重采样仅按帧时长
-复制已有帧，不虚构新帧。已抽帧复核：t≈0.55s 见逐条上浮渐显中间帧，
-t≈2.1s 见顶行先行隐去的阶梯渐隐中间帧。
+`maxGap≈22ms`、`clampedGaps=0`，即真实连续帧而非补帧拉伸。
+
+**两个时长口径必须区分**：`*.frames.json` 的 `spanSecs` 为原始
+compositor 时间戳跨度（桌面 6.90s/415 帧、窄屏 4.67s/281 帧）——
+真实动画节奏以此为准；ffprobe 编码播放时长更长（桌面 mp4 7.87s、
+窄屏 mp4 5.63s、gif 4.16s），差异来自 ffconcat 末帧按其声明时长
+停留 + `fps=30` CFR 重采样按帧时长复制已有帧（仅复制、不虚构新帧）。
+两者不相等也不应混用；抽帧复核以原始时间戳为锚：t≈0.55s 见逐条上浮
+渐显中间帧，t≈2.1s 见顶行先行隐去的阶梯渐隐中间帧。
 
 ## 录屏技术说明（复现须知）
 

@@ -253,22 +253,41 @@ try {
   await evaluate(`[...document.querySelectorAll('#history-list .history-entry')].forEach((r,i)=>{r.dataset.p2n='n'+i})`);
   const preRev = await evaluate(HIST);
   metrics['p2A-preReverse'] = preRev;
-  await clickMore();                              // re-open mid-exit
+  // The reversal instant must be measured inside ONE synchronous task.
+  // Comparing a pre-click CDP evaluate against the first post-click sample
+  // lets ~30-60ms of animation elapse between the two reads — a legit
+  // -0.098 delta was flagged as a jump in review. Here before/after
+  // computed styles bracket the click in the same Runtime.evaluate, so
+  // only a genuine discontinuity can produce a delta. Thresholds unchanged.
+  const instPairs = await evaluate(`(() => {
+    const rows=[...document.querySelectorAll('#history-list .history-entry')];
+    const tyOf=s=>{const m=new DOMMatrixReadOnly(s.transform);return Number.isFinite(m.m42)?+m.m42.toFixed(2):0};
+    const snap=()=>rows.map(r=>{const s=getComputedStyle(r);return {o:+s.opacity,ty:tyOf(s),n:r.dataset.p2n||null}});
+    const before=snap();
+    document.getElementById('more-history').click();
+    const after=snap();
+    return {before,after,expanded:document.querySelector('.glass-card').classList.contains('history-expanded')};
+  })()`);
+  metrics['p2A-reversal-instant'] = instPairs;
   const sRev = await sample(900, 40);
   metrics['p2A-reversal-series'] = sRev;
   // same nodes: every mounted row after re-open still carries its p2n mark
   const sameNode = sRev.every(s => s.v.rows.length === 0 || s.v.rows.every(r => r.n !== null));
   expect('p2-reversal-same-node', sameNode && preRev.rowCount > 0 && preRev.rows.some(r => r.exit),
     {preExitRows: preRev.rows.filter(r => r.exit).length, postUnmarked: sRev.flatMap(s => s.v.rows).filter(r => r.n === null).length});
-  // reversal instant: first post-click sample per row must equal the pre
-  // frame (no opacity drop to 0, no ty reset toward the enter offset)
-  const instBad = sRev.length ? preRev.rows.map((pre, k) => {
-    const cur = sRev[0].v.rows[k]; if (!cur) return null;
-    if (cur.n !== pre.n) return {row: k, nodeChanged: [pre.n, cur.n]}; // different node = not a reversal frame
+  // reversal instant: within one task the post-click computed frame must
+  // equal the pre-click frame on the SAME nodes (no opacity drop to 0,
+  // no ty reset toward the enter offset, no node swap)
+  const instBad = instPairs.before.map((pre, k) => {
+    const cur = instPairs.after[k];
+    if (!cur) return {row: k, missingAfter: true};
+    if (cur.n !== pre.n) return {row: k, nodeChanged: [pre.n, cur.n]};
     const dO = cur.o - pre.o, dTy = cur.ty - pre.ty;
     return (dO < -0.08 || dO > 0.35 || Math.abs(dTy) > 5) ? {row: k, dO: +dO.toFixed(3), dTy: +dTy.toFixed(2), pre: {o: pre.o, ty: pre.ty}} : null;
-  }).filter(Boolean) : [{noSamples: true}];
-  expect('p2-reversal-instant', instBad.length === 0, {violations: instBad, pre: preRev.rows.map(r => ({o: r.o, ty: r.ty, n: r.n}))});
+  }).filter(Boolean);
+  if (instPairs.expanded !== true) instBad.push({expandedAfterClick: instPairs.expanded});
+  expect('p2-reversal-instant', instBad.length === 0,
+    {violations: instBad, pairs: instPairs.before.map((b, k) => ({n: b.n, before: [b.o, b.ty], after: instPairs.after[k] ? [instPairs.after[k].o, instPairs.after[k].ty] : null}))});
   // monotonic convergence incl. the ~110ms stagger-delay hold: o never drops,
   // ty never rises (noise tolerance 0.03 / 1px)
   const revBad = [];
