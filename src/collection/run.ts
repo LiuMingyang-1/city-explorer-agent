@@ -9,7 +9,7 @@ import {collectionCredentials,geocodingKey} from "./config.ts";
 import {redact} from "./pilot-api.ts";
 import type {Attempt} from "./pilot-api.ts";
 import {createToolAnalysisExtractor,createAmapSearch} from "./analysis-model.ts";
-import {createLocalOcr} from "./ocr.ts";
+import {createCloudOcr,cloudOcrEnvironment} from "./cloud-ocr.ts";
 import {processCollection} from "./pipeline.ts";
 import {initializeCollectionDatabase,inspectCollectionDatabase,writeCollectionDatabase,collectionDatabasePath} from "./database.ts";
 
@@ -29,7 +29,10 @@ export async function runCollection(config: ReturnType<typeof parseCollectionRun
   const needsModel=config.processing.enabled||config.engines.some(e=>e.enabled&&e.name==="deepseek");
   const credentials=needsModel?collectionCredentials():undefined;
   const mapKey=config.processing.enabled?geocodingKey():"";
-  const secrets=[credentials?.deepseekKey??"",mapKey];
+  const ocrOptions=cloudOcrEnvironment();
+  // Fail before search or database writes when OCR is enabled but misconfigured.
+  if(config.processing.enabled&&config.processing.ocr)createCloudOcr({...ocrOptions,maxImages:config.processing.ocr_max_images});
+  const secrets=[credentials?.deepseekKey??"",mapKey,ocrOptions.key];
   const now=()=>new Date().toISOString(),runId=`run-${now().replace(/[^0-9TZ]/g,"")}-${randomUUID().slice(0,8)}`;
   mkdirSync(output,{recursive:true});const directory=join(output,runId);mkdirSync(directory);
   const save=(name:string,value:unknown)=>writeFileSync(join(directory,name),JSON.stringify(redact(value,secrets),null,2)+"\n");
@@ -48,7 +51,7 @@ export async function runCollection(config: ReturnType<typeof parseCollectionRun
     const mapApi=createAmapSearch({key:mapKey,requestLimit:config.budgets.map_requests,onRequest:event=>mapAttempts.push(event)});
     const map={search:async(keywords:string)=>{const places=await mapApi.search(keywords);save(`map-${++mapNo}.json`,{keywords,places});return places;}};
     const invoke=createToolAnalysisExtractor({deepseekKey:credentials!.deepseekKey,model:credentials!.extractionModel,map,record,extractLimit:config.budgets.model_requests,scenicSearchLimit:config.budgets.level_searches});
-    const ocr=config.processing.ocr?createLocalOcr({python,maxImages:config.processing.ocr_max_images,record:(url,result)=>save(`ocr-${++ocrNo}.json`,{url,...result})}):undefined;
+    const ocr=config.processing.ocr?createCloudOcr({...ocrOptions,deadline:control.deadline,maxImages:config.processing.ocr_max_images,record:(url,result)=>save(`ocr-${++ocrNo}.json`,{url,...result})}):undefined;
     const date=config.base_date??new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Shanghai"}).format(new Date());
     for(const [index,source]of collected.sources.entries()){
       if(providerError){processing.push({error:providerError,remaining:collected.sources.length-index});break;}
