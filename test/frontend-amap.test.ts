@@ -132,3 +132,14 @@ test('native ordered flow keeps a complete fit target, resizes without recolorin
  const count=oldFlow.pathCalls.length;stale(1500);assert.equal(oldFlow.pathCalls.length,count,'an obsolete animation cannot touch removed route layers');
  h.provider.clearRoutes();assert.equal(frames.size,0);
 });
+
+test('attribution follows the original copyright border box and releases observers on disposal',async()=>{
+ const h=setup(),canvas=new Element(),writes:string[]=[];let height=18.5,callback:()=>void=()=>{},disconnected=0;
+ canvas.style.setProperty=(_name:string,value:string)=>{writes.push(value)};canvas.style.removeProperty=()=>{};
+ const copy={isConnected:true,getBoundingClientRect:()=>({height})},host={parentElement:canvas,querySelector:()=>copy};
+ h.context.document.getElementById=(id:string)=>id==='map'?host:null;
+ h.context.ResizeObserver=class{constructor(fn:()=>void){callback=fn}observe(node:unknown,options:{box:string}){assert.equal(node,copy);assert.equal(options.box,'border-box')}disconnect(){disconnected++}};
+ await h.provider.init({places:[],onSelect:()=>{}});assert(canvas.classList.contains('amap-attribution-layout'));assert.equal(writes.at(-1),'19px');
+ height=48.5;callback();assert.equal(writes.at(-1),'49px');
+ h.provider.dispose();assert(!canvas.classList.contains('amap-attribution-layout'));assert(disconnected>0);const count=writes.length;callback();assert.equal(writes.length,count,'a late old-map observer cannot change the current layout');
+});
