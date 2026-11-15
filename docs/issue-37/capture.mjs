@@ -97,7 +97,7 @@ const stateExpr = `(() => {
  const rect=e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height}};
  return {phase:s?.phase,active:s?.active,plan:s?.model?.active_plan,plans:s?.model?.plans?.length,
   shell:shell&&rect(shell),frame:frame&&rect(frame),map:rect(mapElement),
-  clip:shell&&getComputedStyle(shell).clipPath,radius:shell&&getComputedStyle(shell).borderRadius,feather:frame&&getComputedStyle(frame,'::after').backgroundImage,
+  clip:shell&&getComputedStyle(shell).clipPath,radius:shell&&getComputedStyle(shell).borderRadius,shellFeather:shell&&getComputedStyle(shell,'::after').backgroundImage,shellFeatherOpacity:shell&&getComputedStyle(shell,'::after').opacity,
   canvases:[...mapElement.querySelectorAll('canvas')].map(c=>({rect:rect(c),width:c.width,height:c.height})),
   stationPoints:(()=>{try{if(typeof map==='undefined'||!map||!s?.model)return [];const p=s.model.plans.find(p=>p.plan_id===s.model.active_plan);return p.itinerary.stops.map(stop=>{const e=s.model.events.find(e=>e.event_id===stop.event_id);const q=map.latLngToContainerPoint([e.latitude,e.longitude]);return {event:e.event_id,x:q.x,y:q.y}})}catch{return []}})(),
   stationRects:[...document.querySelectorAll('.route-station-number')].map(rect),
@@ -140,8 +140,8 @@ try {
   await phase('detail');await sleep(450);const detail=await check(name+'-detail','detail',true);await shot(name+'-detail');
   await key('Tab','Tab',9);const focused=await evaluate(`({insideHiddenCard:!!document.activeElement?.closest('.glass-card'),cls:document.activeElement?.className})`);expect(name+'-tab-not-hidden-card',!focused.insideHiddenCard,focused);
   expect(name+'-full-model',detail.plans===2&&detail.plan==='plan_mock_a');
-  expect(name+'-square',detail.frame&&Math.abs(detail.frame.w-detail.frame.h)<2&&detail.frame.w<w&&!detail.radius?.includes('50%')&&parseFloat(detail.radius)<=40);
-  expect(name+'-edge',!detail.feather?.includes('radial-gradient'));
+  expect(name+'-region',detail.frame&&Math.abs(detail.frame.x+detail.frame.w-w)<2&&detail.frame.y<2&&detail.frame.w<w&&detail.frame.h<=h&&!detail.radius?.includes('50%')&&parseFloat(detail.radius||'0')===0,{frame:detail.frame,radius:detail.radius});
+  expect(name+'-edge',detail.shellFeather?.includes('radial-gradient')&&detail.shellFeather?.includes('linear-gradient')&&(detail.shellFeather.match(/radial-gradient/g)||[]).length>=2,{feather:detail.shellFeather});
   await click('.plan-tab:nth-child(2)');await sleep(1000);const b=await check(name+'-b','detail',true);
   expect(name+'-switch-model',b.plan==='plan_mock_b');await shot(name+'-detail-b');
   await key('Escape','Escape',27);await phase('explore');const back=await check(name+'-back','explore',false);

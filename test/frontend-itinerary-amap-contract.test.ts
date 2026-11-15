@@ -61,7 +61,7 @@ test('AMap adapter keeps one native instance, uses immediate resize fits, filter
  h.mapNode.clientWidth=900;h.mapNode.clientHeight=700;h.context.window.WanderItineraryMap.sync();
  assert(h.resizes()>0);assert.equal(h.fits.at(-1).immediate,true,'per-frame camera fit must not start another native animation');
  h.mapNode.clientWidth=400;h.mapNode.clientHeight=400;h.context.window.WanderItineraryMap.sync();
- assert.deepEqual(h.fits.at(-1).padding,[40,40,40,40],'AMap padding order and square inset must match current map-local size');
+ assert.deepEqual(h.fits.at(-1).padding,[60,60,80,44],'AMap padding is top,bottom,left,right and follows the uneven feather depth of the focus region');
  assert.equal(h.fits.at(-1).maxZoom,15);assert.equal(h.fits.at(-1).values.length,3,'fit includes the complete track and both stations');
  assert(business.every(layer=>!h.layers.has(layer)));
  assert.equal(h.routeLayers().filter(l=>l.options.extData?.role==='track').length,1);

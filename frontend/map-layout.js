@@ -6,11 +6,12 @@
  }
  function routeFrame({width,height,card,panels=[],focus=window.WanderItineraryMap?.focusProgress??window.WanderItineraryFocus?.active}){
   if(focus){
-   // Inset of the square focus map, leaving room for station number badges
-   // and the frame edge. These coordinates are map-local.
-   const inset=Math.min(width,height)*.1;
-   let left=(width-Math.min(width,height))/2+inset,right=left;
-   let top=(height-Math.min(width,height))/2+inset,bottom=top;
+   // The focus map is a full-height region hugging the right edge, and its
+   // rim melts into the paper at uneven depths. Per-axis insets keep routes
+   // and station number badges inside the clearly readable area: deepest on
+   // the left where the feather reaches furthest, moderate top and bottom,
+   // shallowest on the right. Map-local coords.
+   let left=width*.2,right=width*.11,top=height*.15,bottom=height*.15;
    if(typeof focus==='number'&&focus<1){
     const base=routeFrame({width,height,card:window.WanderItineraryMap?.exploreCard||card,panels,focus:false});
     const blend=(a,b)=>a+(b-a)*focus;
