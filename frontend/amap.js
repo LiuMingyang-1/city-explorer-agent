@@ -4,7 +4,15 @@
  let native,config,onSelect,selectedMarker,ready=false,selectionEpoch=0,routeEpoch=0,searchEpoch=0,restoreScreen=null;
  let routes=[],scenes=[],currentNames=[],selectedPosition=null,selectedName='',activityMarkers=[],activitiesEpoch=0;
  const converted=new Map(),addresses=new Map();
- let stopRouteAnimation,routeStrokes=[];
+ let stopRouteAnimation,routeStrokes=[],creditObserver,creditNode,creditCanvas;
+ function syncAttribution(){
+  const host=document.getElementById?.('map'),copy=host?.querySelector?.('.amap-copyright');if(!copy||!host.parentElement)return;
+  creditCanvas=host.parentElement;creditCanvas.classList.add('amap-attribution-layout');
+  const measure=()=>{if(creditNode!==copy||!creditCanvas||!copy.isConnected)return;const value=Math.ceil(copy.getBoundingClientRect().height)||16;creditCanvas.style.setProperty('--amap-credit-height',value+'px');};
+  if(copy!==creditNode){creditObserver?.disconnect();creditNode=copy;if(typeof ResizeObserver==='function'){creditObserver=new ResizeObserver(measure);creditObserver.observe(copy,{box:'border-box'});}}
+  measure();
+ }
+ function clearAttribution(){creditObserver?.disconnect();creditObserver=null;creditNode=null;creditCanvas?.classList.remove('amap-attribution-layout');creditCanvas?.style.removeProperty('--amap-credit-height');creditCanvas=null;}
  function updateRouteWidths(){
   const zoom=native?.getZoom?.()||11;routeStrokes.forEach(item=>{const style=window.WanderRouteVisuals.stroke(zoom,item.selected);if(style.width===item.width)return;item.width=style.width;item.layers.forEach(layer=>layer.setOptions({strokeWeight:style.width,borderWeight:style.border}));});
  }
@@ -87,7 +95,7 @@
   // The DOM fallback renderer bakes labels into raster tiles and ignores features/showLabel/mapStyle; the quiet basemap serves those browsers instead.
   if(native.isDOMMode?.()||native.baseRender==='d'){try{native.destroy();}catch{}native=null;return false;}
   // A style applied asynchronously can reset constructor flags; re-assert them when the basemap or its style finishes loading.
-  const quiet=()=>{try{native.setFeatures?.(['bg','road']);native.set?.('showLabel',false);}catch{}};quiet();
+  const quiet=()=>{try{native.setFeatures?.(['bg','road']);native.set?.('showLabel',false);}catch{}syncAttribution();};quiet();
   native.on('complete',quiet);native.on('styleChanged',quiet);native.on('styleLoaded',quiet);
   // JS API 2 uses CSS positions. A control failure must not discard the map.
   try{native.addControl(new window.AMap.ToolBar({position:{right:'28px',bottom:'65px'}}));}catch{}
@@ -99,7 +107,7 @@
    const position=positions[index+1],marker=new window.AMap.Marker({position,content,anchor:'center',title:place.officialName||place.name,zIndex:150});
    marker.on('click',()=>{state.manual=true;select(place.lat,place.lng,place.name,14).catch(()=>showMapStatus('地点暂不可用'));window.WanderActivities?.openNearby(place);});scenes.push({place,position,marker,content,visible:false});
   });
-  ready=true;const moved=()=>{updateRouteWidths();updatePlaces();window.dispatchEvent(new Event('wander:viewport'));};native.on('moveend',moved);native.on('zoomend',moved);native.on('resize',moved);native.on('zoomchange',updateRouteWidths);updatePlaces();
+  ready=true;const moved=()=>{syncAttribution();updateRouteWidths();updatePlaces();window.dispatchEvent(new Event('wander:viewport'));};native.on('moveend',moved);native.on('zoomend',moved);native.on('resize',moved);native.on('zoomchange',updateRouteWidths);updatePlaces();
   onSelect({lat:positions[0][1],lng:positions[0][0],name:'西安市',coordinateSystem:'GCJ02',wgs84:{lat:34.27,lng:108.95}});
   return true;
  }
@@ -211,6 +219,6 @@
   }
  }
  function cancelPending(){selectionEpoch++;searchEpoch++;}
- function dispose(){ready=false;activitiesEpoch++;activityMarkers=[];cancelPending();clearRoutes();native?.destroy();native=null;scenes=[];selectedPosition=null;selectedName='';}
+ function dispose(){ready=false;activitiesEpoch++;activityMarkers=[];cancelPending();clearRoutes();native?.destroy();native=null;clearAttribution();scenes=[];selectedPosition=null;selectedName='';}
  window.WanderAMap={init,dispose,cancelPending,loadFallback,convert,select,search,weather,updatePlaces,setActivities,getViewport,drawPlans,clearRoutes,backendLocation,get ready(){return ready;}};
 })();
