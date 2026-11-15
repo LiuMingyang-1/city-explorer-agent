@@ -74,13 +74,14 @@
  function animate(segments){
   const lines=segments.filter(s=>s.path.length>=2).map(s=>({...s,...measure(s.path)})),total=lines.reduce((sum,l)=>sum+l.length,0);
   const media=typeof matchMedia==='function'?matchMedia('(prefers-reduced-motion: reduce)'):null;
-  let stopped=false,frame=0,start,finished=0,last=-Infinity;
-  const stop=()=>{stopped=true;if(frame&&typeof cancelAnimationFrame==='function')cancelAnimationFrame(frame);media?.removeEventListener?.('change',changed);};
-  const complete=()=>{lines.forEach(line=>line.show(line.path));stop();};
+  let stopped=false,frame=0,deadline=0,start=typeof performance==='undefined'?undefined:performance.now(),finished=0,last=-Infinity;
+  const stop=()=>{stopped=true;clearTimeout(deadline);if(frame&&typeof cancelAnimationFrame==='function')cancelAnimationFrame(frame);media?.removeEventListener?.('change',changed);};
+  const complete=()=>{if(stopped)return;lines.forEach(line=>line.show(line.path));stop();};
   const changed=()=>{if(media.matches)complete();};
   if(!lines.length||!total||media?.matches||typeof requestAnimationFrame!=='function'){complete();return stop;}
   lines.forEach(line=>line.show([line.path[0],line.path[0]]));media?.addEventListener?.('change',changed);
-  const duration=clamp(1400+Math.sqrt(total)*20,1800,3600);
+  // One shared budget for every leg, with headroom below the 1000ms cap.
+  const duration=800;deadline=setTimeout(complete,900);
   function tick(now){
    if(stopped)return;if(start===undefined)start=now;
    if(now-start>=duration){complete();return;}
