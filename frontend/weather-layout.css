@@ -1,0 +1,26 @@
+/* Welcome weather and location share one grid; chat layout is independent. */
+.glass-card:not(.has-conversation) .weather{
+ display:grid;grid-template-columns:44px minmax(0,1fr) 36px;
+ grid-template-areas:"icon temperature temperature" "location location locate";
+ align-items:center;gap:12px;margin-top:24px;min-width:0;
+}
+.glass-card:not(.has-conversation) .weather-main{display:contents}
+.glass-card:not(.has-conversation) .weather-icon{grid-area:icon;width:44px;height:44px}
+.glass-card:not(.has-conversation) .temperature{grid-area:temperature;display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 4px;min-width:0;white-space:normal;line-height:1.3}
+.glass-card:not(.has-conversation) #temperature{font-size:34px;white-space:nowrap}
+.glass-card:not(.has-conversation) .degrees{font-size:18px;white-space:nowrap}
+.glass-card:not(.has-conversation) #weather-description{margin-left:6px;min-width:0;font-size:12px;overflow-wrap:anywhere}
+.glass-card:not(.has-conversation) .location-form{grid-area:location;display:flex;align-items:center;gap:8px;height:36px;min-width:0;max-width:none;margin:0;padding:0 9px;border-radius:18px}
+.glass-card:not(.has-conversation) .location-form>svg{width:14px;height:14px;flex:none}
+.glass-card:not(.has-conversation) .location-form input{flex:1;width:0;min-width:0;height:34px;line-height:34px;padding:0;text-overflow:ellipsis}
+.glass-card:not(.has-conversation) .search-button{display:grid;place-items:center;width:28px;height:30px;flex:none;padding:0}
+.glass-card:not(.has-conversation) .locate-button{grid-area:locate;justify-self:end;width:36px;height:36px;margin:0}
+@media(max-width:700px){
+ .glass-card:not(.has-conversation) .weather{grid-template-columns:36px minmax(0,1fr) 36px;margin-top:12px;gap:8px}
+ .glass-card:not(.has-conversation) .weather-icon{width:36px;height:36px}
+ .glass-card:not(.has-conversation) #temperature{font-size:30px}
+ .glass-card:not(.has-conversation) .temperature{flex-wrap:nowrap}
+ .glass-card:not(.has-conversation) #weather-description{font-size:11px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ /* Leave room for the aligned two-row weather group on compact cards. */
+ .glass-card:not(.has-conversation) .composer-area{top:max(48%,220px)}
+}
