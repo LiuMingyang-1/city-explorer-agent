@@ -88,6 +88,27 @@ test("preview makes no directories, state writes, execution or credential reads"
 test("disabled schedule skips live work but manual explicitly allows one batch",async()=>{
   const f=fixture();try{let calls=0;const execute=async()=>{calls++;return {status:"success",task_completed:true};};assert.equal((await runTask(f.file,{live:true,execute})).status,"skipped");assert.equal(calls,0);assert.equal((await runTask(f.file,{live:true,manual:true,execute})).status,"complete");assert.equal(calls,1);}finally{f.clean();}
 });
+
+test("cron uses the same Beijing-time window, daily dedup and injected Python",async()=>{
+  const f=fixture();try{
+    f.c.schedule.backend="cron";f.c.schedule.enabled=true;f.c.collection_defaults.python=".venv/bin/python";writeFileSync(f.file,JSON.stringify(f.c));
+    let calls=0;const execute=async(c:any)=>{calls++;assert.equal(c.python,".venv/bin/python");return {status:"success",task_completed:true};};
+    assert.equal((await runTask(f.file,{live:true,backend:"cron",now:()=>"2026-11-13T12:00:00Z",execute})).status,"skipped");
+    const options={live:true,backend:"cron" as const,now:()=>"2026-11-13T15:30:00Z",execute};
+    assert.equal((await runTask(f.file,options)).status,"complete");assert.equal((await runTask(f.file,options)).status,"skipped");assert.equal(calls,1);
+  }finally{f.clean();}
+});
+
+test("manual backend and scheduler mismatch cannot accidentally start automatic collection",async()=>{
+  const f=fixture();try{
+    f.c.schedule.backend="manual";f.c.schedule.enabled=true;writeFileSync(f.file,JSON.stringify(f.c));
+    let calls=0;const execute=async()=>{calls++;return {status:"success",task_completed:true};};
+    assert.equal((await runTask(f.file,{live:true,execute})).status,"skipped");assert(!existsSync(f.c.state_file));
+    await assert.rejects(runTask(f.file,{live:true,backend:"cron",execute}),/SCHEDULE_BACKEND_MISMATCH/);
+    await assert.rejects(runTask(f.file,{live:true,backend:"cron",manual:true,execute}),/SCHEDULER_CANNOT_BYPASS_MANUAL_GUARD/);
+    assert.equal(calls,0);assert.equal((await runTask(f.file,{live:true,manual:true,execute})).status,"complete");
+  }finally{f.clean();}
+});
 test("same scheduled day never executes twice, even after configuration changes",async()=>{
   const f=fixture();try{const now=()=>"2026-11-13T15:30:00Z";let calls=0;const execute=async()=>{calls++;return {status:"success",task_completed:true};};await runTask(f.file,{live:true,manual:true,now,execute});f.c.keyword_city="西安市";writeFileSync(f.file,JSON.stringify(f.c));const r=await runTask(f.file,{live:true,manual:true,now,execute});assert.equal(r.status,"skipped");assert.equal(calls,1);assert.equal(read(f.c.state_file).rotation.runs,1);}finally{f.clean();}
 });

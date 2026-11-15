@@ -3,6 +3,8 @@
 架构与输出契约见 [overview.md](architecture/overview.md)；活动库字段语义见
 [database.md](architecture/database.md)。
 
+采集模块的Windows/Linux/macOS依赖、解释器配置和cron教程见[采集跨平台部署](integrations/collection-platforms.md)。
+
 ## 环境与技术栈
 
 - Node.js `>=22.19.0`（开发实测 v24.11.1）；TypeScript 仅用 erasable 语法，

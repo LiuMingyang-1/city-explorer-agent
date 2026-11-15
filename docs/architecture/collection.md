@@ -35,6 +35,8 @@ node scripts/supplement-amap.ts --apply
 
 黄金覆盖检查包括地点本体、可用图片、A级依据、公众参观条件、费用、简介、建议时长，以及未来14天可用的开放规则。A级未提供与真正地点冲突的严重程度不同，报告逐项列明，**报告不是删除清单，也不是全部记录已达黄金标准的声明**。估算时长可作为规划参考，原文依据与估算依据仍在provenance中区分。门票与简介沿用原来源的事实也会注明。
 
+跨平台部署、Python环境、首次登录及每晚23点cron配置教程见[采集跨平台部署与定时运行](../integrations/collection-platforms.md)。
+
 ## 1. 任务、交付物与当前边界
 
 我们的任务是为主 Agent 准备真实的西安市活动和景点数据。采集在本地离线批次中运行：搜索资料，理解正文和图片文字，确认高德地点，检查结构与业务约束，去重，再实际写入 SQLite 的 `events` 表。主 Agent 依托这些记录检索和规划，不负责替我们把搜索长文本导入数据库。
@@ -770,7 +772,7 @@ source engine与search_method是不同概念：DeepSeek/小红书决定去哪里
 | schedule字段 | 默认配置与含义 |
 | --- | --- |
 | enabled | false，不自动采集；--manual --live可明确手动执行 |
-| backend | 当前只windows_task_scheduler |
+| backend | windows_task_scheduler、cron或manual，平台部署教程见上方链接 |
 | task_name | CityExplorerNightlyDiscovery，安装时使用 |
 | poll_minutes | 5；系统每5分钟检查一次，不是每5分钟搜索 |
 | at | 23:30，北京时间业务时刻 |
