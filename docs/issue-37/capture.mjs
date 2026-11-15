@@ -140,8 +140,8 @@ try {
   await phase('detail');await sleep(450);const detail=await check(name+'-detail','detail',true);await shot(name+'-detail');
   await key('Tab','Tab',9);const focused=await evaluate(`({insideHiddenCard:!!document.activeElement?.closest('.glass-card'),cls:document.activeElement?.className})`);expect(name+'-tab-not-hidden-card',!focused.insideHiddenCard,focused);
   expect(name+'-full-model',detail.plans===2&&detail.plan==='plan_mock_a');
-  expect(name+'-circle',detail.frame&&Math.abs(detail.frame.w-detail.frame.h)<2&&detail.frame.w<w);
-  expect(name+'-edge',detail.feather?.includes('radial-gradient'));
+  expect(name+'-square',detail.frame&&Math.abs(detail.frame.w-detail.frame.h)<2&&detail.frame.w<w&&!detail.radius?.includes('50%')&&parseFloat(detail.radius)<=40);
+  expect(name+'-edge',!detail.feather?.includes('radial-gradient'));
   await click('.plan-tab:nth-child(2)');await sleep(1000);const b=await check(name+'-b','detail',true);
   expect(name+'-switch-model',b.plan==='plan_mock_b');await shot(name+'-detail-b');
   await key('Escape','Escape',27);await phase('explore');const back=await check(name+'-back','explore',false);

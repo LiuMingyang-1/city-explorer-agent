@@ -50,7 +50,7 @@
   if(window.WanderAMap?.ready)window.WanderAMap.fitRoutes({immediate:true});
   else{
    const points=leafletBounds();if(!points.length)return;
-   // Fractional zoom keeps the circle's route frame moving continuously.
+   // Fractional zoom keeps the focus map's route frame moving continuously.
    // Leaflet's integer snapping would otherwise produce visible size steps.
    map.options.zoomSnap=0;
    map.fitBounds(L.latLngBounds(points),{paddingTopLeft:frame.paddingTopLeft,paddingBottomRight:frame.paddingBottomRight,maxZoom:15,animate:false});

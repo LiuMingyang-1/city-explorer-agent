@@ -1,12 +1,14 @@
-/* Issue 37 experiment: one live map canvas and an independent itinerary. */
-:root{--focus-map-size:min(43vw,70dvh,660px);--focus-map-right:4vw;--focus-map-top:calc((100dvh - var(--focus-map-size))/2);--itinerary-duration:820ms;--itinerary-ease:cubic-bezier(.22,.75,.22,1);--itinerary-paper:#f0f3e9}
+/* Issue 37 experiment: one live map canvas and an independent itinerary. The canvas shrinks into a rounded-square tile beside the plan detail. */
+:root{--focus-map-size:min(43vw,70dvh,660px);--focus-map-right:4vw;--focus-map-top:calc((100dvh - var(--focus-map-size))/2);--focus-map-radius:26px;--itinerary-duration:820ms;--itinerary-ease:cubic-bezier(.22,.75,.22,1);--itinerary-paper:#f0f3e9}
 .canvas{background:var(--itinerary-paper)}
 #map-shell{position:absolute;left:0;top:0;width:100%;height:100%;z-index:0;overflow:hidden;border-radius:0;transition:left var(--itinerary-duration) var(--itinerary-ease),top var(--itinerary-duration) var(--itinerary-ease),width var(--itinerary-duration) var(--itinerary-ease),height var(--itinerary-duration) var(--itinerary-ease),border-radius var(--itinerary-duration) var(--itinerary-ease)}
 #map-shell #map{position:absolute;inset:0;width:100%;height:100%;transform:none}
-body.itinerary-focus #map-shell{left:calc(100% - var(--focus-map-right) - var(--focus-map-size));top:var(--focus-map-top);width:var(--focus-map-size);height:var(--focus-map-size);border-radius:50%}
-#itinerary-map-frame{position:absolute;right:var(--focus-map-right);top:var(--focus-map-top);width:var(--focus-map-size);height:var(--focus-map-size);z-index:1;border-radius:50%;pointer-events:none;opacity:0;box-shadow:0 22px 52px -22px #3c583430,0 4px 16px -7px #35492e1a;transition:opacity var(--itinerary-duration) var(--itinerary-ease)}
-#itinerary-map-frame:after{content:"";position:absolute;inset:-1px;border-radius:50%;background:radial-gradient(circle,transparent 57%,#f0f3e910 62%,#f0f3e947 65%,#f0f3e9b8 69%,var(--itinerary-paper) 71%)}
-body.itinerary-focus #itinerary-map-frame{opacity:1}
+body.itinerary-focus #map-shell{left:calc(100% - var(--focus-map-right) - var(--focus-map-size));top:var(--focus-map-top);width:var(--focus-map-size);height:var(--focus-map-size);border-radius:var(--focus-map-radius)}
+#itinerary-map-frame{position:absolute;right:var(--focus-map-right);top:var(--focus-map-top);width:var(--focus-map-size);height:var(--focus-map-size);z-index:1;border-radius:var(--focus-map-radius);pointer-events:none;opacity:0;box-shadow:0 22px 52px -22px #3c583430,0 4px 16px -7px #35492e1a;transition:opacity var(--itinerary-duration) var(--itinerary-ease)}
+/* Hairline stroke echoing the glass cards, inset by 1px so it hugs the map edge. */
+#itinerary-map-frame:after{content:"";position:absolute;inset:-1px;border-radius:inherit;border:1px solid #ffffffad;box-shadow:inset 0 1px 0 #ffffffd9}
+/* The frame stays hidden while the canvas is in flight and fades in only once the transition settles. */
+body.itinerary-focus:not(.itinerary-transition) #itinerary-map-frame{opacity:1}
 .glass-card{transition:transform var(--itinerary-duration) var(--itinerary-ease),opacity .6s ease;transform:translateX(0)}
 body.itinerary-focus .glass-card{transform:translateX(calc(-100% - 60px));opacity:0;pointer-events:none}
 /* The old card remains intact while moving away, revealing this lower layer. */

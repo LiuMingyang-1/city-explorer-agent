@@ -6,9 +6,9 @@
  }
  function routeFrame({width,height,card,panels=[],focus=window.WanderItineraryMap?.focusProgress??window.WanderItineraryFocus?.active}){
   if(focus){
-   // An axis-aligned square inscribed in the circle, inset again for station
-   // numbers and the feathered rim. These coordinates are map-local.
-   const inset=Math.min(width,height)*.19;
+   // Inset of the square focus map, leaving room for station number badges
+   // and the frame edge. These coordinates are map-local.
+   const inset=Math.min(width,height)*.1;
    let left=(width-Math.min(width,height))/2+inset,right=left;
    let top=(height-Math.min(width,height))/2+inset,bottom=top;
    if(typeof focus==='number'&&focus<1){
