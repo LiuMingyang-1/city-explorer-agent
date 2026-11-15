@@ -16,7 +16,7 @@ test("real shared runner searches, uses the map tool, validates and commits SQLi
   globalThis.fetch=async(input)=>{
     const url=String(input);
     if(url==="https://api.deepseek.com/v1/tools/search"){searches++;return Response.json({results:[{url:document.url,title:facts.title,content:document.text}]});}
-    if(url.startsWith("https://restapi.amap.com/v3/place/text?")){maps++;return Response.json({status:"1",infocode:"10000",pois:[{id:"B_RUN_SMOKE",name:facts.venue_name,address:"文化路1号",adcode:"610113",adname:"雁塔区",cityname:"西安市",location:"108.95,34.23"}]});}
+    if(url.startsWith("https://restapi.amap.com/v5/place/text?")){maps++;return Response.json({status:"1",infocode:"10000",pois:[{id:"B_RUN_SMOKE",name:facts.venue_name,address:"文化路1号",adcode:"610113",adname:"雁塔区",cityname:"西安市",location:"108.95,34.23"}]});}
     assert.equal(url,"https://api.deepseek.com/chat/completions");
     if(rounds++===0)return Response.json({choices:[{finish_reason:"tool_calls",message:{content:null,tool_calls:[{id:"map1",type:"function",function:{name:"amap_search",arguments:'{"keywords":"西安文化展厅"}'}}]}}]});
     return Response.json({choices:[{finish_reason:"stop",message:{content:JSON.stringify({activities:[record]})}}]});
