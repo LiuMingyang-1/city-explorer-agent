@@ -32,6 +32,18 @@ class LoginRequired(RuntimeError):
     pass
 
 
+def browser_executable(bundled: Path, platform: str = sys.platform, environ=None):
+    """Use installed Playwright everywhere; Edge is a Windows-only fallback."""
+    if bundled.is_file():
+        return bundled
+    if platform == "win32":
+        env = os.environ if environ is None else environ
+        edge = Path(env.get("ProgramFiles(x86)", "C:/Program Files (x86)")) / "Microsoft/Edge/Application/msedge.exe"
+        if edge.is_file():
+            return edge
+    return None
+
+
 def private_path(value: str) -> Path:
     path = Path(value).resolve()
     if not path.is_relative_to(ROOT / ".local-data"):
@@ -124,11 +136,10 @@ async def main() -> int:
     from playwright.async_api import async_playwright, BrowserType, Page
     # If the Playwright CDN is unavailable, use installed Edge with our own profile.
     # Never connect to the user's existing browser session or remote debugging port.
-    edge = Path(os.environ.get("ProgramFiles(x86)", "C:/Program Files (x86)")) / "Microsoft/Edge/Application/msedge.exe"
     async with async_playwright() as playwright:
         bundled = Path(playwright.chromium.executable_path)
-    executable = bundled if bundled.exists() else edge
-    if not executable.exists():
+    executable = browser_executable(bundled)
+    if executable is None:
         print('{"status":"browser_missing"}')
         return 2
     original_persistent = BrowserType.launch_persistent_context

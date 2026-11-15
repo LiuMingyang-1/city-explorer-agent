@@ -1,6 +1,7 @@
 import importlib.util
 from pathlib import Path
 import unittest
+import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location("mediacrawler_local", ROOT / "scripts/mediacrawler-local.py")
@@ -9,6 +10,21 @@ spec.loader.exec_module(runner)
 
 
 class CollectorBoundaryTests(unittest.TestCase):
+    def test_browser_uses_playwright_on_all_platforms_and_edge_only_on_windows(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            bundled = root / "chromium"
+            edge = root / "Microsoft/Edge/Application/msedge.exe"
+            edge.parent.mkdir(parents=True)
+            edge.touch()
+            env = {"ProgramFiles(x86)": str(root)}
+            for platform in ["linux", "darwin"]:
+                self.assertIsNone(runner.browser_executable(bundled, platform, env))
+            self.assertEqual(runner.browser_executable(bundled, "win32", env), edge)
+            bundled.touch()
+            for platform in ["win32", "linux", "darwin"]:
+                self.assertEqual(runner.browser_executable(bundled, platform, env), bundled)
+
     def test_sample_cap_applies_before_detail_fetch_without_mutating_response(self):
         items = [{"id": str(i), "model_type": "note"} for i in range(20)]
         response = {"items": items, "has_more": True}

@@ -1,0 +1,2 @@
+# POSIX entry points must remain executable by sh after Windows checkouts as well.
+*.sh text eol=lf
