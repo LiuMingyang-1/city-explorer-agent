@@ -83,3 +83,14 @@ test('composer enters bottom layout after sending and resets only for a new empt
  h.$('new-chat').click();assert(!h.$('card').classes.has('has-conversation'));assert.equal(h.$('welcome').hidden,false);
  h.$('history-list').children[0]!.click();assert(h.$('card').classes.has('has-conversation'));assert.equal(h.$('welcome').hidden,true);
 });
+
+test('first-send motion never gates the request and does not replay for later messages or restored history',async()=>{
+ const h=setup({api:true});let prepared=0,played=0,cancelled=0;
+ h.context.window.WanderChatMotion={active:false,prepareFirstSend(){prepared++;return ()=>played++},cancel(){cancelled++}};
+ const first=h.run('window.sendMessage("第一条")');assert.equal(h.requests.length,1);assert.equal(prepared,1);assert.equal(played,1);
+ h.requests[0]!.finish({kind:'answer',text:'快速回复'});await first;
+ const next=h.run('window.sendMessage("第二条")');assert.equal(prepared,1);h.requests[1]!.finish({kind:'answer',text:'继续'});await next;
+ h.$('new-chat').click();assert(cancelled>0);h.$('history-list').children[0]!.click();assert.equal(prepared,1);
+ h.$('new-chat').click();const fresh=h.run('window.sendMessage("新的第一条")');assert.equal(prepared,2);h.requests[2]!.finish({kind:'answer',text:'新回复'});await fresh;
+ assert.equal(h.state.messages.filter(m=>m.role==='user').length,1);
+});

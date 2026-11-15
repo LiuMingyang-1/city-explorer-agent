@@ -73,7 +73,8 @@
   document.querySelector('.glass-card').classList.toggle('history-expanded',false);
   $('messages').hidden=false;render(true);
  }
- function setExpanded(value){
+ function setExpanded(value,{immediate=false}={}){
+  if(immediate)return collapseNow();
   value=Boolean(value);
   // A programmatic collapse (open/newChat/setIdentity) abandons an in-flight
   // exit immediately rather than waiting for the exit timer.

@@ -1,0 +1,6 @@
+/* The conversation uses its space for messages; welcome controls leave once. */
+.glass-card.has-conversation{display:flex;flex-direction:column}
+.glass-card.has-conversation>.welcome,.glass-card.has-conversation>.weather,.glass-card.has-conversation>.location-status{display:none}
+.glass-card.has-conversation .messages{flex:1;min-height:0}
+.glass-card.has-conversation.history-expanded .history-area{flex:1}
+.chat-message-flight,.chat-welcome-snapshot{contain:layout style;will-change:transform,opacity}
