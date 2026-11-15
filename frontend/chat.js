@@ -1,7 +1,7 @@
 'use strict';
 let ready=true,activeChatRequest;
-window.addEventListener('wander:reset',()=>{activeChatRequest?.abort();activeChatRequest=null;clearEventChip();});
-function scrollMessages(){const list=$('messages');list.scrollTo({top:list.scrollHeight,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}
+window.addEventListener('wander:reset',()=>{activeChatRequest?.abort();activeChatRequest=null;window.WanderChatMotion?.cancel();clearEventChip();});
+function scrollMessages(){if(window.WanderChatMotion?.active)return;const list=$('messages');list.scrollTo({top:list.scrollHeight,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}
 function updateChatLayout(){const active=Boolean(state.messages.length);document.querySelector('.glass-card').classList.toggle('has-conversation',active);$('welcome').hidden=active;}
 window.updateChatLayout=updateChatLayout;
 function makeMessage(role){
@@ -58,7 +58,8 @@ async function sendMessage(text){
  text=String(text).trim();const chip=state.eventChip;
  if(!text&&chip)text=chip.kind==='add'?'请把「'+chip.title+'」加入我的行程':'帮我看看「'+chip.title+'」适不适合加进行程';
  if(!text||!ready||state.busy)return;
- state.manual=true;window.WanderHistory?.setExpanded(false);appendMessage('user',text);$('message-input').value='';window.WanderHistory?.capture();await deliver(text,chip);
+ const motion=!state.messages.length?window.WanderChatMotion?.prepareFirstSend():null;
+ state.manual=true;window.WanderHistory?.setExpanded(false,{immediate:true});const message=appendMessage('user',text);$('message-input').value='';window.WanderHistory?.capture();motion?.(message,scrollMessages);await deliver(text,chip);
 }
 window.sendMessage=sendMessage;
 function updateSendButton(){$('send-button').disabled=!ready||state.busy||(!$('message-input').value.trim()&&!state.eventChip);}
