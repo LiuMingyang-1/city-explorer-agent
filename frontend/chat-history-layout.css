@@ -1,0 +1,12 @@
+/* Welcome owns the history navigation. Conversations reserve no footer row. */
+.glass-card.has-conversation{display:flex;flex-direction:column}
+.glass-card.has-conversation .history-area{display:none}
+.glass-card:not(.has-conversation).history-expanded>.welcome,
+.glass-card:not(.has-conversation).history-expanded>.weather,
+.glass-card:not(.has-conversation).history-expanded>.location-status{display:none}
+.glass-card:not(.has-conversation).history-expanded .composer-area{top:100px}
+.glass-card:not(.has-conversation).history-expanded .history-area{top:145px}
+
+.glass-card>.welcome,.glass-card>.weather,.glass-card>.location-status{transition:opacity .16s ease}
+.glass-card.history-welcome-returning>.welcome,.glass-card.history-welcome-returning>.weather,.glass-card.history-welcome-returning>.location-status{opacity:0;pointer-events:none}
+@media(prefers-reduced-motion:reduce){.glass-card>.welcome,.glass-card>.weather,.glass-card>.location-status{transition:none}}

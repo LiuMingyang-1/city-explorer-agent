@@ -2,6 +2,21 @@
 // Local navigation for both the static demo and the repository's API-backed chat.
 (() => {
  const MAX_SESSIONS=20;
+ let layoutMotion;
+ function cancelLayoutMotion(){layoutMotion?.cancel();layoutMotion=null;document.querySelector('.glass-card')?.classList.remove('history-welcome-returning');}
+ function composerBefore(){
+  const node=document.querySelector('.composer-area'),rect=node?.getBoundingClientRect?.();cancelLayoutMotion();return rect?{node,rect}:null;
+ }
+ function moveComposer(from){
+  if(!from||still()||!from.node.animate)return;
+  const to=from.node.getBoundingClientRect(),x=from.rect.left-to.left,y=from.rect.top-to.top;if(Math.abs(x)+Math.abs(y)<1)return;
+  const card=from.node.closest?.('.glass-card');
+  const boundary=card?Math.max(...[...card.querySelectorAll('.welcome,.weather,.location-status')].map(n=>n.getBoundingClientRect().bottom)):0;
+  if(card&&!card.classList.contains('has-conversation')&&!card.classList.contains('history-expanded')&&from.rect.top<boundary+8)card.classList.add('history-welcome-returning');
+  const base=getComputedStyle(from.node).transform||'none',end=base==='none'?'translate(0,0)':base;
+  layoutMotion=from.node.animate([{transform:`translate(${x}px,${y}px) ${base==='none'?'':base}`},{transform:end}],{duration:360,easing:'cubic-bezier(.22,.8,.32,1)',fill:'backwards'});
+  const motion=layoutMotion;motion.onfinish=()=>{if(layoutMotion===motion){layoutMotion=null;card?.classList.remove('history-welcome-returning');}};
+ }
  // History is bucketed per identity: account buckets are 'u-<userId>', the
  // anonymous identity is 'guest'. localStorage is shared browser-wide, so a
  // single bucket would leak one identity's snapshots to the next after a
@@ -69,17 +84,18 @@
  // back from wherever they faded to, never vanishing mid-motion.
  function finishClose(){
   if(!closing)return;
-  closing=false;clearTimeout(closeTimer);
+  const from=composerBefore();closing=false;clearTimeout(closeTimer);
   document.querySelector('.glass-card').classList.toggle('history-expanded',false);
-  $('messages').hidden=false;render(true);
+  $('messages').hidden=false;render(true);moveComposer(from);
  }
- function setExpanded(value){
+ function setExpanded(value,{immediate=false}={}){
+  if(immediate)return collapseNow();
   value=Boolean(value);
   // A programmatic collapse (open/newChat/setIdentity) abandons an in-flight
   // exit immediately rather than waiting for the exit timer.
   if(closing&&!value)return finishClose();
   if(value===expanded)return render();
-  const card=document.querySelector('.glass-card');
+  const from=composerBefore(),card=document.querySelector('.glass-card');
   expanded=value;$('more-history').setAttribute('aria-expanded',String(value));
   if(value){
    const list=$('history-list'),rows=list?[...list.children]:[],past=entries.filter(s=>s.id!==activeId);
@@ -96,13 +112,13 @@
       row.animate?.([from,{opacity:1,transform:'translateY(0)'}],{duration:220,delay:Math.min(index,5)*22,easing:'cubic-bezier(.22,.8,.32,1)',fill:'both'});
      }
     });
-    $('more-history').textContent='收起历史规划';$('more-history').disabled=!past.length;return;
+    $('more-history').textContent='收起历史规划';$('more-history').disabled=!past.length;moveComposer(from);return;
    }
-   render(!still());return;
+   render(!still());moveComposer(from);return;
   }
   const list=$('history-list'),rows=list?[...list.children]:[];
   if(!rows.length||still()){
-   card.classList.toggle('history-expanded',false);$('messages').hidden=false;render();return;
+   card.classList.toggle('history-expanded',false);$('messages').hidden=false;render();moveComposer(from);return;
   }
   // The exit is driven by WAAPI from each row's live computed style, so a row
   // caught mid-enter keeps fading down from its in-flight opacity/transform —
@@ -128,7 +144,7 @@
   $('more-history').setAttribute('aria-expanded','false');$('messages').hidden=false;render();
  }
  function clearConversation(){
-  epoch++;window.dispatchEvent(new Event('wander:reset'));
+  cancelLayoutMotion();epoch++;window.dispatchEvent(new Event('wander:reset'));
   state.messages=[];state.busy=false;state.sessionId=null;state.latestPlan=null;state.activePlanId=null;state.routeNames=[];state.eventChip=null;state.planMessageIndex=null;
   $('messages').replaceChildren();$('message-input').value='';
   window.WanderAMap?.cancelPending?.();
@@ -138,12 +154,12 @@
   updateSendButton();window.updateChatLayout?.();
  }
  function newChat(){
-  capture();clearConversation();activeId=makeId();createdAt=Date.now();collapseNow();
+  const from=composerBefore();capture();clearConversation();activeId=makeId();createdAt=Date.now();collapseNow();moveComposer(from);
   $('message-input').focus({preventScroll:true});
  }
  function open(id){
   const entry=entries.find(s=>s.id===id);if(!entry)return;
-  capture();clearConversation();activeId=entry.id;createdAt=entry.createdAt;
+  const from=composerBefore();capture();clearConversation();activeId=entry.id;createdAt=entry.createdAt;
   const restoreEpoch=epoch;
   state.sessionId=typeof entry.sessionId==='string'?entry.sessionId:null;
   // Snapshots written after this change carry an authoritative planIndex:
@@ -153,6 +169,7 @@
   const planText=window.WanderPlans?.summary(entry.latestPlan),isPlan=m=>m?.role==='assistant'&&m.text===planText;
   const planIndex=planText?('planIndex' in entry?(Number.isInteger(entry.planIndex)&&entry.messages[entry.planIndex]?.role==='assistant'?entry.planIndex:-1):entry.messages.map(isPlan).lastIndexOf(true)):-1;
   entry.messages.forEach((m,index)=>{if(index===planIndex)window.WanderPlans.append(entry.latestPlan,{drawMap:false});else appendMessage(m.role,m.text);});
+  collapseNow();moveComposer(from);
   function finish(){
    if(restoreEpoch!==epoch)return;
    if(entry.latestPlan&&window.WanderPlans){
@@ -211,7 +228,8 @@
   clearConversation();
   activeId=makeId();createdAt=Date.now();collapseNow();
  }
- window.WanderHistory={capture,newChat,open,setExpanded,generation:()=>epoch,setIdentity};
+ function setHistoryExpanded(value,options={}){if(!value)cancelLayoutMotion();return setExpanded(value,{immediate:!value,...options});}
+ window.WanderHistory={cancelLayoutMotion,capture,newChat,open,setExpanded:setHistoryExpanded,generation:()=>epoch,setIdentity};
  $('new-chat').addEventListener('click',newChat);
  $('more-history').addEventListener('click',()=>setExpanded(!expanded));
  render();

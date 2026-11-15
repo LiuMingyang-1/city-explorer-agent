@@ -330,3 +330,10 @@ test('expanding inside an active conversation converges to the same end states',
   h.requests[0]!.finish({ kind: 'clarification', question: '哪天去？' });
   await job;
 });
+
+test('sending from expanded history immediately enters visible chat without waiting for row exit',async()=>{
+ const h=setup({api:true,entries:entries3()});animate(h);h.$('more-history').click();assert.equal(h.$('messages').hidden,true);
+ const job=h.run('window.sendMessage("从历史浏览直接开始聊")');
+ assert.equal(h.$('messages').hidden,false);assert(!h.$('card').classList.contains('history-expanded'));assert.equal(h.requests.length,1);
+ h.requests[0]!.finish({kind:'answer',text:'直接回复'});await job;assert.equal(h.state.messages.length,2);
+});
