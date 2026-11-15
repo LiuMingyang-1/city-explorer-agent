@@ -4,7 +4,21 @@
  function visiblePanels(){
   return ['activity-detail','preferences-panel'].map(id=>document.getElementById?.(id)).filter(panel=>panel&&!panel.hidden&&panel.getBoundingClientRect).map(panel=>panel.getBoundingClientRect());
  }
- function routeFrame({width,height,card,panels=[]}){
+ function routeFrame({width,height,card,panels=[],focus=window.WanderItineraryMap?.focusProgress??window.WanderItineraryFocus?.active}){
+  if(focus){
+   // An axis-aligned square inscribed in the circle, inset again for station
+   // numbers and the feathered rim. These coordinates are map-local.
+   const inset=Math.min(width,height)*.19;
+   let left=(width-Math.min(width,height))/2+inset,right=left;
+   let top=(height-Math.min(width,height))/2+inset,bottom=top;
+   if(typeof focus==='number'&&focus<1){
+    const base=routeFrame({width,height,card:window.WanderItineraryMap?.exploreCard||card,panels,focus:false});
+    const blend=(a,b)=>a+(b-a)*focus;
+    left=blend(base.left,left);right=blend(base.right,right);top=blend(base.top,top);bottom=blend(base.bottom,bottom);
+   }
+   return {left,right,top,bottom,targetX:(left+width-right)/2,targetY:(top+height-bottom)/2,
+    amap:[top,bottom,left,right],paddingTopLeft:[left,top],paddingBottomRight:[right,bottom]};
+  }
   const desktop=width>700;
   let left=desktop?Math.max(width/3+48,card.right+24):24,right=desktop?48:24;
   let top=desktop?60:36,bottom=desktop?60:Math.min(card.height+36,height-96);

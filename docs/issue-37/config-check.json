@@ -1,0 +1,24 @@
+{
+  "oldServices": {
+    "checkedUTC": "2026-11-15T10:13:49Z",
+    "ports": [
+      5173,
+      5174
+    ],
+    "httpStatus": 200,
+    "enabled": false,
+    "hasJsKey": false
+  },
+  "newService": {
+    "startedCommand": "FRONTEND_PORT=5455 node --env-file-if-exists=.env scripts/frontend-dev.mjs",
+    "checkedUTC": "2026-11-15T10:14:15.609Z",
+    "port": 5455,
+    "httpStatus": 200,
+    "enabled": true,
+    "hasJsKey": true,
+    "envHasJsKey": true,
+    "envHasSecurityCode": true
+  },
+  "envMtimeUTC": "2026-11-15T10:02:26.850993Z",
+  "noSecretValuesRecorded": true
+}

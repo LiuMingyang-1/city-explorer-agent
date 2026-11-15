@@ -66,13 +66,13 @@ function updatePlaceMarkers(names){
  if(window.WanderAMap?.ready){window.WanderAMap.updatePlaces(names);return;}
  if(!map)return;if(names!==undefined)highlightedPlaces=names;
  const size=map.getSize(),card=document.querySelector('.glass-card').getBoundingClientRect();
- const occupied=[{left:card.left,top:card.top,right:card.right,bottom:card.bottom}];
+ const occupied=window.WanderItineraryFocus?.active?[]:[{left:card.left,top:card.top,right:card.right,bottom:card.bottom}];
  const intersects=(a,b)=>a.left<b.right+6&&a.right>b.left-6&&a.top<b.bottom+6&&a.bottom>b.top-6;
  if(locationMarker){const p=map.latLngToContainerPoint(locationMarker.getLatLng());occupied.push({left:p.x-130,right:p.x+130,top:p.y-65,bottom:p.y+12});}
  const ordered=[...places].sort((a,b)=>Number(highlightedPlaces.includes(b.name))-Number(highlightedPlaces.includes(a.name))||(b.rating||0)-(a.rating||0));
  ordered.forEach(place=>{
   const p=map.latLngToContainerPoint([place.lat,place.lng]);
-  const show=(place.rating>=4||highlightedPlaces.includes(place.name))&&!(locationMarker&&place.name===state.location.name)&&p.x>=-30&&p.y>=-30&&p.x<=size.x+30&&p.y<=size.y+30;
+  const show=!window.WanderItineraryFocus?.active&&(place.rating>=4||highlightedPlaces.includes(place.name))&&!(locationMarker&&place.name===state.location.name)&&p.x>=-30&&p.y>=-30&&p.x<=size.x+30&&p.y<=size.y+30;
   if(!show){if(map.hasLayer(place.marker))map.removeLayer(place.marker);return;}
   const width=Array.from(place.name).reduce((sum,c)=>sum+(/[^\x00-\x7F]/.test(c)?11:6),20)+(place.rating?29:0),height=29;
   const candidates=[['right',{left:p.x+17,right:p.x+17+width,top:p.y-height/2,bottom:p.y+height/2}],['left',{left:p.x-17-width,right:p.x-17,top:p.y-height/2,bottom:p.y+height/2}],['top',{left:p.x-width/2,right:p.x+width/2,top:p.y-18-height,bottom:p.y-18}],['bottom',{left:p.x-width/2,right:p.x+width/2,top:p.y+18,bottom:p.y+18+height}]];
@@ -124,7 +124,7 @@ async function updateWeather(lat,lng,revision){if(window.WanderAMap?.ready){
 function setLocationText(name){state.location.name=name;$('location-input').value='';$('location-input').placeholder=name;if(locationMarker)locationMarker.setTooltipContent(locationLabel(name));}
 function selectLocation(lat,lng,name,zoom=13,reverse=false,system='WGS84',wgs84=null){if(window.WanderAMap?.ready){return window.WanderAMap.select(lat,lng,name,zoom,{system,reverse,wgs84}).catch(()=>{$('location-status').textContent='地点暂不可用';});}if(['GCJ02','GCJ-02'].includes(system))return;const revision=++state.revision;state.location={lat,lng,name};setLocationText(name);$('location-status').textContent='';if(map){highlightedPlaces=[];if(routeLayer){map.removeLayer(routeLayer);routeLayer=null;}map.flyTo([lat,lng],zoom,{duration:.9});if(locationMarker)map.removeLayer(locationMarker);locationMarker=L.marker([lat,lng],{title:name,zIndexOffset:1000,icon:L.divIcon({html:'<span class="location-dot"></span>',className:'current-location',iconSize:[18,18],iconAnchor:[9,9]})}).bindTooltip(locationLabel(name),{permanent:true,direction:'top',offset:[0,-14],opacity:1,className:'search-place-label'}).addTo(map);updatePlaceMarkers();}updateWeather(lat,lng,revision);if(reverse)nominatim('reverse?format=jsonv2&lat='+lat+'&lon='+lng+'&zoom=14&accept-language=zh-CN').then(data=>{if(revision!==state.revision)return;const a=data.address||{};setLocationText(a.city_district||a.suburb||a.county||a.city||a.town||a.village||name);$('location-status').textContent='';}).catch(()=>{});}
 let autoLocateStarted=false;
-function autoLocate(){if(autoLocateStarted||state.manual)return;autoLocateStarted=true;locate(false);}
+function autoLocate(){if(autoLocateStarted||state.manual||state.latestPlan||window.WanderItineraryFocus?.active)return;autoLocateStarted=true;locate(false);}
 function locate(manual=true){if(manual)state.manual=true;const revision=state.revision;$('locate').classList.add('loading');if(!navigator.geolocation){locationFailed();return;}navigator.geolocation.getCurrentPosition(position=>{if(revision!==state.revision||(!manual&&state.manual)){$('locate').classList.remove('loading');return;}$('locate').classList.remove('loading');selectLocation(position.coords.latitude,position.coords.longitude,'当前位置',13,true);},()=>{if(revision===state.revision&&(manual||!state.manual))locationFailed();else $('locate').classList.remove('loading');},{enableHighAccuracy:false,timeout:8000,maximumAge:300000});}
 function locationFailed(){$('locate').classList.remove('loading');if(state.location.name===DEFAULT.name){if(map)map.setView([DEFAULT.lat,DEFAULT.lng],11);setLocationText(DEFAULT.name);$('location-status').textContent='';}}
 $('locate').addEventListener('click',()=>locate(true));

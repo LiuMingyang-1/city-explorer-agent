@@ -1,0 +1,431 @@
+{
+  "profile": "reset-delay-pan-resize",
+  "failures": [],
+  "metrics": {
+    "detail-before-reset": {
+      "phase": "detail",
+      "places": [],
+      "activities": [],
+      "stations": [
+        {
+          "lat": 34.254,
+          "lng": 108.964,
+          "title": "方案 A · 1. Mock 光影展"
+        },
+        {
+          "lat": 34.257,
+          "lng": 108.969,
+          "title": "方案 A · 2. Mock 阅读分享"
+        }
+      ],
+      "tracks": [
+        [
+          [
+            34.254,
+            108.964
+          ],
+          [
+            34.254,
+            108.965
+          ],
+          [
+            34.257,
+            108.965
+          ],
+          [
+            34.257,
+            108.969
+          ]
+        ]
+      ],
+      "screenTracks": [
+        [
+          {
+            "x": 1015.1875,
+            "y": 492.390625
+          },
+          {
+            "x": 1039.1875,
+            "y": 492.390625
+          },
+          {
+            "x": 1039.1875,
+            "y": 407.390625
+          },
+          {
+            "x": 1132.1875,
+            "y": 407.390625
+          }
+        ]
+      ],
+      "circle": {
+        "x": 763.21875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "active": "plan_mock_a",
+      "overflow": false
+    },
+    "detail-before-reset-no-outside-business": {
+      "phase": "detail",
+      "places": [],
+      "activities": [],
+      "stations": [
+        {
+          "lat": 34.254,
+          "lng": 108.964,
+          "title": "方案 A · 1. Mock 光影展"
+        },
+        {
+          "lat": 34.257,
+          "lng": 108.969,
+          "title": "方案 A · 2. Mock 阅读分享"
+        }
+      ],
+      "tracks": [
+        [
+          [
+            34.254,
+            108.964
+          ],
+          [
+            34.254,
+            108.965
+          ],
+          [
+            34.257,
+            108.965
+          ],
+          [
+            34.257,
+            108.969
+          ]
+        ]
+      ],
+      "screenTracks": [
+        [
+          {
+            "x": 1015.1875,
+            "y": 492.390625
+          },
+          {
+            "x": 1039.1875,
+            "y": 492.390625
+          },
+          {
+            "x": 1039.1875,
+            "y": 407.390625
+          },
+          {
+            "x": 1132.1875,
+            "y": 407.390625
+          }
+        ]
+      ],
+      "circle": {
+        "x": 763.21875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "active": "plan_mock_a",
+      "overflow": false,
+      "assert": "pass"
+    },
+    "detail-before-reset-active-stations": {
+      "phase": "detail",
+      "places": [],
+      "activities": [],
+      "stations": [
+        {
+          "lat": 34.254,
+          "lng": 108.964,
+          "title": "方案 A · 1. Mock 光影展"
+        },
+        {
+          "lat": 34.257,
+          "lng": 108.969,
+          "title": "方案 A · 2. Mock 阅读分享"
+        }
+      ],
+      "tracks": [
+        [
+          [
+            34.254,
+            108.964
+          ],
+          [
+            34.254,
+            108.965
+          ],
+          [
+            34.257,
+            108.965
+          ],
+          [
+            34.257,
+            108.969
+          ]
+        ]
+      ],
+      "screenTracks": [
+        [
+          {
+            "x": 1015.1875,
+            "y": 492.390625
+          },
+          {
+            "x": 1039.1875,
+            "y": 492.390625
+          },
+          {
+            "x": 1039.1875,
+            "y": 407.390625
+          },
+          {
+            "x": 1132.1875,
+            "y": 407.390625
+          }
+        ]
+      ],
+      "circle": {
+        "x": 763.21875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "active": "plan_mock_a",
+      "overflow": false,
+      "assert": "pass"
+    },
+    "detail-before-reset-single-route": {
+      "phase": "detail",
+      "places": [],
+      "activities": [],
+      "stations": [
+        {
+          "lat": 34.254,
+          "lng": 108.964,
+          "title": "方案 A · 1. Mock 光影展"
+        },
+        {
+          "lat": 34.257,
+          "lng": 108.969,
+          "title": "方案 A · 2. Mock 阅读分享"
+        }
+      ],
+      "tracks": [
+        [
+          [
+            34.254,
+            108.964
+          ],
+          [
+            34.254,
+            108.965
+          ],
+          [
+            34.257,
+            108.965
+          ],
+          [
+            34.257,
+            108.969
+          ]
+        ]
+      ],
+      "screenTracks": [
+        [
+          {
+            "x": 1015.1875,
+            "y": 492.390625
+          },
+          {
+            "x": 1039.1875,
+            "y": 492.390625
+          },
+          {
+            "x": 1039.1875,
+            "y": 407.390625
+          },
+          {
+            "x": 1132.1875,
+            "y": 407.390625
+          }
+        ]
+      ],
+      "circle": {
+        "x": 763.21875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "active": "plan_mock_a",
+      "overflow": false,
+      "assert": "pass"
+    },
+    "detail-before-reset-route-safe-in-circle": {
+      "ratios": [
+        0.11554933308210992,
+        0.08740421267229775,
+        0.0876416909470291,
+        0.1180138341931957
+      ],
+      "box": {
+        "left": 1015.1875,
+        "right": 1132.1875,
+        "top": 407.390625,
+        "bottom": 492.390625
+      },
+      "circle": {
+        "x": 763.21875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "assert": "pass"
+    },
+    "palette-pending": {
+      "assert": "pass"
+    },
+    "sync-reset": {
+      "phase": "explore",
+      "places": [],
+      "activities": [
+        "Mock 光影展"
+      ],
+      "stations": [],
+      "tracks": [],
+      "screenTracks": [],
+      "circle": {
+        "x": 763.21875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "active": null,
+      "overflow": false
+    },
+    "sync-reset-empty": {
+      "phase": "explore",
+      "places": [],
+      "activities": [
+        "Mock 光影展"
+      ],
+      "stations": [],
+      "tracks": [],
+      "screenTracks": [],
+      "circle": {
+        "x": 763.21875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "active": null,
+      "overflow": false,
+      "assert": "pass"
+    },
+    "palette-resolved-after-reset": {
+      "phase": "explore",
+      "places": [],
+      "activities": [
+        "验收专用·行程外活动"
+      ],
+      "stations": [],
+      "tracks": [],
+      "screenTracks": [],
+      "circle": {
+        "x": 763.21875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "active": null,
+      "overflow": false
+    },
+    "late-palette-no-resurrection": {
+      "phase": "explore",
+      "places": [],
+      "activities": [
+        "验收专用·行程外活动"
+      ],
+      "stations": [],
+      "tracks": [],
+      "screenTracks": [],
+      "circle": {
+        "x": 763.21875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "active": null,
+      "overflow": false,
+      "assert": "pass"
+    },
+    "pan-resize-after-reset": {
+      "phase": "explore",
+      "places": [],
+      "activities": [],
+      "stations": [],
+      "tracks": [],
+      "screenTracks": [],
+      "circle": {
+        "x": 556.5,
+        "y": 164.25,
+        "w": 451.5,
+        "h": 451.5
+      },
+      "active": null,
+      "overflow": false
+    },
+    "camera": {
+      "center": {
+        "lat": 31.30084828737045,
+        "lng": 121.20254516601562
+      },
+      "zoom": 10,
+      "fitCalls": 0
+    },
+    "resize-no-old-fit": {
+      "center": {
+        "lat": 31.30084828737045,
+        "lng": 121.20254516601562
+      },
+      "zoom": 10,
+      "fitCalls": 0,
+      "assert": "pass"
+    },
+    "pan-preserved": {
+      "center": {
+        "lat": 31.30084828737045,
+        "lng": 121.20254516601562
+      },
+      "zoom": 10,
+      "fitCalls": 0,
+      "assert": "pass"
+    },
+    "resize-no-old-route": {
+      "phase": "explore",
+      "places": [],
+      "activities": [],
+      "stations": [],
+      "tracks": [],
+      "screenTracks": [],
+      "circle": {
+        "x": 556.5,
+        "y": 164.25,
+        "w": 451.5,
+        "h": 451.5
+      },
+      "active": null,
+      "overflow": false,
+      "assert": "pass"
+    }
+  },
+  "log": [
+    "shot detail-before-reset",
+    "shot reset-after-late-palette",
+    "shot pan-resize-after-reset"
+  ]
+}

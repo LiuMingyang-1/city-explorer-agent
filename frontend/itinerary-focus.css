@@ -1,0 +1,38 @@
+/* Issue 37 experiment: one live map canvas and an independent itinerary. */
+:root{--focus-map-size:min(43vw,70dvh,660px);--focus-map-right:4vw;--focus-map-top:calc((100dvh - var(--focus-map-size))/2);--itinerary-duration:820ms;--itinerary-ease:cubic-bezier(.22,.75,.22,1);--itinerary-paper:#f0f3e9}
+.canvas{background:var(--itinerary-paper)}
+#map-shell{position:absolute;left:0;top:0;width:100%;height:100%;z-index:0;overflow:hidden;border-radius:0;transition:left var(--itinerary-duration) var(--itinerary-ease),top var(--itinerary-duration) var(--itinerary-ease),width var(--itinerary-duration) var(--itinerary-ease),height var(--itinerary-duration) var(--itinerary-ease),border-radius var(--itinerary-duration) var(--itinerary-ease)}
+#map-shell #map{position:absolute;inset:0;width:100%;height:100%;transform:none}
+body.itinerary-focus #map-shell{left:calc(100% - var(--focus-map-right) - var(--focus-map-size));top:var(--focus-map-top);width:var(--focus-map-size);height:var(--focus-map-size);border-radius:50%}
+#itinerary-map-frame{position:absolute;right:var(--focus-map-right);top:var(--focus-map-top);width:var(--focus-map-size);height:var(--focus-map-size);z-index:1;border-radius:50%;pointer-events:none;opacity:0;box-shadow:0 22px 52px -22px #3c583430,0 4px 16px -7px #35492e1a;transition:opacity var(--itinerary-duration) var(--itinerary-ease)}
+#itinerary-map-frame:after{content:"";position:absolute;inset:-1px;border-radius:50%;background:radial-gradient(circle,transparent 57%,#f0f3e910 62%,#f0f3e947 65%,#f0f3e9b8 69%,var(--itinerary-paper) 71%)}
+body.itinerary-focus #itinerary-map-frame{opacity:1}
+.glass-card{transition:transform var(--itinerary-duration) var(--itinerary-ease),opacity .6s ease;transform:translateX(0)}
+body.itinerary-focus .glass-card{transform:translateX(calc(-100% - 60px));opacity:0;pointer-events:none}
+/* The old card remains intact while moving away, revealing this lower layer. */
+.glass-card.viewing-plan>:not(.plan-detail-view){visibility:visible}
+#plan-detail{position:absolute;inset:36px auto 30px 5vw;width:calc(91vw - var(--focus-map-size) - 4vw);max-width:780px;min-width:0;z-index:800;padding:0 22px 0 0;border:0;border-radius:0;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;color:#3f5438;opacity:0;transform:translateX(24px);pointer-events:none;transition:opacity .5s ease,transform var(--itinerary-duration) var(--itinerary-ease)}
+#plan-detail[hidden]{display:none}
+body.itinerary-focus #plan-detail{opacity:1;transform:translateX(0);pointer-events:auto}
+#plan-detail .plan-detail-top{min-height:38px;flex-shrink:0}
+#plan-detail .plan-back{background:#ffffff90;font-size:12px;border-color:#a7ba974a;padding:10px 13px;border-radius:12px}
+#plan-detail .plan-detail-eyebrow{letter-spacing:2px;font-size:10px}
+#plan-detail .plan-detail-title{font-size:clamp(25px,2.7vw,40px);font-weight:500;line-height:1.4;letter-spacing:-1px;margin:28px 0 22px}
+#plan-detail>.plan-switch{max-width:380px;background:#dde6d45c;margin-bottom:22px}
+#plan-detail .plan-detail-scroll{padding-right:10px;padding-bottom:48px}
+#plan-detail .itinerary-date{font-size:11px;letter-spacing:1px;margin-bottom:8px}
+#plan-detail .itinerary-summary{font-size:14px;line-height:1.9;max-width:560px;margin-bottom:24px}
+#plan-detail .event-card{background:#ffffff7a;border-color:#c5d2b75c;border-radius:19px;padding:18px;grid-template-columns:100px minmax(0,1fr);gap:12px 18px;box-shadow:0 5px 22px #3f543805}
+#plan-detail .event-cover{width:100px;height:112px;border-radius:12px}
+#plan-detail .event-title{font-size:17px}
+#plan-detail .event-schedule{font-size:11px;letter-spacing:1px}
+#plan-detail .event-venue,#plan-detail .event-source{font-size:11px}
+#plan-detail .commute-row{padding:17px 5px 17px 20px;margin-left:26px}
+#plan-detail button:focus-visible,#plan-detail a:focus-visible{outline:2px solid #7c966c;outline-offset:4px}
+body.itinerary-focus .map-status{left:auto;right:6vw;bottom:30px;max-width:38vw}
+body.itinerary-transition #map-shell{pointer-events:none;will-change:left,top,width,height,border-radius}
+body.itinerary-transition .glass-card{will-change:transform,opacity}
+@media(min-width:1600px){#plan-detail{top:48px;bottom:40px}}
+@media(max-width:1000px) and (min-width:701px){:root{--focus-map-size:min(42vw,62dvh);--focus-map-right:3vw}#plan-detail{left:4vw;width:49vw;padding-right:20px}#plan-detail .plan-detail-eyebrow{display:none}#plan-detail .event-card{grid-template-columns:78px minmax(0,1fr);padding:14px;gap:10px 13px}#plan-detail .event-cover{width:78px;height:96px}#plan-detail .event-title{font-size:15px}}
+@media(max-width:700px){:root{--focus-map-size:min(52vw,240px,30dvh);--focus-map-top:64px;--focus-map-right:18px}#plan-detail{inset:18px 18px 0;width:auto;max-width:none;padding:0}#plan-detail .plan-detail-top{width:calc(100% - 100px);min-height:36px}#plan-detail .plan-detail-eyebrow{display:none}#plan-detail .plan-detail-title{width:calc(100% - var(--focus-map-size) - 14px);min-height:calc(var(--focus-map-size) + 10px);display:flex;align-items:center;font-size:clamp(22px,6vw,30px);margin:20px 0 12px;line-height:1.6;letter-spacing:-.5px}#plan-detail>.plan-switch{max-width:none;margin-bottom:16px}#plan-detail .plan-detail-scroll{padding-right:2px;padding-bottom:25px}#plan-detail .event-card{grid-template-columns:78px minmax(0,1fr);padding:13px;gap:10px 12px;border-radius:16px}#plan-detail .event-cover{width:78px;height:94px}#plan-detail .event-title{font-size:15px}#plan-detail .itinerary-summary{font-size:12px;margin-bottom:18px}body.itinerary-focus .map-status{right:18px;bottom:12px;max-width:70vw}}
+@media(prefers-reduced-motion:reduce){#map-shell,#itinerary-map-frame,.glass-card,#plan-detail{transition:none!important}}

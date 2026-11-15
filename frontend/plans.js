@@ -1,7 +1,7 @@
 'use strict';
 // Presentational adapter for legacy itineraries and the Day 0 single/comparison samples.
 (() => {
- let currentView=null,viewCount=0,detailEpoch=0,openRect=null,detailFocus=true;
+ let currentView=null,viewCount=0,detailEpoch=0,detailTimer=null,cancelDetailSettle=null;
  let routeRun=0,stopRouteAnimation,stopRouteZoom;
  function stopRouteEffects(){routeRun++;stopRouteAnimation?.();stopRouteAnimation=null;stopRouteZoom?.();stopRouteZoom=null;}
  const text=(tag,className,value)=>{const node=document.createElement(tag);node.className=className;node.textContent=String(value??'');return node;};
@@ -77,7 +77,9 @@
  }
  function compatibleCoordinates(model){if(window.WanderAMap?.ready)return ['WGS84','WGS-84','GCJ02','GCJ-02'].includes(String(model.coordinate_system||'WGS84').toUpperCase());return ['WGS84','WGS-84'].includes(String(model.coordinate_system||'WGS84').toUpperCase());}
  function draw(data,{fit=true,onSelect}={}){
-  const model=normalize(data);if(!model)return;stopRouteEffects();
+  let model=normalize(data);if(!model)return;stopRouteEffects();
+  model=window.WanderItineraryMap?.prepareDraw(model,{fit,onSelect})||model;
+  fit=window.WanderItineraryMap?.allowFit(fit)??fit;
   if(window.WanderAMap?.ready){return window.WanderAMap.drawPlans(model,{fit,onSelect});}if(!map)return;
   const epoch=routeRun,visuals=window.WanderRouteVisuals;
   function render(palette){
@@ -113,57 +115,88 @@
    map.on?.('zoom',widths);stopRouteZoom=()=>map.off?.('zoom',widths);
    if(fit&&bounds.length){const card=document.querySelector('.glass-card').getBoundingClientRect(),size=map.getSize();const frame=window.WanderMapLayout.routeFrame({width:size.x,height:size.y,card,panels:window.WanderMapLayout.visiblePanels()});map.fitBounds(L.latLngBounds(bounds),{paddingTopLeft:frame.paddingTopLeft,paddingBottomRight:frame.paddingBottomRight,maxZoom:15,animate:true});}
    stopRouteAnimation=visuals.animate(segments);
+   window.WanderItineraryMap?.routesReady?.();
   }
   const palette=visuals.palette(model);if(palette?.then)return palette.then(render);render(palette);
  }
  const reduceMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
- // Where the detail view shrinks to / grows from: the preview rect while it is on screen, else the card center.
- function detailAnchor(preview,card){
-  const bounds=card.getBoundingClientRect(),center={left:bounds.left+bounds.width*.3,top:bounds.top+bounds.height*.38,width:bounds.width*.4,height:bounds.height*.24};
-  if(!preview?.isConnected||preview.disabled)return center;
-  const rect=preview.getBoundingClientRect();
-  return rect.width>0&&rect.height>0&&rect.bottom>bounds.top&&rect.top<bounds.bottom?rect:center;
+ // One shared state, published before each layout change, lets map adapters fit
+ // the same viewport without owning the UI or re-creating the SDK instance.
+ let focusState={active:false,phase:'explore',model:null};
+ window.WanderItineraryFocus=focusState;
+ function publishFocus(active,phase,model){
+  focusState={active,phase,model};window.WanderItineraryFocus=focusState;
+  if(typeof CustomEvent==='function')window.dispatchEvent(new CustomEvent('wander:itinerary-focus',{detail:focusState}));
  }
- const detailRadius=preview=>preview?.isConnected&&getComputedStyle(preview).borderRadius||'15px';
- const detailInset=(anchor,rect,radius)=>`inset(${Math.round(anchor.top-rect.top)}px ${Math.round(rect.right-anchor.right)}px ${Math.round(rect.bottom-anchor.bottom)}px ${Math.round(anchor.left-rect.left)}px round ${radius||'15px'})`;
- function endMotion(overlay){openRect=null;overlay.classList.remove('plan-detail-motion','plan-detail-closing');overlay.style.clipPath='';overlay.style.opacity='';}
+ function setCardUnavailable(value){
+  const card=document.querySelector('.glass-card');if(!card)return;
+  card.inert=value;card.setAttribute('aria-hidden',String(value));
+ }
+ function settleFocus(epoch,callback,immediate=false){
+  cancelDetailSettle?.();clearTimeout(detailTimer);
+  if(immediate||reduceMotion()){callback();return;}
+  const shell=document.getElementById?.('map-shell');
+  let finished=false;
+  const cleanup=()=>{clearTimeout(detailTimer);shell?.removeEventListener?.('transitionend',onEnd);if(cancelDetailSettle===cleanup)cancelDetailSettle=null;};
+  const atTarget=()=>{
+   const target=focusState.active?document.getElementById?.('itinerary-map-frame'):document.querySelector('.canvas');
+   if(!shell?.getBoundingClientRect||!target?.getBoundingClientRect)return true;
+   const actual=shell.getBoundingClientRect(),expected=target.getBoundingClientRect();
+   return ['left','top','width','height'].every(key=>Math.abs(actual[key]-expected[key])<.75);
+  };
+  const check=()=>{
+   if(finished||epoch!==detailEpoch){cleanup();return;}
+   // A timer is only a fallback probe, never evidence that the CSS transition
+   // finished. Slow rendering, resize and reversed transitions must all converge.
+   if(!atTarget()){clearTimeout(detailTimer);detailTimer=setTimeout(check,100);return;}
+   finished=true;cleanup();callback();
+  };
+  const onEnd=event=>{if(event.target===shell&&['width','height','left','top','border-radius'].includes(event.propertyName))check();};
+  cancelDetailSettle=cleanup;
+  shell?.addEventListener?.('transitionend',onEnd);
+  detailTimer=setTimeout(check,1200);
+ }
  function openDetail(overlay,preview){
-  const card=document.querySelector('.glass-card');
-  if(!overlay.hidden||overlay.classList.contains?.('plan-detail-motion'))return;
-  const epoch=++detailEpoch;
-  overlay.hidden=false;preview.setAttribute('aria-expanded','true');card.classList.add('viewing-plan');
-  if(reduceMotion())return;
-  const anchor=detailAnchor(preview,card),rect=openRect=overlay.getBoundingClientRect();
-  overlay.style.clipPath=detailInset(anchor,rect,detailRadius(preview));overlay.style.opacity='0';
+  if(focusState.active&&focusState.phase!=='leaving')return;
+  const epoch=++detailEpoch;cancelDetailSettle?.();clearTimeout(detailTimer);
+  overlay.hidden=false;overlay.inert=false;overlay.setAttribute('aria-hidden','false');
+  preview.setAttribute('aria-expanded','true');
+  // Establish the initial style before toggling the target layout. The map
+  // controller resizes the live canvas as its shell changes; never scale it.
   void overlay.offsetHeight;
-  overlay.classList.add('plan-detail-motion');overlay.style.clipPath='inset(0px 0px 0px 0px)';overlay.style.opacity='';
-  let settled=false;
-  const done=()=>{if(settled)return;settled=true;clearTimeout(timer);overlay.removeEventListener?.('transitionend',onEnd);if(epoch!==detailEpoch)return;endMotion(overlay);};
-  const onEnd=event=>{if(event.target===overlay&&event.propertyName==='clip-path')done();};
-  overlay.addEventListener('transitionend',onEnd);const timer=setTimeout(done,400);
+  document.body?.classList.add('itinerary-transition');
+  document.body?.classList.add('itinerary-focus');
+  document.querySelector('.glass-card')?.classList.add('viewing-plan');
+  publishFocus(true,'entering',currentView?.model||null);
+  overlay.querySelector('.plan-back')?.focus({preventScroll:true});
+  setCardUnavailable(true);
+  settleFocus(epoch,()=>{
+   document.body?.classList.remove('itinerary-transition');
+   publishFocus(true,'detail',currentView?.model||null);
+  });
  }
  function closeDetail(options){
   const overlay=$('plan-detail');if(!overlay)return;
-  const card=document.querySelector('.glass-card'),preview=currentView?.preview;
-  const finish=()=>{endMotion(overlay);overlay.hidden=true;card.classList.remove('viewing-plan','plan-reveal');preview?.setAttribute('aria-expanded','false');if(detailFocus)preview?.focus({preventScroll:true});detailFocus=true;};
-  if(overlay.hidden||options?.animate===false||reduceMotion()){detailFocus=options?.focus!==false;++detailEpoch;finish();return;}
-  if(overlay.classList.contains?.('plan-detail-closing')){if(options?.focus===false)detailFocus=false;return;}
-  detailFocus=options?.focus!==false;
-  const epoch=++detailEpoch;
-  const anchor=detailAnchor(preview,card),rect=openRect||overlay.getBoundingClientRect();
-  const start=getComputedStyle(overlay).clipPath;
-  overlay.style.clipPath=start==='none'?'inset(0px 0px 0px 0px)':start;
-  void overlay.offsetHeight;
-  overlay.classList.add('plan-detail-motion','plan-detail-closing');card.classList.add('plan-reveal');
-  overlay.style.clipPath=detailInset(anchor,rect,detailRadius(preview));overlay.style.opacity='0';
-  let settled=false;
-  const done=()=>{if(settled)return;settled=true;clearTimeout(timer);overlay.removeEventListener?.('transitionend',onEnd);if(epoch!==detailEpoch)return;finish();};
-  const onEnd=event=>{if(event.target===overlay&&event.propertyName==='clip-path')done();};
-  overlay.addEventListener('transitionend',onEnd);const timer=setTimeout(done,370);
+  const wasActive=focusState.active||focusState.phase==='leaving';
+  if(!wasActive&&overlay.hidden)return;
+  const epoch=++detailEpoch;cancelDetailSettle?.();clearTimeout(detailTimer);
+  const preview=currentView?.preview,restoreFocus=options?.focus!==false;
+  preview?.setAttribute('aria-expanded','false');setCardUnavailable(false);
+  if(restoreFocus&&preview&&!preview.disabled)preview.focus({preventScroll:true});
+  overlay.inert=true;overlay.setAttribute('aria-hidden','true');
+  document.body?.classList.add('itinerary-transition');
+  document.body?.classList.remove('itinerary-focus');
+  document.querySelector('.glass-card')?.classList.remove('viewing-plan');
+  publishFocus(false,'leaving',currentView?.model||null);
+  settleFocus(epoch,()=>{
+   overlay.hidden=true;overlay.inert=false;
+   document.body?.classList.remove('itinerary-transition');
+   publishFocus(false,'explore',null);
+  },options?.animate===false);
  }
  function append(data,{drawMap=true}={}){
   const model=normalize(data);if(!model)throw new Error('方案内容不完整');
-  closeDetail({animate:false});if(currentView){currentView.preview.disabled=true;currentView.buttons.forEach(b=>{b.disabled=true;});}
+  closeDetail({animate:false,focus:false});if(currentView){currentView.preview.disabled=true;currentView.buttons.forEach(b=>{b.disabled=true;});}
   const {message,bubble}=makeMessage('assistant');bubble.classList.add('plan-bubble');
   bubble.append(text('p','plan-reply',model.plans.length>1?'为你整理了两种出发方式，看看哪一种更合心意。':'行程已经整理好了，点开看看这一路的安排。'));
   const preview=text('button','plan-preview','');preview.type='button';preview.setAttribute('aria-expanded','false');preview.setAttribute('aria-controls','plan-detail');
@@ -176,7 +209,7 @@
   if(isExample(model))bubble.append(text('span','example-badge','示例行程 · 非真实活动'));
   const overlay=$('plan-detail');overlay.replaceChildren();overlay.hidden=true;
   const top=document.createElement('header');top.className='plan-detail-top';
-  const back=text('button','plan-back','← 返回对话');back.type='button';back.addEventListener('click',closeDetail);top.append(back,text('span','plan-detail-eyebrow','你的漫游提案'));
+  const back=text('button','plan-back','← 返回探索');back.type='button';back.addEventListener('click',closeDetail);top.append(back,text('span','plan-detail-eyebrow','你的漫游提案'));
   const heading=text('h2','plan-detail-title',model.plans.length>1?'选择你的出发方式':'把今天交给喜欢的事');
   const tabs=document.createElement('div');tabs.className='plan-switch';tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','游玩方案');
   if(model.plans.length===1)tabs.classList.add('single');
@@ -208,17 +241,18 @@
    state.latestPlan=model;state.activePlanId=id;state.messages[messageIndex].text=summary(model);
    previewTitle.textContent=plan.title||plan.itinerary.summary||'查看游玩规划';
    previewFooter.textContent='方案 '+(plan.label||'A')+' · '+plan.itinerary.stops.length+' 个停留点  ↗';
+   if(focusState.active)publishFocus(true,focusState.phase,model);
    if(drawMap)draw(model,{fit,onSelect:next=>choose(next)});
    if(capture)window.WanderHistory?.capture();
   }
   preview.addEventListener('click',()=>{openDetail(overlay,preview);choose(model.active_plan,{fit:true,capture:false});scroll.scrollTo({top:0});back.focus({preventScroll:true});});
   // History hydration suppresses only this initial draw; explicit clicks must
   // always restore the selected route, even when its selection hasn't changed.
-  currentView={buttons,preview};choose(model.active_plan,{fit:true,capture:false,drawMap});
+  currentView={buttons,preview,model};choose(model.active_plan,{fit:true,capture:false,drawMap});
   window.WanderActivities?.addPlanEvents(model);
   scrollMessages();return message;
  }
- window.addEventListener('wander:reset',()=>{stopRouteEffects();closeDetail({focus:false});currentView=null;state.activePlanId=null;});
+ window.addEventListener('wander:reset',()=>{stopRouteEffects();closeDetail({focus:false,animate:false});currentView=null;state.activePlanId=null;});
  window.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('plan-detail').hidden)closeDetail();});
- window.WanderPlans={normalize,active,summary,price,geometry,commute,safeURL,eventCover,draw,append,closeDetail};
+ window.WanderPlans={normalize,active,summary,price,geometry,commute,safeURL,eventCover,draw,append,closeDetail,cancelDraw:stopRouteEffects};
 })();

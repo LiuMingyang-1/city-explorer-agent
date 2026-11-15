@@ -4,7 +4,7 @@
  let native,config,onSelect,selectedMarker,ready=false,selectionEpoch=0,routeEpoch=0,searchEpoch=0,restoreScreen=null;
  let routes=[],scenes=[],currentNames=[],selectedPosition=null,selectedName='',activityMarkers=[],activitiesEpoch=0;
  const converted=new Map(),addresses=new Map();
- let stopRouteAnimation,routeStrokes=[];
+ let stopRouteAnimation,routeStrokes=[],fitLayers=[];
  function updateRouteWidths(){
   const zoom=native?.getZoom?.()||11;routeStrokes.forEach(item=>{const style=window.WanderRouteVisuals.stroke(zoom,item.selected);if(style.width===item.width)return;item.width=style.width;item.layers.forEach(layer=>layer.setOptions({strokeWeight:style.width,borderWeight:style.border}));});
  }
@@ -46,7 +46,7 @@
   const result=await call(callback=>new window.AMap.Geocoder({extensions:'base'}).getAddress([lng,lat],callback));
   if(!result.regeocode)throw new Error('地址暂不可用');addresses.set(cacheKey,result.regeocode);return result.regeocode;
  }
- function clearRoutes(){routeEpoch++;stopRouteAnimation?.();stopRouteAnimation=null;routeStrokes=[];if(native&&routes.length)native.remove(routes);routes=[];}
+ function clearRoutes(){fitLayers=[];routeEpoch++;stopRouteAnimation?.();stopRouteAnimation=null;routeStrokes=[];if(native&&routes.length)native.remove(routes);routes=[];}
  async function select(lat,lng,name,zoom=13,{system='WGS84',reverse=false,wgs84}={}){
   searchEpoch++;const epoch=++selectionEpoch,[position]=await convert([[lng,lat]],system);if(epoch!==selectionEpoch)return;
   clearRoutes();let displayName=name;
@@ -62,13 +62,14 @@
  function updatePlaces(names){
   if(names!==undefined)currentNames=names;if(!native)return;
   const size=native.getSize(),width=size.getWidth?.()??size.width,height=size.getHeight?.()??size.height;
-  const card=document.querySelector('.glass-card').getBoundingClientRect(),occupied=[card];
+  const card=document.querySelector('.glass-card').getBoundingClientRect(),occupied=window.WanderItineraryFocus?.active?[]:[card];
+  if(selectedMarker)selectedMarker.setMap(window.WanderItineraryFocus?.active?null:native);
   for(const id of ['activity-detail','preferences-panel']){const detail=document.getElementById?.(id);if(detail&&!detail.hidden)occupied.push(detail.getBoundingClientRect());}
   if(selectedPosition){const p=native.lngLatToContainer(selectedPosition),x=p.getX?.()??p.x,y=p.getY?.()??p.y;occupied.push({left:x-135,right:x+135,top:y-65,bottom:y+12});}
   const overlap=(a,b)=>a.left<b.right+6&&a.right>b.left-6&&a.top<b.bottom+6&&a.bottom>b.top-6;
   [...scenes].sort((a,b)=>Number(currentNames.includes(b.place.name))-Number(currentNames.includes(a.place.name))||(b.place.rating||0)-(a.place.rating||0)).forEach(scene=>{
    const p=native.lngLatToContainer(scene.position),x=p.getX?.()??p.x,y=p.getY?.()??p.y;
-   const show=(scene.place.rating>=4||currentNames.includes(scene.place.name))&&scene.place.name!==selectedName&&x>=-25&&x<=width+25&&y>=-25&&y<=height+25;
+   const show=!window.WanderItineraryFocus?.active&&(scene.place.rating>=4||currentNames.includes(scene.place.name))&&scene.place.name!==selectedName&&x>=-25&&x<=width+25&&y>=-25&&y<=height+25;
    visibility(scene,show);if(!show)return;
    const w=Array.from(scene.place.name).length*11+50,h=29;
    const positions=[['right',{left:x+17,right:x+17+w,top:y-h/2,bottom:y+h/2}],['left',{left:x-17-w,right:x-17,top:y-h/2,bottom:y+h/2}],['top',{left:x-w/2,right:x+w/2,top:y-18-h,bottom:y-18}],['bottom',{left:x-w/2,right:x+w/2,top:y+18,bottom:y+18+h}]];
@@ -149,7 +150,7 @@
   const items=activityMarkers.map(item=>{const p=native.lngLatToContainer(item.position);return {id:item.group.id,x:p.getX?.()??p.x,y:p.getY?.()??p.y};});
   const fits=window.WanderActivities.layoutBubbles(items,{width,height,occupied,zoom:native.getZoom?.()||11});
   activityMarkers.forEach(item=>{
-   const fit=fits.get(item.group.id),show=Boolean(fit);
+   const fit=fits.get(item.group.id),show=!window.WanderItineraryFocus?.active&&Boolean(fit);
    if(fit){
     const layout=[fit.dx,fit.dy,fit.tailX,fit.tailY,fit.below].join(',');
     if(item.layout!==layout){item.content.style.setProperty('--bubble-tail-x',fit.tailX+'px');item.content.style.setProperty('--bubble-tail-y',fit.tailY+'px');item.content.classList.toggle('bubble-below',fit.below);item.marker.setOffset(new window.AMap.Pixel(fit.dx,fit.dy));item.layout=layout;}
@@ -193,10 +194,18 @@
      const marker=new window.AMap.Marker({position:translated[item.pointIndex],content,anchor:'center',zIndex:selected?300:200});
      marker.on('click',()=>{choose?.(item.plan.plan_id);window.WanderActivities?.openEvents([item.event],{placeName:item.event.venue_name,coordinateSystem:model.coordinate_system});});routes.push(marker);if(selected)activeLayers.push(marker);
     }
-   });native.add(routes);
-   if(fit&&activeLayers.length){const card=document.querySelector('.glass-card').getBoundingClientRect(),size=native.getSize();const frame=window.WanderMapLayout.routeFrame({width:size.width,height:size.height,card,panels:window.WanderMapLayout.visiblePanels()});native.setFitView(activeLayers,false,frame.amap,15);}
+   });native.add(routes);fitLayers=activeLayers;
+   if(fit&&activeLayers.length)fitRoutes();
+   window.WanderItineraryMap?.routesReady?.();
    stopRouteAnimation=visuals.animate(segments);
   }catch{if(epoch===routeEpoch)showMapStatus('路线暂不可用');}
+ }
+ function resize(){if(!ready)return;native.resize?.();}
+ function fitRoutes({immediate=false}={}){
+  if(!ready||!fitLayers.length)return;
+  const card=document.querySelector('.glass-card').getBoundingClientRect(),size=native.getSize();
+  const frame=window.WanderMapLayout.routeFrame({width:size.getWidth?.()??size.width,height:size.getHeight?.()??size.height,card,panels:window.WanderMapLayout.visiblePanels()});
+  native.setFitView(fitLayers,immediate,frame.amap,15);
  }
  function backendLocation(location){
   if(config?.backendCoordinateSystem!=='WGS84')return location?.coordinateSystem==='GCJ02'?{lat:location.lat,lng:location.lng}:null;
@@ -212,5 +221,5 @@
  }
  function cancelPending(){selectionEpoch++;searchEpoch++;}
  function dispose(){ready=false;activitiesEpoch++;activityMarkers=[];cancelPending();clearRoutes();native?.destroy();native=null;scenes=[];selectedPosition=null;selectedName='';}
- window.WanderAMap={init,dispose,cancelPending,loadFallback,convert,select,search,weather,updatePlaces,setActivities,getViewport,drawPlans,clearRoutes,backendLocation,get ready(){return ready;}};
+ window.WanderAMap={init,dispose,cancelPending,loadFallback,convert,select,search,weather,updatePlaces,setActivities,getViewport,drawPlans,clearRoutes,resize,fitRoutes,backendLocation,get ready(){return ready;}};
 })();

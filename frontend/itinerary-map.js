@@ -1,0 +1,98 @@
+'use strict';
+// Coordinates the one live SDK canvas with the UI's changing map shell.
+// The UI owns phase timing; resize and camera updates never create another map.
+(() => {
+ let fullModel=null,choose,internalDraw=false,raf=0,lastSize='',lastFit='',revision=0;
+ let phase=window.WanderItineraryFocus?.phase||'explore',exploreCard=null;
+ const focused=()=>Boolean(window.WanderItineraryFocus?.active);
+ function geometryPending(){
+  const element=document.getElementById('map'),canvas=document.querySelector('.canvas'),frame=document.getElementById('itinerary-map-frame');
+  if(!element?.clientWidth||!element.clientHeight||!canvas?.clientWidth||!canvas.clientHeight||!frame?.clientWidth||!frame.clientHeight)return false;
+  const target=focused()?frame:canvas;
+  return Math.abs(element.clientWidth-target.clientWidth)>1||Math.abs(element.clientHeight-target.clientHeight)>1;
+ }
+ const transitioning=()=>phase==='entering'||phase==='leaving'||geometryPending();
+ const valid=(lat,lng)=>Number.isFinite(lat)&&Number.isFinite(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180;
+ function focusProgress(){
+  const element=document.getElementById('map'),canvas=document.querySelector('.canvas'),frame=document.getElementById('itinerary-map-frame');
+  if(!element||!canvas||!frame)return focused()?1:0;
+  const full=canvas.clientWidth,target=frame.clientWidth;
+  return full>target?Math.max(0,Math.min(1,(full-element.clientWidth)/(full-target))):focused()?1:0;
+ }
+ function prepareDraw(model,{onSelect}={}){
+  if(!internalDraw){fullModel=model;choose=onSelect;revision++;lastFit='';}
+  if(focused())schedule();
+  return focused()?{...model,plans:model.plans.filter(plan=>plan.plan_id===model.active_plan)}:model;
+ }
+ function allowFit(value){return Boolean(value)&&!transitioning()&&!focused();}
+ function leafletBounds(){
+  if(!fullModel||!['WGS84','WGS-84'].includes(String(fullModel.coordinate_system||'WGS84').toUpperCase()))return [];
+  const plan=fullModel.plans.find(p=>p.plan_id===fullModel.active_plan),events=new Map(fullModel.events.map(e=>[e.event_id,e])),points=[];
+  for(const stop of plan?.itinerary.stops||[]){const e=events.get(stop.event_id);if(e&&valid(e.latitude,e.longitude))points.push([e.latitude,e.longitude]);}
+  for(const leg of plan?.legs||[])points.push(...(window.WanderPlans?.geometry(leg)||[]));
+  return points;
+ }
+ function sync({force=false}={}){
+  const element=document.getElementById('map');if(!element)return;
+  const width=element.clientWidth,height=element.clientHeight;if(!width||!height)return;
+  const size=width+','+height,changed=size!==lastSize;lastSize=size;
+  if(window.WanderAMap?.ready){
+   if(changed||force)window.WanderAMap.resize();
+  }else if(typeof map!=='undefined'&&map){
+   if(changed||force){map.stop?.();map.invalidateSize({animate:false,pan:false,debounceMoveend:true});tiles?.getMaplibreMap?.()?.resize();}
+  }else return;
+  if(typeof updatePlaceMarkers==='function')updatePlaceMarkers();
+  if(!fullModel)return;
+  const card=document.querySelector('.glass-card').getBoundingClientRect();
+  const frame=window.WanderMapLayout.routeFrame({width,height,card,panels:window.WanderMapLayout.visiblePanels()});
+  const signature=[revision,size,focused(),...frame.amap].join(':');
+  if(!force&&signature===lastFit)return;lastFit=signature;
+  if(window.WanderAMap?.ready)window.WanderAMap.fitRoutes({immediate:true});
+  else{
+   const points=leafletBounds();if(!points.length)return;
+   // Fractional zoom keeps the circle's route frame moving continuously.
+   // Leaflet's integer snapping would otherwise produce visible size steps.
+   map.options.zoomSnap=0;
+   map.fitBounds(L.latLngBounds(points),{paddingTopLeft:frame.paddingTopLeft,paddingBottomRight:frame.paddingBottomRight,maxZoom:15,animate:false});
+  }
+ }
+ function schedule(){if(!raf)raf=requestAnimationFrame(tick);}
+ function tick(){raf=0;sync();if(transitioning())schedule();}
+ function redraw(){
+  if(!fullModel||!window.WanderPlans)return;
+  internalDraw=true;
+  try{
+   const pending=window.WanderPlans.draw(fullModel,{fit:false,onSelect:choose});
+   Promise.resolve(pending).then(()=>{lastFit='';schedule();}).catch(()=>{});
+  }finally{internalDraw=false;}
+ }
+ function onFocus(event){
+  const focus=event.detail;if(!focus)return;
+  if(focus.phase==='entering'&&phase==='explore')exploreCard=document.querySelector('.glass-card').getBoundingClientRect();
+  phase=focus.phase;
+  // A reset listener may run before the UI closes its previous detail. The
+  // resulting leaving event must not resurrect the model we just cleared.
+  if(focus.model&&(focus.active||fullModel)){if(JSON.stringify(fullModel)!==JSON.stringify(focus.model))revision++;fullModel=focus.model;}
+  if(transitioning())window.WanderAMap?.cancelPending?.();
+  // Stops async palette results and route reveals before another phase wins.
+  if(typeof map!=='undefined'&&map){map.stop?.();if(locationMarker){if(focus.active)map.removeLayer(locationMarker);else if(!map.hasLayer(locationMarker))locationMarker.addTo(map);}}
+  if(phase==='entering'||phase==='leaving'||phase==='detail'){
+   // The stable detail event follows entering without redrawing the same route.
+   const key=[focus.active,fullModel?.active_plan,JSON.stringify(fullModel)].join(':');
+   if(key!==onFocus.lastModel){
+    window.WanderPlans?.cancelDraw?.();
+    if(typeof map!=='undefined'&&map&&routeLayer){map.removeLayer(routeLayer);routeLayer=null;}
+    onFocus.lastModel=key;redraw();
+   }
+  }
+  schedule();
+ }
+ window.addEventListener('wander:itinerary-focus',onFocus);
+ window.addEventListener('wander:map-ready',()=>{lastSize='';lastFit='';if(focused()||transitioning())redraw();schedule();});
+ window.addEventListener('wander:reset',()=>{window.WanderPlans?.cancelDraw?.();window.WanderAMap?.clearRoutes?.();fullModel=null;choose=null;revision++;lastFit='';onFocus.lastModel=null;});
+ window.addEventListener('resize',schedule);
+ if(typeof ResizeObserver!=='undefined'){
+  const element=document.getElementById('map');if(element)new ResizeObserver(schedule).observe(element);
+ }
+ window.WanderItineraryMap={prepareDraw,allowFit,routesReady(){if(focused()||transitioning()){lastFit='';schedule();}},get transitioning(){return transitioning();},get focusProgress(){return focusProgress();},get exploreCard(){return exploreCard;},sync};
+})();

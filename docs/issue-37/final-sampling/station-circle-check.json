@@ -1,0 +1,53 @@
+{
+  "1440-enter": {
+    "points": [
+      {
+        "screenX": 1029.59375,
+        "screenY": 464.59375,
+        "distanceOverDiameter": 0.12101135511353318
+      },
+      {
+        "screenX": 1146.59375,
+        "screenY": 379.59375,
+        "distanceOverDiameter": 0.12378329386297625
+      }
+    ],
+    "within44Percent": true,
+    "firstZoom": 15,
+    "finalZoom": 15
+  },
+  "390-enter": {
+    "points": [
+      {
+        "screenX": 213.1875,
+        "screenY": 209,
+        "distanceOverDiameter": 0.3554960435380714
+      },
+      {
+        "screenX": 330.1875,
+        "screenY": 124,
+        "distanceOverDiameter": 0.3577747262770756
+      }
+    ],
+    "within44Percent": true,
+    "firstZoom": 15,
+    "finalZoom": 15
+  },
+  "320-enter": {
+    "points": [
+      {
+        "screenX": 167.59375,
+        "screenY": 184,
+        "distanceOverDiameter": 0.37901540936889516
+      },
+      {
+        "screenX": 270.59375,
+        "screenY": 110,
+        "distanceOverDiameter": 0.38320695105581304
+      }
+    ],
+    "within44Percent": true,
+    "firstZoom": 15,
+    "finalZoom": 14.821088838061218
+  }
+}
