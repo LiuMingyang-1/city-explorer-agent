@@ -59,6 +59,94 @@ export interface PlannerProgress {
 /** 子任务派发终态：与回传父模型的 DelegateTaskDetails.status 同枚同义。 */
 export type SubagentDoneStatus = "completed" | "failed" | "cancelled";
 
+/**
+ * 一个真实地理位置点（恒 GCJ-02，与 events 表/EventView 同源）：
+ * search_events 的命中候选（tool_call.candidates）与子任务终局站点
+ * （subagent_done.stops）共用形状；event_id 即 EventView.event_id，
+ * 供前端与最终 result 的采纳站点做真实 id 比对。
+ */
+export interface ProgressPoint {
+  event_id: string;
+  latitude: number;
+  longitude: number;
+}
+
+/** tool_call.candidates 单次透出上限（search_events 命中可至 100，只透前 16）。 */
+export const PROGRESS_CANDIDATE_LIMIT = 16;
+/** subagent_done.stops 透出上限（实际行程站点 ≤10，留足防御余量）。 */
+export const PROGRESS_STOP_LIMIT = 24;
+/**
+ * event_id 字符数上限：真实 id 为短串（evt_…）；超出视为损坏数据
+ * **整条跳过**——绝不截断：截断后的 id 会把候选点错认成另一条活动。
+ */
+export const PROGRESS_POINT_ID_MAX = 256;
+/**
+ * candidates/stops 数组的 JSON 字节预算（UTF-8）：极端长真实 id 也不突破
+ * 单帧增量。与条数上限独立兜底——条数先到先截断，字节先到同样截断。
+ */
+export const PROGRESS_POINTS_BYTE_LIMIT = 8192;
+
+const pointsEncoder = new TextEncoder();
+
+/**
+ * 原始点位 → 有界清单：逐项校验真实身份与坐标（非空/≤ID_MAX 字符串 id、
+ * 有限数且 |lat|≤90、|lng|≤180），按原序去重；条数与 JSON 字节双上限，
+ * 任一先到即截断。不造点、不改值——缺哪项如实跳哪项。
+ */
+function boundedPoints(
+  raw: Iterable<{
+    event_id?: unknown;
+    latitude?: unknown;
+    longitude?: unknown;
+  }>,
+  limit: number,
+): ProgressPoint[] {
+  const out: ProgressPoint[] = [];
+  const seen = new Set<string>();
+  let bytes = 2; // "[" + "]"
+  for (const entry of raw) {
+    if (out.length >= limit) break;
+    const id = typeof entry.event_id === "string" ? entry.event_id : "";
+    if (id === "" || [...id].length > PROGRESS_POINT_ID_MAX || seen.has(id)) continue;
+    const lat = entry.latitude;
+    const lng = entry.longitude;
+    if (typeof lat !== "number" || !Number.isFinite(lat) || Math.abs(lat) > 90) continue;
+    if (typeof lng !== "number" || !Number.isFinite(lng) || Math.abs(lng) > 180) continue;
+    const point: ProgressPoint = { event_id: id, latitude: lat, longitude: lng };
+    const cost = pointsEncoder.encode(JSON.stringify(point)).length + 1; // 含分隔逗号
+    if (bytes + cost > PROGRESS_POINTS_BYTE_LIMIT) break;
+    seen.add(id);
+    out.push(point);
+    bytes += cost;
+  }
+  return out;
+}
+
+/**
+ * search_events 成功结果 → 真实命中候选：只认 structuredContent.events
+ * （工具真实产出，content 文本不解析、args_summary 的 near= 只作查询中心
+ * 不冒充候选）。提取不出 → 空表（调用方据此省略整个字段）。
+ */
+function searchCandidates(result: unknown): ProgressPoint[] {
+  const structured =
+    result !== null && typeof result === "object"
+      ? (result as { structuredContent?: unknown }).structuredContent
+      : undefined;
+  const events =
+    structured !== null && typeof structured === "object"
+      ? (structured as { events?: unknown }).events
+      : undefined;
+  if (!Array.isArray(events)) return [];
+  return boundedPoints(
+    events.map((e) => {
+      const o = (e !== null && typeof e === "object" ? e : {}) as Record<string, unknown>;
+      // Event.id → wire event_id（与 EventView/stops 同键名，供前端真实 id 比对）。
+      return { event_id: o.id, latitude: o.latitude, longitude: o.longitude };
+    }),
+    PROGRESS_CANDIDATE_LIMIT,
+  );
+}
+
 /** 子会话创建成功即发射：分身入场，含 title 供前端气泡/分身头顶展示。 */
 export interface SubagentSpawnedEvent {
   type: "subagent_spawned";
@@ -87,6 +175,9 @@ export interface SubagentDoneEvent {
   kind?: "itinerary" | "clarification";
   /** completed+itinerary 时为站点数；其余情形 null。 */
   stops_count: number | null;
+  /** completed+itinerary 时按行程站序透出的真实站点（GCJ-02，≤24、
+   *  id 去重）；failed/cancelled/clarification 恒省略。 */
+  stops?: ProgressPoint[];
   /** 子任务标题（与 spawned.title 同源必填，≤40 码点）：前端按 title 归属 done。 */
   title: string;
   /** 单行摘要：行程 summary / 追问问题 / 失败或取消原因（≤160 码点）。 */
@@ -119,6 +210,9 @@ export interface ToolCallEvent {
   duration_ms?: number;
   /** 源自被派发子会话时盖章为 child sessionId；父会话原生事件省略。 */
   subagent_id?: string;
+  /** 仅 search_events 成功时透出：structuredContent.events 的真实命中
+   *  候选（GCJ-02，≤16、id 去重）；其余工具/error/提取不出恒省略。 */
+  candidates?: ProgressPoint[];
   message: string;
 }
 
@@ -275,6 +369,11 @@ export function toolCallEvent(input: {
 }): ToolCallEvent {
   const argsSummary = summarizeToolArgs(input.name, input.args);
   const resultCount = input.isError ? null : toolResultCount(input.name, input.result);
+  // 仅成功 search_events 透真实候选；其余工具与 error 帧一律省略字段。
+  const candidates =
+    !input.isError && input.name === "search_events"
+      ? searchCandidates(input.result)
+      : [];
   const message = input.isError
     ? `${input.name} 失败`
     : `${input.name}${argsSummary !== "" ? ` ${argsSummary}` : ""}` +
@@ -288,6 +387,7 @@ export function toolCallEvent(input: {
     status: input.isError ? "error" : "completed",
     ...(input.durationMs !== undefined ? { duration_ms: Math.round(input.durationMs) } : {}),
     ...(input.subagentId !== undefined ? { subagent_id: input.subagentId } : {}),
+    ...(candidates.length > 0 ? { candidates } : {}),
     message: clipText(message),
   };
 }
@@ -313,13 +413,18 @@ export function subagentSpawnedEvent(input: {
 }
 
 /** 派发终了 → subagent_done 事件；status/summary 由调用方按真实结果填入，
- *  title 必填（与 spawned 同源：入参 title 缺省取 task 裁剪，≤40 码点）。 */
+ *  title 必填（与 spawned 同源：入参 title 缺省取 task 裁剪，≤40 码点）。
+ *  stops 仅 completed+itinerary 透出（真实 eventsById 行程序站点）——
+ *  终态 gate 在 builder 内把关：close 降级/取消后 stops 入参即便存在
+ *  也随最终 status 一起省略，绝不漏进失败帧。 */
 export function subagentDoneEvent(input: {
   subagentId: string;
   planId: string | null;
   status: SubagentDoneStatus;
   kind?: "itinerary" | "clarification";
   stopsCount?: number | null;
+  /** 真实站点原始值（行程序、GCJ-02）；builder 再做校验/去重/有界截断。 */
+  stops?: { event_id: string; latitude: number; longitude: number }[];
   title: string;
   summary: string;
   childRunId: string | null;
@@ -328,6 +433,10 @@ export function subagentDoneEvent(input: {
   const summary = clipText(input.summary);
   const title = clipText(input.title, 40);
   const stopsCount = input.stopsCount ?? null;
+  const stops =
+    input.status === "completed" && input.kind === "itinerary" && input.stops !== undefined
+      ? boundedPoints(input.stops, PROGRESS_STOP_LIMIT)
+      : [];
   const message =
     input.status === "completed"
       ? `子任务完成${stopsCount !== null ? `：${stopsCount} 站` : ""}${
@@ -343,6 +452,7 @@ export function subagentDoneEvent(input: {
     status: input.status,
     ...(input.kind !== undefined ? { kind: input.kind } : {}),
     stops_count: stopsCount,
+    ...(stops.length > 0 ? { stops } : {}),
     title,
     summary,
     child_run_id: input.childRunId,

@@ -265,10 +265,47 @@ test("delegate progress: success emits spawned then done, fields same-source as 
   assert.equal(done.status, payload.status);
   assert.equal(done.kind, "itinerary");
   assert.equal(done.stops_count, payload.itinerary?.stops.length);
+  // stops：真实 eventsById 行程序站点（GCJ-02 坐标如实抄库）。
+  assert.deepEqual(done.stops, [
+    { event_id: "evt_a", latitude: 31.1, longitude: 121.4 },
+  ]);
   assert.equal(done.summary, payload.itinerary?.summary);
   assert.equal(done.child_run_id, payload.runId);
   assert.equal(done.child_run_id, childRuns[0].run.runId);
   assert.equal(done.child_run_status, "completed");
+  assertMessagesWellFormed(events);
+});
+
+test("delegate progress: done stops keep itinerary order and skip events missing from DB", async (t) => {
+  const { sessions, main, writer, parentRun } = await parentFixture(t);
+  const childRuns: ChildRunRef[] = [];
+  const events: PlannerProcessEvent[] = [];
+  const evtB = { ...fakeEvent("evt_b"), latitude: 32.5, longitude: 120.6 };
+  // 行程序 evt_b → evt_missing → evt_a；缺库站如实跳过、顺序保真。
+  const child = fakeChild(() => itineraryTurn("evt_b", "evt_missing", "evt_a"));
+  const ctx = makeCtx(
+    { writer, sessionId: main.sessionId, runId: parentRun.runId },
+    { onProgress: (e) => events.push(e) },
+  );
+  const tool = createDelegateTaskTool({
+    getContext: () => ctx,
+    repository: stubEvents([fakeEvent("evt_a"), evtB]),
+    sessions,
+    spawnChild: spawnWithChildRun(sessions, child, childRuns),
+  });
+
+  const result = await tool.execute("tc", { task: "x" });
+  const payload = payloadOf(result);
+  assert.equal(payload.status, "completed");
+  const done = asDone(events[1]);
+  assert.equal(done.status, "completed");
+  assert.equal(done.stops_count, 3); // stops_count 按行程站数如实记
+  assert.deepEqual(done.stops, [
+    { event_id: "evt_b", latitude: 32.5, longitude: 120.6 },
+    { event_id: "evt_a", latitude: 31.1, longitude: 121.4 },
+  ]);
+  // 模型侧 details 不增字段：events 仍是无坐标的 DelegatedEventMeta。
+  assert.equal("latitude" in (payload.events?.[0] ?? {}), false);
   assertMessagesWellFormed(events);
 });
 
@@ -307,6 +344,8 @@ test("delegate progress: clarification done, plan_id null when unmapped, title f
   assert.equal(done.kind, "clarification");
   assert.equal(done.stops_count, null);
   assert.equal(done.summary, payload.question);
+  // clarification 无 itinerary：stops 字段省略。
+  assert.equal("stops" in done, false);
   // 竞态如实呈现：父视角 completed，但子 run 尚未持久化终态 → running，不伪装。
   assert.equal(done.child_run_id, childRuns[0].run.runId);
   assert.equal(done.child_run_status, "running");
@@ -349,6 +388,7 @@ test("delegate progress: spawnChild failure still pairs spawned with exactly one
   assert.match(done.summary, /^启动子任务失败：打开子会话失败$/);
   assert.equal(done.child_run_id, null);
   assert.equal(done.child_run_status, null);
+  assert.equal("stops" in done, false); // 失败帧绝不带站点
   assertMessagesWellFormed(events);
 });
 
@@ -506,6 +546,7 @@ test("delegate progress: child timeout pairs cancelled done and never disguises 
   // DB 权威：子 run 未被任何人持久化终态 → running 如实抄录。
   assert.equal(done.child_run_id, childRuns[0].run.runId);
   assert.equal(done.child_run_status, "running");
+  assert.equal("stops" in done, false); // 取消帧绝不带站点
   const persisted = await sessions.getRun(USER, childRuns[0].run.runId);
   assert.equal(persisted?.status, "running");
   assertMessagesWellFormed(events);
@@ -758,9 +799,11 @@ test("delegate progress: close rejection downgrades completed to failed, done sa
   assert.equal(child.closes, 1);
 
   // 唯一 done 与最终 details 同源；child_run_status 仍为 DB 权威 completed。
+  // close 降级 failed：已组好的 stops 随终态 gate 省略，不漏进失败帧。
   assert.equal(events.length, 2);
   const done = asDone(events[1]);
   assert.equal(done.status, payload.status);
+  assert.equal("stops" in done, false);
   assert.equal(done.summary, payload.error);
   assert.equal(done.child_run_id, payload.runId);
   assert.equal(done.child_run_id, childRuns[0].run.runId);

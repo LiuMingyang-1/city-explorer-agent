@@ -96,6 +96,39 @@
 7. **代际**：请求中开历史/新聊天 → generation+round 双重挡旧帧；重试=全新团队与候选层。
 8. **Leaflet 后备**：`WanderAMap` 未就绪时候选层静默跳过，不报错不画错位点。
 
-## 7. QA 边界（沿用主指挥约束）
+## 7. I41-B 落地纪要（已锁定 wire，分支 issue41-live-mascot）
+
+- `tool_call.candidates`：仅 `search_events`+`status:"completed"`，取自
+  `result.structuredContent.events`（Event.id→`event_id`），按结果原序
+  ≤`PROGRESS_CANDIDATE_LIMIT`=16、`event_id` 去重；其余工具/error/提取
+  不出→字段整体省略。
+- `subagent_done.stops`：仅 `completed`+`kind:"itinerary"`，按行程站序取
+  真实 `eventsById` 点（`delegate.ts` 复用同一 `getByIds`，无新查询、
+  模型侧 details 不增字段），≤`PROGRESS_STOP_LIMIT`=24；终态 gate 在
+  emitDone 与 builder 双侧把关——close 降级 failed/取消后绝不带出。
+- 逐点校验：`event_id` 非空且 ≤`PROGRESS_POINT_ID_MAX`=256 码点（**超长
+  整条跳过，绝不截断冒充身份**）；`latitude` 有限数且 |lat|≤90、
+  `longitude` 有限数且 |lng|≤180；缺项如实跳该项。
+- 字节预算：每字段 JSON ≤`PROGRESS_POINTS_BYTE_LIMIT`=8192（UTF-8，
+  逐条累加含分隔符），条数/字节任一先到即截断。
+- 坐标恒 GCJ-02：与 events 表/result.events 同源直出，后端不做坐标
+  转换，不把其他坐标系当 GCJ-02 写入。
+- 跨作用域：`eventsById` 在行程分支内层，`emitDone/finish` 在外层——
+  以 execute 闭包内 `progressStops` 暂存、发射时按最终 details 放行；
+  close→DB 快照→唯一 done 与派发 details 同源不变、无多余 DB 查询。
+
+## 8. 待下一任务锁定的 UI/地图事项（主指挥拟订，本文记录不实施）
+
+- facade 须支持**同步返回 round** 与 **async import 缓冲**（mascot 模块
+  异步加载期间到达的真实事件不得丢失或静默绑定新轮）。
+- `settle` 接口应能接**完整 result**（而非只传 kind）：候选层据此对
+  `plans[].itinerary.stops[].event_id` 做真实采纳收敛。
+- 候选层 settle 不得「立即全清再假称灰显」：落选点先真实灰显退场、
+  采纳点移交路线层，时序对得上 result。
+- 地图标记须体现真实分身身份（字母/title/帽色或分身头像锚点），
+  不是无名彩点；「飞向片区」只由真实 candidates 质心 anchor 入场，
+  spawn 阶段无位置不造锚。
+
+## 9. QA 边界（沿用主指挥约束）
 
 - 用户真实 8080 服务与其 DB/配置/密钥一律不碰；联调只用 faux 模型 e2e 与 mock SSE 文件（如临时起 preview 端口，醒目标注「非用户真实入口」）。QA 清理只用自己确切 PID，禁宽匹配 pkill。

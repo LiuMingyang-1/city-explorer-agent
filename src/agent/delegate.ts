@@ -377,6 +377,10 @@ export function createDelegateTaskTool(
           // DB 状态快照（如实抄录，竞态下可为非终态，不伪装）。每次 spawn
           // 至多且最终恰一个 done：所有路径都经 finish（child.close 落定
           // 后的统一终局点发；spawnChild 失败走上方提前分支同样查库回填）。
+          // progressStops：成功行程分支在内层作用域取 eventsById 真实坐标
+          // 暂存于此；emitDone 只在最终 details 为 completed+itinerary 时
+          // 透出——close 降级 failed/取消后即使已填也随终态省略。
+          let progressStops: { event_id: string; latitude: number; longitude: number }[] | undefined;
           const emitDone = (
             details: DelegateTaskDetails,
             childRunStatus?: RunStatus | null,
@@ -395,6 +399,11 @@ export function createDelegateTaskTool(
                   details.status === "completed" && details.kind === "itinerary"
                     ? (details.itinerary?.stops.length ?? null)
                     : null,
+                // 真实站点（行程序、GCJ-02）：终态 gate——非 completed+itinerary
+                // 不传参，builder 侧同规则兜底；模型侧 details 不增字段。
+                ...(details.status === "completed" && details.kind === "itinerary"
+                  ? { stops: progressStops }
+                  : {}),
                 summary:
                   details.status === "completed"
                     ? details.kind === "clarification"
@@ -559,6 +568,21 @@ export function createDelegateTaskTool(
                   itinerary,
                   events,
                 };
+                // done 的 stops 数据源：行程序 event_id → eventsById 真实
+                // GCJ-02 坐标（复用上方同一次查询，不新增 DB 调用；查无
+                // 坐标的站如实跳过，缺库记录本就不在 map 中）。
+                progressStops = itinerary.stops.flatMap((stop) => {
+                  const event = eventsById.get(stop.event_id);
+                  return event
+                    ? [
+                        {
+                          event_id: event.id,
+                          latitude: event.latitude,
+                          longitude: event.longitude,
+                        },
+                      ]
+                    : [];
+                });
               }
             }
           } catch (error) {
