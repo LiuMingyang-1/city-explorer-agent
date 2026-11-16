@@ -17,9 +17,9 @@ import type { StreamFn } from "@earendil-works/pi-agent-core";
 import { createPersistentPlanner } from "../agent/session.ts";
 import type {
   PersistentPlannerOptions,
-  PlannerProgress,
   PlannerPromptOptions,
   PlannerTurn,
+  ProgressSink,
 } from "../agent/session.ts";
 import type { ExplorerConfig } from "../config.ts";
 import type { EventRepository } from "../data/repository.ts";
@@ -239,8 +239,8 @@ export interface SendOptions {
   referencedEventId?: string;
   /** 会话确定（planner 就绪、sessionId 可知）即回调一次；SSE meta 据此发出。 */
   onSession?: (sessionId: string) => void;
-  /** 规划阶段进度回调（轮内可多次）；SSE progress 事件据此转发。 */
-  onProgress?: (progress: PlannerProgress) => void;
+  /** 规划过程事件回调（轮内可多次）；SSE progress 事件据此转发。 */
+  onProgress?: ProgressSink;
 }
 
 /** GET /api/events 未传 limit 时的契约默认条数（上限校验在 HTTP 层）。 */
@@ -404,7 +404,7 @@ export function createChatService(options: WebChatServiceOptions): ManagedChatSe
    */
   async function assemblePlans(
     items: { label: "A" | "B"; title: string; itinerary: Itinerary }[],
-    onProgress?: (progress: PlannerProgress) => void,
+    onProgress?: ProgressSink,
     signal?: AbortSignal,
   ): Promise<{ plans: Plan[]; events: EventView[]; warnings: string[] }> {
     const eventsById = await planEvents(...items.map((i) => i.itinerary));

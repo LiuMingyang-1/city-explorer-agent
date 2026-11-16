@@ -23,6 +23,7 @@ import type {
 } from "../../session/types.ts";
 import { SessionRepositoryError } from "../../session/types.ts";
 import { abortedTurn } from "../session.ts";
+import type { ProgressSink } from "../progress.ts";
 import type {
   PlannerCompactOutcome,
   PlannerPromptOptions,
@@ -66,6 +67,17 @@ export interface ActiveDispatchTurn {
   depth: number;
   /** 父会话写租约已失效（lease_lost/archived）时中止父轮，不空跑浪费 token。 */
   failParentLease: (error: unknown) => void;
+  /**
+   * 父轮过程事件 sink（即本轮 PlannerPromptOptions.onProgress）：delegate_task
+   * 用它发 subagent_spawned/subagent_done，并把 child 内部事件盖章透传——
+   * 子任务过程经同一 SSE progress 通道直发前端。未挂接时省略。
+   */
+  onProgress?: ProgressSink;
+  /**
+   * delegate_task 的 toolCallId → 本轮方案标号（"A"/"B"…）查询：与
+   * exploring_plans 的 plan_ids 同源，供 subagent_* 事件回填 plan_id。
+   */
+  planIdForToolCall?: (toolCallId: string) => string | undefined;
 }
 
 export interface PersistentRuntimeOptions {
@@ -619,6 +631,8 @@ export class PersistentRuntime implements PlannerRuntime {
             : undefined,
           depth: this.depth,
           failParentLease: (error) => this.guard.fail(error),
+          onProgress: options.onProgress,
+          planIdForToolCall: (toolCallId) => this.planner.planIdForToolCall(toolCallId),
         });
         this.pendingDedupeKey =
           options.requestId !== undefined ? `request:${options.requestId}` : undefined;

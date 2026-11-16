@@ -6,6 +6,8 @@ import type { Itinerary, PlanningConstraints } from "../itinerary/types.ts";
 import type { SessionRepository } from "../session/repository.ts";
 import type { LeaseWriter, Session } from "../session/types.ts";
 import { isSessionError } from "../session/types.ts";
+import { safeEmit, stampSubagent } from "./progress.ts";
+import type { ProgressSink } from "./progress.ts";
 import type { PlannerTurn } from "./session.ts";
 
 /** 工具名：父 Agent 经它把自包含的子任务派给同进程的子 PlannerSession。 */
@@ -144,6 +146,18 @@ export interface DelegateTurnContext {
   depth: number;
   /** 父租约失效（createChildSession 抛 lease_lost/archived）时中止父轮的回调。 */
   failParentLease: (error: unknown) => void;
+  /**
+   * 父轮过程事件 sink（本轮 PlannerPromptOptions.onProgress 原样透传）：
+   * 派发点发 subagent_spawned、终了点发 subagent_done；child.prompt 的
+   * onProgress 经 stampSubagent 盖章后也落此 sink——子任务过程与父轮
+   * 阶段事件共用同一 SSE progress 通道。未挂接时省略，事件自然静默。
+   */
+  onProgress?: ProgressSink;
+  /**
+   * 本次工具调用 ID → 父轮方案标号（"A"/"B"…）：与 exploring_plans 的
+   * plan_ids 同源；供 subagent_* 事件回填 plan_id，未知调用 → undefined。
+   */
+  planIdForToolCall?: (toolCallId: string) => string | undefined;
 }
 
 /**
@@ -154,7 +168,11 @@ export interface ChildPlannerHandle {
   readonly sessionId?: string;
   prompt(
     text: string,
-    options?: { location?: { lat: number; lng: number } },
+    options?: {
+      location?: { lat: number; lng: number };
+      /** 子会话过程事件回调：编排层盖章（subagent_id）后透传父 sink。 */
+      onProgress?: ProgressSink;
+    },
   ): Promise<PlannerTurn>;
   cancel(): void;
   close(): Promise<void>;
@@ -369,7 +387,24 @@ export function createDelegateTaskTool(
               const onCombinedAbort = () => child.cancel();
               combined.signal.addEventListener("abort", onCombinedAbort, { once: true });
               try {
-                turn = await child.prompt(task, ctx.location ? { location: ctx.location } : {});
+                // 子会话过程事件盖章 subagent_id 后落父 sink（契约骨架
+                // 透传缝）。stage 事件是本轮私有叙事不透传——父轮 stage 序列
+                // 保持原状不被子会话插入；子侧可见性由 subagent_* 与盖章
+                // tool_call 等实体级事件承担（详见 docs/issue-39/coordination.md）。
+                turn = await child.prompt(task, {
+                  ...(ctx.location ? { location: ctx.location } : {}),
+                  ...(ctx.onProgress
+                    ? {
+                        onProgress: (event) => {
+                          if (event.type === undefined || event.type === "stage") return;
+                          safeEmit(
+                            ctx.onProgress,
+                            stampSubagent(event, childSession.sessionId),
+                          );
+                        },
+                      }
+                    : {}),
+                });
               } catch (error) {
                 turn = { kind: "error", message: errorText(error) };
               } finally {
