@@ -9,35 +9,35 @@
   --mt-ink: #29392e; --mt-soft: #5a6b54; --mt-faint: #7b8375;
   --mt-line: #29392e26; --mt-warn: #a8542f; --mt-paper: #f0efe2;
 }
-.mascot-team-clone {
+.mascot-team .mascot-team-clone {
   position: relative; display: grid; justify-items: center; gap: 5px;
   min-width: 56px;
 }
-.mascot-team-clone boop-face { display: block; }
-.mascot-team-badge {
+.mascot-team .mascot-team-clone boop-face { display: block; }
+.mascot-team .mascot-team-badge {
   position: absolute; top: -4px; right: 2px; z-index: 1;
   min-width: 18px; height: 18px; padding: 0 5px;
   display: grid; place-items: center;
   border-radius: 999px; background: var(--mt-ink); color: var(--mt-paper);
   font-size: 10px; letter-spacing: .5px; line-height: 1;
 }
-.mascot-team-title {
+.mascot-team .mascot-team-title {
   max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   font-size: 10px; color: var(--mt-soft); text-align: center;
 }
-.mascot-team-note {
+.mascot-team .mascot-team-note {
   min-height: 11px; font-size: 9px; color: var(--mt-faint);
   letter-spacing: .3px; text-align: center;
 }
-.mascot-team-overflow, .mascot-team-nested {
+.mascot-team .mascot-team-overflow, .mascot-team .mascot-team-nested {
   align-self: center; padding: 6px 10px;
   border: 1px dashed var(--mt-line); border-radius: 999px;
   font-size: 11px; color: var(--mt-soft); background: #fff8;
 }
-.mascot-team-nested { border-style: dotted; }
+.mascot-team .mascot-team-nested { border-style: dotted; }
 
 /* 入场短拍：仅 data-status="entering" 窗口（≤220ms），module 之后置 working。 */
-.mascot-team-clone[data-status="entering"] {
+.mascot-team .mascot-team-clone[data-status="entering"] {
   animation: mt-enter .22s ease-out both;
 }
 @keyframes mt-enter {
@@ -47,9 +47,9 @@
 
 /* 退场短拍：done 后 module 按 status 置 data-status，≤380ms 后移除节点。
    completed 开心小跳收束、failed 困惑低垂、cancelled 直接淡出。 */
-.mascot-team-clone[data-status="completed"] { animation: mt-exit-happy .38s ease-in both; }
-.mascot-team-clone[data-status="failed"]    { animation: mt-exit-fail  .38s ease-in both; }
-.mascot-team-clone[data-status="cancelled"] { animation: mt-exit       .34s ease-in both; }
+.mascot-team .mascot-team-clone[data-status="completed"] { animation: mt-exit-happy .38s ease-in both; }
+.mascot-team .mascot-team-clone[data-status="failed"]    { animation: mt-exit-fail  .38s ease-in both; }
+.mascot-team .mascot-team-clone[data-status="cancelled"] { animation: mt-exit       .34s ease-in both; }
 @keyframes mt-exit-happy {
   0%   { transform: translateY(0) scale(1);      opacity: 1; }
   35%  { transform: translateY(-7px) scale(1.04); opacity: 1; }
@@ -66,23 +66,23 @@
 
 /* 活动脉冲：tool_call 是结束事件 — 徽标一次性脉冲 + 真实 note 文案，
    不伪「正在检索」。error 为静态警示（无动画循环）。 */
-.mascot-team-clone[data-activity="searched"] .mascot-team-badge,
-.mascot-team-clone[data-activity="tool"] .mascot-team-badge {
+.mascot-team .mascot-team-clone[data-activity="searched"] .mascot-team-badge,
+.mascot-team .mascot-team-clone[data-activity="tool"] .mascot-team-badge {
   animation: mt-pulse .9s ease-out;
 }
 @keyframes mt-pulse {
-  0%   { opacity: .4; box-shadow: 0 0 0 0 #526e4573; }
-  40%  { opacity: 1;  box-shadow: 0 0 0 5px #526e452b; }
-  100% { opacity: 1;  box-shadow: 0 0 0 6px transparent; }
+  0%   { transform: scale(.75); opacity: .4; }
+  40%  { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1);    opacity: 1; }
 }
-.mascot-team-clone[data-activity="error"] .mascot-team-badge {
+.mascot-team .mascot-team-clone[data-activity="error"] .mascot-team-badge {
   background: var(--mt-warn); color: var(--mt-paper);
 }
-.mascot-team-clone[data-activity="error"] .mascot-team-note { color: var(--mt-warn); }
+.mascot-team .mascot-team-clone[data-activity="error"] .mascot-team-note { color: var(--mt-warn); }
 
 /* reduced-motion：静帧 / 即时显隐（媒体查询与宿主手动开关都覆盖）。 */
 @media (prefers-reduced-motion: reduce) {
-  .mascot-team-clone, .mascot-team-clone .mascot-team-badge {
+  .mascot-team .mascot-team-clone, .mascot-team .mascot-team-clone .mascot-team-badge {
     animation: none !important;
   }
 }
@@ -94,5 +94,5 @@
 /* 窄容器：title 收窄保持可读，不挤压脸位 */
 @media (max-width: 360px) {
   .mascot-team { gap: 10px; }
-  .mascot-team-title { max-width: 84px; }
+  .mascot-team .mascot-team-title { max-width: 84px; }
 }

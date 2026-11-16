@@ -12,7 +12,8 @@
 | --- | --- |
 | F1 review（R1 契约） | ① stage 误回收 pending → 改「仅同 id done / 轮次终结 / destroy 可清理」；② mutator 无 round 隔离 → 全 API 必填 token，缺 token 抛错、stale 返回 null |
 | F3 集成（首轮，2P2 发现） | ① 预览 CSS 完全缺 `data-status`/`data-activity` 规则——入退场/活动无视觉反馈；② done 时槽位即释放但退场 DOM 仍在 → 补位可出现第 4 脸 → `mount()` 加 `domFaces()` 闸，在途退场为真实补位让位 |
-| R1/R2 修复（本轮） | ① 预览样式抽为 `frontend/mascot-team.css` 运行时层（#41 直接 link）；② done 退场 controller 收真实终结表情 completed→happy/failed→confused/cancelled→idle（`rec.mascot` 持有 + api 保护）；③ orphan 转正后 ⧉ 徽标不消失 → `orphans.delete(id)` 后 `renderNested()`；④ 等待池分身不再实例化 controller；⑤ settle/cancel 清全部在途 enter/exit/pulse 定时器；⑥ 集成修正：`r2-completed-exit-real-fade` 探针边界——`mt-exit-happy` 上跳段刻意 opacity=1，real-fade 断言移至 ~310ms 淡出段（动画/表情断言仍在 150ms），稳定通过 |
+| R1/R2 修复（`8ae9b8c`） | ① 预览样式抽为 `frontend/mascot-team.css` 运行时层（#41 直接 link）；② done 退场 controller 收真实终结表情 completed→happy/failed→confused/cancelled→idle（`rec.mascot` 持有 + api 保护）；③ orphan 转正后 ⧉ 徽标不消失 → `orphans.delete(id)` 后 `renderNested()`；④ 等待池分身不再实例化 controller；⑤ settle/cancel 清全部在途 enter/exit/pulse 定时器；⑥ 集成修正：`r2-completed-exit-real-fade` 探针边界——`mt-exit-happy` 上跳段刻意 opacity=1，real-fade 断言移至 ~310ms 淡出段（动画/表情断言仍在 150ms），稳定通过 |
+| Reviewer 复审 P3（本提交） | ① `mt-pulse` 删动态 box-shadow → transform/opacity 缩放脉冲（约定属性）；② 全部团队类选择器补 `.mascot-team` 容器 scope（含 RM 媒体查询路径，`data-motion` 本已 scope），防多实例串规则。54 断言复跑通过 |
 
 ## 检查执行（本 worktree 实跑，本轮）
 
@@ -36,15 +37,15 @@
 - 终结表情：done 后 controller 实收 `happy`/`confused`/`idle`（R2 经 `wander-mascot-state` 事件录制断言，非仅 data 标记）；`mascot.setState` 抛错静默降级不拖垮编排（badMascot 单测）。
 - 徽标字母 = plan_id ?? 派发序（「派发序」文案）；title 纯 textContent 省略号；无 innerHTML。
 - RM：入退场即静态/即移除（双通道：系统偏好 + 容器 `data-motion="reduce"`，`mascot-team.css` 动画归零 + face `motion="reduce"`）；cancel/settle/destroy 清全部在途 DOM/定时器/vendor rAF（定时器清零有单测）。
-- 运行时 CSS 只 transform/opacity/box-shadow 动画 + 静态色；时长与模块常量一致（enter ≤220ms / exit ≤380ms / pulse ≤900ms），不推进语义。
+- 运行时 CSS 只 transform/opacity 动画 + 静态色（脉冲为徽标缩放拍，无 box-shadow 动画）；时长与模块常量一致（enter ≤220ms / exit ≤380ms / pulse ≤900ms），不推进语义。
 
 ## 实际字节与性能边界
 
 | 资产（运行时，#41 需携带） | raw | gzip |
 | --- | --- | --- |
 | `frontend/mascot-team.js` | 13,003 B（≤16KB） | ≈4.7KB |
-| `frontend/mascot-team.css` | 4,146 B（≤6KB） | ≈1.8KB |
-| **运行时合计** | **≈17.1KB（≤22KB）** | ≈6.5KB |
+| `frontend/mascot-team.css` | 4,363 B（≤6KB） | ≈1.7KB |
+| **运行时合计** | **≈17.4KB（≤22KB）** | ≈6.4KB |
 | 预览资产（另列，不计运行时预算）`mascot-team-preview.{html,css,js}` | ≈40.7KB | js gzip ≈7.1KB |
 | 既有：`wander-mascot.js`+motion | 12.6KB（≤20KB） | — |
 | 既有：vendored BoopFace Lite | 192KB（≤350KB） | — |

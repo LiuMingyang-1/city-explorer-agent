@@ -125,7 +125,7 @@ stage 到达时分身仍 pending 是**合法状态**（stage 只管父脸/父相
 - 入场：仅真实 `subagent_spawned` 触发；装饰性 scale/fade 入场，reduced-motion 下立即静态呈现。
 - 退场：仅同 id `subagent_done`（按 status 短节拍）或轮次终结/`destroy()`（按"轮次关闭"移除，不记为 done）→ 移除元素；upstream `disconnectedCallback` 停 rAF，WeakMap 释放控制器。装饰时长固定 ≤400ms，不等待、不阻塞相位。stage 到达绝不触发退场。
 - 终结表情：done 退场期间 controller 收到与 status 同源的真实表情——`completed→happy`、`failed→confused`、`cancelled→idle`（`mascot.setState` 失败静默降级为静态 DOM，不拖垮编排）。
-- 实例样式层：`frontend/mascot-team.css` 为唯一运行时样式（clone/badge/title/note/overflow/nested + `data-status` 入退场 + `data-activity` 脉冲/警示），全部规则 scope 在 `.mascot-team`，仅 transform/opacity/box-shadow 动画与静态色；RM 双通道（`prefers-reduced-motion` 与容器 `data-motion="reduce"`）全部动画归零。
+- 实例样式层：`frontend/mascot-team.css` 为唯一运行时样式（clone/badge/title/note/overflow/nested + `data-status` 入退场 + `data-activity` 脉冲/警示），全部规则 scope 在 `.mascot-team` 容器内（多实例互不串规则），仅 transform/opacity 动画与静态色；RM 双通道（`prefers-reduced-motion` 与容器 `data-motion="reduce"`）全部动画归零。
 - 轮次：`begin()` 发放新 round token；调用方在请求闭包内捕获，之后 `applyEvent/settle/cancel` 必带——token 过期一律 noop。
 - reduced-motion：`motion="reduce"` 或 `prefers-reduced-motion` → 无入退场/扫视/律动，静态表情仍随真实状态切换。
 
@@ -173,7 +173,7 @@ mascot.setHat(false);
 
 - vendored BoopFace Lite 目录 192KB（上限 350KB），钉 `ceb0580b5f8ee8b93f206920baba5265d7d7d482`（`assets/vendor/boopface/SOURCE.md`）。
 - 自研控制器：`wander-mascot.js` 10.6KB + `wander-mascot-motion.js` 2.0KB ≈12.6KB（上限 20KB）；`mascot-card.js` 2.4KB。
-- 团队层运行时（#41 需携带的两件）：`mascot-team.js` 13.0KB raw / gzip ≈4.7KB（上限 **≤16KB**）；`mascot-team.css` 4.1KB raw / gzip ≈1.8KB（上限 **≤6KB**）；**运行时合计 ≈17.1KB raw，上限 ≤22KB**（内部早期 8KB 估算偏紧，为可读性/正确性上调）。预览资产 `mascot-team-preview.{html,css,js}` 共 ≈40.7KB raw 另列，不计运行时预算。每分身增量 = 1 个 shadow DOM + 共享 extension draw hook（upstream 每脸一条 rAF）。
+- 团队层运行时（#41 需携带的两件）：`mascot-team.js` 13.0KB raw / gzip ≈4.7KB（上限 **≤16KB**）；`mascot-team.css` 4.4KB raw / gzip ≈1.7KB（上限 **≤6KB**）；**运行时合计 ≈17.4KB raw，上限 ≤22KB**（内部早期 8KB 估算偏紧，为可读性/正确性上调）。预览资产 `mascot-team-preview.{html,css,js}` 共 ≈40.7KB raw 另列，不计运行时预算。每分身增量 = 1 个 shadow DOM + 共享 extension draw hook（upstream 每脸一条 rAF）。
 - 无运行时 CDN、图片或新框架。
 - vendor 边界：控制器依赖钉版 SVG 内部结构（`head`/`headMotion`/`defs`/eyes 顺序）与少量内部接口（`_updateBlink`/`_startMorph`/`_expressionLock`/extension `draw` hook）；upstream 升级须重新验证，不追 latest。
 

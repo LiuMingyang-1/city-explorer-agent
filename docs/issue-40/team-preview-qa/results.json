@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-16T04:02:10.424Z",
+  "at": "2026-11-16T04:07:47.845Z",
   "metrics": {
     "module-ready": true,
     "team-3-visible-faces": {
@@ -216,12 +216,12 @@
     "perf-headless": {
       "note": "headless Chromium 测量值（force-device-scale-factor=1），不能冒称真笔记本性能",
       "faces4": {
-        "fps": 60.2,
-        "usedJSHeapMB": 2.68
+        "fps": 60,
+        "usedJSHeapMB": 3.11
       },
       "faces1": {
-        "fps": 59.7,
-        "usedJSHeapMB": 3.09
+        "fps": 59.8,
+        "usedJSHeapMB": 2.65
       }
     },
     "clear-instance-regression": {
@@ -254,7 +254,7 @@
       "el": true,
       "status": "entering",
       "anim": "mt-enter",
-      "opacity": 0.545562
+      "opacity": 0.545428
     },
     "r2-tool-badge-pulse-real": {
       "assert": "pass",
@@ -285,7 +285,7 @@
       "el": true,
       "status": "completed",
       "anim": "mt-exit-happy",
-      "opacity": 0.991463,
+      "opacity": 1,
       "face": "happy"
     },
     "r2-completed-exit-real-fade": {
@@ -293,7 +293,7 @@
       "el": true,
       "status": "completed",
       "anim": "mt-exit-happy",
-      "opacity": 0.475034,
+      "opacity": 0.639517,
       "face": "happy"
     },
     "r2-completed-removed": {
@@ -304,7 +304,7 @@
       "el": true,
       "status": "failed",
       "anim": "mt-exit-fail",
-      "opacity": 0.802043,
+      "opacity": 0.804386,
       "face": "confused"
     },
     "r2-failed-face-confused": {
@@ -312,7 +312,7 @@
       "el": true,
       "status": "failed",
       "anim": "mt-exit-fail",
-      "opacity": 0.802043,
+      "opacity": 0.804386,
       "face": "confused"
     },
     "r2-failed-others-continue": {
@@ -323,7 +323,7 @@
       "el": true,
       "status": "cancelled",
       "anim": "mt-exit",
-      "opacity": 0.792382,
+      "opacity": 0.787042,
       "face": "idle"
     },
     "r2-cancelled-face-idle": {
@@ -331,7 +331,7 @@
       "el": true,
       "status": "cancelled",
       "anim": "mt-exit",
-      "opacity": 0.792382,
+      "opacity": 0.787042,
       "face": "idle"
     },
     "r2-backfill-yield-3max": {
