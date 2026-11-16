@@ -96,3 +96,7 @@
   .mascot-team { gap: 10px; }
   .mascot-team .mascot-team-title { max-width: 84px; }
 }
+
+/* 地图锚点接管（#41）：分身已在地图真实坐标落位时隐藏卡片侧 boop-face，
+   visibility 保留布局与徽标/title/note 归属；anchored=false 即恢复原貌。 */
+.mascot-team .mascot-team-clone[data-anchored="true"] boop-face { visibility: hidden; }

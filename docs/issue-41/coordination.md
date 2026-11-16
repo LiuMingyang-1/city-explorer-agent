@@ -117,18 +117,39 @@
   以 execute 闭包内 `progressStops` 暂存、发射时按最终 details 放行；
   close→DB 快照→唯一 done 与派发 details 同源不变、无多余 DB 查询。
 
-## 8. 待下一任务锁定的 UI/地图事项（主指挥拟订，本文记录不实施）
+## 8. UI/地图锁定事项落实（I41-C/D 已交付，I41-E 集成验证）
 
-- facade 须支持**同步返回 round** 与 **async import 缓冲**（mascot 模块
-  异步加载期间到达的真实事件不得丢失或静默绑定新轮）。
-- `settle` 接口应能接**完整 result**（而非只传 kind）：候选层据此对
-  `plans[].itinerary.stops[].event_id` 做真实采纳收敛。
-- 候选层 settle 不得「立即全清再假称灰显」：落选点先真实灰显退场、
-  采纳点移交路线层，时序对得上 result。
-- 地图标记须体现真实分身身份（字母/title/帽色或分身头像锚点），
-  不是无名彩点；「飞向片区」只由真实 candidates 质心 anchor 入场，
-  spawn 阶段无位置不造锚。
+- facade：`begin()` 同步返 `{round}`；异步 import 期间缓冲 ≤400（保 spawn/
+  done 优先），team 就绪按序 replay、不重复地图 fanout、末态 face 一次提交；
+  `settle(result)` 接完整 result 供采纳收敛；round token 严格
+  （缺抛/旧 noop/closed 拒收），`wander:reset` 代际隔离。
+- 候选层 `window.WanderCandidates`（`candidate-preview.js`）：同 facade round；
+  ctx 仅 team 可见分身 `{id,title,letter,palette}`+主脸 rect；身份不虚构。
+  `WanderAMap.candidates` 窄 renderer（独立 marker 集+epoch，
+  `convert(points,'GCJ-02')` 单入口，不 fit/pan、不动路线/活动/详情层）。
+- 锚点=该分身真实候选质心，marker=真实 `boop-face`+字母 chip+title；
+  spawn 无坐标不飞；离屏/focus/SDK 缺席 → `wander:candidate-anchor`
+  `{round,subagent_id,anchored:false}`，卡片侧 face 恢复。
+- done(completed+itinerary) stops 高亮 480ms 收锚；settle 采纳
+  `∪plans[].itinerary.stops[].event_id`（含 `result.itinerary`）移交路线层、
+  落选灰显 450ms 整层回收；answer/clarify/error/cancel/新轮 epoch 即刻清。
+- 上限：候选 ≤32/分身、≤96 全局、stops ≤24（防御性，dropped 计数）。
+- 布局：strip 按 DOM 序落在 location-status/messages 之间（flex column
+  自然占位，`hidden`/`:empty` 零足迹），3 分身+长 title 在 1440~320 各
+  视口与 header/messages/composer 无重叠、无横向滚动；welcome 零影响。
+- reduced-motion：无 flip/脉冲动画，锚点仍真实落位，静帧标记。
 
-## 9. QA 边界（沿用主指挥约束）
+## 9. 集成验证结论（I41-E，详见 verification.md）
+
+- **状态：已集成待独立 review。** 真实链（faux provider→真实 service/
+  HTTP/SSE/SQLite/delegate→真 index.html + headless Chrome）：
+  stub 47/47、fallback 42/42、真实高德 SDK 47/47（`.env` JS key 只读注入，
+  未打印）；`npm run check` 1003/1003、`check:frontend` 20 文件全过。
+- 产物：`docs/issue-41/integration-qa/`（e2e-capture.ts 可复跑 + results
+  JSON + 36 截图）；`docs/issue-41/map-qa/`（D 侧 stub/fallback 23 断言）。
+- I41-E 修复：mascot-card.css 移除 flex 容器上的无效 grid 死规则；
+  check:frontend 补 mascot-team/candidate-preview 语法检查接线。
+
+## 10. QA 边界（沿用主指挥约束）
 
 - 用户真实 8080 服务与其 DB/配置/密钥一律不碰；联调只用 faux 模型 e2e 与 mock SSE 文件（如临时起 preview 端口，醒目标注「非用户真实入口」）。QA 清理只用自己确切 PID，禁宽匹配 pkill。

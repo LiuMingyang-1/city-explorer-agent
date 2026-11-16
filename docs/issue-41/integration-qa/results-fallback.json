@@ -1,0 +1,478 @@
+{
+  "mode": "fallback",
+  "at": "2026-11-16T12:13:14.044Z",
+  "metrics": {
+    "map-ready": {
+      "assert": "pass",
+      "mode": "fallback"
+    },
+    "clones-mounted": {
+      "assert": "pass",
+      "clones": [
+        {
+          "id": "5f57247b-91a6-4719-9e25-40f5fc725999",
+          "status": "entering",
+          "anchored": "false",
+          "faceHidden": false
+        },
+        {
+          "id": "8ccfd8d0-c829-49b5-83a7-9defa158b698",
+          "status": "entering",
+          "anchored": "false",
+          "faceHidden": false
+        }
+      ]
+    },
+    "fallback-no-dots": {
+      "assert": "pass",
+      "dots": 0
+    },
+    "settle-done": {
+      "assert": "pass"
+    },
+    "progress-frames": [
+      {
+        "type": "stage",
+        "stage": "exploring_plans"
+      },
+      {
+        "type": "stage",
+        "stage": "exploring_plans"
+      },
+      {
+        "type": "subagent_spawned",
+        "id": "5f57247b-91a6-4719-9e25-40f5fc725999"
+      },
+      {
+        "type": "subagent_spawned",
+        "id": "8ccfd8d0-c829-49b5-83a7-9defa158b698"
+      },
+      {
+        "type": "tool_call",
+        "id": "5f57247b-91a6-4719-9e25-40f5fc725999",
+        "name": "search_events",
+        "cand": 5,
+        "status": "completed"
+      },
+      {
+        "type": "tool_call",
+        "id": "8ccfd8d0-c829-49b5-83a7-9defa158b698",
+        "name": "search_events",
+        "cand": 1,
+        "status": "completed"
+      },
+      {
+        "type": "subagent_done",
+        "id": "5f57247b-91a6-4719-9e25-40f5fc725999",
+        "stops": 2,
+        "status": "completed"
+      },
+      {
+        "type": "tool_call",
+        "name": "delegate_task",
+        "status": "completed"
+      },
+      {
+        "type": "subagent_done",
+        "id": "8ccfd8d0-c829-49b5-83a7-9defa158b698",
+        "stops": 2,
+        "status": "completed"
+      },
+      {
+        "type": "tool_call",
+        "name": "delegate_task",
+        "status": "completed"
+      },
+      {
+        "type": "stage",
+        "stage": "validating_schedule"
+      }
+    ],
+    "clone-dom-log": [
+      {
+        "t": 557,
+        "cls": "mascot-team-clone",
+        "html": 962
+      },
+      {
+        "t": 557,
+        "cls": "mascot-team-clone",
+        "html": 962
+      }
+    ],
+    "strip-html": "<div id=\"mascot-team-strip\" class=\"mascot-team\" hidden=\"\"></div>",
+    "post-settle-layer-clean": {
+      "assert": "pass",
+      "post": {
+        "round": 1,
+        "closed": true,
+        "destroyed": false,
+        "subs": [],
+        "aggregate": 0,
+        "anchored": [],
+        "dots": 0,
+        "anchors": 0,
+        "dropped": 0
+      }
+    },
+    "post-settle-strip-hidden": {
+      "assert": "pass",
+      "strip": {
+        "hidden": true,
+        "live": false,
+        "h": 0
+      }
+    },
+    "post-settle-clones-zero": {
+      "assert": "pass"
+    },
+    "plans-rendered": {
+      "assert": "pass"
+    },
+    "s1-no-errors": {
+      "assert": "pass",
+      "errs": []
+    },
+    "single-round-done": {
+      "assert": "pass"
+    },
+    "single-strip-never-shown": {
+      "assert": "pass",
+      "strip": {
+        "hidden": true,
+        "live": false,
+        "h": 0
+      }
+    },
+    "single-no-clones": {
+      "assert": "pass"
+    },
+    "partial-clones": [],
+    "partial-settled": {
+      "assert": "pass"
+    },
+    "partial-layer-clean": {
+      "assert": "pass",
+      "partSnap": {
+        "round": 3,
+        "closed": true,
+        "destroyed": false,
+        "subs": [],
+        "aggregate": 0,
+        "anchored": [],
+        "dots": 0,
+        "anchors": 0,
+        "dropped": 0
+      }
+    },
+    "partial-no-errors": {
+      "assert": "pass",
+      "errs": []
+    },
+    "reset-layer-clear": {
+      "assert": "pass",
+      "resetSnap": {
+        "round": 4,
+        "closed": true,
+        "destroyed": false,
+        "subs": [],
+        "aggregate": 0,
+        "anchored": [],
+        "dots": 0,
+        "anchors": 0,
+        "dropped": 0
+      }
+    },
+    "reset-strip-hidden": {
+      "assert": "pass",
+      "strip": {
+        "hidden": true,
+        "live": false,
+        "h": 0
+      }
+    },
+    "clarify-settled": {
+      "assert": "pass"
+    },
+    "clarify-strip-hidden": {
+      "assert": "pass"
+    },
+    "layout-1440-three-clones": {
+      "assert": "pass",
+      "clones": [
+        {
+          "id": "1b76c536-45b3-4ffc-b68f-7c2174344b2a",
+          "status": "entering",
+          "anchored": "false",
+          "faceHidden": false
+        },
+        {
+          "id": "7ac16cad-f1d8-40da-895f-8c1d1c2309b6",
+          "status": "entering",
+          "anchored": "false",
+          "faceHidden": false
+        },
+        {
+          "id": "cbbc7e68-f0dd-46b2-a7aa-ad27408bd150",
+          "status": "entering",
+          "anchored": "false",
+          "faceHidden": false
+        }
+      ]
+    },
+    "layout-1440": {
+      "strip": {},
+      "msg": {},
+      "comp": {},
+      "status": {},
+      "card": {},
+      "overlapStripMsg": false,
+      "overlapStripComp": false,
+      "overlapStripStatus": false,
+      "stripInsideCard": true,
+      "scrollW": 1440,
+      "innerW": 1440
+    },
+    "layout-1440-no-overlap": {
+      "assert": "pass",
+      "strip": {},
+      "msg": {},
+      "comp": {},
+      "status": {},
+      "card": {},
+      "overlapStripMsg": false,
+      "overlapStripComp": false,
+      "overlapStripStatus": false,
+      "stripInsideCard": true,
+      "scrollW": 1440,
+      "innerW": 1440
+    },
+    "layout-1440-strip-inside-card": {
+      "assert": "pass"
+    },
+    "layout-1440-no-xscroll": {
+      "assert": "pass",
+      "scrollW": 1440,
+      "innerW": 1440
+    },
+    "layout-1440-restore": {
+      "assert": "pass",
+      "back": {
+        "hidden": true,
+        "live": false,
+        "h": 0
+      }
+    },
+    "layout-1024-three-clones": {
+      "assert": "pass",
+      "clones": [
+        {
+          "id": "138d7703-2515-42b0-a3aa-05b8008d9e66",
+          "status": "entering",
+          "anchored": "false",
+          "faceHidden": false
+        },
+        {
+          "id": "9279335d-ce70-4096-8667-e958a870f6a8",
+          "status": "entering",
+          "anchored": "false",
+          "faceHidden": false
+        },
+        {
+          "id": "eadd8bf4-1d0f-4ef1-9988-8112dd6f40b6",
+          "status": "entering",
+          "anchored": "false",
+          "faceHidden": false
+        }
+      ]
+    },
+    "layout-1024": {
+      "strip": {},
+      "msg": {},
+      "comp": {},
+      "status": {},
+      "card": {},
+      "overlapStripMsg": false,
+      "overlapStripComp": false,
+      "overlapStripStatus": false,
+      "stripInsideCard": true,
+      "scrollW": 1024,
+      "innerW": 1024
+    },
+    "layout-1024-no-overlap": {
+      "assert": "pass",
+      "strip": {},
+      "msg": {},
+      "comp": {},
+      "status": {},
+      "card": {},
+      "overlapStripMsg": false,
+      "overlapStripComp": false,
+      "overlapStripStatus": false,
+      "stripInsideCard": true,
+      "scrollW": 1024,
+      "innerW": 1024
+    },
+    "layout-1024-strip-inside-card": {
+      "assert": "pass"
+    },
+    "layout-1024-no-xscroll": {
+      "assert": "pass",
+      "scrollW": 1024,
+      "innerW": 1024
+    },
+    "layout-1024-restore": {
+      "assert": "pass",
+      "back": {
+        "hidden": true,
+        "live": false,
+        "h": 0
+      }
+    },
+    "layout-800-three-clones": {
+      "assert": "pass",
+      "clones": [
+        {
+          "id": "d87a477f-6c78-4cc1-8bfd-fe04d1c4602b",
+          "status": "entering",
+          "anchored": "false",
+          "faceHidden": false
+        },
+        {
+          "id": "f15ed385-1548-458c-9482-3c6b29849262",
+          "status": "entering",
+          "anchored": "false",
+          "faceHidden": false
+        },
+        {
+          "id": "13ac3de9-b780-4716-9f38-77c08124df16",
+          "status": "entering",
+          "anchored": "false",
+          "faceHidden": false
+        }
+      ]
+    },
+    "layout-800": {
+      "strip": {},
+      "msg": {},
+      "comp": {},
+      "status": {},
+      "card": {},
+      "overlapStripMsg": false,
+      "overlapStripComp": false,
+      "overlapStripStatus": false,
+      "stripInsideCard": true,
+      "scrollW": 800,
+      "innerW": 800
+    },
+    "layout-800-no-overlap": {
+      "assert": "pass",
+      "strip": {},
+      "msg": {},
+      "comp": {},
+      "status": {},
+      "card": {},
+      "overlapStripMsg": false,
+      "overlapStripComp": false,
+      "overlapStripStatus": false,
+      "stripInsideCard": true,
+      "scrollW": 800,
+      "innerW": 800
+    },
+    "layout-800-strip-inside-card": {
+      "assert": "pass"
+    },
+    "layout-800-no-xscroll": {
+      "assert": "pass",
+      "scrollW": 800,
+      "innerW": 800
+    },
+    "layout-800-restore": {
+      "assert": "pass",
+      "back": {
+        "hidden": true,
+        "live": false,
+        "h": 0
+      }
+    },
+    "layout-320-three-clones": {
+      "assert": "pass",
+      "clones": [
+        {
+          "id": "bf3dcf5d-a75a-42c8-956b-e8296e131d24",
+          "status": "entering",
+          "anchored": "false",
+          "faceHidden": false
+        },
+        {
+          "id": "a4010b9f-fa56-4493-b8a0-85dc26954c73",
+          "status": "entering",
+          "anchored": "false",
+          "faceHidden": false
+        },
+        {
+          "id": "d3a0cbae-0169-494e-a960-31bc61450185",
+          "status": "entering",
+          "anchored": "false",
+          "faceHidden": false
+        }
+      ]
+    },
+    "layout-320": {
+      "strip": {},
+      "msg": {},
+      "comp": {},
+      "status": {},
+      "card": {},
+      "overlapStripMsg": false,
+      "overlapStripComp": false,
+      "overlapStripStatus": false,
+      "stripInsideCard": true,
+      "scrollW": 320,
+      "innerW": 320
+    },
+    "layout-320-no-overlap": {
+      "assert": "pass",
+      "strip": {},
+      "msg": {},
+      "comp": {},
+      "status": {},
+      "card": {},
+      "overlapStripMsg": false,
+      "overlapStripComp": false,
+      "overlapStripStatus": false,
+      "stripInsideCard": true,
+      "scrollW": 320,
+      "innerW": 320
+    },
+    "layout-320-strip-inside-card": {
+      "assert": "pass"
+    },
+    "layout-320-no-xscroll": {
+      "assert": "pass",
+      "scrollW": 320,
+      "innerW": 320
+    },
+    "layout-320-restore": {
+      "assert": "pass",
+      "back": {
+        "hidden": true,
+        "live": false,
+        "h": 0
+      }
+    },
+    "timeout-settled": {
+      "assert": "pass",
+      "ms": 4295
+    },
+    "timeout-no-fatal": {
+      "assert": "pass",
+      "errs": []
+    },
+    "final-no-errors": {
+      "assert": "pass",
+      "errs": []
+    }
+  },
+  "failures": []
+}

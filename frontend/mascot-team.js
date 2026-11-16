@@ -6,6 +6,9 @@
 // real round end, or destroy); tool_call is an end event (badge pulse + real
 // result_count, no fake searching); late frames need the live round token —
 // missing token throws, stale token noops.
+// setAnchored(id, anchored, token) is a display-only switch for #41 map
+// anchors: while a clone is anchored at real coordinates the card-side face
+// hides (badge/title/note stay), pending bookkeeping never changes.
 
 const STAGE_FACE=new Map([['searching_events','searching'],['exploring_plans','thinking'],
  ['routing','thinking'],['validating_schedule','validating']]);
@@ -76,7 +79,8 @@ export function createMascotTeam(container,{
   slotOwner[slotIndex]=rec;
   const el=document.createElement('div');
   el.className='mascot-team-clone';
-  attrs(el,{'data-palette':rec.palette,'data-status':isReduced()?'working':'entering','data-activity':rec.activity});
+  attrs(el,{'data-palette':rec.palette,'data-status':isReduced()?'working':'entering','data-activity':rec.activity,
+   'data-subagent-id':rec.id,'data-anchored':rec.anchored?'true':'false'});
   const face=document.createElement('boop-face');
   face.style.width=face.style.height=`${cloneSize}px`;
   if(isReduced())face.setAttribute('motion','reduce');
@@ -135,7 +139,7 @@ export function createMascotTeam(container,{
   const planId=typeof evt.plan_id==='string'&&evt.plan_id?evt.plan_id:null;
   const rec={id,title:String(evt.title??''),
    letter:(planId??LETTERS[(dispatchSeq-1)%LETTERS.length]).slice(0,2),
-   slot:null,palette:null,status:'working',activity:'',noteText:'',entered:false,
+   slot:null,palette:null,status:'working',activity:'',noteText:'',entered:false,anchored:false,
    el:null,noteEl:null,mascot:null,enterTimer:null,exitTimer:null,pulseTimer:null};
   alive.set(id,rec);
   beat='dispatching';                                      // each top-level spawn is a dispatch beat
@@ -265,6 +269,14 @@ export function createMascotTeam(container,{
    phase='idle';
    return{mainFace:'idle'};
   },
+  setAnchored(id,anchored,token){
+   if(guard('setAnchored',token)!==true)return null;
+   const rec=typeof id==='string'?alive.get(id):undefined;
+   if(!rec)return null;                             // unknown/nested/finished: display-only noop
+   rec.anchored=anchored===true;                    // waiting-pool recs carry the flag into a later mount
+   if(rec.el)rec.el.setAttribute('data-anchored',rec.anchored?'true':'false');
+   return{anchored:rec.anchored};
+  },
   destroy(){
    if(destroyed)return;
    destroyed=true;
@@ -276,7 +288,7 @@ export function createMascotTeam(container,{
   snapshot(){
    const clones=[...alive.values()].filter(rec=>rec.slot!==null).sort((a,b)=>a.slot-b.slot)
     .map(rec=>({id:rec.id,title:rec.title,letter:rec.letter,
-     palette:rec.palette,status:rec.status,activity:rec.activity}));
+     palette:rec.palette,status:rec.status,activity:rec.activity,anchored:rec.anchored===true}));
    return{round,phase,beat,clones,
     overflow:waiting.length,nested:nestedCount(),
     active:clones.length,pending:alive.size,

@@ -27,3 +27,11 @@
  .glass-card.has-conversation,.glass-card:not(.has-conversation).history-expanded{--mascot-w:48px;--mascot-top:9px}
 }
 @media(prefers-reduced-motion:reduce){.card-mascot{transition:none}}
+
+/* 分身条（#41）：.glass-card 两个状态都是 flex column，条按 DOM 序落在
+   location-status 与 messages 之间自然占位；仅在请求期间有可见分身时出现。
+   facade 同步切换 team-live 类与 hidden 属性——空时无占位无间隙，
+   welcome/历史展开布局完全不受影响；不挤主脸与 #new-chat 之间的头部空隙。 */
+#mascot-team-strip{min-width:0;align-self:stretch;flex-shrink:0;margin-top:6px}
+#mascot-team-strip[hidden]{display:none}
+#mascot-team-strip:empty{display:none}

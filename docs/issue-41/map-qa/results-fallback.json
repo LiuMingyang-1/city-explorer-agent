@@ -1,0 +1,61 @@
+{
+  "mode": "fallback",
+  "at": "2026-11-16T11:46:17.904Z",
+  "metrics": {
+    "map-layer-ready": {
+      "assert": "pass",
+      "mode": "fallback"
+    },
+    "fallback-snapshot": {
+      "round": 1,
+      "closed": false,
+      "destroyed": false,
+      "subs": [
+        {
+          "id": "sess_mock_child_a",
+          "title": "曲江看展方案",
+          "letter": null,
+          "palette": null,
+          "status": "completed",
+          "points": 2,
+          "stops": 2,
+          "retired": true,
+          "anchored": false
+        },
+        {
+          "id": "sess_mock_child_b",
+          "title": "城南市集方案",
+          "letter": null,
+          "palette": null,
+          "status": "completed",
+          "points": 2,
+          "stops": 2,
+          "retired": true,
+          "anchored": false
+        }
+      ],
+      "aggregate": 4,
+      "anchored": [],
+      "dots": 0,
+      "anchors": 0,
+      "dropped": 0
+    },
+    "fallback-records-without-drawing": {
+      "assert": "pass",
+      "dots": 0,
+      "anchors": 0
+    },
+    "fallback-card-clones-alive": {
+      "assert": "pass"
+    },
+    "fallback-no-anchor-claims": {
+      "assert": "pass",
+      "log": []
+    },
+    "fallback-no-layer-errors": {
+      "assert": "pass",
+      "errs": []
+    }
+  },
+  "failures": []
+}

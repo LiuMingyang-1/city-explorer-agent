@@ -5,6 +5,11 @@
  let routes=[],scenes=[],currentNames=[],selectedPosition=null,selectedName='',activityMarkers=[],activitiesEpoch=0;
  const converted=new Map(),addresses=new Map();
  let stopRouteAnimation,routeStrokes=[],fitLayers=[],creditObserver,creditNode,creditCanvas;
+ // Isolated candidate layer (issue #41): own marker set + epoch, never touches
+ // routes/activities/scenes/selected/fitLayers and never triggers fit/pan.
+ let candidateEpoch=0,candidateAnchorListener=null;
+ const candidateMarkers=new Map(),candidateAnchors=new Map();
+ const CANDIDATE_MARGIN=60;
  function syncAttribution(){
   const host=document.getElementById?.('map'),copy=host?.querySelector?.('.amap-copyright');if(!copy||!host.parentElement)return;
   creditCanvas=host.parentElement;creditCanvas.classList.add('amap-attribution-layout');
@@ -85,6 +90,90 @@
    const cls='place-wrap direction-'+(fit?.[0]||'right')+(fit?'':' label-hidden');if(scene.content.className!==cls)scene.content.className=cls;if(fit)occupied.push(fit[1]);
   });
   updateActivityBubbles({width,height,occupied});
+  updateCandidateLayer();
+ }
+ // Candidate dots simply hide with the layer; anchors additionally report their
+ // real on-screen state so the card can restore a clone face when its map
+ // anchor is off-screen, covered by the detail focus, or the SDK is gone.
+ function updateCandidateLayer(){
+  if(!candidateMarkers.size&&!candidateAnchors.size)return;
+  const hidden=window.WanderItineraryFocus?.active===true;
+  for(const item of candidateMarkers.values())visibility(item,ready&&!hidden);
+  const size=ready?native.getSize():null,w=size?(size.getWidth?.()??size.width):0,h=size?(size.getHeight?.()??size.height):0;
+  for(const [id,item] of candidateAnchors){
+   let show=ready&&!hidden;
+   if(show){const p=native.lngLatToContainer(item.position),x=p.getX?.()??p.x,y=p.getY?.()??p.y;show=x>=-CANDIDATE_MARGIN&&x<=w+CANDIDATE_MARGIN&&y>=-CANDIDATE_MARGIN&&y<=h+CANDIDATE_MARGIN;}
+   if(item.visible!==show)visibility(item,show);
+   if(item.anchored!==show){item.anchored=show;try{candidateAnchorListener?.(id,show);}catch{}}
+  }
+ }
+ function releaseCandidate(item){try{item.marker.setMap(null);}catch{}try{item.el?.remove?.();}catch{}}
+ function clearCandidateMarks(){
+  candidateEpoch++;
+  for(const item of candidateMarkers.values())releaseCandidate(item);
+  candidateMarkers.clear();
+  for(const [id,item] of candidateAnchors){releaseCandidate(item);if(item.anchored){item.anchored=false;try{candidateAnchorListener?.(id,false);}catch{}}}
+  candidateAnchors.clear();
+ }
+ // Narrow renderer surface for WanderCandidates. Positions are GCJ-02
+ // [lng,lat] pairs and still pass through convert() — the module's single
+ // coordinate entry — so a future system change stays in one place.
+ async function renderCandidates(spec){
+  const epoch=++candidateEpoch;
+  if(spec&&typeof spec.onAnchor==='function')candidateAnchorListener=spec.onAnchor;
+  if(!ready)return false;
+  const dots=Array.isArray(spec?.dots)?spec.dots:[],anchors=Array.isArray(spec?.anchors)?spec.anchors:[];
+  const points=[],refs=[];
+  const push=(kind,item)=>{const p=item?.position;if(!Array.isArray(p)||!valid(p[1],p[0]))return;refs.push({kind,item,index:points.length});points.push([p[0],p[1]]);};
+  dots.forEach(item=>push('dot',item));anchors.forEach(item=>push('anchor',item));
+  let translated;
+  try{translated=await convert(points,'GCJ-02');}catch{return false;}
+  if(epoch!==candidateEpoch||!ready)return false;
+  const seenDots=new Set(),seenAnchors=new Set();
+  for(const ref of refs){
+   const position=translated[ref.index];
+   if(ref.kind==='dot'){
+    const d=ref.item,id=typeof d.id==='string'&&d.id?d.id:null;if(!id)continue;
+    let item=candidateMarkers.get(id);
+    if(!item){
+     const el=document.createElement('div');el.className='wander-candidate-dot';el.setAttribute('data-palette','neutral');
+     item={marker:new window.AMap.Marker({position,content:el,anchor:'center',zIndex:160}),el,position,visible:false,tone:'neutral',dim:false,title:'',anchored:false};
+     candidateMarkers.set(id,item);
+    }
+    if(key(item.position)!==key(position)){item.marker.setPosition(position);item.position=position;}
+    const tone=typeof d.tone==='string'&&d.tone?d.tone:'neutral',dim=d.dim===true,title=String(d.title??'');
+    if(item.tone!==tone){item.el.setAttribute('data-palette',tone);item.tone=tone;}
+    if(item.dim!==dim){item.el.classList.toggle('dim',dim);item.dim=dim;}
+    if(d.highlight===true&&!item.el.classList.contains('highlight'))item.el.classList.add('highlight');
+    if(d.highlight!==true&&item.el.classList.contains('highlight'))item.el.classList.remove('highlight');
+    if(item.title!==title){item.el.title=title;item.marker.setTitle?.(title);item.title=title;}
+    seenDots.add(id);
+   }else{
+    const a=ref.item,id=typeof a.id==='string'&&a.id?a.id:null;if(!id||!a.node)continue;
+    let item=candidateAnchors.get(id);
+    if(item&&item.el!==a.node){releaseCandidate(item);if(item.anchored){item.anchored=false;try{candidateAnchorListener?.(id,false);}catch{}}candidateAnchors.delete(id);item=null;}
+    if(!item){
+     item={marker:new window.AMap.Marker({position,content:a.node,anchor:'center',zIndex:180,title:String(a.title??'')}),el:a.node,position,visible:false,anchored:false};
+     candidateAnchors.set(id,item);
+    }
+    if(key(item.position)!==key(position)){item.marker.setPosition(position);item.position=position;}
+    const title=String(a.title??'');if(item.title!==title){item.title=title;item.marker.setTitle?.(title);}
+    seenAnchors.add(id);
+   }
+  }
+  for(const [id,item] of candidateMarkers)if(!seenDots.has(id)){releaseCandidate(item);candidateMarkers.delete(id);}
+  for(const [id,item] of candidateAnchors)if(!seenAnchors.has(id)){releaseCandidate(item);if(item.anchored){item.anchored=false;try{candidateAnchorListener?.(id,false);}catch{}}candidateAnchors.delete(id);}
+  updateCandidateLayer();
+  return true;
+ }
+ // Container-independent viewport point for the decorative entrance flight;
+ // real anchoring is always the marker's geo position, never this pixel.
+ function candidatePoint(position){
+  if(!ready||!Array.isArray(position)||!valid(position[1],position[0]))return null;
+  const p=native.lngLatToContainer(position);if(!p)return null;
+  const rect=native.getContainer?.().getBoundingClientRect?.()||document.getElementById?.('map')?.getBoundingClientRect?.();
+  const x=p.getX?.()??p.x,y=p.getY?.()??p.y;
+  return rect?{x:rect.left+x,y:rect.top+y}:{x,y};
  }
  async function init({places=[],onSelect:callback}={}){
   try{const response=await fetch('/api/map-config',{credentials:'same-origin'});if(!response.ok)return false;config=await response.json();}catch{return false;}
@@ -228,6 +317,9 @@
   }
  }
  function cancelPending(){selectionEpoch++;searchEpoch++;}
- function dispose(){ready=false;activitiesEpoch++;activityMarkers=[];cancelPending();clearRoutes();native?.destroy();native=null;clearAttribution();scenes=[];selectedPosition=null;selectedName='';}
- window.WanderAMap={init,dispose,cancelPending,loadFallback,convert,select,search,weather,updatePlaces,setActivities,getViewport,drawPlans,clearRoutes,resize,fitRoutes,backendLocation,get ready(){return ready;}};
+ function dispose(){ready=false;activitiesEpoch++;activityMarkers=[];cancelPending();clearRoutes();clearCandidateMarks();candidateAnchorListener=null;native?.destroy();native=null;clearAttribution();scenes=[];selectedPosition=null;selectedName='';}
+ window.WanderAMap={init,dispose,cancelPending,loadFallback,convert,select,search,weather,updatePlaces,setActivities,getViewport,drawPlans,clearRoutes,resize,fitRoutes,backendLocation,
+ // Narrow candidate renderer for WanderCandidates only — not general map access.
+ candidates:{render:renderCandidates,clear:clearCandidateMarks,refresh(){updateCandidateLayer();},point:candidatePoint,get ready(){return ready;}},
+ get ready(){return ready;}};
 })();
