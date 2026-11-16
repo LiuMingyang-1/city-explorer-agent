@@ -22,6 +22,25 @@ function boot(opts: Parameters<typeof setup>[0] = {}) {
   h.run(mascotSource);
   return h;
 }
+
+const VALID_STATES = ['idle', 'thinking', 'searching', 'validating', 'happy', 'asking', 'confused'];
+// 成功挂载路径：把 import('./wander-mascot.js') 替换为测试注入的假模块，
+// 其余挂载逻辑（元素创建、append、控制器绑定、pending 回放、catch 移除）原样运行。
+const mountableSource = mascotSource.replace(`import('./wander-mascot.js')`, 'window.__fakeMascotModule');
+function bootMounted(opts: Parameters<typeof setup>[0] = {}) {
+  const h = setup({ api: true, ...opts });
+  h.context.console = { ...console, error: (...args: unknown[]) => mascotErrors.push(args) };
+  h.run(`window.__fakeMascotModule = Promise.resolve({ createWanderMascot: face => {
+    face.__states = [];
+    return { get state() { return face.__states.at(-1) || 'idle'; },
+      setState(next) { if (!${JSON.stringify(VALID_STATES)}.includes(next)) throw new Error('bad state: ' + next); face.__states.push(next); },
+      setPalette() {}, setHat() {} };
+  } })`);
+  h.run(mountableSource);
+  return h;
+}
+const mountedFace = (h: ReturnType<typeof boot>) =>
+  h.$('card').children.find(c => String(c.className).split(' ').includes('card-mascot'));
 const mascot = (h: ReturnType<typeof boot>) => h.run('window.WanderMascot.state');
 const sse = (body: string) => new Response(body, { headers: { 'Content-Type': 'text/event-stream' } });
 const tick = () => new Promise(resolve => setImmediate(resolve));
@@ -106,6 +125,40 @@ test('历史切换复位待机后恢复对话保持小尺寸语义', async () =>
   await pending;
   assert.equal(mascot(h), 'idle', '历史切换复位待机且旧请求被丢弃');
   assert.ok(h.state.messages.length >= 2, '旧会话消息已恢复');
+});
+
+test('挂载成功前后：toString/__proto__/constructor 等继承键不驱动状态、不移除形象', async () => {
+  const h = bootMounted();
+  const errorsBefore = mascotErrors.length;
+  // 挂载完成前（动态 import 仍在途）注入继承键与非法值：不得进入 pending，
+  // 否则回放到真 controller 会抛错并把刚挂载的形象移除。
+  h.run(`window.WanderMascot.progress('toString');window.WanderMascot.progress('__proto__');
+    window.WanderMascot.progress('constructor');window.WanderMascot.finish('hasOwnProperty');
+    window.WanderMascot.finish('__proto__');window.WanderMascot.progress('future_probe');`);
+  assert.equal(mascot(h), 'idle', '继承键与未知值不得写入 pending');
+  await until(() => Boolean(mountedFace(h)), '等待挂载完成');
+  const face = mountedFace(h)!;
+  assert.equal((face as never as { __states: string[] }).__states.length, 0, '非法 pending 不应回放到形象');
+  // 挂载成功后合法驱动，再注入同样值：保持既有状态且不移除元素。
+  h.run(`window.WanderMascot.progress('searching_events')`);
+  assert.deepEqual([...(face as never as { __states: string[] }).__states], ['searching']);
+  h.run(`window.WanderMascot.progress('toString');window.WanderMascot.progress('__proto__');
+    window.WanderMascot.progress('constructor');window.WanderMascot.finish('toString');
+    window.WanderMascot.finish('valueOf');window.WanderMascot.finish('weird_kind');`);
+  assert.equal(mascot(h), 'searching', '挂载后未知/继承值保持既有状态');
+  assert.deepEqual([...(face as never as { __states: string[] }).__states], ['searching'],
+    '非法值不得转发到 controller');
+  assert.ok(mountedFace(h), '形象不得因非法值被移除');
+  assert.equal(mascotErrors.length, errorsBefore, '非法输入不得触发降级日志');
+});
+
+test('挂载成功：pending 合法状态在挂载后回放', async () => {
+  const h = bootMounted();
+  h.run(`window.WanderMascot.progress('validating_schedule')`); // import 未就绪前进入 pending
+  await until(() => (mountedFace(h) as never as { __states?: string[] })?.__states?.length === 1, '等待挂载与回放');
+  assert.deepEqual([...(mountedFace(h) as never as { __states: string[] }).__states], ['validating'],
+    '挂载前合法 pending 应回放一次');
+  assert.equal(mascot(h), 'validating');
 });
 
 test('形象挂载失败降级：对话与文字进度照常，门面仍可驱动', async () => {

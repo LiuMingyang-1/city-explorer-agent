@@ -22,6 +22,9 @@
   `showSendError`→`fail()`→confused。`wander:reset`（新聊天/历史切换/身份切换）→idle。
 - 未知 `progress.stage` 不重置当前表情；无 search-start 事件不伪造搜索区间；
   不以时钟推进业务；结果表情保留到下一次真实交互。未引入 #39 后端/旧 issue40 资产。
+- M3 小修：stage/kind 映射表改 null-prototype + `Object.hasOwn` 守卫，挂载 pending 回放
+  走同一受控 `commit`——`toString`/`__proto__`/`constructor` 等继承键与普通未知值
+  一律保持既有状态、不进入 pending、不移除形象（含成功挂载回归）。
 
 ## Mock 边界
 

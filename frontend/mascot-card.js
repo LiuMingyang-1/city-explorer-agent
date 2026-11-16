@@ -6,15 +6,18 @@
 // progress frames only change the current expression, unknown stages never
 // reset it.
 (() => {
- const STAGE_STATE={searching_events:'searching',exploring_plans:'thinking',routing:'thinking',validating_schedule:'validating'};
- const KIND_STATE={plans:'happy',itinerary:'happy',answer:'happy',clarification:'asking'};
+ const STAGE_STATE=Object.assign(Object.create(null),{searching_events:'searching',exploring_plans:'thinking',routing:'thinking',validating_schedule:'validating'});
+ const KIND_STATE=Object.assign(Object.create(null),{plans:'happy',itinerary:'happy',answer:'happy',clarification:'asking'});
  let controller=null,current='idle',pending='idle';
  function commit(next){pending=next;current=next;if(controller)try{controller.setState(next);}catch{/* a broken face must not break chat */}}
  const api={
   get state(){return current;},
   begin(){commit('thinking');},
-  progress(stage){const next=STAGE_STATE[stage];if(next)commit(next);},
-  finish(kind){const next=KIND_STATE[kind];if(next)commit(next);},
+  // Own-key lookups only: inherited names like toString/__proto__ and any
+  // unknown stage/kind keep the current expression instead of committing a
+  // function into pending (which would then throw on mount replay).
+  progress(stage){if(Object.hasOwn(STAGE_STATE,stage))commit(STAGE_STATE[stage]);},
+  finish(kind){if(Object.hasOwn(KIND_STATE,kind))commit(KIND_STATE[kind]);},
   fail(){commit('confused');},
   idle(){commit('idle');},
  };
@@ -34,7 +37,7 @@
   face.setAttribute('motion','auto');
   card.append(face);
   controller=createWanderMascot(face,{palette:'moss',pointerFollow:true});
-  if(pending!=='idle')controller.setState(pending);
+  if(pending!=='idle')commit(pending);
  }).catch(error=>{
   // Degraded: no mascot, but every WanderMascot call stays a safe no-op and
   // the text progress bubble keeps reporting the real request state.
