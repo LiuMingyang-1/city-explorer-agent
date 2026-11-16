@@ -7,8 +7,9 @@
  * - 既有 4 个 stage 事件（PlannerProgress）：wire 形状恒为
  *   {stage,message,plan_ids}——不带 type 键，字节级向后兼容，旧前端文案
  *   与既有测试断言不受影响；消费端用 `event.type ?? "stage"` 归一判别。
- * - 新事件均带 type 判别键 + message 单行文案：旧前端 progress 气泡
- *   取 message 兜底展示，新前端按 type 分流（#41 分身 / #42 涟漪 / #43 面板）。
+ * - 新事件均带 type 判别键 + message 单行文案：旧前端逐帧覆盖展示
+ *   progress.message，故 message 必须恒非空——事件一律经本文件 builders
+ *   构造，禁止手写对象绕过（旧前端兼容硬约定见 coordination.md §1）。
  *
  * 边界约定：
  * - 所有文本字段（title/task_summary/args_summary/summary/message）经

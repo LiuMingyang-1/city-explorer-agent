@@ -18,6 +18,28 @@
 - 备选：若前端要求独立 event 名（`event: subagent_spawned`），只需 I39-4
   在 `http.ts` 加一行映射，契约字段不变。
 
+### 旧前端兼容硬约定（chat.js 逐帧覆盖 `status.textContent`）
+
+旧前端对**每一条** progress 帧执行
+`textContent = progress.message || stageNames[stage] || '正在整理方案'`。
+防回退/防闪烁据此立约：
+
+1. **message 恒非空**：所有事件必须经 `progress.ts` 的 builders 构造
+   （`stageProgress/subagentSpawnedEvent/subagentDoneEvent/toolCallEvent`），
+   message 由模板组合 + clipText 产出，恒为非空单行——禁止手写事件对象
+   绕过 builders（I39-2/3 评审项）。由此新事件永不落入 `stageNames` /
+   `'正在整理方案'` 兜底。
+2. **stage 帧保持旧序旧形**：父轮 stage 序列不被子会话插入（stage 属
+   本轮私有叙事、不透传），`searching→exploring→routing→validating`
+   文案演进与今一致。
+3. **新事件帧是实时 narrate 而非 stage**：它们会覆盖气泡文案为真实动作
+   （如「正在派发子任务「方案A」」「search_events date=…：12 条」），
+   语义上不低于 stage 帧信息密度——这是设计内的活报，不是回退。
+4. **逃生阀（I39-4 决策项）**：若联调实测高频帧导致气泡闪烁观感差，
+   将三类新事件改发独立 SSE event 名（契约字段不变，`http.ts` 一处映射
+   + 前端 transport 注册新名）；旧前端天然忽略未知事件名，自动停在
+   最后一个 stage 文案。**该切换属 I39-4 验收范围，不在骨架期预置。**
+
 ## 2. 事件契约（progress.ts 为唯一权威）
 
 ```ts
