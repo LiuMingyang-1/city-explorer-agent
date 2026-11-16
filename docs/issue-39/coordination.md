@@ -67,6 +67,7 @@ type ProgressSink = (e: PlannerProcessEvent) => void;   // 观察回调
                         │    │   （与 exploring_plans.plan_ids 同源：
                         │    │     PlannerSession.planIdForToolCall(toolCallId)）
                         │    └─ child_run_id / child_run_status = 子会话最新 run
+                        │      （done 发射瞬间的 DB 状态快照）
                         └─ tool_call.subagent_id = child sessionId（子内部调用盖章）
 ```
 
@@ -75,7 +76,9 @@ type ProgressSink = (e: PlannerProcessEvent) => void;   // 观察回调
   盖章 `subagent_id` 后落父 sink（骨架已接通）；**stage 事件不透传**——
   stage 是本轮私有叙事，父轮 stage 序列不被子会话插入（旧 wire/旧前端/
   既有 e2e 序列断言零扰动），子侧可见性由 subagent_* 与盖章 tool_call
-  等实体级事件承担。
+  等实体级事件承担。**多层派发保留已有归属**：事件已带 `subagent_id`
+  （如孙会话产出）时不重盖章，只给未归属事件补盖当前 child id——
+  消费端据此把事件精确归属到产生它的那一层会话（R1 修复）。
 - **消费者须容忍**：透传事件的 `subagent_id` 与 subagent_spawned/done
   之间可能有交错（并行派发下各事件按真实发生序到达），按 id 归属即可。
 
@@ -123,11 +126,20 @@ type ProgressSink = (e: PlannerProcessEvent) => void;   // 观察回调
    summary:"启动子任务失败：…"})`——`childRunId`/`childRunStatus` 不恒
    null：失败前可能已建半成品 run 行，同样走 `listRunsBySession`
    如实抄录，查无才 null（与 §4 DB 快照语义一致，文档不凌驾落库真相）。
-3. `child.prompt` 之后每个 `return toResult(details)` 点统一先 emit done：
-   `status`/`summary`/`kind`/`stopsCount` 与 details 同源；
-   `childRunId`/`childRunStatus` 用现有 `listRunsBySession` 结果
-   （`runs.at(-1)` 发射时快照，竞态下可如实为 `running`）。超时/父取消
-   → `"cancelled"`，`summary` = `cancelError()`。
+3. `child.prompt` 落定后终局决策（最终形态，I39-R P2 修订）：
+   a. turn/异常先折算初步 details（`runId` 占位 null，不发事件）；
+   b. `child.close()` 落定——close 拒绝且结果已成功者降级 `failed`；
+      `cancelled`/`failed` 保留首因不被覆盖；
+   c. 紧挨 done 发射前统一 `listRunsBySession.at(-1)` 快照，回填
+      `details.runId` 与 `childRunStatus`（发射瞬间 DB 状态快照，
+      竞态下可如实为 `running`；快照取在 close 之后、紧邻发射）；
+   d. 唯一 `finish(details, childRunStatus)`：emitDone + 返回同源
+      toResult——done 永不先于终局发出，杜绝"done.completed+tool
+      上抛"分裂；spawn 后意外异常收编为结构化 `failed` details 同路
+      发出（父模型按既有降级准则处理 isError 结果）。
+   透传回调生命周期 = prompt 调用期：`forwardEvents` 封口后（含 close
+   与 done 之后）悬挂子事件不再透传。超时/父取消 → `"cancelled"`，
+   `summary` = `cancelError()`。
 4. `createChildSession` 之前的失败（空 task、无 ctx、depth、信号量取消）
    不发 spawned/done——分身未入场。
 5. 每条 done 只发一次；spawn 与 done 恒 1:1 配对。

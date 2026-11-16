@@ -8,6 +8,7 @@ import { test } from "node:test";
 import {
   PROGRESS_TEXT_LIMIT,
   clipText,
+  type ToolCallEvent,
   safeEmit,
   stageProgress,
   stampSubagent,
@@ -186,10 +187,40 @@ test("subagent_spawned/done：关联 id、终态、摘要裁剪与 message", () 
   assert.ok(!("kind" in cancelled));
 });
 
-test("stampSubagent：保留原字段并盖章 subagent_id", () => {
-  const stamped = stampSubagent(stageProgress("searching_events", []), "sess_child");
+test("stampSubagent：未归属实体事件补盖 child id", () => {
+  const call = toolCallEvent({
+    toolCallId: "tc1",
+    name: "search_events",
+    args: {},
+    isError: false,
+  });
+  const stamped = stampSubagent(call, "sess_child");
   assert.equal(stamped.subagent_id, "sess_child");
-  assert.equal((stamped as { stage: string }).stage, "searching_events");
+  assert.equal((stamped as ToolCallEvent).tool_call_id, "tc1");
+});
+
+test("stampSubagent：已归属实体 ID 不覆盖、stage 不盖章", () => {
+  // 多层派发：孙会话事件已盖 sess_grand，外层转发不得改写成 sess_child。
+  const grand = stampSubagent(
+    toolCallEvent({ toolCallId: "tc_g", name: "search_events", args: {}, isError: false }),
+    "sess_grand",
+  );
+  const again = stampSubagent(grand, "sess_child");
+  assert.equal(again.subagent_id, "sess_grand");
+  assert.equal(again, grand); // 已归属事件原样透传（同一对象，零篡改）。
+  // spawned/done 恒带自身 subagent_id：外层转发同样保真。
+  const spawned = subagentSpawnedEvent({
+    subagentId: "sess_grand",
+    planId: "A",
+    parentRunId: "run_c",
+    task: "孙任务",
+  });
+  assert.equal(stampSubagent(spawned, "sess_child").subagent_id, "sess_grand");
+  // stage 是本轮私有叙事：不盖章（含无 type 键的旧帧形状）。
+  const stage = stageProgress("searching_events", []);
+  const unstamped = stampSubagent(stage, "sess_child");
+  assert.equal(unstamped.subagent_id, undefined);
+  assert.equal(unstamped, stage);
 });
 
 test("safeEmit：sink 缺省空转、回调抛错吞掉", () => {

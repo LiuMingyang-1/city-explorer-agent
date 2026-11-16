@@ -80,9 +80,10 @@ interface FakeChild extends ChildPlannerHandle {
   release?: (turn: PlannerTurn) => void;
 }
 
-/** prompt 行为由 impl 决定（拿到 options 可发子过程事件）；返回挂起 Promise 时经 release/cancel 放行。 */
+/** prompt 行为由 impl 决定（拿到 options 可发子过程事件）；closeImpl 可注入收尾失败/延迟。 */
 function fakeChild(
   impl: (self: FakeChild, options?: ChildPromptOptions) => Promise<PlannerTurn> | PlannerTurn,
+  closeImpl?: () => Promise<void> | void,
 ): FakeChild {
   const child: FakeChild = {
     prompts: [],
@@ -98,6 +99,7 @@ function fakeChild(
     },
     async close() {
       this.closes += 1;
+      await closeImpl?.();
     },
   };
   return child;
@@ -720,7 +722,193 @@ test("delegate progress: throwing sink does not affect dispatch", async (t) => {
   assert.equal(child.closes, 1);
 });
 
-test("delegate progress: unexpected exception after spawn backstops exactly one failed done", async (t) => {
+// ---- close 纳入终局决策（I39-R P2）----
+
+test("delegate progress: close rejection downgrades completed to failed, done same-source", async (t) => {
+  const { sessions, main, writer, parentRun } = await parentFixture(t);
+  const childRuns: ChildRunRef[] = [];
+  const events: PlannerProcessEvent[] = [];
+  const child = fakeChild(
+    async () => {
+      const { writer: w, run } = childRuns[0];
+      await sessions.finishRun(w, USER, run.runId, { status: "completed" });
+      return itineraryTurn("evt_a");
+    },
+    () => {
+      throw new Error("心跳释放失败");
+    },
+  );
+  const ctx = makeCtx(
+    { writer, sessionId: main.sessionId, runId: parentRun.runId },
+    { onProgress: (e) => events.push(e) },
+  );
+  const tool = createDelegateTaskTool({
+    getContext: () => ctx,
+    repository: stubEvents([fakeEvent("evt_a")]),
+    sessions,
+    spawnChild: spawnWithChildRun(sessions, child, childRuns),
+  });
+
+  // close 纳入结果决策：返回结构化 failed（而非 completed details 之后又 tool error）。
+  const result = await tool.execute("tc", { task: "x" });
+  const payload = payloadOf(result);
+  assert.equal(result.isError, true);
+  assert.equal(payload.status, "failed");
+  assert.match(payload.error ?? "", /^子任务收尾失败：心跳释放失败$/);
+  assert.equal(child.closes, 1);
+
+  // 唯一 done 与最终 details 同源；child_run_status 仍为 DB 权威 completed。
+  assert.equal(events.length, 2);
+  const done = asDone(events[1]);
+  assert.equal(done.status, payload.status);
+  assert.equal(done.summary, payload.error);
+  assert.equal(done.child_run_id, payload.runId);
+  assert.equal(done.child_run_id, childRuns[0].run.runId);
+  assert.equal(done.child_run_status, "completed");
+  assertMessagesWellFormed(events);
+});
+
+test("delegate progress: close rejection keeps prior failed/cancelled reasons", async (t) => {
+  const { sessions, main, writer, parentRun } = await parentFixture(t);
+  const events: PlannerProcessEvent[] = [];
+
+  // 已有失败路径：error turn + close 拒绝 → 保留首要原因不被 close 错误覆盖。
+  const failing = fakeChild(
+    () => ({ kind: "error", message: "子规划模型失败" }),
+    () => {
+      throw new Error("close boom");
+    },
+  );
+  const ctx = makeCtx(
+    { writer, sessionId: main.sessionId, runId: parentRun.runId },
+    { onProgress: (e) => events.push(e) },
+  );
+  const tool = createDelegateTaskTool({
+    getContext: () => ctx,
+    repository: stubEvents([]),
+    sessions,
+    spawnChild: async () => failing,
+  });
+  const result = await tool.execute("tc", { task: "x" });
+  const payload = payloadOf(result);
+  assert.equal(payload.status, "failed");
+  assert.equal(payload.error, "子规划模型失败");
+  assert.equal(failing.closes, 1);
+  const done = asDone(events[1]);
+  assert.equal(done.status, "failed");
+  assert.equal(done.summary, "子规划模型失败");
+
+  // 取消路径：超时 + close 拒绝 → 仍 cancelled、保留超时文案。
+  events.length = 0;
+  const hanging = fakeChild(
+    (self) =>
+      new Promise<PlannerTurn>((resolve) => {
+        self.release = resolve;
+      }),
+    () => {
+      throw new Error("close boom");
+    },
+  );
+  const ctx2 = makeCtx(
+    { writer, sessionId: main.sessionId, runId: parentRun.runId },
+    { onProgress: (e) => events.push(e) },
+  );
+  const timeoutTool = createDelegateTaskTool({
+    getContext: () => ctx2,
+    repository: stubEvents([]),
+    sessions,
+    spawnChild: async () => hanging,
+    timeoutMs: 60,
+  });
+  const cancelResult = await timeoutTool.execute("tc2", { task: "x" });
+  const cancelPayload = payloadOf(cancelResult);
+  assert.equal(cancelPayload.status, "cancelled");
+  assert.match(cancelPayload.error ?? "", /子任务执行超时/);
+  const cancelDone = asDone(events[1]);
+  assert.equal(cancelDone.status, "cancelled");
+  assert.equal(cancelDone.summary, cancelPayload.error);
+});
+
+test("delegate progress: abort during close does not downgrade produced result", async (t) => {
+  const { sessions, main, writer, parentRun } = await parentFixture(t);
+  const events: PlannerProcessEvent[] = [];
+  const parent = new AbortController();
+  // cleanup 期间 abort 属"迟到"（与 runtime 终态线性化一致）：
+  // 已产出 completed 不被抹成 cancelled。
+  const child = fakeChild(
+    () => itineraryTurn("evt_a"),
+    async () => {
+      parent.abort();
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    },
+  );
+  const ctx = makeCtx(
+    { writer, sessionId: main.sessionId, runId: parentRun.runId },
+    { onProgress: (e) => events.push(e) },
+  );
+  const tool = createDelegateTaskTool({
+    getContext: () => ctx,
+    repository: stubEvents([fakeEvent("evt_a")]),
+    sessions,
+    spawnChild: async () => child,
+  });
+  const result = await tool.execute("tc", { task: "x" }, parent.signal);
+  const payload = payloadOf(result);
+  assert.equal(payload.status, "completed");
+  const done = asDone(events[1]);
+  assert.equal(done.status, "completed");
+  assert.equal(done.kind, "itinerary");
+});
+
+test("delegate progress: stale child callback after prompt settles is not forwarded", async (t) => {
+  const { sessions, main, writer, parentRun } = await parentFixture(t);
+  const events: PlannerProcessEvent[] = [];
+  let staleSink: ((e: PlannerProcessEvent) => void) | undefined;
+  const child = fakeChild((_self, options) => {
+    staleSink = options?.onProgress;
+    options?.onProgress?.(
+      toolCallEvent({
+        toolCallId: "ct1",
+        name: "search_events",
+        args: { date: DAY },
+        result: { details: { count: 1 } },
+        isError: false,
+      }),
+    );
+    return itineraryTurn("evt_a");
+  });
+  const ctx = makeCtx(
+    { writer, sessionId: main.sessionId, runId: parentRun.runId },
+    { onProgress: (e) => events.push(e) },
+  );
+  const tool = createDelegateTaskTool({
+    getContext: () => ctx,
+    repository: stubEvents([fakeEvent("evt_a")]),
+    sessions,
+    spawnChild: async () => child,
+  });
+  const result = await tool.execute("tc", { task: "x" });
+  assert.equal(result.isError, false);
+  assert.deepEqual(
+    events.map((e) => e.type),
+    ["subagent_spawned", "tool_call", "subagent_done"],
+  );
+
+  // prompt 落定后回调视为过期：悬挂子事件（close 内或更晚）不透传父 sink。
+  staleSink?.(
+    toolCallEvent({
+      toolCallId: "ct2",
+      name: "search_events",
+      args: { date: DAY },
+      isError: false,
+    }),
+  );
+  staleSink?.({ type: "tool_call" } as PlannerProcessEvent);
+  assert.equal(events.length, 3);
+  assertMessagesWellFormed(events);
+});
+
+test("delegate progress: unexpected exception after spawn becomes one failed result+done", async (t) => {
   const { sessions, main, writer, parentRun } = await parentFixture(t);
   const childRuns: ChildRunRef[] = [];
   const events: PlannerProcessEvent[] = [];
@@ -744,15 +932,21 @@ test("delegate progress: unexpected exception after spawn backstops exactly one 
     spawnChild: spawnWithChildRun(sessions, child, childRuns),
   });
 
-  await assert.rejects(tool.execute("tc", { task: "x" }), /db boom/);
+  // spawn 之后不再上抛：收编为结构化 failed 结果，done 与 details 恒同源。
+  const result = await tool.execute("tc", { task: "x" });
+  const payload = payloadOf(result);
+  assert.equal(result.isError, true);
+  assert.equal(payload.status, "failed");
+  assert.match(payload.error ?? "", /^子任务派发异常：db boom$/);
   assert.equal(child.closes, 1);
 
   assert.equal(events.length, 2);
   const spawned = asSpawned(events[0]);
   const done = asDone(events[1]);
   assert.equal(done.subagent_id, spawned.subagent_id);
-  assert.equal(done.status, "failed");
-  assert.match(done.summary, /^子任务派发异常：db boom$/);
+  assert.equal(done.status, payload.status);
+  assert.equal(done.summary, payload.error);
+  assert.equal(done.child_run_id, payload.runId);
   assert.equal(done.child_run_id, childRuns[0].run.runId);
   assert.equal(done.child_run_status, "completed");
   assertMessagesWellFormed(events);

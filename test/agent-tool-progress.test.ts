@@ -16,7 +16,12 @@ import {
   fauxToolCall,
 } from "@earendil-works/pi-ai/providers/faux";
 import { createExplorerAgent } from "../src/agent/explorer-agent.ts";
-import type { PlannerProcessEvent, ToolCallEvent } from "../src/agent/progress.ts";
+import type {
+  PlannerProcessEvent,
+  SubagentDoneEvent,
+  SubagentSpawnedEvent,
+  ToolCallEvent,
+} from "../src/agent/progress.ts";
 import { PlannerSession, createPersistentPlanner } from "../src/agent/session.ts";
 import { createSqliteSessionRepository } from "../src/session/sqlite.ts";
 import {
@@ -268,6 +273,188 @@ test("子会话：内部 tool_call 盖章 subagent_id 透父 sink；stage 不透
 
   // stage 属本轮私有叙事不透传：父流中没有任何盖章 stage 帧；
   // 盖章事件全是实体级（tool_call/subagent_*）。
+  assert.ok(
+    events.every(
+      (e) => e.subagent_id === undefined || (e.type !== undefined && e.type !== "stage"),
+    ),
+  );
+  assertMessages(events);
+});
+
+/** 首条 user 消息文本：content 可为 string 或 block 数组。 */
+function firstUserText(context: {
+  messages: Array<{ role?: string; content?: unknown }>;
+}): string {
+  const first = context.messages.find((m) => m.role === "user");
+  const content = first?.content;
+  if (typeof content === "string") return content;
+  if (!Array.isArray(content)) return "";
+  return content
+    .map((b) =>
+      b !== null && typeof b === "object" ? ((b as { text?: unknown }).text ?? "") : "",
+    )
+    .filter((s): s is string => typeof s === "string")
+    .join(" ");
+}
+
+test("两层派发：孙会话实体 ID 不被外层盖章覆盖，spawned/done 与 DB 一一对应", async (t: TestContext) => {
+  const repository = await makeRepo(t);
+  const sessions = createSqliteSessionRepository(":memory:");
+  t.after(() => sessions.close());
+  const ev = await exhibition(repository);
+
+  // 孙（depth=2，无 delegate_task）：一次真实检索后出行程。
+  const grandCore = createFauxCore({});
+  grandCore.setResponses([
+    fauxAssistantMessage(
+      [
+        fauxToolCall(
+          "search_events",
+          { date: DAY1, category: "市集" },
+          { id: "tc_grand_search" },
+        ),
+      ],
+      { stopReason: "toolUse" },
+    ),
+    afternoonPlan(ev),
+  ]);
+  // 子（depth=1，仍挂 delegate_task）：先自身检索，再派孙，最后出行程。
+  const childCore = createFauxCore({});
+  childCore.setResponses([
+    fauxAssistantMessage(
+      [
+        fauxToolCall(
+          "search_events",
+          { date: DAY1, category: "展览" },
+          { id: "tc_child_search" },
+        ),
+      ],
+      { stopReason: "toolUse" },
+    ),
+    fauxAssistantMessage(
+      [
+        fauxToolCall(
+          "delegate_task",
+          { task: "孙任务：市集深挖", title: "孙方案" },
+          { id: "tc_child_delegate" },
+        ),
+      ],
+      { stopReason: "toolUse" },
+    ),
+    afternoonPlan(ev),
+  ]);
+  // 父（depth=0）：派子 → 行程。
+  const parentCore = createFauxCore({});
+  parentCore.setResponses([
+    fauxAssistantMessage(
+      [
+        fauxToolCall(
+          "delegate_task",
+          { task: "子任务：看展探路", title: "方案A" },
+          { id: "tc_parent_delegate" },
+        ),
+      ],
+      { stopReason: "toolUse" },
+    ),
+    afternoonPlan(ev),
+  ]);
+  const canned = (text: string) => {
+    const core = createFauxCore({});
+    core.setResponses([fauxAssistantMessage(text)]);
+    return core;
+  };
+  const distillCore = canned("UNCHANGED");
+  const summaryCore = canned("## 摘要\n- 已确认约束与行程要点已保留");
+  // 分流：无 delegate_task 的是孙；父子都挂 delegate_task，按首条 user
+  // 文本区分（父 = 原始提问，子 = 派发 task 文本）。
+  const streamFn: StreamFn = (model, context, options) => {
+    if (isDistillRequest(context)) return distillCore.streamSimple(model, context, options);
+    if (isSummaryRequest(context)) return summaryCore.streamSimple(model, context, options);
+    const tools = getCurrentTools(context.messages).map((tool) => tool.name);
+    if (!tools.includes("delegate_task")) {
+      return grandCore.streamSimple(model, context, options);
+    }
+    return (firstUserText(context).includes("看展探路") ? childCore : parentCore).streamSimple(
+      model,
+      context,
+      options,
+    );
+  };
+
+  const planner = await createPersistentPlanner({
+    config: CONFIG,
+    repository,
+    sessions,
+    userId: USER,
+    streamFn,
+    currentDate: BASE,
+    maxSubagentDepth: 2,
+  });
+  t.after(() => planner.close());
+
+  const events: PlannerProcessEvent[] = [];
+  const turn = await planner.prompt("派看展子任务", {
+    onProgress: (e) => events.push(e),
+  });
+  assert.equal(turn.kind, "itinerary");
+
+  // DB 真实两级 child：parent_session_id 各异、ID 各不相同。
+  const kids = (await sessions.listSessions(USER)).filter((s) => s.kind === "child");
+  assert.equal(kids.length, 2);
+  const child = kids.find((s) => s.parentSessionId === planner.sessionId);
+  assert.ok(child, "缺第一层 child 会话");
+  const grand = kids.find((s) => s.parentSessionId === child.sessionId);
+  assert.ok(grand, "缺孙会话（parent 应为 child）");
+  assert.notEqual(child.sessionId, grand.sessionId);
+
+  // spawned/done：与 DB 真实 ID 一一对应且严格 1:1 配对。
+  const spawned = events.filter(
+    (e): e is SubagentSpawnedEvent => e.type === "subagent_spawned",
+  );
+  const done = events.filter((e): e is SubagentDoneEvent => e.type === "subagent_done");
+  assert.deepEqual(
+    spawned.map((s) => s.subagent_id).sort(),
+    [child.sessionId, grand.sessionId].sort(),
+  );
+  assert.deepEqual(
+    done.map((d) => d.subagent_id).sort(),
+    [child.sessionId, grand.sessionId].sort(),
+  );
+  for (const s of spawned) {
+    const d = done.find((x) => x.subagent_id === s.subagent_id);
+    assert.ok(d, `缺 ${s.subagent_id} 的 done`);
+    assert.equal(d.status, "completed");
+    assert.equal(d.title, s.title);
+  }
+  // 孙的 spawned 挂在子 run 下（parent_run_id 与子的不同）。
+  const grandSpawn = spawned.find((s) => s.subagent_id === grand.sessionId);
+  const childSpawn = spawned.find((s) => s.subagent_id === child.sessionId);
+  assert.notEqual(grandSpawn?.parent_run_id, childSpawn?.parent_run_id);
+
+  // 工具归属：孙会话事件保留孙 ID——外层转发不得改写成子 ID。
+  const byId = new Map(toolCalls(events).map((c) => [c.tool_call_id, c]));
+  assert.equal(byId.get("tc_child_search")?.subagent_id, child.sessionId);
+  assert.equal(byId.get("tc_grand_search")?.subagent_id, grand.sessionId);
+  assert.equal(byId.get("tc_child_delegate")?.subagent_id, child.sessionId);
+  assert.equal(byId.get("tc_parent_delegate")?.subagent_id, undefined);
+  // 命中数按真实 details 推导：子的展览检索、孙的市集检索。
+  assert.equal(
+    byId.get("tc_child_search")?.result_count,
+    (await repository.search({ date: DAY1, category: "展览" })).length,
+  );
+  assert.equal(
+    byId.get("tc_grand_search")?.result_count,
+    (await repository.search({ date: DAY1, category: "市集" })).length,
+  );
+  // 盖章值只能来自真实会话树；无盖章 stage 帧。
+  assert.ok(
+    toolCalls(events).every(
+      (c) =>
+        c.subagent_id === undefined ||
+        c.subagent_id === child.sessionId ||
+        c.subagent_id === grand.sessionId,
+    ),
+  );
   assert.ok(
     events.every(
       (e) => e.subagent_id === undefined || (e.type !== undefined && e.type !== "stage"),

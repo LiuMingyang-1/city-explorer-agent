@@ -18,8 +18,9 @@
  * - 事件只透摘要：args_summary 为参数白名单单行、result_count 为命中数；
  *   不回传完整工具入参/结果（帧大小与信息面都需控制）。
  * - 终态一致性：subagent_done.status 即回传父模型的 DelegateTaskDetails.status；
- *   child_run_status 如实抄录子 run 持久化终态——父取消/子超时按真实落库
- *   结果区分，不凭主观猜测。
+ *   child_run_status 为发射瞬间子 run 的 DB 状态快照（如实抄录，竞态下
+ *   可为非终态，不做 running→终态伪装或追帧）——父取消/子超时按真实
+ *   落库结果区分，不凭主观猜测。
  * - sink 是观察者：safeEmit 吞掉回调异常，进度透出绝不拖垮规划主链路。
  */
 
@@ -74,7 +75,8 @@ export interface SubagentSpawnedEvent {
   message: string;
 }
 
-/** 派发终了即发射：分身退场；终态与回传父模型的结果及持久化子 run 一致。 */
+/** 终局点发射：分身退场；status 与回传父模型的结果同源，
+ *  child_run_* 为发射瞬间子 run 的 DB 状态快照。 */
 export interface SubagentDoneEvent {
   type: "subagent_done";
   subagent_id: string;
@@ -91,7 +93,8 @@ export interface SubagentDoneEvent {
   summary: string;
   /** 子会话本次派发的 run ID（查无则 null）。 */
   child_run_id: string | null;
-  /** 子 run 持久化终态（DB 权威；查无则 null）。 */
+  /** 发射瞬间子 run 的 DB 状态快照（如实抄录，查无则 null；
+   *  竞态下可为 running 等非终态，消费者不得据此猜测已终结）。 */
   child_run_status: RunStatus | null;
   message: string;
 }
@@ -350,12 +353,17 @@ export function subagentDoneEvent(input: {
 
 /**
  * 子会话透传盖章：child 内部实体级事件（tool_call；stage 属本轮私有叙事
- * 不透传）经 dispatch 上下文转发到父 sink 时标上其 subagent_id
- * （= child sessionId），父会话原生事件不带此字段。消费端据此归属事件来源。
+ * 不透传也不盖章）经 dispatch 上下文转发到父 sink 时标上其 subagent_id
+ * （= child sessionId），父会话原生事件不带此字段。
+ * 多层派发下事件可能已带更深层归属（孙会话 ID）——保留原值不篡改，
+ * 只给未归属的 tool_call 补盖当前 child id；消费端据此把事件精确归属
+ * 到产生它的那一层会话。
  */
 export function stampSubagent(
   event: PlannerProcessEvent,
   subagentId: string,
 ): PlannerProcessEvent {
+  if (event.type === "stage" || event.type === undefined) return event;
+  if (event.subagent_id !== undefined) return event;
   return { ...event, subagent_id: subagentId };
 }
