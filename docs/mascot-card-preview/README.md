@@ -14,12 +14,14 @@
   boop-face 的 `--face-size`。欢迎态约 64–88px（`clamp(64,4.11vw+26,88)`，随标题字号对应的
   可用空间缩放），对话态/历史展开态 52px；移动端欢迎 60px、对话 48px。
   `prefers-reduced-motion` 下尺寸过渡即时生效。
-- 问候排版（M4 修）：`.greet-line` 块包问候+句号，首行 `text-indent` 让出头像；
-  `padding-right:80px` 预留右上「新聊天」位，`white-space:normal` 允许长问候自然折行。
+- 问候排版（M4/M5 修）：`.greet-line` 块包问候+句号，首行 `text-indent` 让出头像；
+  `padding-right:80px` 预留右上「新聊天」位。问候语在**全部视口**统一单行
+  `nowrap + overflow:hidden + text-overflow:ellipsis`——welcome 块高度恒定，
+  无论问候多长都不推挤 weather/composer（M5 产品决策：900×800 窄高视口下
+  自由折行曾把 weather 压进绝对定位的 composer 38px，P2）。
   约束视口（`max-height:700px` 桌面 / `max-width:700px` 移动端）下头像底缘会越过第二行，
   此时 h1 整体 `padding-left`（= 头像右缘+6px-卡片左内边距，`--card-pad-l` 变量镜像
-  style.css 各断点），问候列改为头像右侧通排的两行 lockup、零纵向增长；
-  问候语同时降为单行 `text-overflow:ellipsis`。高视口布局不变。
+  style.css 各断点），问候列改为头像右侧通排的两行 lockup、零纵向增长。
 - `chat.js` 四个挂点（全部在既有 `isCurrent()` 代际守卫内）：
   `deliver` 开始 `begin()`→thinking；`onProgress` 按 `stage` 映射
   `searching_events→searching、exploring_plans/routing→thinking、validating_schedule→validating`；
@@ -63,18 +65,25 @@ clarification/error/retry/newChat、旧代迟到结果与进度的代际隔离�
 历史切换复位、挂载失败降级。`npm run typecheck`、`npm run check:frontend`
 （已含 `node --check frontend/mascot-card.js`）及 50 个相关前端回归全部通过。
 
-## M4 排版修复（layout-fix/）
+## M4/M5 排版修复（layout-fix/、layout-fix-v2/）
 
-针对 M2 QA 的 F1（第二行标题伸进头像下缘）与 F2（长问候被卡缘硬裁）：
+针对 M2 QA 的 F1（第二行标题伸进头像下缘）与 F2（长问候被卡缘硬裁）；M5 收窄为
+全视口统一单行省略（reviewer P2：900×800/900×701 折行把 weather 压入 composer）。
 
-- 证据：`layout-fix/verify-layout.mjs`（CDP，复用 QA 的 Range.getClientRects 行级探针），
-  `layout-fix/metrics.json` + `v*-welcome.png` / `v*-long-greeting.png`，44/44 断言通过。
-- 覆盖视口：1440×900、1440×680（矮宽）、1024×600、900×800（高窄）、800×480、320×568(DPR2)。
-- F1 修复判定：所有视口问候各行文字与头像矩形零相交（原 1024/800/320 三处 FAIL 全消）。
-- F2 修复判定：1440 高视口长问候自然折行且全部行在卡片内（无 clip）；
-  约束视口（1024/800/1440s/320）问候单行省略号，`greet-line` 可视盒右缘在
-  「新聊天」左缘之前（264≤269 / 207≤220 等），无重叠。
-- 320×568 对话态/复位态复验：sameNode、`happy` 48px、复位 `idle` 60px、碰撞为零。
+- 证据：`layout-fix-v2/verify-layout.mjs` + `metrics.json` + `v*-welcome.png` /
+  `v*-long-greeting.png` / `chat-900x800.png`，**62/62** 断言通过；
+  `layout-fix/` 为 M4 首轮证据（未覆盖，历史保留）。
+- 覆盖视口：900×800、900×701、900×700（媒体断点两侧）、1024×600、800×480、
+  1440×900、320×568(DPR2, innerWidth=clientWidth)。
+- F1：各视口问候行文字与头像矩形零相交。
+- F2：全部视口 `greet-line` 单行 `nowrap+ellipsis`，可视盒右缘在新聊天按钮左缘之前；
+  **长问候下 weather/composer/history/messages/location-* 矩形与常态逐值一致**
+  （`lg-nothing-moves`），不再把 weather 压入 composer。
+- 已知基线（非本分支引入，QA metrics 同值）：800×480 下欢迎态绝对定位的 composer
+  与 weather/location-form 框交叠 ~41px、320×568 下 composer 与 messages 交叠 ~11.6px；
+  欢迎态 composer 锚在卡片 50% 高度的原布局决策，未在 M5 最小范围改动。
+- 流程回归：900×800 welcome→chat `happy` 52px sameNode、新聊天复位 `idle` 64px、
+  历史恢复 52px、reduced-motion transition 0s。
 
 
 
@@ -84,5 +93,5 @@ clarification/error/retry/newChat、旧代迟到结果与进度的代际隔离�
 - `prefers-reduced-motion` 实机走查（代码路径已覆盖，未做系统级截图）。
 - 短窗口桌面（高 ~600px）与横屏平板的余量确认；欢迎尺寸在窄桌面收敛到 ~64–70px。
 - 历史展开态形象缩到 52px 是否保留（当前随 `.history-expanded` 缩放）。
-- 超长问候（>20 字）在高视口自然折行会推高 welcome 区；约束视口为单行省略，
-  若产品要两可见行需另行设计。
+- 欢迎态 composer 锚定卡片 50% 的原布局在极矮/窄窗口与上方内容交叠（见 M4/M5 节），
+  属产品既有取舍；若要根治需改卡片布局方案，超出本任务。

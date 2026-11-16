@@ -1,0 +1,253 @@
+{
+  "results": [
+    {
+      "name": "v900x800.css-px",
+      "ok": true
+    },
+    {
+      "name": "v900x800.size",
+      "ok": true
+    },
+    {
+      "name": "v900x800.face-text-clear",
+      "ok": true
+    },
+    {
+      "name": "v900x800.pairs-subset-baseline",
+      "ok": true
+    },
+    {
+      "name": "v900x800.lg-face-clear",
+      "ok": true
+    },
+    {
+      "name": "v900x800.lg-nothing-moves",
+      "ok": true
+    },
+    {
+      "name": "v900x800.lg-ellipsis",
+      "ok": true
+    },
+    {
+      "name": "v900x800.lg-pairs-subset-baseline",
+      "ok": true
+    },
+    {
+      "name": "v900x701.css-px",
+      "ok": true
+    },
+    {
+      "name": "v900x701.size",
+      "ok": true
+    },
+    {
+      "name": "v900x701.face-text-clear",
+      "ok": true
+    },
+    {
+      "name": "v900x701.pairs-subset-baseline",
+      "ok": true
+    },
+    {
+      "name": "v900x701.lg-face-clear",
+      "ok": true
+    },
+    {
+      "name": "v900x701.lg-nothing-moves",
+      "ok": true
+    },
+    {
+      "name": "v900x701.lg-ellipsis",
+      "ok": true
+    },
+    {
+      "name": "v900x701.lg-pairs-subset-baseline",
+      "ok": true
+    },
+    {
+      "name": "v900x700.css-px",
+      "ok": true
+    },
+    {
+      "name": "v900x700.size",
+      "ok": true
+    },
+    {
+      "name": "v900x700.face-text-clear",
+      "ok": true
+    },
+    {
+      "name": "v900x700.pairs-subset-baseline",
+      "ok": true
+    },
+    {
+      "name": "v900x700.lg-face-clear",
+      "ok": true
+    },
+    {
+      "name": "v900x700.lg-nothing-moves",
+      "ok": true
+    },
+    {
+      "name": "v900x700.lg-ellipsis",
+      "ok": true
+    },
+    {
+      "name": "v900x700.lg-pairs-subset-baseline",
+      "ok": true
+    },
+    {
+      "name": "v1024.css-px",
+      "ok": true
+    },
+    {
+      "name": "v1024.size",
+      "ok": true
+    },
+    {
+      "name": "v1024.face-text-clear",
+      "ok": true
+    },
+    {
+      "name": "v1024.pairs-subset-baseline",
+      "ok": true
+    },
+    {
+      "name": "v1024.lg-face-clear",
+      "ok": true
+    },
+    {
+      "name": "v1024.lg-nothing-moves",
+      "ok": true
+    },
+    {
+      "name": "v1024.lg-ellipsis",
+      "ok": true
+    },
+    {
+      "name": "v1024.lg-pairs-subset-baseline",
+      "ok": true
+    },
+    {
+      "name": "v800.css-px",
+      "ok": true
+    },
+    {
+      "name": "v800.size",
+      "ok": true
+    },
+    {
+      "name": "v800.face-text-clear",
+      "ok": true
+    },
+    {
+      "name": "v800.pairs-subset-baseline",
+      "ok": true
+    },
+    {
+      "name": "v800.lg-face-clear",
+      "ok": true
+    },
+    {
+      "name": "v800.lg-nothing-moves",
+      "ok": true
+    },
+    {
+      "name": "v800.lg-ellipsis",
+      "ok": true
+    },
+    {
+      "name": "v800.lg-pairs-subset-baseline",
+      "ok": true
+    },
+    {
+      "name": "v1440.css-px",
+      "ok": true
+    },
+    {
+      "name": "v1440.size",
+      "ok": true
+    },
+    {
+      "name": "v1440.face-text-clear",
+      "ok": true
+    },
+    {
+      "name": "v1440.pairs-subset-baseline",
+      "ok": true
+    },
+    {
+      "name": "v1440.lg-face-clear",
+      "ok": true
+    },
+    {
+      "name": "v1440.lg-nothing-moves",
+      "ok": true
+    },
+    {
+      "name": "v1440.lg-ellipsis",
+      "ok": true
+    },
+    {
+      "name": "v1440.lg-pairs-subset-baseline",
+      "ok": true
+    },
+    {
+      "name": "v320.css-px",
+      "ok": true
+    },
+    {
+      "name": "v320.size",
+      "ok": true
+    },
+    {
+      "name": "v320.face-text-clear",
+      "ok": true
+    },
+    {
+      "name": "v320.pairs-subset-baseline",
+      "ok": true
+    },
+    {
+      "name": "v320.lg-face-clear",
+      "ok": true
+    },
+    {
+      "name": "v320.lg-nothing-moves",
+      "ok": true
+    },
+    {
+      "name": "v320.lg-ellipsis",
+      "ok": true
+    },
+    {
+      "name": "v320.lg-pairs-subset-baseline",
+      "ok": true
+    },
+    {
+      "name": "chat.happy-52-same",
+      "ok": true
+    },
+    {
+      "name": "chat.pairs-empty",
+      "ok": true
+    },
+    {
+      "name": "reset.idle-64",
+      "ok": true
+    },
+    {
+      "name": "reset.face-text-clear",
+      "ok": true
+    },
+    {
+      "name": "history.52px",
+      "ok": true
+    },
+    {
+      "name": "rm.transition-none",
+      "ok": true
+    }
+  ],
+  "note": "Range.getClientRects reports unclipped text extents; greeting visible bounds are asserted via the greet-line box content edge (right-padR) vs #new-chat.left plus ellipsis computed style."
+}
