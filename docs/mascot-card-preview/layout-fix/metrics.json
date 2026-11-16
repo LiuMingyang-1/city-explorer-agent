@@ -1,0 +1,180 @@
+{
+  "results": [
+    {
+      "name": "v1440.css-px",
+      "ok": true
+    },
+    {
+      "name": "v1440.welcome-size",
+      "ok": true
+    },
+    {
+      "name": "v1440.no-collision",
+      "ok": true
+    },
+    {
+      "name": "v1440.text-clear-of-face",
+      "ok": true
+    },
+    {
+      "name": "v1440.long-greet-clear",
+      "ok": true
+    },
+    {
+      "name": "v1440.long-greet-wraps-in-card",
+      "ok": true
+    },
+    {
+      "name": "v1440.long-greet-not-clipped",
+      "ok": true
+    },
+    {
+      "name": "v1440s.css-px",
+      "ok": true
+    },
+    {
+      "name": "v1440s.welcome-size",
+      "ok": true
+    },
+    {
+      "name": "v1440s.no-collision",
+      "ok": true
+    },
+    {
+      "name": "v1440s.text-clear-of-face",
+      "ok": true
+    },
+    {
+      "name": "v1440s.long-greet-clear",
+      "ok": true
+    },
+    {
+      "name": "v1440s.long-greet-ellipsis",
+      "ok": true
+    },
+    {
+      "name": "v1024.css-px",
+      "ok": true
+    },
+    {
+      "name": "v1024.welcome-size",
+      "ok": true
+    },
+    {
+      "name": "v1024.no-collision",
+      "ok": true
+    },
+    {
+      "name": "v1024.text-clear-of-face",
+      "ok": true
+    },
+    {
+      "name": "v1024.long-greet-clear",
+      "ok": true
+    },
+    {
+      "name": "v1024.long-greet-ellipsis",
+      "ok": true
+    },
+    {
+      "name": "v900t.css-px",
+      "ok": true
+    },
+    {
+      "name": "v900t.welcome-size",
+      "ok": true
+    },
+    {
+      "name": "v900t.no-collision",
+      "ok": true
+    },
+    {
+      "name": "v900t.text-clear-of-face",
+      "ok": true
+    },
+    {
+      "name": "v900t.long-greet-clear",
+      "ok": true
+    },
+    {
+      "name": "v900t.long-greet-wraps-in-card",
+      "ok": true
+    },
+    {
+      "name": "v900t.long-greet-not-clipped",
+      "ok": true
+    },
+    {
+      "name": "v800.css-px",
+      "ok": true
+    },
+    {
+      "name": "v800.welcome-size",
+      "ok": true
+    },
+    {
+      "name": "v800.no-collision",
+      "ok": true
+    },
+    {
+      "name": "v800.text-clear-of-face",
+      "ok": true
+    },
+    {
+      "name": "v800.long-greet-clear",
+      "ok": true
+    },
+    {
+      "name": "v800.long-greet-ellipsis",
+      "ok": true
+    },
+    {
+      "name": "v320.css-px",
+      "ok": true
+    },
+    {
+      "name": "v320.welcome-size",
+      "ok": true
+    },
+    {
+      "name": "v320.no-collision",
+      "ok": true
+    },
+    {
+      "name": "v320.text-clear-of-face",
+      "ok": true
+    },
+    {
+      "name": "v320.long-greet-clear",
+      "ok": true
+    },
+    {
+      "name": "v320.long-greet-ellipsis",
+      "ok": true
+    },
+    {
+      "name": "v320.chat-thinking-same-node",
+      "ok": true
+    },
+    {
+      "name": "v320.chat-happy-48",
+      "ok": true
+    },
+    {
+      "name": "v320.chat-no-collision",
+      "ok": true
+    },
+    {
+      "name": "v320.reset-idle-60",
+      "ok": true
+    },
+    {
+      "name": "v320.reset-text-clear",
+      "ok": true
+    },
+    {
+      "name": "rm.transition-none",
+      "ok": true
+    }
+  ]
+}
