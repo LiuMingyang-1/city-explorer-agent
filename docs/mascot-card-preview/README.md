@@ -78,10 +78,13 @@ clarification/error/retry/newChat、旧代迟到结果与进度的代际隔离�
 - F1：各视口问候行文字与头像矩形零相交。
 - F2：全部视口 `greet-line` 单行 `nowrap+ellipsis`，可视盒右缘在新聊天按钮左缘之前；
   **长问候下 weather/composer/history/messages/location-* 矩形与常态逐值一致**
-  （`lg-nothing-moves`），不再把 weather 压入 composer。
-- 已知基线（非本分支引入，QA metrics 同值）：800×480 下欢迎态绝对定位的 composer
-  与 weather/location-form 框交叠 ~41px、320×568 下 composer 与 messages 交叠 ~11.6px；
-  欢迎态 composer 锚在卡片 50% 高度的原布局决策，未在 M5 最小范围改动。
+  （`lg-nothing-moves`），不再把 weather 压入 composer（900×800/900×701 原 P2 已消）。
+- F3 已知既有短窗口限制（**不作为通过项**）：欢迎态 `.composer-area` 绝对定位于卡片
+  50%（style.css `top:50%;translateY(-50%)`），800×480 下 weather/location-form 与
+  composer 交叠 ~41px、320×568 下 composer 与 messages 交叠 ~10.4px。
+  逐像素归因见 `layout-fix-v2/baseline-attribution.json`：当前矩形与 QA 修复前
+  metrics 完全一致，非头像/排版修复引入；断言仅要求「不新增交叠」
+  （pairs ⊆ baseline），根治需改卡片布局方案，超出本任务。
 - 流程回归：900×800 welcome→chat `happy` 52px sameNode、新聊天复位 `idle` 64px、
   历史恢复 52px、reduced-motion transition 0s。
 
@@ -93,5 +96,6 @@ clarification/error/retry/newChat、旧代迟到结果与进度的代际隔离�
 - `prefers-reduced-motion` 实机走查（代码路径已覆盖，未做系统级截图）。
 - 短窗口桌面（高 ~600px）与横屏平板的余量确认；欢迎尺寸在窄桌面收敛到 ~64–70px。
 - 历史展开态形象缩到 52px 是否保留（当前随 `.history-expanded` 缩放）。
-- 欢迎态 composer 锚定卡片 50% 的原布局在极矮/窄窗口与上方内容交叠（见 M4/M5 节），
-  属产品既有取舍；若要根治需改卡片布局方案，超出本任务。
+- 欢迎态 composer 锚定卡片 50% 的原布局在极矮/窄窗口与上方内容交叠（F3，见
+  M4/M5 节与 `layout-fix-v2/baseline-attribution.json`），属产品既有取舍；
+  若要根治需改卡片布局方案，超出本任务。

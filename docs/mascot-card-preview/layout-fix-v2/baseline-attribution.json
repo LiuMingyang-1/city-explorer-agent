@@ -1,0 +1,140 @@
+{
+  "note": "F3 attribution: welcome-state .composer-area is absolutely positioned at card 50% (style.css .composer-area top:50% translateY(-50%)). Overlaps below are baseline-identical to qa/metrics.json (pre-M5 measurements on pre-fix code), NOT introduced by mascot or greeting fixes. Reported as known limitation, not a pass.",
+  "800x480": {
+    "pairs": [
+      "weather x composer (41.1px)",
+      "locForm x composer"
+    ],
+    "baseline_qa": {
+      "weather": {
+        "left": 46,
+        "top": 162.9,
+        "right": 344,
+        "bottom": 255.1,
+        "w": 298,
+        "h": 92.2
+      },
+      "composer": {
+        "left": 46,
+        "top": 214,
+        "right": 344,
+        "bottom": 266,
+        "w": 298,
+        "h": 52
+      }
+    },
+    "current": {
+      "weather": {
+        "left": 46,
+        "top": 162.9,
+        "right": 344,
+        "bottom": 255.1,
+        "h": 92.2
+      },
+      "locForm": {
+        "left": 46,
+        "top": 219.1,
+        "right": 296,
+        "bottom": 255.1,
+        "h": 36
+      },
+      "locStatus": {
+        "left": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "h": 0
+      },
+      "composer": {
+        "left": 46,
+        "top": 214,
+        "right": 344,
+        "bottom": 266,
+        "h": 52
+      },
+      "messages": {
+        "left": 46,
+        "top": 279,
+        "right": 344,
+        "bottom": 321,
+        "h": 42
+      },
+      "history": {
+        "left": 46,
+        "top": 382,
+        "right": 344,
+        "bottom": 436,
+        "h": 54
+      }
+    },
+    "verdict": "identical-rects"
+  },
+  "320x568": {
+    "pairs": [
+      "composer x messages (10.4px)"
+    ],
+    "baseline_qa": {
+      "composer": {
+        "left": 33,
+        "top": 331,
+        "right": 287,
+        "bottom": 383,
+        "w": 254,
+        "h": 52
+      },
+      "messages": {
+        "left": 33,
+        "top": 372.6,
+        "right": 287,
+        "bottom": 441,
+        "w": 254,
+        "h": 68.4
+      }
+    },
+    "current": {
+      "weather": {
+        "left": 33,
+        "top": 233.6,
+        "right": 287,
+        "bottom": 316.6,
+        "h": 83
+      },
+      "locForm": {
+        "left": 33,
+        "top": 280.6,
+        "right": 243,
+        "bottom": 316.6,
+        "h": 36
+      },
+      "locStatus": {
+        "left": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "h": 0
+      },
+      "composer": {
+        "left": 33,
+        "top": 331,
+        "right": 287,
+        "bottom": 383,
+        "h": 52
+      },
+      "messages": {
+        "left": 33,
+        "top": 372.6,
+        "right": 287,
+        "bottom": 441,
+        "h": 68.4
+      },
+      "history": {
+        "left": 33,
+        "top": 491,
+        "right": 287,
+        "bottom": 541,
+        "h": 50
+      }
+    },
+    "verdict": "identical-rects"
+  }
+}
