@@ -118,7 +118,9 @@ type ProgressSink = (e: PlannerProcessEvent) => void;   // 观察回调
    parentRunId: ctx.runId, title: params.title, task}))`。
    注意 `execute` 首参 `_toolCallId` 需改名启用。
 2. `spawnChild` 失败返回处：`subagentDoneEvent({status:"failed",
-   summary:"启动子任务失败：…", childRunId:null})`。
+   summary:"启动子任务失败：…"})`——`childRunId`/`childRunStatus` 不恒
+   null：失败前可能已建半成品 run 行，同样走 `listRunsBySession`
+   如实抄录，查无才 null（与 §4 持久化终态权威一致，文档不凌驾落库真相）。
 3. `child.prompt` 之后每个 `return toResult(details)` 点统一先 emit done：
    `status`/`summary`/`kind`/`stopsCount` 与 details 同源；
    `childRunId`/`childRunStatus` 用现有 `listRunsBySession` 结果
