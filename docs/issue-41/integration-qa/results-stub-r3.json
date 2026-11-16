@@ -1,0 +1,651 @@
+{
+  "mode": "stub",
+  "at": "2026-11-16T13:03:22.211Z",
+  "metrics": {
+    "map-ready": {
+      "assert": "pass",
+      "mode": "stub"
+    },
+    "clones-mounted": {
+      "assert": "pass",
+      "clones": [
+        {
+          "id": "72e0de88-5aaa-4611-b285-988cb120eff4",
+          "status": "entering",
+          "anchored": "false",
+          "faceHidden": false
+        },
+        {
+          "id": "fe0a3ac6-bfb9-449e-81c3-d409d0beaa88",
+          "status": "entering",
+          "anchored": "false",
+          "faceHidden": false
+        }
+      ]
+    },
+    "candidates-drawn": {
+      "assert": "pass",
+      "dots": 6
+    },
+    "anchor-mounted": {
+      "assert": "pass",
+      "anchors": 2
+    },
+    "mid-snapshot": {
+      "round": 1,
+      "closed": false,
+      "destroyed": false,
+      "subs": [
+        {
+          "id": "72e0de88-5aaa-4611-b285-988cb120eff4",
+          "title": "曲江看展探路方案",
+          "letter": "A",
+          "palette": "sand",
+          "status": "working",
+          "points": 5,
+          "stops": 0,
+          "retired": false,
+          "anchored": true
+        },
+        {
+          "id": "fe0a3ac6-bfb9-449e-81c3-d409d0beaa88",
+          "title": "城南市集签售探路方案",
+          "letter": "B",
+          "palette": "clay",
+          "status": "working",
+          "points": 1,
+          "stops": 0,
+          "retired": false,
+          "anchored": true
+        }
+      ],
+      "aggregate": 0,
+      "anchored": [
+        "72e0de88-5aaa-4611-b285-988cb120eff4",
+        "fe0a3ac6-bfb9-449e-81c3-d409d0beaa88"
+      ],
+      "dots": 6,
+      "anchors": 2,
+      "dropped": 0
+    },
+    "anchor-identity-real": {
+      "assert": "pass",
+      "subs": [
+        {
+          "id": "72e0de88-5aaa-4611-b285-988cb120eff4",
+          "title": "曲江看展探路方案",
+          "letter": "A",
+          "palette": "sand",
+          "status": "working",
+          "points": 5,
+          "stops": 0,
+          "retired": false,
+          "anchored": true
+        },
+        {
+          "id": "fe0a3ac6-bfb9-449e-81c3-d409d0beaa88",
+          "title": "城南市集签售探路方案",
+          "letter": "B",
+          "palette": "clay",
+          "status": "working",
+          "points": 1,
+          "stops": 0,
+          "retired": false,
+          "anchored": true
+        }
+      ]
+    },
+    "card-clone-anchored": {
+      "assert": "pass",
+      "clones": [
+        {
+          "id": "72e0de88-5aaa-4611-b285-988cb120eff4",
+          "status": "working",
+          "anchored": "true",
+          "faceHidden": true
+        },
+        {
+          "id": "fe0a3ac6-bfb9-449e-81c3-d409d0beaa88",
+          "status": "working",
+          "anchored": "true",
+          "faceHidden": true
+        }
+      ]
+    },
+    "settle-done": {
+      "assert": "pass"
+    },
+    "progress-frames": [
+      {
+        "type": "stage",
+        "stage": "exploring_plans"
+      },
+      {
+        "type": "stage",
+        "stage": "exploring_plans"
+      },
+      {
+        "type": "subagent_spawned",
+        "id": "72e0de88-5aaa-4611-b285-988cb120eff4"
+      },
+      {
+        "type": "subagent_spawned",
+        "id": "fe0a3ac6-bfb9-449e-81c3-d409d0beaa88"
+      },
+      {
+        "type": "tool_call",
+        "id": "72e0de88-5aaa-4611-b285-988cb120eff4",
+        "name": "search_events",
+        "cand": 5,
+        "status": "completed"
+      },
+      {
+        "type": "tool_call",
+        "id": "fe0a3ac6-bfb9-449e-81c3-d409d0beaa88",
+        "name": "search_events",
+        "cand": 1,
+        "status": "completed"
+      },
+      {
+        "type": "subagent_done",
+        "id": "72e0de88-5aaa-4611-b285-988cb120eff4",
+        "stops": 2,
+        "status": "completed"
+      },
+      {
+        "type": "tool_call",
+        "name": "delegate_task",
+        "status": "completed"
+      },
+      {
+        "type": "subagent_done",
+        "id": "fe0a3ac6-bfb9-449e-81c3-d409d0beaa88",
+        "stops": 2,
+        "status": "completed"
+      },
+      {
+        "type": "tool_call",
+        "name": "delegate_task",
+        "status": "completed"
+      },
+      {
+        "type": "stage",
+        "stage": "validating_schedule"
+      }
+    ],
+    "clone-dom-log": [
+      {
+        "t": 559,
+        "cls": "mascot-team-clone",
+        "html": 962
+      },
+      {
+        "t": 559,
+        "cls": "mascot-team-clone",
+        "html": 962
+      }
+    ],
+    "strip-html": "<div id=\"mascot-team-strip\" class=\"mascot-team\" hidden=\"\"></div>",
+    "post-settle-layer-clean": {
+      "assert": "pass",
+      "post": {
+        "round": 1,
+        "closed": true,
+        "destroyed": false,
+        "subs": [],
+        "aggregate": 0,
+        "anchored": [],
+        "dots": 0,
+        "anchors": 0,
+        "dropped": 0
+      }
+    },
+    "post-settle-strip-hidden": {
+      "assert": "pass",
+      "strip": {
+        "hidden": true,
+        "live": false,
+        "h": 0
+      }
+    },
+    "post-settle-clones-zero": {
+      "assert": "pass"
+    },
+    "route-markers": 4,
+    "adopted-handed-off": {
+      "assert": "pass",
+      "routeDots": 4
+    },
+    "dispatched": [
+      "wander:map-ready",
+      "wander:viewport",
+      {
+        "t": "wander:candidate-anchor",
+        "d": {
+          "round": 1,
+          "subagent_id": "72e0de88-5aaa-4611-b285-988cb120eff4",
+          "anchored": true
+        }
+      },
+      {
+        "t": "wander:candidate-anchor",
+        "d": {
+          "round": 1,
+          "subagent_id": "fe0a3ac6-bfb9-449e-81c3-d409d0beaa88",
+          "anchored": true
+        }
+      },
+      {
+        "t": "wander:candidate-anchor",
+        "d": {
+          "round": 1,
+          "subagent_id": "72e0de88-5aaa-4611-b285-988cb120eff4",
+          "anchored": false
+        }
+      },
+      {
+        "t": "wander:candidate-anchor",
+        "d": {
+          "round": 1,
+          "subagent_id": "fe0a3ac6-bfb9-449e-81c3-d409d0beaa88",
+          "anchored": false
+        }
+      }
+    ],
+    "anchor-events": [
+      {
+        "round": 1,
+        "subagent_id": "72e0de88-5aaa-4611-b285-988cb120eff4",
+        "anchored": true
+      },
+      {
+        "round": 1,
+        "subagent_id": "fe0a3ac6-bfb9-449e-81c3-d409d0beaa88",
+        "anchored": true
+      },
+      {
+        "round": 1,
+        "subagent_id": "72e0de88-5aaa-4611-b285-988cb120eff4",
+        "anchored": false
+      },
+      {
+        "round": 1,
+        "subagent_id": "fe0a3ac6-bfb9-449e-81c3-d409d0beaa88",
+        "anchored": false
+      }
+    ],
+    "anchor-roundtrip": {
+      "assert": "pass",
+      "log": [
+        {
+          "round": 1,
+          "subagent_id": "72e0de88-5aaa-4611-b285-988cb120eff4",
+          "anchored": true
+        },
+        {
+          "round": 1,
+          "subagent_id": "fe0a3ac6-bfb9-449e-81c3-d409d0beaa88",
+          "anchored": true
+        },
+        {
+          "round": 1,
+          "subagent_id": "72e0de88-5aaa-4611-b285-988cb120eff4",
+          "anchored": false
+        },
+        {
+          "round": 1,
+          "subagent_id": "fe0a3ac6-bfb9-449e-81c3-d409d0beaa88",
+          "anchored": false
+        }
+      ]
+    },
+    "plans-rendered": {
+      "assert": "pass"
+    },
+    "s1-no-errors": {
+      "assert": "pass",
+      "errs": []
+    },
+    "single-round-done": {
+      "assert": "pass"
+    },
+    "single-strip-never-shown": {
+      "assert": "pass",
+      "strip": {
+        "hidden": true,
+        "live": false,
+        "h": 0
+      }
+    },
+    "single-no-clones": {
+      "assert": "pass"
+    },
+    "partial-clones": [],
+    "partial-settled": {
+      "assert": "pass"
+    },
+    "partial-layer-clean": {
+      "assert": "pass",
+      "partSnap": {
+        "round": 3,
+        "closed": true,
+        "destroyed": false,
+        "subs": [],
+        "aggregate": 0,
+        "anchored": [],
+        "dots": 0,
+        "anchors": 0,
+        "dropped": 0
+      }
+    },
+    "partial-no-errors": {
+      "assert": "pass",
+      "errs": []
+    },
+    "reset-layer-clear": {
+      "assert": "pass",
+      "resetSnap": {
+        "round": 4,
+        "closed": true,
+        "destroyed": false,
+        "subs": [],
+        "aggregate": 0,
+        "anchored": [],
+        "dots": 0,
+        "anchors": 0,
+        "dropped": 0
+      }
+    },
+    "reset-strip-hidden": {
+      "assert": "pass",
+      "strip": {
+        "hidden": true,
+        "live": false,
+        "h": 0
+      }
+    },
+    "clarify-settled": {
+      "assert": "pass"
+    },
+    "clarify-strip-hidden": {
+      "assert": "pass"
+    },
+    "layout-1440-three-clones": {
+      "assert": "pass",
+      "clones": [
+        {
+          "id": "8e8e55dc-8568-4ab4-9687-335dfc00a839",
+          "status": "entering",
+          "anchored": "false",
+          "faceHidden": false
+        },
+        {
+          "id": "5b5ec22e-a05b-4fdb-9c0a-ae3bbc0b83d8",
+          "status": "entering",
+          "anchored": "false",
+          "faceHidden": false
+        },
+        {
+          "id": "f9a83260-0b56-4642-bd90-4dbbba721978",
+          "status": "entering",
+          "anchored": "false",
+          "faceHidden": false
+        }
+      ]
+    },
+    "layout-1440": {
+      "strip": {},
+      "msg": {},
+      "comp": {},
+      "status": {},
+      "card": {},
+      "overlapStripMsg": false,
+      "overlapStripComp": false,
+      "overlapStripStatus": false,
+      "stripInsideCard": true,
+      "scrollW": 1440,
+      "innerW": 1440
+    },
+    "layout-1440-no-overlap": {
+      "assert": "pass",
+      "strip": {},
+      "msg": {},
+      "comp": {},
+      "status": {},
+      "card": {},
+      "overlapStripMsg": false,
+      "overlapStripComp": false,
+      "overlapStripStatus": false,
+      "stripInsideCard": true,
+      "scrollW": 1440,
+      "innerW": 1440
+    },
+    "layout-1440-strip-inside-card": {
+      "assert": "pass"
+    },
+    "layout-1440-no-xscroll": {
+      "assert": "pass",
+      "scrollW": 1440,
+      "innerW": 1440
+    },
+    "layout-1440-restore": {
+      "assert": "pass",
+      "back": {
+        "hidden": true,
+        "live": false,
+        "h": 0
+      }
+    },
+    "layout-1024-three-clones": {
+      "assert": "pass",
+      "clones": [
+        {
+          "id": "68535e9c-5d68-4a0e-adec-a4719f091863",
+          "status": "entering",
+          "anchored": "false",
+          "faceHidden": false
+        },
+        {
+          "id": "a7e73ad4-98b2-4d90-8c1e-79406498cabb",
+          "status": "entering",
+          "anchored": "false",
+          "faceHidden": false
+        },
+        {
+          "id": "f5fbc43a-0519-48ee-a712-6ff349ec1c98",
+          "status": "entering",
+          "anchored": "false",
+          "faceHidden": false
+        }
+      ]
+    },
+    "layout-1024": {
+      "strip": {},
+      "msg": {},
+      "comp": {},
+      "status": {},
+      "card": {},
+      "overlapStripMsg": false,
+      "overlapStripComp": false,
+      "overlapStripStatus": false,
+      "stripInsideCard": true,
+      "scrollW": 1024,
+      "innerW": 1024
+    },
+    "layout-1024-no-overlap": {
+      "assert": "pass",
+      "strip": {},
+      "msg": {},
+      "comp": {},
+      "status": {},
+      "card": {},
+      "overlapStripMsg": false,
+      "overlapStripComp": false,
+      "overlapStripStatus": false,
+      "stripInsideCard": true,
+      "scrollW": 1024,
+      "innerW": 1024
+    },
+    "layout-1024-strip-inside-card": {
+      "assert": "pass"
+    },
+    "layout-1024-no-xscroll": {
+      "assert": "pass",
+      "scrollW": 1024,
+      "innerW": 1024
+    },
+    "layout-1024-restore": {
+      "assert": "pass",
+      "back": {
+        "hidden": true,
+        "live": false,
+        "h": 0
+      }
+    },
+    "layout-800-three-clones": {
+      "assert": "pass",
+      "clones": [
+        {
+          "id": "e093feb7-1444-426a-a7a7-563d7d8a71b4",
+          "status": "entering",
+          "anchored": "false",
+          "faceHidden": false
+        },
+        {
+          "id": "ead731f3-2c9f-4ded-91a1-1a98cbabca7b",
+          "status": "entering",
+          "anchored": "false",
+          "faceHidden": false
+        },
+        {
+          "id": "d1afbfa2-1a4f-488b-a822-ab33768c87a7",
+          "status": "entering",
+          "anchored": "false",
+          "faceHidden": false
+        }
+      ]
+    },
+    "layout-800": {
+      "strip": {},
+      "msg": {},
+      "comp": {},
+      "status": {},
+      "card": {},
+      "overlapStripMsg": false,
+      "overlapStripComp": false,
+      "overlapStripStatus": false,
+      "stripInsideCard": true,
+      "scrollW": 800,
+      "innerW": 800
+    },
+    "layout-800-no-overlap": {
+      "assert": "pass",
+      "strip": {},
+      "msg": {},
+      "comp": {},
+      "status": {},
+      "card": {},
+      "overlapStripMsg": false,
+      "overlapStripComp": false,
+      "overlapStripStatus": false,
+      "stripInsideCard": true,
+      "scrollW": 800,
+      "innerW": 800
+    },
+    "layout-800-strip-inside-card": {
+      "assert": "pass"
+    },
+    "layout-800-no-xscroll": {
+      "assert": "pass",
+      "scrollW": 800,
+      "innerW": 800
+    },
+    "layout-800-restore": {
+      "assert": "pass",
+      "back": {
+        "hidden": true,
+        "live": false,
+        "h": 0
+      }
+    },
+    "layout-320-three-clones": {
+      "assert": "pass",
+      "clones": [
+        {
+          "id": "722bdd10-d813-467b-9daa-97784ec768de",
+          "status": "entering",
+          "anchored": "false",
+          "faceHidden": false
+        },
+        {
+          "id": "75f9b8f3-7116-41e1-9d54-096384122de8",
+          "status": "entering",
+          "anchored": "false",
+          "faceHidden": false
+        },
+        {
+          "id": "0836c75f-1f1c-4a74-af0b-68ae8ee2c395",
+          "status": "entering",
+          "anchored": "false",
+          "faceHidden": false
+        }
+      ]
+    },
+    "layout-320": {
+      "strip": {},
+      "msg": {},
+      "comp": {},
+      "status": {},
+      "card": {},
+      "overlapStripMsg": false,
+      "overlapStripComp": false,
+      "overlapStripStatus": false,
+      "stripInsideCard": true,
+      "scrollW": 320,
+      "innerW": 320
+    },
+    "layout-320-no-overlap": {
+      "assert": "pass",
+      "strip": {},
+      "msg": {},
+      "comp": {},
+      "status": {},
+      "card": {},
+      "overlapStripMsg": false,
+      "overlapStripComp": false,
+      "overlapStripStatus": false,
+      "stripInsideCard": true,
+      "scrollW": 320,
+      "innerW": 320
+    },
+    "layout-320-strip-inside-card": {
+      "assert": "pass"
+    },
+    "layout-320-no-xscroll": {
+      "assert": "pass",
+      "scrollW": 320,
+      "innerW": 320
+    },
+    "layout-320-restore": {
+      "assert": "pass",
+      "back": {
+        "hidden": true,
+        "live": false,
+        "h": 0
+      }
+    },
+    "timeout-settled": {
+      "assert": "pass",
+      "ms": 4326
+    },
+    "timeout-no-fatal": {
+      "assert": "pass",
+      "errs": []
+    },
+    "final-no-errors": {
+      "assert": "pass",
+      "errs": []
+    }
+  },
+  "failures": []
+}

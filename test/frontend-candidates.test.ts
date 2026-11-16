@@ -149,6 +149,80 @@ test('candidate ingest is bounded per sub and overall',async()=>{
  assert(snap.subs.reduce((n:number,s:any)=>n+s.points,0)<=96,'global cap holds across tool_calls');
 });
 
+test('renderer failure revokes real anchors and the next event redraws',async()=>{
+ const h=setupPreview(),api=h.api;
+ let failNext=false;
+ h.renderer.render=(spec:any)=>{h.specLog.push(spec);h.anchorCb.fn=spec.onAnchor;return failNext?Promise.reject(new Error('renderer down')):Promise.resolve(true);};
+ api.begin(1);
+ api.applyEvent(candEvt('s1',[{event_id:'e1',latitude:34.2,longitude:108.9}]),1,ctx1);
+ await flush();
+ h.anchorCb.fn('s1',true);
+ failNext=true;
+ api.applyEvent(candEvt('s1',[{event_id:'e2',latitude:34.21,longitude:108.91}]),1);
+ await flush();
+ assert(h.cleared>0,'a current-round failure clears the drawn layer');
+ assert.deepEqual({...h.anchorEvents.at(-1)},{round:1,subagent_id:'s1',anchored:false},'card face restored on failure');
+ assert.equal(api.snapshot().subs[0].points,2,'real points are retained for redraw');
+ failNext=false;
+ api.applyEvent(candEvt('s1',[{event_id:'e3',latitude:34.22,longitude:108.92}]),1);
+ await flush();
+ assert.equal(h.specLog.at(-1).dots.length,3,'recovery re-renders the retained set');
+});
+
+test('a stale render failure cannot clear a newer round',async()=>{
+ const h=setupPreview(),api=h.api;
+ const pending:((v:boolean)=>void)[]=[];
+ h.renderer.render=(spec:any)=>{h.specLog.push(spec);h.anchorCb.fn=spec.onAnchor;return new Promise(r=>pending.push(r));};
+ api.begin(1);
+ api.applyEvent(candEvt('s1',[{event_id:'e1',latitude:34.2,longitude:108.9}]),1,ctx1);
+ await flush();
+ api.begin(2);
+ const clearedAfterBegin=h.cleared;
+ api.applyEvent(candEvt('s2',[{event_id:'x1',latitude:34.3,longitude:109.1}]),2,{clones:[{id:'s2',title:'t',letter:'A',palette:'moss'}]});
+ await flush();
+ assert.equal(pending.length,2);
+ pending[0](false);                       // round-1 render fails late
+ await flush();
+ assert.equal(h.cleared,clearedAfterBegin,'stale failure must not wipe the new round');
+ assert.equal(api.snapshot().subs.length,1);
+ assert.equal(api.snapshot().subs[0].id,'s2');
+ pending[1](true);                        // round-2 render succeeds
+ await flush();
+ assert.equal(h.specLog.at(-1).dots.length,1);
+});
+
+test('a late mascot import never creates a face for a dead round',async()=>{
+ const h=setupPreview(),api=h.api;
+ const calls:any[]=[];let resolveModule:(m:any)=>void=()=>{};
+ h.context.window.__WANDER_MASCOT_MODULE__=new Promise(r=>{resolveModule=r;});
+ api.begin(1);
+ api.applyEvent(candEvt('s1',[{event_id:'e1',latitude:34.2,longitude:108.9}]),1,ctx1);
+ await flush();
+ api.cancel(1);                            // round dies while the import is in flight
+ resolveModule({createWanderMascot:(_f:any,o:any)=>{calls.push(o);return {setState(){},setPalette(){}};}});
+ await flush();
+ assert.equal(calls.length,0,'no detached face materializes for a dead round');
+ api.begin(2);
+ api.applyEvent(candEvt('s2',[{event_id:'x1',latitude:34.3,longitude:109.1}]),2,{clones:[{id:'s2',title:'t',letter:'A',palette:'moss'}]});
+ await flush();
+ assert.equal(calls.length,1,'a live round still gets its real face');
+ assert.equal(calls[0].palette,'moss');
+});
+
+test('reset inside the gray fade clears at once and nothing revives',async()=>{
+ const h=setupPreview(),api=h.api;api.begin(1);
+ api.applyEvent(candEvt('s1',[{event_id:'keep',latitude:34.2,longitude:108.9},{event_id:'lose',latitude:34.21,longitude:108.91}]),1,ctx1);
+ await flush();
+ api.settle({kind:'plans',plans:[{itinerary:{stops:[{event_id:'keep'}]}}]},1);
+ await flush();
+ const clearedBefore=h.cleared,specsBefore=h.specLog.length;
+ h.context.window.dispatchEvent(new Event('wander:reset'));
+ assert.equal(h.cleared,clearedBefore+1,'reset reclaims even a round already settling');
+ assert.equal(api.snapshot().subs.length,0);
+ await flush();await flush();
+ assert.equal(h.specLog.length,specsBefore,'the killed fade cannot paint again');
+});
+
 test('a missing or degraded map records without drawing and resets cleanly',async()=>{
  const h=setupPreview(),api=h.api;
  h.context.window.WanderAMap={candidates:{get ready(){return false},render(){return Promise.resolve(false)},clear(){},refresh(){},point(){return null}}};

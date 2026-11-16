@@ -313,13 +313,36 @@ test('形象挂载失败降级：对话与文字进度照常，facade 与地图 
   assert.deepEqual(mapCalls(h).map(c => c[0]), ['begin', 'event', 'settle'], '降级时地图 fanout 照常');
 });
 
-test('缓冲有界：team 未就绪时海量帧不炸内存，spawn/done 永不丢弃', async () => {
-  const h = boot();
+test('缓冲有界：非关键帧按需淘汰，spawn 生命周期帧回放保留', async () => {
+  const h = bootMounted({}, { teamDelay: true });
   const r = h.run('window.WanderMascot.begin().round');
   apply(h, spawn('a'), r);
   for (let i = 0; i < 500; i++) apply(h, tool('a', { name: 'estimate_travel' }), r);
   apply(h, { stage: 'routing' }, r);
   assert.equal(mascot(h), 'thinking', '海量缓冲后主脸仍正常');
+  h.run('window.__resolveTeam(window.__teamModule)');
+  await until(() => cloneEls(h).length === 1, 'spawn 不被非关键淘汰');
   h.run(`window.WanderMascot.settle(${JSON.stringify({ kind: 'answer' })},${r})`);
   assert.equal(mascot(h), 'happy');
+});
+
+test('I41-R1：>400 全生命周期帧溢出→本轮 team 展示禁用，不回放残缺历史', async () => {
+  const h = bootMounted({}, { teamDelay: true });
+  fakeMap(h);
+  const r = h.run('window.WanderMascot.begin().round');
+  for (let i = 0; i < 199; i++) { apply(h, spawn(`s${i}`), r); apply(h, done(`s${i}`), r); }
+  apply(h, spawn('a'), r); apply(h, spawn('b'), r);           // 恰好打满 400 全生命周期帧
+  apply(h, done('a'), r); apply(h, done('b'), r);            // 402 帧：无安全淘汰位 → 降级
+  assert.equal(mascot(h), 'thinking');
+  h.run('window.__resolveTeam(window.__teamModule)');
+  for (let i = 0; i < 15; i++) await tick();
+  assert.equal(cloneEls(h).length, 0, '残缺回放不得伪造 working 分身');
+  assert.equal(card(h).hidden, true, '降级轮 strip 不出现');
+  assert.equal(mapCalls(h).filter(c => c[0] === 'event').length, 402, '真实帧仍恰一次 fan 地图');
+  assert.equal(mapCalls(h).some(c => c[0] === 'sync'), false, '降级轮不 sync');
+  h.run(`window.WanderMascot.settle(${JSON.stringify({ kind: 'answer' })},${r})`);
+  assert.equal(mascot(h), 'happy', '主脸终态照常');
+  const r2 = h.run('window.WanderMascot.begin().round');
+  apply(h, spawn('z'), r2);
+  await until(() => cloneEls(h).length === 1, '下一轮 team 展示恢复');
 });

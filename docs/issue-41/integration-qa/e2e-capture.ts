@@ -422,10 +422,137 @@ async function runMode(mode: "stub" | "fallback" | "real", mapEnv: Record<string
   return ctx.failures.length;
 }
 
-const only = (args.only as string | undefined) ?? "all";
+// ---------- R3 故障注入探针（stub 地图）：四 review 修复的真实页面验证 ----------
+async function runProbe() {
+  const ctx: RunCtx = { failures: [], metrics: {} };
+  const backend = await startBackend({ subagentTimeoutMs: 3500 });
+  const driver = await launchChrome(backend.port);
+  const { cdp, evaluate, waitFor, shot, viewport, on } = driver;
+  await cdp("Fetch.enable", { patterns: [{ urlPattern: "*webapi.amap.com*" }] });
+  on("Fetch.requestPaused", (p: { requestId: string }) => cdp("Fetch.fulfillRequest", { requestId: p.requestId, responseCode: 200,
+    responseHeaders: [{ name: "Content-Type", value: "text/javascript" }], body: Buffer.from(stubSource).toString("base64") }).catch(() => {}));
+  await cdp("Page.addScriptToEvaluateOnNewDocument", { source: `
+    window.__qaErrors = [];
+    addEventListener('error', e => __qaErrors.push(String(e.message || e.error)));
+    addEventListener('unhandledrejection', e => __qaErrors.push('rejection: ' + String(e.reason)));
+    const __ce = console.error.bind(console); console.error = (...a) => {__qaErrors.push(a.map(String).join(' ')); __ce(...a);};` });
+  const nav = () => cdp("Page.navigate", { url: `http://127.0.0.1:${backend.port}/` });
+  const errs = () => evaluate("window.__qaErrors.filter(e => !/favicon|net::|404/.test(e))") as Promise<string[]>;
+  const snap = () => evaluate("window.WanderCandidates?.snapshot()") as Promise<Record<string, never> | undefined>;
+  const sendMsg = (text: string) => evaluate(`window.sendMessage(${JSON.stringify(text)})`, false);
+
+  try {
+    await viewport(1280, 800); await nav();
+    await waitFor("window.WanderAMap && window.WanderAMap.ready && window.WanderMascot", 25000);
+    // seam 必须在首个 anchor 触发 mascot import 前挂上（mascotModule 全局缓存，之后不再读 seam）。
+    await evaluate("window.__WANDER_MASCOT_MODULE__ = new Promise(r => { window.__lateMascot = r; })", false);
+
+    // P1：极端帧洪峰（201 spawn/done 对）打满真实页面 team：≤3 槽位+溢出
+    //     计数诚实地展示多余派发，绝不复活/丢身份/崩溃；settle 全回收。
+    const r = await evaluate("window.WanderMascot.begin().round") as number;
+    for (let i = 0; i < 60; i++) {
+      await evaluate(`(()=>{const m=window.WanderMascot;m.applyEvent({type:'subagent_spawned',subagent_id:'flood_${i}',parent_run_id:'r1',title:'洪峰子任务${i}',plan_id:null},${r});m.applyEvent({type:'subagent_done',subagent_id:'flood_${i}',status:'completed',title:'洪峰子任务${i}'},${r});})()`);
+    }
+    await evaluate(`window.WanderMascot.applyEvent({type:'subagent_spawned',subagent_id:'flood_a',parent_run_id:'r1',title:'洪峰A',plan_id:null},${r})`);
+    await evaluate(`window.WanderMascot.applyEvent({type:'subagent_spawned',subagent_id:'flood_b',parent_run_id:'r1',title:'洪峰B',plan_id:null},${r})`);
+    await evaluate(`window.WanderMascot.applyEvent({type:'subagent_spawned',subagent_id:'flood_c',parent_run_id:'r1',title:'洪峰C',plan_id:null},${r})`);
+    await evaluate(`window.WanderMascot.applyEvent({type:'subagent_spawned',subagent_id:'flood_d',parent_run_id:'r1',title:'洪峰D',plan_id:null},${r})`);
+    await driver.sleep(600);
+    const live = await evaluate("document.querySelectorAll('#mascot-team-strip .mascot-team-clone').length") as number;
+    const overflowChip = await evaluate("document.querySelector('#mascot-team-strip .mascot-team-overflow')?.textContent ?? null") as string | null;
+    expect(ctx, "flood-visible-cap", live === 3, { live });
+    expect(ctx, "flood-overflow-honest", overflowChip !== null && /\+?1|\d/.test(overflowChip), { overflowChip });
+    await evaluate(`window.WanderMascot.settle({kind:'answer'},${r})`);
+    await driver.sleep(700);
+    expect(ctx, "flood-settled-clean", (await evaluate("document.querySelectorAll('#mascot-team-strip .mascot-team-clone').length")) === 0);
+    const errsP1 = await errs();
+    expect(ctx, "flood-no-errors", errsP1.length === 0, { errs: errsP1.slice(0, 5) });
+    await shot("probe-10-flood");
+
+    // P2：真实事件流经 facade 驱动候选层（spawn+tool_call 真帧），renderer
+    //     当轮失败 → clear 可达 + 真实 anchor 撤销 + 点保留，下帧恢复重绘。
+    const r2 = await evaluate("window.WanderMascot.begin().round") as number;
+    await evaluate(`window.WanderMascot.applyEvent({type:'subagent_spawned',subagent_id:'rf1',parent_run_id:'r',title:'渲染失败探针子任务',plan_id:null},${r2})`);
+    await driver.sleep(250);
+    await evaluate(`window.WanderMascot.applyEvent({type:'tool_call',subagent_id:'rf1',name:'search_events',status:'completed',candidates:[{event_id:'e1',latitude:34.25,longitude:108.95},{event_id:'e2',latitude:34.26,longitude:108.96}]},${r2})`);
+    await waitFor("document.querySelectorAll('.wander-candidate-anchor').length > 0", 15000);
+    const anchoredBefore = await evaluate("window.WanderCandidates.snapshot().anchored.length") as number;
+    expect(ctx, "renderfail-anchors-up", anchoredBefore >= 1, { anchoredBefore });
+    await evaluate(`window.__origRender = window.WanderAMap.candidates.render;
+      window.__failCalls = 0;
+      window.WanderAMap.candidates.render = () => { window.__failCalls++; return Promise.resolve(false); };`);
+    await evaluate(`window.WanderMascot.applyEvent({type:'tool_call',subagent_id:'rf1',name:'search_events',status:'completed',candidates:[{event_id:'e3',latitude:34.27,longitude:108.97}]},${r2})`);
+    await driver.sleep(600);
+    const failCalls = await evaluate("window.__failCalls") as number;
+    const afterFail = await snap() as { subs?: { points: number }[]; anchored?: string[] };
+    const anchorEls = await evaluate("document.querySelectorAll('.wander-candidate-anchor').length") as number;
+    const cardFaces = await evaluate("[...document.querySelectorAll('#mascot-team-strip .mascot-team-clone')].map(el => el.getAttribute('data-anchored'))") as string[];
+    expect(ctx, "renderfail-render-invoked", failCalls >= 1, { failCalls });
+    expect(ctx, "renderfail-anchors-revoked", (afterFail?.anchored?.length ?? -1) === 0 && anchorEls === 0, { anchored: afterFail?.anchored, anchorEls });
+    expect(ctx, "renderfail-card-faces-back", cardFaces.length >= 1 && cardFaces.every((a) => a !== "true"), { cardFaces });
+    expect(ctx, "renderfail-points-kept", (afterFail?.subs ?? []).some((s) => s.points >= 3), { subs: afterFail?.subs });
+    // 恢复 renderer，下一帧真实事件重绘保留的点集。
+    await evaluate("window.WanderAMap.candidates.render = window.__origRender");
+    await evaluate(`window.WanderMascot.applyEvent({type:'tool_call',subagent_id:'rf1',name:'search_events',status:'completed',candidates:[{event_id:'e4',latitude:34.28,longitude:108.98}]},${r2})`);
+    await driver.sleep(700);
+    const recovered = await snap() as { subs?: { points: number }[]; dots?: number };
+    expect(ctx, "renderfail-recovery", (recovered?.dots ?? 0) >= 4, { recovered });
+    const errsP2 = await errs();
+    expect(ctx, "renderfail-no-fatal", errsP2.length === 0, { errs: errsP2.slice(0, 5) });
+    await evaluate(`window.WanderMascot.settle({kind:'answer'},${r2})`);
+    await driver.sleep(500);
+    await shot("probe-20-renderfail");
+
+    // P3：迟到 mascot import（round 结束后才 resolve）→ 死元素不复活脸；
+    //     round 内锚点退化为字母+title（非假脸）。
+    await evaluate("document.getElementById('new-chat').click()"); await driver.sleep(300);
+    await sendMsg("双方案联调：迟到 import");
+    await waitFor("document.querySelectorAll('.wander-candidate-anchor').length > 0", 20000);
+    const degraded = await evaluate("[...document.querySelectorAll('.wander-candidate-anchor')].map(a => ({face: !!a.querySelector('boop-face')?.shadowRoot, letter: a.querySelector('.wander-candidate-letter')?.textContent, title: a.querySelector('.wander-candidate-title')?.textContent}))") as { face: boolean; letter: string; title: string }[];
+    expect(ctx, "lateimport-degraded-identity", degraded.length >= 1 && degraded.every((a) => a.letter && a.title), { degraded });
+    await shot("probe-30-lateimport-degraded");
+    await waitFor("window.WanderCandidates.snapshot().closed === true", 30000);
+    await driver.sleep(600);
+    await evaluate("window.__lateMascot(window.__realMascotModule ?? {})");
+    await driver.sleep(800);
+    const revived = await evaluate("[...document.querySelectorAll('.wander-candidate-anchor boop-face')].filter(f => f.shadowRoot).length") as number;
+    expect(ctx, "lateimport-no-zombie-face", revived === 0, { revived });
+    const errsP3 = await errs();
+    expect(ctx, "lateimport-no-errors", errsP3.length === 0, { errs: errsP3.slice(0, 5) });
+
+    // P4：settle 灰显窗口内 wander:reset → 立即清层/timer，滞留 render 不重绘。
+    await evaluate("document.getElementById('new-chat').click()"); await driver.sleep(300);
+    await sendMsg("双方案联调：灰显期 reset");
+    await waitFor("document.querySelectorAll('.wander-candidate-dot').length > 0", 20000);
+    await waitFor("window.WanderCandidates.snapshot().closed === true", 30000);
+    await driver.sleep(120);                                   // 仍在 450ms 淡出窗口内
+    await evaluate("window.dispatchEvent(new Event('wander:reset'))");
+    await driver.sleep(80);
+    const midFade = await snap() as { subs?: unknown[] };
+    expect(ctx, "fade-reset-subs-zero", (midFade?.subs?.length ?? -1) === 0, { midFade });
+    await driver.sleep(800);                                   // 越过整个淡出窗口
+    const dotsAfter = await evaluate("document.querySelectorAll('.wander-candidate-dot,.wander-candidate-anchor').length") as number;
+    expect(ctx, "fade-reset-no-repaint", dotsAfter === 0, { dotsAfter });
+    const errsP4 = await errs();
+    expect(ctx, "probe-no-errors", errsP4.length === 0, { errs: errsP4.slice(0, 5) });
+    await shot("probe-40-fade-reset");
+  } catch (error) {
+    ctx.failures.push("driver: " + (error as Error).message);
+    ctx.metrics["driver-error"] = { assert: "FAIL", error: String(error) };
+  }
+  writeFileSync(join(HERE, "results-probe.json"), JSON.stringify({ mode: "probe", at: new Date().toISOString(), metrics: ctx.metrics, failures: ctx.failures }, null, 2));
+  console.log(JSON.stringify({ mode: "probe", pass: Object.values(ctx.metrics).filter((m) => (m as { assert?: string }).assert === "pass").length, fails: ctx.failures }, null, 1));
+  try { await driver.sendRaw("Target.closeTarget", { targetId: driver.targetId }); } catch { /* noop */ }
+  driver.chrome.kill();
+  await backend.close();
+  return ctx.failures.length;
+}
+
+const only = ((args.only as string | undefined) ?? "all").split(",");
 let failed = 0;
-if (only === "all" || only === "stub") failed += await runMode("stub", undefined);
-if (only === "all" || only === "fallback") failed += await runMode("fallback", {});
+if (only.includes("all") || only.includes("stub")) failed += await runMode("stub", undefined);
+if (only.includes("all") || only.includes("fallback")) failed += await runMode("fallback", {});
+if (only.includes("probe")) failed += await runProbe();
 if (only === "real") {
   // 真实高德尝试：只读用户 .env 取 JS key/jscode（绝不打印）；缺则跳过。
   let env: Record<string, string> = {};

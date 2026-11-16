@@ -24,6 +24,7 @@
  let round=0,open=false;              // open: live round not yet settled/cancelled
  let team=null,teamRound=null;        // lazily imported orchestrator + its own round token
  let buffer=[];                       // ordered real frames awaiting the team import
+ let overflowed=false;                // true once a full-lifecycle buffer forced round-wide team degradation
  const anchoredIds=new Map();         // map-anchored clone ids this round; replays into late mounts
  const fanout=(method,...args)=>{try{window.WanderCandidates?.[method]?.(...args);}catch{/* the map layer must never break the card */}};
  function rectOf(el){try{const r=el?.getBoundingClientRect?.();return r?{left:r.left,top:r.top,width:r.width,height:r.height}:null;}catch{return null;}}
@@ -40,17 +41,22 @@
  }
  const frameType=e=>e&&typeof e==='object'?e.type??'stage':'stage';
  function bufferEvent(evt){
+  if(overflowed)return;
   if(buffer.length<BUFFER_LIMIT){buffer.push(evt);return;}
   const at=buffer.findIndex(e=>frameType(e)!=='subagent_spawned'&&frameType(e)!=='subagent_done');
-  if(at<0)return;                    // lifecycle frames are never dropped
-  buffer.splice(at,1);buffer.push(evt);
+  if(at>=0){buffer.splice(at,1);buffer.push(evt);return;}
+  // Buffer saturated with lifecycle frames only: a truncated replay would
+  // show finished clones as still working. Honest degradation — disable the
+  // whole team display for this round instead; the face, text status and the
+  // map fanout keep reporting real events and stay bounded.
+  overflowed=true;buffer=[];
  }
  function safeApply(evt){
   if(!team||teamRound===null)return null;
   try{return team.applyEvent(evt,teamRound);}catch{return null;}
  }
  function onTeamReady(){
-  if(open&&team){
+  if(open&&team&&!overflowed){
    const res=team.begin();teamRound=res?res.round:null;
    let faceHint;                       // frames already drove the face live — replay commits once
    for(const evt of buffer){const out=safeApply(evt);if(out?.mainFace)faceHint=out.mainFace;}
@@ -68,7 +74,7 @@
  const api={
   get state(){return current;},
   begin(){
-   round+=1;open=true;teamRound=null;buffer=[];anchoredIds.clear();
+   round+=1;open=true;teamRound=null;buffer=[];overflowed=false;anchoredIds.clear();
    commit('thinking');
    if(team){const res=team.begin();teamRound=res?res.round:null;}
    fanout('begin',round);syncStrip();

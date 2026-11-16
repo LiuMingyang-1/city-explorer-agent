@@ -150,6 +150,16 @@
 - I41-E 修复：mascot-card.css 移除 flex 容器上的无效 grid 死规则；
   check:frontend 补 mascot-team/candidate-preview 语法检查接线。
 
+## 9.1 首轮独立 review → I41-R3 修复复验
+
+- 首轮 review（6.1-sol）：**2 P2 + 2 P3** —— 生命周期帧缓冲溢出无界、
+  renderer 失败清层/锚释放不达、迟到异步渲染/import 跨轮串扰、
+  closed 轮 reset 不清层。修复见 verification.md「首轮独立 review」表。
+- **状态：已修待独立复审。** 复验：`npm run check` 1008/1008、
+  stub/fallback 回归 47/42 全过（results-*-r3.json，首轮存 -r1.json）、
+  故障注入探针 17/17（results-probe.json + probe-*.png 4 张）；
+  真实高德路径未改，沿用首轮 47/47 未重跑。
+
 ## 10. QA 边界（沿用主指挥约束）
 
 - 用户真实 8080 服务与其 DB/配置/密钥一律不碰；联调只用 faux 模型 e2e 与 mock SSE 文件（如临时起 preview 端口，醒目标注「非用户真实入口」）。QA 清理只用自己确切 PID，禁宽匹配 pkill。

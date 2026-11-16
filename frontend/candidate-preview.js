@@ -11,7 +11,7 @@
 // draws and every anchor reports anchored=false so the card keeps its faces.
 (() => {
 const PER_SUB_LIMIT=32,TOTAL_LIMIT=96,STOP_LIMIT=24,HIGHLIGHT_MS=480,FADE_MS=450,FLIP_MS=60;
-let round=null,closed=true,destroyed=false;
+let round=null,closed=true,destroyed=false,epoch=0;
 let context={clones:[],origin:null},dropped=0;
 const subs=new Map(),anchored=new Set(),timers=new Set();
 let mascotModule=null,renderQueued=false;
@@ -26,7 +26,11 @@ const cloneOf=sub=>context.clones.find(c=>c.id===sub.id)??null;
 const totalPoints=()=>[...subs.values()].reduce((n,s)=>n+s.points.size,0);
 function later(fn,ms){const t=setTimeout(()=>{timers.delete(t);fn();},ms);timers.add(t);return t;}
 function loadMascot(){
- if(!mascotModule)mascotModule=Promise.resolve().then(()=>import('./wander-mascot.js')).then(m=>m?.createWanderMascot??null).catch(()=>null);
+ if(!mascotModule)mascotModule=Promise.resolve().then(async()=>{
+  // __WANDER_MASCOT_MODULE__ is a test seam; production always takes the import.
+  const m=await (window.__WANDER_MASCOT_MODULE__??import('./wander-mascot.js'));
+  return m?.createWanderMascot??null;
+ }).catch(()=>null);
  return mascotModule;
 }
 function notifyAnchor(id,show){
@@ -49,9 +53,12 @@ function ensureAnchor(sub,clone){
   const title=document.createElement('span');title.className='wander-candidate-title';title.hidden=true;
   el.append(face,letter,title);
   sub.anchorEl=el;sub.anchorFace=face;sub.anchorLetterEl=letter;sub.anchorTitleEl=title;
+  // The import can resolve after this round ended: only create the face while
+  // the same sub record still owns this element (teardown nulls the refs).
+  const held=sub,heldFace=face;
   loadMascot().then(create=>{
-   if(destroyed||!create||sub.anchorFace!==face)return;
-   try{sub.anchorMascot=create(face,{palette:sub.anchorPalette||'moss',pointerFollow:false});sub.anchorMascot?.setState?.('thinking');}catch{/* degraded anchor keeps letter+title */}
+   if(destroyed||!create||subs.get(held.id)!==held||held.anchorFace!==heldFace)return;
+   try{held.anchorMascot=create(heldFace,{palette:held.anchorPalette||'moss',pointerFollow:false});held.anchorMascot?.setState?.('thinking');}catch{/* degraded anchor keeps letter+title */}
   });
  }
  if(sub.anchorPalette!==clone.palette){sub.anchorPalette=clone.palette;sub.anchorEl.setAttribute('data-palette',str(clone.palette)||'neutral');try{sub.anchorMascot?.setPalette?.(clone.palette);}catch{}}
@@ -95,12 +102,23 @@ function decorateEntrance(sub){
 }
 // Renders stay legal while closed so settle can paint the final dim/retract
 // frame; only stale tokens (guarded callers) or a destroyed facade block work.
+// epoch invalidates in-flight renders: a render that resolves after teardown
+// belongs to a dead round and must neither draw nor clear the newer layer.
 async function render(){
  if(destroyed||round===null)return;
  const map=mapApi();
  if(!map||!map.ready)return;               // recorded only; wander:map-ready retries
+ const r=round,ep=epoch;
  const ok=await map.render(buildSpec()).catch(()=>false);
- if(ok!==true||destroyed||closed)return;
+ if(destroyed||round!==r||epoch!==ep)return;  // stale: a newer round/teardown owns the layer
+ if(ok!==true){
+  // Current-round failure: clear the renderer and revoke every real anchor so
+  // the card restores faces; subs keep their real points and the next
+  // applyEvent/sync/viewport retries the draw.
+  try{map.clear?.();}catch{}
+  for(const id of[...anchored])notifyAnchor(id,false);
+  return;
+ }
  for(const sub of subs.values())if(!sub.entered&&sub.anchorEl&&anchored.has(sub.id))decorateEntrance(sub);
 }
 function scheduleRender(){if(renderQueued)return;renderQueued=true;Promise.resolve().then(()=>{renderQueued=false;render().catch(()=>{});});}
@@ -152,8 +170,9 @@ function adoptedIds(result){
  return ids;
 }
 function teardownAll(){
+ epoch++;                                        // invalidate in-flight renders
  for(const t of timers)clearTimeout(t);timers.clear();
- for(const sub of subs.values())sub.anchorEl?.remove?.();
+ for(const sub of subs.values()){sub.anchorEl?.remove?.();sub.anchorEl=sub.anchorFace=sub.anchorLetterEl=sub.anchorTitleEl=sub.anchorMascot=sub.anchorPos=null;}
  subs.clear();dropped=0;
  for(const id of [...anchored])notifyAnchor(id,false);
  try{mapApi()?.clear?.();}catch{}
@@ -166,8 +185,11 @@ function guard(api,token){
  return true;
 }
 const onMapReady=()=>scheduleRender();
-const onRefresh=()=>{try{mapApi()?.refresh?.();}catch{}};
-const onReset=()=>{if(round!==null&&!closed){closed=true;teardownAll();}};
+const onRefresh=()=>{try{mapApi()?.refresh?.();}catch{}scheduleRender();};
+// Global reset has no token: it unconditionally clears layer+timers and
+// invalidates pending renders (incl. a settle still inside its gray fade).
+// Round-scoped cancel(token) stays the strict path that can't hit a new round.
+const onReset=()=>{if(round===null)return;closed=true;teardownAll();};
 if(typeof window!=='undefined'&&window.addEventListener){
  window.addEventListener('wander:map-ready',onMapReady);
  window.addEventListener('wander:viewport',onRefresh);
