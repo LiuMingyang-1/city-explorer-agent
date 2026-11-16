@@ -126,6 +126,17 @@ try {
       {scrollWidth: await evaluate(`document.scrollingElement.scrollWidth`)});
     await shot('00-frame-320');
   } else {
+    // per-face wander-state recorder（wander-mascot-state 不冒泡，直接挂元素；
+    // 挂载时同步的 thinking 姿态早于观察，默认 'thinking' 补齐）
+    await evaluate(`window.__faceStates = new Map();
+      window.__faceWatch = f => { if (!window.__faceStates.has(f)) {
+        window.__faceStates.set(f, 'thinking');
+        f.addEventListener('wander-mascot-state', e => window.__faceStates.set(f, e.detail.state)); } };
+      new MutationObserver(muts => { for (const m of muts) for (const n of m.addedNodes) {
+        if (n.nodeType !== 1) continue;
+        for (const f of n.matches('boop-face') ? [n] : [...n.querySelectorAll('boop-face')]) window.__faceWatch(f);
+      }}).observe(document.getElementById('team-strip'), {subtree: true, childList: true});`);
+
     // ——— A. 三分身组合 + 槽位帽色 + 独立实例 ———
     await selectScenario('3 分身'); await runSteps(4); await sleep(400);
     expect('team-3-visible-faces', (await stripFaces()) === 3, {faces: await stripFaces()});
@@ -298,6 +309,123 @@ try {
     const logHasRoundKey = await evaluate(`[...document.querySelectorAll('#event-log .wire-json')].some(el => {try {const o = JSON.parse(el.firstChild?.textContent || el.textContent); return o && typeof o === 'object' && 'round' in o;} catch {return false;}})`);
     expect('log-wire-no-round-key', logHasRoundKey === false);
     await scrollLogEnd(); await shotEl('.log-panel', '18-log');
+
+    // ——— R2. 真实 CSS 反馈 / computed 动画 / 控制器表情 ———
+    const activityProbe = title => `(() => {const el = [...document.querySelectorAll('#team-strip .mascot-team-clone')]
+      .find(e => e.querySelector('.mascot-team-title')?.textContent === ${JSON.stringify(title)});
+      if (!el) return {el: false}; const b = getComputedStyle(el.querySelector('.mascot-team-badge'));
+      return {el: true, activity: el.getAttribute('data-activity'), badgeAnim: b.animationName,
+        badgeBg: b.backgroundColor, note: el.querySelector('.mascot-team-note').textContent};})()`;
+    const exitProbe = title => `(() => {const el = [...document.querySelectorAll('#team-strip .mascot-team-clone')]
+      .find(e => e.querySelector('.mascot-team-title')?.textContent === ${JSON.stringify(title)});
+      if (!el) return {el: false}; const cs = getComputedStyle(el); const f = el.querySelector('boop-face');
+      return {el: true, status: el.getAttribute('data-status'), anim: cs.animationName,
+        opacity: +cs.opacity, face: window.__faceStates.get(f) ?? null};})()`;
+    const T = {A: '湖东咖啡与老书店散步', B: '老城巷子与美术馆半日', C: '滨江日落骑行线', X: '候补·城北夜市'};
+
+    // R2-a: entering 真实 CSS 动画（220ms 窗口内断言，非仅 data 属性）
+    await selectScenario('3 分身'); await runSteps(2); // begin + spawn A
+    const enterProbe = await evaluate(`(() => {const el = document.querySelector('#team-strip .mascot-team-clone');
+      if (!el) return {el: false}; const cs = getComputedStyle(el);
+      return {el: true, status: el.getAttribute('data-status'), anim: cs.animationName, opacity: +cs.opacity};})()`);
+    expect('r2-enter-real-animation', enterProbe.el && enterProbe.status === 'entering' && enterProbe.anim !== 'none' && enterProbe.opacity <= 1, enterProbe);
+    await runSteps(3); await sleep(150); // spawn B/C + 盖章 tool_call（web_search → activity 'tool'）
+    const pulseProbe = await evaluate(activityProbe(T.C));
+    expect('r2-tool-badge-pulse-real', pulseProbe.el && pulseProbe.activity === 'tool' && pulseProbe.badgeAnim !== 'none' && pulseProbe.badgeAnim !== '', pulseProbe);
+
+    // R2-b: search_events 盖章 → searched 徽标脉冲 + 真实 result_count 文案
+    await evaluate(`document.getElementById('tool-sub').value='sub-a';document.getElementById('tool-name').value='search_events';document.getElementById('tool-count').value='6'`);
+    await click('#btn-tool');
+    const searchedProbe = await evaluate(activityProbe(T.A));
+    expect('r2-searched-badge-pulse-real', searchedProbe.el && searchedProbe.activity === 'searched'
+      && searchedProbe.badgeAnim !== 'none' && searchedProbe.note === '已检索 6', searchedProbe);
+    await shotEl('.stage', 'r2-01-searched-pulse');
+
+    // R2-c: error → 静态警示（无动画循环、warn 底色、真实 note）
+    await evaluate(`document.getElementById('tool-sub').value='sub-b'`);
+    await click('#btn-tool-error');
+    const errProbe = await evaluate(activityProbe(T.B));
+    expect('r2-error-static-warning', errProbe.el && errProbe.activity === 'error' && errProbe.badgeAnim === 'none'
+      && errProbe.badgeBg === 'rgb(168, 84, 47)' && errProbe.note === '调用出错', errProbe);
+    await sleep(800); // 等脉冲窗结束
+
+    // R2-d: completed 退场 — 中段真实淡出 + 控制器表情 happy（需核心 controller 保存修复）
+    // mt-exit-happy 上跳段（0–35%）刻意保持 opacity=1、末段才淡出：150ms 探针验证
+    // 动画/表情，~310ms 探针验证淡出进行中（380ms 移除前留安全边际）。
+    await evaluate(`document.getElementById('done-id').value='sub-a';document.getElementById('done-status').value='completed'`);
+    await click('#btn-done'); await sleep(150);
+    const doneProbe = await evaluate(exitProbe(T.A));
+    expect('r2-completed-face-happy', doneProbe.el && doneProbe.status === 'completed'
+      && doneProbe.anim !== 'none' && doneProbe.face === 'happy', doneProbe);
+    await sleep(150);
+    const doneFade = await evaluate(exitProbe(T.A));
+    await shotEl('.stage', 'r2-02-completed-exit');
+    expect('r2-completed-exit-real-fade', doneFade.el && doneFade.status === 'completed'
+      && doneFade.anim !== 'none' && doneFade.opacity < 1, doneFade);
+    await sleep(350);
+    expect('r2-completed-removed', await evaluate(`![...document.querySelectorAll('#team-strip .mascot-team-clone')].some(e => e.querySelector('.mascot-team-title')?.textContent === ${JSON.stringify(T.A)})`));
+
+    // R2-e: failed 退场 — droop 淡出 + 控制器表情 confused，其余分身继续
+    await evaluate(`document.getElementById('done-id').value='sub-b';document.getElementById('done-status').value='failed'`);
+    await click('#btn-done'); await sleep(150);
+    const failProbe = await evaluate(exitProbe(T.B));
+    await shotEl('.stage', 'r2-03-failed-exit');
+    expect('r2-failed-exit-real-fade', failProbe.el && failProbe.status === 'failed'
+      && failProbe.anim !== 'none' && failProbe.opacity < 1, failProbe);
+    expect('r2-failed-face-confused', failProbe.face === 'confused', failProbe);
+    expect('r2-failed-others-continue', (await mainState()) !== 'confused' && (await stripFaces()) >= 1);
+    await sleep(350);
+
+    // R2-f: cancelled 直接淡出 + idle 表情
+    await evaluate(`document.getElementById('spawn-id').value='sub-x';document.getElementById('spawn-plan').value='';document.getElementById('spawn-title').value='候补·城北夜市';document.getElementById('spawn-parent').value='run-root-01'`);
+    await click('#btn-spawn-custom'); await sleep(350);
+    await evaluate(`document.getElementById('done-id').value='sub-x';document.getElementById('done-status').value='cancelled'`);
+    await click('#btn-done'); await sleep(140);
+    const canProbe = await evaluate(exitProbe(T.X));
+    expect('r2-cancelled-exit-real-fade', canProbe.el && canProbe.status === 'cancelled'
+      && canProbe.anim !== 'none' && canProbe.opacity < 1, canProbe);
+    expect('r2-cancelled-face-idle', canProbe.face === 'idle', canProbe);
+    await sleep(350);
+
+    // R2-g: 补位 yield — 3 存活 + 退场拍中再 spawn，可见 boop-face 恒 ≤3
+    await click('#btn-begin');
+    for (const p of [0, 1, 2]) { await click(`[data-preset="${p}"]`); await sleep(60); }
+    await evaluate(`document.getElementById('done-id').value='sub-a';document.getElementById('done-status').value='completed'`);
+    await click('#btn-done'); await sleep(120); // 退场拍进行中，槽位已释放
+    await evaluate(`document.getElementById('spawn-id').value='sub-x2';document.getElementById('spawn-title').value='补位验证';document.getElementById('spawn-parent').value='run-root-01'`);
+    await click('#btn-spawn-custom'); await sleep(60);
+    expect('r2-backfill-yield-3max', await evaluate(`document.querySelectorAll('#team-strip boop-face').length`) === 3,
+      {faces: await evaluate(`document.querySelectorAll('#team-strip boop-face').length`)});
+
+    // R2-h: 手动 RM 开关 — 全部实例零 CSS 动画、入场即 working、done 即时移除
+    await evaluate(`document.getElementById('rm-toggle').click()`);
+    await click('#btn-begin'); await click('[data-preset="0"]'); await sleep(80);
+    const rmProbe = await evaluate(`(() => {const el = document.querySelector('#team-strip .mascot-team-clone');
+      const cs = el && getComputedStyle(el);
+      return {status: el?.getAttribute('data-status'), cloneAnim: cs?.animationName,
+        faceMotion: el?.querySelector('boop-face').getAttribute('motion'),
+        stripMotion: document.getElementById('team-strip').dataset.motion};})()`);
+    expect('r2-rm-static-mount', rmProbe.status === 'working' && rmProbe.cloneAnim === 'none'
+      && rmProbe.faceMotion === 'reduce' && rmProbe.stripMotion === 'reduce', rmProbe);
+    const rmTarget = await evaluate(`window.__preview.snapshot().clones[0]?.id`);
+    await evaluate(`document.getElementById('done-id').value=${JSON.stringify(rmTarget)};document.getElementById('done-status').value='completed'`);
+    await click('#btn-done'); await sleep(60);
+    expect('r2-rm-instant-exit', await evaluate(`document.querySelectorAll('#team-strip boop-face').length`) === 0,
+      {target: rmTarget, left: await evaluate(`document.querySelectorAll('#team-strip boop-face').length`)});
+    await shotEl('.stage', 'r2-04-rm-static');
+    await evaluate(`document.getElementById('rm-toggle').click()`); await sleep(150);
+
+    // R2-i: orphan 盖章 → ⧉ 指示；真实 spawn 同 id 转正后 ⧉ 应消失（核心修复后验证）
+    await click('#btn-begin');
+    await evaluate(`document.getElementById('tool-sub').value='sub-orphan';document.getElementById('tool-name').value='search_events'`);
+    await click('#btn-tool'); await sleep(120);
+    const orphanShown = await evaluate(`document.querySelector('#team-strip .mascot-team-nested')?.textContent ?? ''`);
+    expect('r2-orphan-indicator-shown', orphanShown === '⧉1', {orphanShown});
+    await evaluate(`document.getElementById('spawn-id').value='sub-orphan';document.getElementById('spawn-title').value='孤儿分身转正';document.getElementById('spawn-parent').value='run-root-01'`);
+    await click('#btn-spawn-custom'); await sleep(200);
+    const orphanAfter = await evaluate(`({nestedText: document.querySelector('#team-strip .mascot-team-nested')?.textContent ?? '',
+      faces: document.querySelectorAll('#team-strip boop-face').length, nested: window.__preview.snapshot().nested})`);
+    expect('r2-orphan-promoted-badge-cleared', orphanAfter.faces === 1 && orphanAfter.nestedText === '' && orphanAfter.nested === 0, orphanAfter);
 
     // ——— Q. destroy() 永闭合（最后执行） ———
     await evaluate(`window.__preview.team.destroy()`);

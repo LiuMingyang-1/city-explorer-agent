@@ -124,6 +124,8 @@ stage 到达时分身仍 pending 是**合法状态**（stage 只管父脸/父相
 
 - 入场：仅真实 `subagent_spawned` 触发；装饰性 scale/fade 入场，reduced-motion 下立即静态呈现。
 - 退场：仅同 id `subagent_done`（按 status 短节拍）或轮次终结/`destroy()`（按"轮次关闭"移除，不记为 done）→ 移除元素；upstream `disconnectedCallback` 停 rAF，WeakMap 释放控制器。装饰时长固定 ≤400ms，不等待、不阻塞相位。stage 到达绝不触发退场。
+- 终结表情：done 退场期间 controller 收到与 status 同源的真实表情——`completed→happy`、`failed→confused`、`cancelled→idle`（`mascot.setState` 失败静默降级为静态 DOM，不拖垮编排）。
+- 实例样式层：`frontend/mascot-team.css` 为唯一运行时样式（clone/badge/title/note/overflow/nested + `data-status` 入退场 + `data-activity` 脉冲/警示），全部规则 scope 在 `.mascot-team`，仅 transform/opacity/box-shadow 动画与静态色；RM 双通道（`prefers-reduced-motion` 与容器 `data-motion="reduce"`）全部动画归零。
 - 轮次：`begin()` 发放新 round token；调用方在请求闭包内捕获，之后 `applyEvent/settle/cancel` 必带——token 过期一律 noop。
 - reduced-motion：`motion="reduce"` 或 `prefers-reduced-motion` → 无入退场/扫视/律动，静态表情仍随真实状态切换。
 
@@ -171,13 +173,13 @@ mascot.setHat(false);
 
 - vendored BoopFace Lite 目录 192KB（上限 350KB），钉 `ceb0580b5f8ee8b93f206920baba5265d7d7d482`（`assets/vendor/boopface/SOURCE.md`）。
 - 自研控制器：`wander-mascot.js` 10.6KB + `wander-mascot-motion.js` 2.0KB ≈12.6KB（上限 20KB）；`mascot-card.js` 2.4KB。
-- 团队层 `mascot-team.js` 实测 12.7KB raw（gzip ≈4.6KB），上限定为 **≤16KB raw**（内部原估 8KB 偏紧，为可读性/正确性上调；预览驱动器 `mascot-team-preview.js` 22.6KB raw/gzip 7.1KB 不计入运行时预算——预览页独立资产）。每分身增量 = 1 个 shadow DOM + 共享 extension draw hook（upstream 每脸一条 rAF）。
+- 团队层运行时（#41 需携带的两件）：`mascot-team.js` 13.0KB raw / gzip ≈4.7KB（上限 **≤16KB**）；`mascot-team.css` 4.1KB raw / gzip ≈1.8KB（上限 **≤6KB**）；**运行时合计 ≈17.1KB raw，上限 ≤22KB**（内部早期 8KB 估算偏紧，为可读性/正确性上调）。预览资产 `mascot-team-preview.{html,css,js}` 共 ≈40.7KB raw 另列，不计运行时预算。每分身增量 = 1 个 shadow DOM + 共享 extension draw hook（upstream 每脸一条 rAF）。
 - 无运行时 CDN、图片或新框架。
 - vendor 边界：控制器依赖钉版 SVG 内部结构（`head`/`headMotion`/`defs`/eyes 顺序）与少量内部接口（`_updateBlink`/`_startMorph`/`_expressionLock`/extension `draw` hook）；upstream 升级须重新验证，不追 latest。
 
 ## 6. 后续分工与合入
 
 1. I40-F2：`mascot-team.js` 编排层 + 独立组合预览页（离线模拟事件、手动触发）——文件与接口见 `docs/issue-40/completion-plan.md`。
-2. #41：生产接线——`deliver` 闭包内 `const {round}=team.begin()`，`onProgress` 调 `team.applyEvent(progress,round)`，结果/失败调 `settle(kind,round)`，`wander:reset` 调 `cancel(round)`；不经本 issue 提前改生产文件。
+2. #41：生产接线——`deliver` 闭包内 `const {round}=team.begin()`，`onProgress` 调 `team.applyEvent(progress,round)`，结果/失败调 `settle(kind,round)`，`wander:reset` 调 `cancel(round)`；页面 `<link>` 引入 `frontend/mascot-team.css`（容器自带 `.mascot-team` 类即生效），不经本 issue 提前改生产文件。
 3. #43：地图检索涟漪单独接入。
 4. 联调覆盖：无分身、1/2/3、>3 溢出、乱序/重复/迟到 done、嵌套、取消/断连/重试/代际切换、reduced-motion。

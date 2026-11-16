@@ -28,7 +28,7 @@ interface Team {
     overflow: number; nested: number; active: number; pending: number; finished: number; destroyed: boolean;
   };
 }
-function boot({ reduced = true } = {}) {
+function boot({ reduced = true, badMascot = false } = {}) {
   const timers: { cb: () => void; cancelled: boolean }[] = [];
   const context = vm.createContext({
     document: { createElement: () => new Element() },
@@ -37,12 +37,14 @@ function boot({ reduced = true } = {}) {
     clearTimeout: (t: { cancelled: boolean }) => { t.cancelled = true; },
   });
   vm.runInContext(source.replace(/^export /gm, '') + '\nglobalThis.createMascotTeam = createMascotTeam;', context);
-  const calls: { palette: string; pointerFollow: boolean }[] = [];
+  const calls: { palette: string; pointerFollow: boolean; states: string[] }[] = [];
   const container = new Element();
   const team = (vm.runInContext('createMascotTeam', context) as (c: Element, o: object) => Team)(container, {
     createMascot: (_face: Element, o: { palette: string; pointerFollow: boolean }) => {
-      calls.push(o);
-      return { setState() {}, setPalette() {}, setHat() {} };
+      const rec = { palette: o.palette, pointerFollow: o.pointerFollow, states: [] as string[] };
+      calls.push(rec);
+      if (badMascot) return { setState() { throw new Error('broken face'); }, setPalette() {}, setHat() {} };
+      return { setState(s: string) { rec.states.push(s); }, setPalette() {}, setHat() {} };
     },
     reduced: () => reduced,
   });
@@ -51,7 +53,7 @@ function boot({ reduced = true } = {}) {
     for (let guard = 0; timers.length && guard < 50; guard++)
       for (const t of timers.splice(0)) if (!t.cancelled) t.cb();
   };
-  return { team, container, calls, flush };
+  return { team, container, calls, flush, timers };
 }
 
 const spawn = (id: string, o: Record<string, unknown> = {}) =>
@@ -106,10 +108,11 @@ test('0/1/2/3/5：可见槽位封顶 3、+N 溢出真实计数、done 释放槽�
   assert.equal(clones(container).length, 3);
   assert.equal(findCls(container, 'mascot-team-overflow')[0]?.textContent, '+2');
   assert.equal(calls.every(c => c.pointerFollow === false), true);
-  // 等待池中的分身收到自身 done：真实计数下降，自始至终不建 DOM
+  // 等待池中的分身收到自身 done：真实计数下降，自始至终不建 DOM 不建 controller
   team.applyEvent(done('b', 'cancelled'), round);
   assert.equal(team.snapshot().overflow, 1);
   assert.equal(clones(container).length, 3);
+  assert.equal(calls.length, 3, '等待池分身不实例化形象');
   // 可见分身完成 → 槽位释放 → 等待池按 spawn 序补位到该槽位
   team.applyEvent(done('x', 'completed'), round);
   snap = team.snapshot();
@@ -181,7 +184,7 @@ test('tool_call 是结束事件：盖章 search_events 给徽标脉冲+真实 re
   assert.equal(parent !== null && parent.mainFace === undefined, true, '无盖章 tool_call 是父侧事件');
 });
 
-test('未知盖章 tool_call 计孤儿聚合不建分身，其 spawned 到达后转正为顶层', () => {
+test('未知盖章 tool_call 计孤儿聚合不建分身，其 spawned 到达后转正为顶层且徽标同步移除', () => {
   const { team, container } = boot();
   const { round } = team.begin()!;
   team.applyEvent(spawn('a'), round);
@@ -192,8 +195,26 @@ test('未知盖章 tool_call 计孤儿聚合不建分身，其 spawned 到达后
   team.applyEvent(spawn('ghost'), round);
   const snap = team.snapshot();
   assert.equal(snap.nested, 0);
+  assert.equal(findCls(container, 'mascot-team-nested').length, 0, '转正后 DOM 聚合徽标必须消失');
   assert.equal(snap.pending, 2);
   assert.equal(clones(container).length, 2, '孤儿 spawn 同源转正为顶层分身');
+});
+
+test('orphan 与 nested 并存不重复计数：转正后真嵌套仍按真实 id 保留', () => {
+  const { team, container } = boot();
+  const { round } = team.begin()!;
+  team.applyEvent(spawn('a', { parent_run_id: 'r0' }), round);
+  team.applyEvent(tool('g'), round);                              // orphan
+  team.applyEvent(spawn('n', { parent_run_id: 'child1' }), round); // 真嵌套
+  assert.equal(team.snapshot().nested, 2, 'orphan+nested 分别计数');
+  assert.equal(findCls(container, 'mascot-team-nested')[0]?.textContent, '⧉2');
+  team.applyEvent(spawn('g'), round);                             // orphan 转正
+  assert.equal(team.snapshot().nested, 1, '仅剩真嵌套');
+  assert.equal(findCls(container, 'mascot-team-nested')[0]?.textContent, '⧉1');
+  assert.equal(team.snapshot().pending, 2);
+  team.applyEvent(done('n'), round);
+  assert.equal(team.snapshot().nested, 0);
+  assert.equal(findCls(container, 'mascot-team-nested').length, 0);
 });
 
 test('嵌套：异源 parent_run_id 计聚合、不建顶层分身、不覆盖根 run', () => {
@@ -305,6 +326,50 @@ test('label 注入安全：title/plan_id 仅 textContent；非法 stage 继承�
     assert.equal(team.applyEvent({ stage: key }, round)?.mainFace, undefined, `继承键 ${key} 拒绝`);
   assert.equal(team.snapshot().phase, 'exploring', '继承键不得推进相位');
   assert.equal(team.applyEvent({ type: 'future_probe' }, round)?.mainFace, undefined, '未知 type 前向兼容');
+});
+
+test('done 终结脸真实到达分身 controller：completed→happy、failed→confused、cancelled→idle', () => {
+  const { team, calls } = boot({ reduced: false });
+  const { round } = team.begin()!;
+  team.applyEvent(spawn('a'), round);
+  team.applyEvent(spawn('b'), round);
+  team.applyEvent(spawn('c'), round);
+  assert.equal(JSON.stringify(calls.map(c => c.states)), '[["thinking"],["thinking"],["thinking"]]', '入场呈工作姿态');
+  team.applyEvent(done('a', 'completed'), round);
+  team.applyEvent(done('b', 'failed'), round);
+  team.applyEvent(done('c', 'cancelled'), round);
+  assert.equal(JSON.stringify(calls[0]!.states), '["thinking","happy"]');
+  assert.equal(JSON.stringify(calls[1]!.states), '["thinking","confused"]');
+  assert.equal(JSON.stringify(calls[2]!.states), '["thinking","idle"]');
+});
+
+test('终结脸在 reduced 路径同样下发；controller 抛错不拖垮编排', () => {
+  const good = boot();
+  const rg = good.team.begin()!.round;
+  good.team.applyEvent(spawn('a'), rg);
+  good.team.applyEvent(done('a', 'failed'), rg);
+  assert.equal(JSON.stringify(good.calls[0]!.states), '["thinking","confused"]', 'reduced 立即移除前仍收到终结脸');
+
+  const bad = boot({ badMascot: true });
+  const rb = bad.team.begin()!.round;
+  bad.team.applyEvent(spawn('a'), rb);                             // setState('thinking') 抛错
+  assert.equal(clones(bad.container).length, 1, '坏脸分身仍建 DOM');
+  bad.team.applyEvent(done('a'), rb);                              // setState('happy') 再抛
+  assert.equal(clones(bad.container).length, 0, '坏脸不阻塞退场');
+  assert.equal(bad.team.snapshot().phase, 'thinking');
+});
+
+test('settle/cancel 清理全部在途 enter/exit/pulse 定时器', () => {
+  const { team, container, timers } = boot({ reduced: false });
+  const { round } = team.begin()!;
+  team.applyEvent(spawn('a'), round);                              // enterTimer 在途
+  team.applyEvent(done('a'), round);                               // exitTimer 在途
+  team.applyEvent(spawn('b'), round);
+  team.applyEvent(tool('b', { name: 'search_events', result_count: 2 }), round); // pulseTimer 在途
+  assert.equal(timers.filter(t => !t.cancelled).length > 0, true);
+  team.settle('answer', round);
+  assert.equal(clones(container).length, 0);
+  assert.equal(timers.filter(t => !t.cancelled).length, 0, '轮次终结清空全部装饰定时器');
 });
 
 test('reduced-motion：入场即静态、退场即移除，face 带 motion=reduce', () => {

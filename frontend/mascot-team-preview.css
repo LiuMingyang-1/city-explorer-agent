@@ -97,35 +97,8 @@ h2 { font-family: "Songti SC", "STSong", serif; font-size: 21px; font-weight: 50
   content: "等待真实 subagent_spawned — 分身不会凭 stage 出现";
   font-size: 11px; color: var(--ink-faint); letter-spacing: .5px;
 }
-/* module tags the container itself with .mascot-team; host provides layout defaults */
-#team-strip.mascot-team, #team-strip .mascot-team { display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; }
-#team-strip .mascot-team-clone {
-  display: grid; justify-items: center; gap: 5px; position: relative;
-  min-width: 56px;
-}
-#team-strip .mascot-team-badge {
-  position: absolute; top: -4px; right: 2px; z-index: 1;
-  min-width: 18px; height: 18px; padding: 0 5px;
-  display: grid; place-items: center;
-  border-radius: 999px; background: var(--ink); color: #f0efe2;
-  font-size: 10px; letter-spacing: .5px; line-height: 1;
-}
-#team-strip .mascot-team-title {
-  max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  font-size: 10px; color: var(--ink-soft); text-align: center;
-}
-#team-strip .mascot-team-note {
-  min-height: 11px; font-size: 9px; color: var(--ink-faint); letter-spacing: .3px;
-}
-#team-strip .mascot-team-overflow {
-  align-self: center;
-  padding: 6px 10px; border: 1px dashed var(--line); border-radius: 999px;
-  font-size: 11px; color: var(--ink-soft); background: #fff8;
-}
-@media (max-width: 360px) {
-  #team-strip .mascot-team { gap: 10px; }
-  #team-strip .mascot-team-title { max-width: 84px; }
-}
+/* clone/badge/title/enter-exit/activity feedback styles live in mascot-team.css
+   (runtime layer, also linked by #41); this file owns only page layout. */
 .snapshot { display: flex; flex-wrap: wrap; gap: 6px; border-top: 1px dashed var(--line); padding-top: 10px; }
 .snap-chip.wide { flex-basis: 100%; border-style: dashed; line-height: 1.5; white-space: normal; }
 

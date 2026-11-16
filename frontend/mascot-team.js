@@ -11,6 +11,7 @@ const STAGE_FACE=new Map([['searching_events','searching'],['exploring_plans','t
  ['routing','thinking'],['validating_schedule','validating']]);
 const SETTLE_FACE=new Map([['plans','happy'],['itinerary','happy'],['answer','happy'],
  ['clarification','asking'],['error','confused']]);
+const DONE_FACE=new Map([['completed','happy'],['failed','confused'],['cancelled','idle']]);
 const LETTERS='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const ENTER_MS=220,EXIT_MS=380,PULSE_MS=900; // decorative beats; business state never waits on them
 
@@ -94,8 +95,9 @@ export function createMascotTeam(container,{
   rec.el=el;rec.noteEl=note;
   labelClone(rec);
   try{
-   createMascot(face,{palette:rec.palette,pointerFollow:false})?.setState?.('thinking'); // working posture
-  }catch{/* a broken face stays a static DOM marker, never breaks the team */}
+   rec.mascot=createMascot(face,{palette:rec.palette,pointerFollow:false});
+   rec.mascot?.setState?.('thinking');              // working posture; a broken face never breaks the team
+  }catch{/* degraded clone stays a static DOM marker */}
   if(rec.activity)armPulse(rec);
   if(isReduced())rec.entered=true;
   else rec.enterTimer=setTimeout(()=>{
@@ -108,7 +110,7 @@ export function createMascotTeam(container,{
   exiting.delete(rec);
   for(const key of ['enterTimer','exitTimer','pulseTimer'])if(rec[key]){clearTimeout(rec[key]);rec[key]=null;}
   if(rec.el)rec.el.remove();                       // vendor disconnectedCallback stops its rAF
-  rec.el=rec.noteEl=null;
+  rec.el=rec.noteEl=rec.mascot=null;
  }
  function assignSlots(){
   while(waiting.length){
@@ -128,13 +130,13 @@ export function createMascotTeam(container,{
    if(!nested.has(id))nested.set(id,{done:false});
    return renderNested();
   }
-  orphans.delete(id);                                      // orphan now confirmed top-level
+  if(orphans.delete(id))renderNested();                    // orphan promoted to top-level: refresh aggregate chip
   dispatchSeq+=1;
   const planId=typeof evt.plan_id==='string'&&evt.plan_id?evt.plan_id:null;
   const rec={id,title:String(evt.title??''),
    letter:(planId??LETTERS[(dispatchSeq-1)%LETTERS.length]).slice(0,2),
    slot:null,palette:null,status:'working',activity:'',noteText:'',entered:false,
-   el:null,noteEl:null,enterTimer:null,exitTimer:null,pulseTimer:null};
+   el:null,noteEl:null,mascot:null,enterTimer:null,exitTimer:null,pulseTimer:null};
   alive.set(id,rec);
   beat='dispatching';                                      // each top-level spawn is a dispatch beat
   phase='exploring';
@@ -162,6 +164,7 @@ export function createMascotTeam(container,{
   if(rec.el){                                              // decorative exit beat, detached from business
    rec.el.setAttribute('data-status',status);
    labelClone(rec);
+   try{rec.mascot?.setState?.(DONE_FACE.get(status)??'idle');}catch{/* broken face never breaks the team */}
    exiting.add(rec);
    if(isReduced())dropEl(rec);
    else rec.exitTimer=setTimeout(()=>{rec.exitTimer=null;dropEl(rec);},EXIT_MS);

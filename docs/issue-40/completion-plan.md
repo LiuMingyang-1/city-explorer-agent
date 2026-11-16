@@ -1,6 +1,6 @@
 # #40 补齐计划（I40-F1 交付）
 
-契约与状态机见同目录 `mascot-states.md`（#39 最终协议版）。**I40-F2 已交付**（`mascot-team.js` 编排层 + `mascot-team-preview.*` 排练场 + 16 项单测 + 真实 Chrome 37 断言 QA，证据见 `docs/issue-40/verification.md` 与 `team-preview-qa/`）；更后续的生产接线归 #41，地图涟漪归 #43——本文件保留 F2 的设计规格供追溯。
+契约与状态机见同目录 `mascot-states.md`（#39 最终协议版）。**I40-F2 已交付并经 R1/R2 修复回归**（`mascot-team.js` 编排层 + `mascot-team.css` 运行时样式层 + `mascot-team-preview.*` 排练场 + 20 项单测 + 真实 Chrome 54 断言 QA，证据见 `docs/issue-40/verification.md` 与 `team-preview-qa/`；状态：已修待独立复审）；更后续的生产接线归 #41（含 `<link mascot-team.css>`），地图涟漪归 #43——本文件保留 F2 的设计规格供追溯。
 
 ## 1. 剩余验收差距（对照 issue #40，F2 后现状）
 

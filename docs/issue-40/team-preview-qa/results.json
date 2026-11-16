@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-16T03:45:27.317Z",
+  "at": "2026-11-16T04:02:10.424Z",
   "metrics": {
     "module-ready": true,
     "team-3-visible-faces": {
@@ -216,12 +216,12 @@
     "perf-headless": {
       "note": "headless Chromium 测量值（force-device-scale-factor=1），不能冒称真笔记本性能",
       "faces4": {
-        "fps": 60.1,
-        "usedJSHeapMB": 2.52
+        "fps": 60.2,
+        "usedJSHeapMB": 2.68
       },
       "faces1": {
-        "fps": 59.8,
-        "usedJSHeapMB": 3.03
+        "fps": 59.7,
+        "usedJSHeapMB": 3.09
       }
     },
     "clear-instance-regression": {
@@ -248,6 +248,117 @@
     ],
     "log-wire-no-round-key": {
       "assert": "pass"
+    },
+    "r2-enter-real-animation": {
+      "assert": "pass",
+      "el": true,
+      "status": "entering",
+      "anim": "mt-enter",
+      "opacity": 0.545562
+    },
+    "r2-tool-badge-pulse-real": {
+      "assert": "pass",
+      "el": true,
+      "activity": "tool",
+      "badgeAnim": "mt-pulse",
+      "badgeBg": "rgb(41, 57, 46)",
+      "note": ""
+    },
+    "r2-searched-badge-pulse-real": {
+      "assert": "pass",
+      "el": true,
+      "activity": "searched",
+      "badgeAnim": "mt-pulse",
+      "badgeBg": "rgb(41, 57, 46)",
+      "note": "已检索 6"
+    },
+    "r2-error-static-warning": {
+      "assert": "pass",
+      "el": true,
+      "activity": "error",
+      "badgeAnim": "none",
+      "badgeBg": "rgb(168, 84, 47)",
+      "note": "调用出错"
+    },
+    "r2-completed-face-happy": {
+      "assert": "pass",
+      "el": true,
+      "status": "completed",
+      "anim": "mt-exit-happy",
+      "opacity": 0.991463,
+      "face": "happy"
+    },
+    "r2-completed-exit-real-fade": {
+      "assert": "pass",
+      "el": true,
+      "status": "completed",
+      "anim": "mt-exit-happy",
+      "opacity": 0.475034,
+      "face": "happy"
+    },
+    "r2-completed-removed": {
+      "assert": "pass"
+    },
+    "r2-failed-exit-real-fade": {
+      "assert": "pass",
+      "el": true,
+      "status": "failed",
+      "anim": "mt-exit-fail",
+      "opacity": 0.802043,
+      "face": "confused"
+    },
+    "r2-failed-face-confused": {
+      "assert": "pass",
+      "el": true,
+      "status": "failed",
+      "anim": "mt-exit-fail",
+      "opacity": 0.802043,
+      "face": "confused"
+    },
+    "r2-failed-others-continue": {
+      "assert": "pass"
+    },
+    "r2-cancelled-exit-real-fade": {
+      "assert": "pass",
+      "el": true,
+      "status": "cancelled",
+      "anim": "mt-exit",
+      "opacity": 0.792382,
+      "face": "idle"
+    },
+    "r2-cancelled-face-idle": {
+      "assert": "pass",
+      "el": true,
+      "status": "cancelled",
+      "anim": "mt-exit",
+      "opacity": 0.792382,
+      "face": "idle"
+    },
+    "r2-backfill-yield-3max": {
+      "assert": "pass",
+      "faces": 3
+    },
+    "r2-rm-static-mount": {
+      "assert": "pass",
+      "status": "working",
+      "cloneAnim": "none",
+      "faceMotion": "reduce",
+      "stripMotion": "reduce"
+    },
+    "r2-rm-instant-exit": {
+      "assert": "pass",
+      "target": "sub-a-2",
+      "left": 0
+    },
+    "r2-orphan-indicator-shown": {
+      "assert": "pass",
+      "orphanShown": "⧉1"
+    },
+    "r2-orphan-promoted-badge-cleared": {
+      "assert": "pass",
+      "nestedText": "",
+      "faces": 1,
+      "nested": 0
     },
     "destroy-empties-strip": {
       "assert": "pass"
@@ -278,6 +389,10 @@
     "shot 15-rm-3clones",
     "shot 16-320-3clones",
     "shot 17-320-rm",
-    "shot 18-log"
+    "shot 18-log",
+    "shot r2-01-searched-pulse",
+    "shot r2-02-completed-exit",
+    "shot r2-03-failed-exit",
+    "shot r2-04-rm-static"
   ]
 }

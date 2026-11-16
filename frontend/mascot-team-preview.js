@@ -113,6 +113,7 @@ function refresh() {
 
 function applyMotionPref() {
   const mode = els.rm.checked ? 'reduce' : 'auto';
+  els.strip.dataset.motion = mode; // CSS 层手动 RM 开关（mascot-team.css 识别）
   for (const face of document.querySelectorAll('boop-face')) face.setAttribute('motion', mode);
 }
 
