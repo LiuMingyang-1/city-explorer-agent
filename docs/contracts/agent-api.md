@@ -174,9 +174,14 @@ event: error     data: {"error":{"code":"…","message":"…","retryable":false}
   回传父模型的派发终态 `"completed"|"failed"|"cancelled"`；`title` ≤40
   码点（与 spawned 同源，必填）；`stops_count` 仅 completed+itinerary
   为站点数否则 null；`kind` 为 `"itinerary"|"clarification"`（非 completed
-  省略）；`summary` 为行程摘要/追问/失败原因 ≤160 码点；`child_run_id` /
-  `child_run_status` 为子会话本次 run 的持久化终态（DB 权威，查无 null）。
-  父取消/子超时 → `status:"cancelled"`，与落库终态一致，不凭猜测。
+  省略）；`summary` 为行程摘要/追问/失败原因 ≤160 码点。
+  `child_run_id` / `child_run_status` 为**事件发射瞬间**子会话最新 run
+  的 DB 状态快照（`listRunsBySession.at(-1)` 如实抄录，查无为 null）：
+  - 快照可与父视角 `status` 不同——父取消/子超时 → `status:"cancelled"`
+    （派发语义），而此刻子 run 可能尚未收尾，快照如实为 `"running"`；
+    启动失败前已建半成品 run 时 `runId`/`status` 同样如实抄录。
+  - 消费者**不得**据 `child_run_status` 猜测子 run 已终结；确认终态需
+    另行查询会话库。服务端不做 running→终态的追帧补发。
 - **tool_call**：`{type,tool_call_id,name,args_summary,result_count,status,
   duration_ms?,subagent_id?,message}`。tool_execution_end 即发：
   `tool_call_id` = Pi 调用 ID（start/end 配对）；`args_summary` = 参数

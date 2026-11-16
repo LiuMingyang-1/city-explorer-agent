@@ -49,7 +49,7 @@ type ProgressSink = (e: PlannerProcessEvent) => void;   // 观察回调
 ```
 
 - `subagent_spawned`：`{type, subagent_id, plan_id, parent_run_id, title, task_summary, message}`
-- `subagent_done`：`{type, subagent_id, plan_id, status("completed"|"failed"|"cancelled"), kind?("itinerary"|"clarification"), stops_count(number|null), title, summary, child_run_id, child_run_status(RunStatus|null), message}`
+- `subagent_done`：`{type, subagent_id, plan_id, status("completed"|"failed"|"cancelled"), kind?("itinerary"|"clarification"), stops_count(number|null), title, summary, child_run_id, child_run_status(RunStatus|null，发射时 DB 快照，竞态下可为 running，见 §4), message}`
   （契约修订：`title` 必填 ≤40 码点，与 spawned 同源——I39-2 发射时回传派发 title，分身退场景气泡可直接复用。）
 - `tool_call`：`{type, tool_call_id, name, args_summary, result_count(number|null), status("completed"|"error"), duration_ms?, subagent_id?, message}`
 - `stage`（PlannerProgress）：`{type?, stage, message, plan_ids, subagent_id?}`
@@ -82,8 +82,10 @@ type ProgressSink = (e: PlannerProcessEvent) => void;   // 观察回调
 ## 4. 终态与取消一致性
 
 - `subagent_done.status` = 回传父模型的 `DelegateTaskDetails.status`
-  （父视角派发终态）；`child_run_status` = DB 持久化子 run 终态。
-  两者通常一致；竞态（父超时瞬间子已提交）时以 `child_run_status` 为权威，
+  （父视角派发终态）；`child_run_status` = 发射瞬间子会话最新 run 的
+  DB 状态快照（不是"已终结"承诺：父超时/取消瞬间可如实为 `running`，
+  消费者不得据此猜测终结，确认终态另行查库）。两字段通常一致；
+  竞态（父超时瞬间子已提交）时以 `child_run_status` 为权威，
   `status` 仍如实反映父收到什么。
 - `stops_count`：仅 completed+itinerary 为站点数，其余 null；`summary` 为
   行程 summary / 追问 / 失败原因裁剪。
@@ -120,12 +122,12 @@ type ProgressSink = (e: PlannerProcessEvent) => void;   // 观察回调
 2. `spawnChild` 失败返回处：`subagentDoneEvent({status:"failed",
    summary:"启动子任务失败：…"})`——`childRunId`/`childRunStatus` 不恒
    null：失败前可能已建半成品 run 行，同样走 `listRunsBySession`
-   如实抄录，查无才 null（与 §4 持久化终态权威一致，文档不凌驾落库真相）。
+   如实抄录，查无才 null（与 §4 DB 快照语义一致，文档不凌驾落库真相）。
 3. `child.prompt` 之后每个 `return toResult(details)` 点统一先 emit done：
    `status`/`summary`/`kind`/`stopsCount` 与 details 同源；
    `childRunId`/`childRunStatus` 用现有 `listRunsBySession` 结果
-   （`runs.at(-1)`，已含持久化终态）。超时/父取消 → `"cancelled"`，
-   `summary` = `cancelError()`。
+   （`runs.at(-1)` 发射时快照，竞态下可如实为 `running`）。超时/父取消
+   → `"cancelled"`，`summary` = `cancelError()`。
 4. `createChildSession` 之前的失败（空 task、无 ctx、depth、信号量取消）
    不发 spawned/done——分身未入场。
 5. 每条 done 只发一次；spawn 与 done 恒 1:1 配对。
