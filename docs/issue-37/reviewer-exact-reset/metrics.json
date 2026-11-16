@@ -1,0 +1,22 @@
+{
+  "failures": [],
+  "metrics": {
+    "reset": {
+      "latestPlan": null,
+      "focus": {
+        "active": false,
+        "phase": "explore",
+        "model": null
+      },
+      "oldRouteFitCalls": 0,
+      "before": {
+        "lat": 31.23,
+        "lng": 121.47
+      },
+      "after": {
+        "lat": 31.064698120353743,
+        "lng": 122.03338623046876
+      }
+    }
+  }
+}

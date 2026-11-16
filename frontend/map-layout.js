@@ -4,7 +4,22 @@
  function visiblePanels(){
   return ['activity-detail','preferences-panel'].map(id=>document.getElementById?.(id)).filter(panel=>panel&&!panel.hidden&&panel.getBoundingClientRect).map(panel=>panel.getBoundingClientRect());
  }
- function routeFrame({width,height,card,panels=[]}){
+ function routeFrame({width,height,card,panels=[],focus=window.WanderItineraryMap?.focusProgress??window.WanderItineraryFocus?.active}){
+  if(focus){
+   // The focus map is a full-height region hugging the right edge, and its
+   // rim melts into the paper at uneven depths. Per-axis insets keep routes
+   // and station number badges inside the clearly readable area: deepest on
+   // the left where the feather reaches furthest, moderate top and bottom,
+   // shallowest on the right. Map-local coords.
+   let left=width*.2,right=width*.11,top=height*.15,bottom=height*.15;
+   if(typeof focus==='number'&&focus<1){
+    const base=routeFrame({width,height,card:window.WanderItineraryMap?.exploreCard||card,panels,focus:false});
+    const blend=(a,b)=>a+(b-a)*focus;
+    left=blend(base.left,left);right=blend(base.right,right);top=blend(base.top,top);bottom=blend(base.bottom,bottom);
+   }
+   return {left,right,top,bottom,targetX:(left+width-right)/2,targetY:(top+height-bottom)/2,
+    amap:[top,bottom,left,right],paddingTopLeft:[left,top],paddingBottomRight:[right,bottom]};
+  }
   const desktop=width>700;
   let left=desktop?Math.max(width/3+48,card.right+24):24,right=desktop?48:24;
   let top=desktop?60:36,bottom=desktop?60:Math.min(card.height+36,height-96);

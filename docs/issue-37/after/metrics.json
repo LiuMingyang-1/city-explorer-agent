@@ -1,0 +1,3174 @@
+{
+  "profile": "after",
+  "failures": [
+    "desktop-circle",
+    "desktop-edge",
+    "narrow-circle",
+    "narrow-edge"
+  ],
+  "metrics": {
+    "desktop-generated": {
+      "phase": "explore",
+      "active": false,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "",
+      "transitioning": false,
+      "detail": false,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": []
+    },
+    "desktop-generated-state": {
+      "phase": "explore",
+      "active": false,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "",
+      "transitioning": false,
+      "detail": false,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [],
+      "assert": "pass"
+    },
+    "desktop-generated-one-map": {
+      "assert": "pass"
+    },
+    "desktop-generated-no-overflow": {
+      "assert": "pass"
+    },
+    "desktop-middle": {
+      "phase": "entering",
+      "active": true,
+      "plan": "plan_mock_a",
+      "plans": 2,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-back",
+      "transitioning": true,
+      "detail": true,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        }
+      ]
+    },
+    "desktop-detail": {
+      "phase": "detail",
+      "active": true,
+      "plan": "plan_mock_a",
+      "plans": 2,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-back",
+      "transitioning": false,
+      "detail": true,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        }
+      ]
+    },
+    "desktop-detail-state": {
+      "phase": "detail",
+      "active": true,
+      "plan": "plan_mock_a",
+      "plans": 2,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-back",
+      "transitioning": false,
+      "detail": true,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "desktop-detail-one-map": {
+      "assert": "pass"
+    },
+    "desktop-detail-no-overflow": {
+      "assert": "pass"
+    },
+    "desktop-full-model": {
+      "assert": "pass"
+    },
+    "desktop-circle": {
+      "assert": "FAIL"
+    },
+    "desktop-edge": {
+      "assert": "FAIL"
+    },
+    "desktop-b": {
+      "phase": "detail",
+      "active": true,
+      "plan": "plan_mock_b",
+      "plans": 2,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-back",
+      "transitioning": false,
+      "detail": true,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        }
+      ]
+    },
+    "desktop-b-state": {
+      "phase": "detail",
+      "active": true,
+      "plan": "plan_mock_b",
+      "plans": 2,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-back",
+      "transitioning": false,
+      "detail": true,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "desktop-b-one-map": {
+      "assert": "pass"
+    },
+    "desktop-b-no-overflow": {
+      "assert": "pass"
+    },
+    "desktop-switch-model": {
+      "assert": "pass"
+    },
+    "desktop-back": {
+      "phase": "explore",
+      "active": false,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-preview",
+      "transitioning": false,
+      "detail": false,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        }
+      ]
+    },
+    "desktop-back-state": {
+      "phase": "explore",
+      "active": false,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-preview",
+      "transitioning": false,
+      "detail": false,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "desktop-back-one-map": {
+      "assert": "pass"
+    },
+    "desktop-back-no-overflow": {
+      "assert": "pass"
+    },
+    "desktop-focus-return": {
+      "assert": "pass"
+    },
+    "desktop-burst": {
+      "phase": "detail",
+      "active": true,
+      "plan": "plan_mock_b",
+      "plans": 2,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-back",
+      "transitioning": false,
+      "detail": true,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        }
+      ]
+    },
+    "desktop-burst-state": {
+      "phase": "detail",
+      "active": true,
+      "plan": "plan_mock_b",
+      "plans": 2,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-back",
+      "transitioning": false,
+      "detail": true,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "desktop-burst-one-map": {
+      "assert": "pass"
+    },
+    "desktop-burst-no-overflow": {
+      "assert": "pass"
+    },
+    "desktop-burst-model": {
+      "assert": "pass"
+    },
+    "desktop-new-chat": {
+      "phase": "explore",
+      "active": false,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "",
+      "transitioning": false,
+      "detail": false,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        }
+      ]
+    },
+    "desktop-new-chat-state": {
+      "phase": "explore",
+      "active": false,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "",
+      "transitioning": false,
+      "detail": false,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "desktop-new-chat-one-map": {
+      "assert": "pass"
+    },
+    "desktop-new-chat-no-overflow": {
+      "assert": "pass"
+    },
+    "desktop-history": {
+      "phase": "explore",
+      "active": false,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "",
+      "transitioning": false,
+      "detail": false,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        }
+      ]
+    },
+    "desktop-history-state": {
+      "phase": "explore",
+      "active": false,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "",
+      "transitioning": false,
+      "detail": false,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "desktop-history-one-map": {
+      "assert": "pass"
+    },
+    "desktop-history-no-overflow": {
+      "assert": "pass"
+    },
+    "desktop-restored-detail": {
+      "phase": "detail",
+      "active": true,
+      "plan": "plan_mock_b",
+      "plans": 2,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-back",
+      "transitioning": false,
+      "detail": true,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        }
+      ]
+    },
+    "desktop-restored-detail-state": {
+      "phase": "detail",
+      "active": true,
+      "plan": "plan_mock_b",
+      "plans": 2,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-back",
+      "transitioning": false,
+      "detail": true,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "desktop-restored-detail-one-map": {
+      "assert": "pass"
+    },
+    "desktop-restored-detail-no-overflow": {
+      "assert": "pass"
+    },
+    "desktop-restored-b": {
+      "assert": "pass"
+    },
+    "desktop-events-match-global": {
+      "assert": "pass"
+    },
+    "desktop-event-phases": {
+      "phases": [
+        "entering",
+        "entering",
+        "detail",
+        "detail",
+        "leaving",
+        "explore",
+        "entering",
+        "entering",
+        "leaving",
+        "entering",
+        "entering",
+        "entering",
+        "detail",
+        "leaving",
+        "explore",
+        "entering",
+        "entering",
+        "detail"
+      ],
+      "assert": "pass"
+    },
+    "narrow-generated": {
+      "phase": "explore",
+      "active": false,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "",
+      "transitioning": false,
+      "detail": false,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": []
+    },
+    "narrow-generated-state": {
+      "phase": "explore",
+      "active": false,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "",
+      "transitioning": false,
+      "detail": false,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [],
+      "assert": "pass"
+    },
+    "narrow-generated-one-map": {
+      "assert": "pass"
+    },
+    "narrow-generated-no-overflow": {
+      "assert": "pass"
+    },
+    "narrow-middle": {
+      "phase": "entering",
+      "active": true,
+      "plan": "plan_mock_a",
+      "plans": 2,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-back",
+      "transitioning": true,
+      "detail": true,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        }
+      ]
+    },
+    "narrow-detail": {
+      "phase": "detail",
+      "active": true,
+      "plan": "plan_mock_a",
+      "plans": 2,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-back",
+      "transitioning": false,
+      "detail": true,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        }
+      ]
+    },
+    "narrow-detail-state": {
+      "phase": "detail",
+      "active": true,
+      "plan": "plan_mock_a",
+      "plans": 2,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-back",
+      "transitioning": false,
+      "detail": true,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "narrow-detail-one-map": {
+      "assert": "pass"
+    },
+    "narrow-detail-no-overflow": {
+      "assert": "pass"
+    },
+    "narrow-full-model": {
+      "assert": "pass"
+    },
+    "narrow-circle": {
+      "assert": "FAIL"
+    },
+    "narrow-edge": {
+      "assert": "FAIL"
+    },
+    "narrow-b": {
+      "phase": "detail",
+      "active": true,
+      "plan": "plan_mock_b",
+      "plans": 2,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-back",
+      "transitioning": false,
+      "detail": true,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        }
+      ]
+    },
+    "narrow-b-state": {
+      "phase": "detail",
+      "active": true,
+      "plan": "plan_mock_b",
+      "plans": 2,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-back",
+      "transitioning": false,
+      "detail": true,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "narrow-b-one-map": {
+      "assert": "pass"
+    },
+    "narrow-b-no-overflow": {
+      "assert": "pass"
+    },
+    "narrow-switch-model": {
+      "assert": "pass"
+    },
+    "narrow-back": {
+      "phase": "explore",
+      "active": false,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-preview",
+      "transitioning": false,
+      "detail": false,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        }
+      ]
+    },
+    "narrow-back-state": {
+      "phase": "explore",
+      "active": false,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-preview",
+      "transitioning": false,
+      "detail": false,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "narrow-back-one-map": {
+      "assert": "pass"
+    },
+    "narrow-back-no-overflow": {
+      "assert": "pass"
+    },
+    "narrow-focus-return": {
+      "assert": "pass"
+    },
+    "narrow-burst": {
+      "phase": "detail",
+      "active": true,
+      "plan": "plan_mock_b",
+      "plans": 2,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-back",
+      "transitioning": false,
+      "detail": true,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        }
+      ]
+    },
+    "narrow-burst-state": {
+      "phase": "detail",
+      "active": true,
+      "plan": "plan_mock_b",
+      "plans": 2,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-back",
+      "transitioning": false,
+      "detail": true,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "narrow-burst-one-map": {
+      "assert": "pass"
+    },
+    "narrow-burst-no-overflow": {
+      "assert": "pass"
+    },
+    "narrow-burst-model": {
+      "assert": "pass"
+    },
+    "narrow-new-chat": {
+      "phase": "explore",
+      "active": false,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "",
+      "transitioning": false,
+      "detail": false,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        }
+      ]
+    },
+    "narrow-new-chat-state": {
+      "phase": "explore",
+      "active": false,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "",
+      "transitioning": false,
+      "detail": false,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "narrow-new-chat-one-map": {
+      "assert": "pass"
+    },
+    "narrow-new-chat-no-overflow": {
+      "assert": "pass"
+    },
+    "narrow-history": {
+      "phase": "explore",
+      "active": false,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "",
+      "transitioning": false,
+      "detail": false,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        }
+      ]
+    },
+    "narrow-history-state": {
+      "phase": "explore",
+      "active": false,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "",
+      "transitioning": false,
+      "detail": false,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "narrow-history-one-map": {
+      "assert": "pass"
+    },
+    "narrow-history-no-overflow": {
+      "assert": "pass"
+    },
+    "narrow-restored-detail": {
+      "phase": "detail",
+      "active": true,
+      "plan": "plan_mock_b",
+      "plans": 2,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-back",
+      "transitioning": false,
+      "detail": true,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        }
+      ]
+    },
+    "narrow-restored-detail-state": {
+      "phase": "detail",
+      "active": true,
+      "plan": "plan_mock_b",
+      "plans": 2,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-back",
+      "transitioning": false,
+      "detail": true,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "narrow-restored-detail-one-map": {
+      "assert": "pass"
+    },
+    "narrow-restored-detail-no-overflow": {
+      "assert": "pass"
+    },
+    "narrow-restored-b": {
+      "assert": "pass"
+    },
+    "narrow-events-match-global": {
+      "assert": "pass"
+    },
+    "narrow-event-phases": {
+      "phases": [
+        "entering",
+        "entering",
+        "detail",
+        "detail",
+        "leaving",
+        "explore",
+        "entering",
+        "entering",
+        "leaving",
+        "entering",
+        "entering",
+        "entering",
+        "detail",
+        "leaving",
+        "explore",
+        "entering",
+        "entering",
+        "detail"
+      ],
+      "assert": "pass"
+    },
+    "reduced-detail": {
+      "phase": "detail",
+      "active": true,
+      "plan": "plan_mock_a",
+      "plans": 2,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-back",
+      "transitioning": false,
+      "detail": true,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        }
+      ]
+    },
+    "reduced-detail-state": {
+      "phase": "detail",
+      "active": true,
+      "plan": "plan_mock_a",
+      "plans": 2,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-back",
+      "transitioning": false,
+      "detail": true,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "reduced-detail-one-map": {
+      "assert": "pass"
+    },
+    "reduced-detail-no-overflow": {
+      "assert": "pass"
+    },
+    "reduced-back": {
+      "phase": "explore",
+      "active": false,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-preview",
+      "transitioning": false,
+      "detail": false,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        }
+      ]
+    },
+    "reduced-back-state": {
+      "phase": "explore",
+      "active": false,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-preview",
+      "transitioning": false,
+      "detail": false,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "leaving",
+          "active": false,
+          "plan": "plan_mock_a",
+          "same": true
+        },
+        {
+          "phase": "explore",
+          "active": false,
+          "same": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "reduced-back-one-map": {
+      "assert": "pass"
+    },
+    "reduced-back-no-overflow": {
+      "assert": "pass"
+    }
+  },
+  "log": [
+    "shot desktop-explore",
+    "shot desktop-entering",
+    "shot desktop-detail",
+    "FAIL desktop-circle",
+    "FAIL desktop-edge",
+    "shot desktop-detail-b",
+    "shot desktop-returned",
+    "shot desktop-restored",
+    "shot narrow-explore",
+    "shot narrow-entering",
+    "shot narrow-detail",
+    "FAIL narrow-circle",
+    "FAIL narrow-edge",
+    "shot narrow-detail-b",
+    "shot narrow-returned",
+    "shot narrow-restored",
+    "shot reduced-detail"
+  ]
+}

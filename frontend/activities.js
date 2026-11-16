@@ -71,7 +71,7 @@
   if(window.WanderAMap?.ready){await window.WanderAMap.setActivities(groups,group=>openEvents(group.events,{placeName:group.name,coordinateSystem:group.coordinateSystem}));return;}
   if(typeof map==='undefined'||!map||!window.L)return;
   if(leafletLayer)map.removeLayer(leafletLayer);
-  const layers=groups.filter(g=>['WGS84','WGS-84'].includes(g.coordinateSystem)).map(group=>{
+  const layers=groups.filter(g=>!window.WanderItineraryFocus?.active&&['WGS84','WGS-84'].includes(g.coordinateSystem)).map(group=>{
    const node=pin(group);node.addEventListener('click',()=>openEvents(group.events,{placeName:group.name,coordinateSystem:group.coordinateSystem}));
    const marker=L.marker([group.lat,group.lng],{icon:L.divIcon({className:'activity-map-icon',html:node,iconSize:[0,0],iconAnchor:[0,0]}),title:group.events[0].title,zIndexOffset:400});return {marker,group,node};
   });
@@ -175,12 +175,14 @@
   }catch{ /* Keep the current viewport's usable data when the feed is temporarily unavailable. */ }
  }
  function viewportChanged(){
+  if(window.WanderItineraryMap?.transitioning)return;
   if(!window.WanderAMap?.ready)renderMap();
   const configured=window.WANDER_CONFIG?.eventsEndpoint;if(feedMissing||configured&&!configured.startsWith('/api/events'))return;
   const view=window.WanderAMap?.getViewport?.();if(!view?.bbox)return;
   const key=view.bbox.map(v=>v.toFixed(4)).join(',');if(key===lastViewportKey)return;lastViewportKey=key;
   clearTimeout(viewportTimer);viewportTimer=setTimeout(()=>load({viewport:true}),250);
  }
+ window.addEventListener('wander:itinerary-focus',event=>{renderMap();if(event.detail?.phase==='explore')viewportChanged();});
  window.addEventListener('wander:map-ready',()=>{renderMap();viewportChanged();});
  window.addEventListener('wander:viewport',viewportChanged);
  window.addEventListener('wander:reset',()=>{close();planEvents=[];refresh();});

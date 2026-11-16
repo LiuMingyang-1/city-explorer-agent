@@ -1,0 +1,905 @@
+{
+  "profile": "after",
+  "failures": [
+    "fatal: waitFor timeout (6000ms): window.WanderItineraryFocus?.phase===\"explore\""
+  ],
+  "metrics": {
+    "desktop-generated": {
+      "phase": "explore",
+      "active": false,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "frame": {
+        "x": 763.21875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "clip": "none",
+      "radius": "0px",
+      "feather": "radial-gradient(circle, rgba(0, 0, 0, 0) 57%, rgba(240, 243, 233, 0.063) 62%, rgba(240, 243, 233, 0.28) 65%, rgba(240, 243, 233, 0.72) 69%, rgb(240, 243, 233) 71%)",
+      "canvases": [
+        {
+          "rect": {
+            "x": -72,
+            "y": -45,
+            "w": 1584,
+            "h": 990
+          },
+          "width": 1584,
+          "height": 990
+        }
+      ],
+      "stationPoints": [],
+      "stationRects": [
+        {
+          "x": 340,
+          "y": 625,
+          "w": 6.125,
+          "h": 16.5
+        },
+        {
+          "x": 480,
+          "y": 540,
+          "w": 6.125,
+          "h": 16.5
+        },
+        {
+          "x": 899,
+          "y": 484,
+          "w": 6.125,
+          "h": 16.5
+        },
+        {
+          "x": 1016,
+          "y": 399,
+          "w": 6.125,
+          "h": 16.5
+        }
+      ],
+      "markers": 3,
+      "mapSame": true,
+      "maps": 1,
+      "focus": "",
+      "transitioning": false,
+      "detail": false,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": []
+    },
+    "desktop-generated-state": {
+      "phase": "explore",
+      "active": false,
+      "shell": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "frame": {
+        "x": 763.21875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "clip": "none",
+      "radius": "0px",
+      "feather": "radial-gradient(circle, rgba(0, 0, 0, 0) 57%, rgba(240, 243, 233, 0.063) 62%, rgba(240, 243, 233, 0.28) 65%, rgba(240, 243, 233, 0.72) 69%, rgb(240, 243, 233) 71%)",
+      "canvases": [
+        {
+          "rect": {
+            "x": -72,
+            "y": -45,
+            "w": 1584,
+            "h": 990
+          },
+          "width": 1584,
+          "height": 990
+        }
+      ],
+      "stationPoints": [],
+      "stationRects": [
+        {
+          "x": 340,
+          "y": 625,
+          "w": 6.125,
+          "h": 16.5
+        },
+        {
+          "x": 480,
+          "y": 540,
+          "w": 6.125,
+          "h": 16.5
+        },
+        {
+          "x": 899,
+          "y": 484,
+          "w": 6.125,
+          "h": 16.5
+        },
+        {
+          "x": 1016,
+          "y": 399,
+          "w": 6.125,
+          "h": 16.5
+        }
+      ],
+      "markers": 3,
+      "mapSame": true,
+      "maps": 1,
+      "focus": "",
+      "transitioning": false,
+      "detail": false,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [],
+      "assert": "pass"
+    },
+    "desktop-generated-one-map": {
+      "assert": "pass"
+    },
+    "desktop-generated-no-overflow": {
+      "assert": "pass"
+    },
+    "desktop-middle": {
+      "phase": "entering",
+      "active": true,
+      "plan": "plan_mock_a",
+      "plans": 2,
+      "shell": {
+        "x": 411.875,
+        "y": 75.765625,
+        "w": 997.03125,
+        "h": 748.453125
+      },
+      "frame": {
+        "x": 763.21875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "map": {
+        "x": 411.875,
+        "y": 75.765625,
+        "w": 997.03125,
+        "h": 748.453125
+      },
+      "clip": "none",
+      "radius": "26.9834%",
+      "feather": "radial-gradient(circle, rgba(0, 0, 0, 0) 57%, rgba(240, 243, 233, 0.063) 62%, rgba(240, 243, 233, 0.28) 65%, rgba(240, 243, 233, 0.72) 69%, rgb(240, 243, 233) 71%)",
+      "canvases": [
+        {
+          "rect": {
+            "x": 323.875,
+            "y": 28.765625,
+            "w": 1148,
+            "h": 842
+          },
+          "width": 1148,
+          "height": 842
+        }
+      ],
+      "stationPoints": [
+        {
+          "event": "mock_evt_a1",
+          "x": 548,
+          "y": 417
+        },
+        {
+          "event": "mock_evt_a2",
+          "x": 665,
+          "y": 332
+        }
+      ],
+      "stationRects": [
+        {
+          "x": 397.875,
+          "y": 624.765625,
+          "w": 6.125,
+          "h": 16.5
+        },
+        {
+          "x": 537.875,
+          "y": 539.765625,
+          "w": 6.125,
+          "h": 16.5
+        },
+        {
+          "x": 956.875,
+          "y": 483.765625,
+          "w": 6.125,
+          "h": 16.5
+        },
+        {
+          "x": 1073.875,
+          "y": 398.765625,
+          "w": 6.125,
+          "h": 16.5
+        }
+      ],
+      "markers": 0,
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-back",
+      "transitioning": true,
+      "detail": true,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true,
+          "actual": {
+            "x": 0,
+            "y": 0,
+            "w": 1440,
+            "h": 900
+          },
+          "target": {
+            "x": 763.21875,
+            "y": 140.390625,
+            "w": 619.1875,
+            "h": 619.1875
+          },
+          "atTarget": false
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true,
+          "actual": {
+            "x": 0,
+            "y": 0,
+            "w": 1440,
+            "h": 900
+          },
+          "target": {
+            "x": 763.21875,
+            "y": 140.390625,
+            "w": 619.1875,
+            "h": 619.1875
+          },
+          "atTarget": false
+        }
+      ]
+    },
+    "desktop-detail": {
+      "phase": "detail",
+      "active": true,
+      "plan": "plan_mock_a",
+      "plans": 2,
+      "shell": {
+        "x": 763.1875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "frame": {
+        "x": 763.21875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "map": {
+        "x": 763.1875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "clip": "none",
+      "radius": "50%",
+      "feather": "radial-gradient(circle, rgba(0, 0, 0, 0) 57%, rgba(240, 243, 233, 0.063) 62%, rgba(240, 243, 233, 0.28) 65%, rgba(240, 243, 233, 0.72) 69%, rgb(240, 243, 233) 71%)",
+      "canvases": [
+        {
+          "rect": {
+            "x": 732.1875,
+            "y": 109.390625,
+            "w": 682,
+            "h": 682
+          },
+          "width": 682,
+          "height": 682
+        }
+      ],
+      "stationPoints": [
+        {
+          "event": "mock_evt_a1",
+          "x": 252,
+          "y": 352
+        },
+        {
+          "event": "mock_evt_a2",
+          "x": 369,
+          "y": 267
+        }
+      ],
+      "stationRects": [
+        {
+          "x": 1012.1875,
+          "y": 483.390625,
+          "w": 6.125,
+          "h": 16.5
+        },
+        {
+          "x": 1129.1875,
+          "y": 398.390625,
+          "w": 6.125,
+          "h": 16.5
+        }
+      ],
+      "markers": 0,
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-back",
+      "transitioning": false,
+      "detail": true,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true,
+          "actual": {
+            "x": 0,
+            "y": 0,
+            "w": 1440,
+            "h": 900
+          },
+          "target": {
+            "x": 763.21875,
+            "y": 140.390625,
+            "w": 619.1875,
+            "h": 619.1875
+          },
+          "atTarget": false
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true,
+          "actual": {
+            "x": 0,
+            "y": 0,
+            "w": 1440,
+            "h": 900
+          },
+          "target": {
+            "x": 763.21875,
+            "y": 140.390625,
+            "w": 619.1875,
+            "h": 619.1875
+          },
+          "atTarget": false
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true,
+          "actual": {
+            "x": 763.1875,
+            "y": 140.390625,
+            "w": 619.1875,
+            "h": 619.1875
+          },
+          "target": {
+            "x": 763.21875,
+            "y": 140.390625,
+            "w": 619.1875,
+            "h": 619.1875
+          },
+          "atTarget": true
+        }
+      ]
+    },
+    "desktop-detail-state": {
+      "phase": "detail",
+      "active": true,
+      "plan": "plan_mock_a",
+      "plans": 2,
+      "shell": {
+        "x": 763.1875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "frame": {
+        "x": 763.21875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "map": {
+        "x": 763.1875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "clip": "none",
+      "radius": "50%",
+      "feather": "radial-gradient(circle, rgba(0, 0, 0, 0) 57%, rgba(240, 243, 233, 0.063) 62%, rgba(240, 243, 233, 0.28) 65%, rgba(240, 243, 233, 0.72) 69%, rgb(240, 243, 233) 71%)",
+      "canvases": [
+        {
+          "rect": {
+            "x": 732.1875,
+            "y": 109.390625,
+            "w": 682,
+            "h": 682
+          },
+          "width": 682,
+          "height": 682
+        }
+      ],
+      "stationPoints": [
+        {
+          "event": "mock_evt_a1",
+          "x": 252,
+          "y": 352
+        },
+        {
+          "event": "mock_evt_a2",
+          "x": 369,
+          "y": 267
+        }
+      ],
+      "stationRects": [
+        {
+          "x": 1012.1875,
+          "y": 483.390625,
+          "w": 6.125,
+          "h": 16.5
+        },
+        {
+          "x": 1129.1875,
+          "y": 398.390625,
+          "w": 6.125,
+          "h": 16.5
+        }
+      ],
+      "markers": 0,
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-back",
+      "transitioning": false,
+      "detail": true,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true,
+          "actual": {
+            "x": 0,
+            "y": 0,
+            "w": 1440,
+            "h": 900
+          },
+          "target": {
+            "x": 763.21875,
+            "y": 140.390625,
+            "w": 619.1875,
+            "h": 619.1875
+          },
+          "atTarget": false
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true,
+          "actual": {
+            "x": 0,
+            "y": 0,
+            "w": 1440,
+            "h": 900
+          },
+          "target": {
+            "x": 763.21875,
+            "y": 140.390625,
+            "w": 619.1875,
+            "h": 619.1875
+          },
+          "atTarget": false
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true,
+          "actual": {
+            "x": 763.1875,
+            "y": 140.390625,
+            "w": 619.1875,
+            "h": 619.1875
+          },
+          "target": {
+            "x": 763.21875,
+            "y": 140.390625,
+            "w": 619.1875,
+            "h": 619.1875
+          },
+          "atTarget": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "desktop-detail-one-map": {
+      "assert": "pass"
+    },
+    "desktop-detail-no-overflow": {
+      "assert": "pass"
+    },
+    "desktop-tab-not-hidden-card": {
+      "insideHiddenCard": false,
+      "cls": "plan-tab active",
+      "assert": "pass"
+    },
+    "desktop-full-model": {
+      "assert": "pass"
+    },
+    "desktop-circle": {
+      "assert": "pass"
+    },
+    "desktop-edge": {
+      "assert": "pass"
+    },
+    "desktop-b": {
+      "phase": "detail",
+      "active": true,
+      "plan": "plan_mock_b",
+      "plans": 2,
+      "shell": {
+        "x": 763.1875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "frame": {
+        "x": 763.21875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "map": {
+        "x": 763.1875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "clip": "none",
+      "radius": "50%",
+      "feather": "radial-gradient(circle, rgba(0, 0, 0, 0) 57%, rgba(240, 243, 233, 0.063) 62%, rgba(240, 243, 233, 0.28) 65%, rgba(240, 243, 233, 0.72) 69%, rgb(240, 243, 233) 71%)",
+      "canvases": [
+        {
+          "rect": {
+            "x": 732.1875,
+            "y": 109.390625,
+            "w": 682,
+            "h": 682
+          },
+          "width": 682,
+          "height": 682
+        }
+      ],
+      "stationPoints": [
+        {
+          "event": "mock_evt_b1",
+          "x": 239,
+          "y": 353
+        },
+        {
+          "event": "mock_evt_b2",
+          "x": 379,
+          "y": 268
+        }
+      ],
+      "stationRects": [
+        {
+          "x": 999.1875,
+          "y": 484.390625,
+          "w": 6.125,
+          "h": 16.5
+        },
+        {
+          "x": 1139.1875,
+          "y": 399.390625,
+          "w": 6.125,
+          "h": 16.5
+        }
+      ],
+      "markers": 0,
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-tab",
+      "transitioning": false,
+      "detail": true,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true,
+          "actual": {
+            "x": 0,
+            "y": 0,
+            "w": 1440,
+            "h": 900
+          },
+          "target": {
+            "x": 763.21875,
+            "y": 140.390625,
+            "w": 619.1875,
+            "h": 619.1875
+          },
+          "atTarget": false
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true,
+          "actual": {
+            "x": 0,
+            "y": 0,
+            "w": 1440,
+            "h": 900
+          },
+          "target": {
+            "x": 763.21875,
+            "y": 140.390625,
+            "w": 619.1875,
+            "h": 619.1875
+          },
+          "atTarget": false
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true,
+          "actual": {
+            "x": 763.1875,
+            "y": 140.390625,
+            "w": 619.1875,
+            "h": 619.1875
+          },
+          "target": {
+            "x": 763.21875,
+            "y": 140.390625,
+            "w": 619.1875,
+            "h": 619.1875
+          },
+          "atTarget": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true,
+          "actual": {
+            "x": 763.1875,
+            "y": 140.390625,
+            "w": 619.1875,
+            "h": 619.1875
+          },
+          "target": {
+            "x": 763.21875,
+            "y": 140.390625,
+            "w": 619.1875,
+            "h": 619.1875
+          },
+          "atTarget": true
+        }
+      ]
+    },
+    "desktop-b-state": {
+      "phase": "detail",
+      "active": true,
+      "plan": "plan_mock_b",
+      "plans": 2,
+      "shell": {
+        "x": 763.1875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "frame": {
+        "x": 763.21875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "map": {
+        "x": 763.1875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "clip": "none",
+      "radius": "50%",
+      "feather": "radial-gradient(circle, rgba(0, 0, 0, 0) 57%, rgba(240, 243, 233, 0.063) 62%, rgba(240, 243, 233, 0.28) 65%, rgba(240, 243, 233, 0.72) 69%, rgb(240, 243, 233) 71%)",
+      "canvases": [
+        {
+          "rect": {
+            "x": 732.1875,
+            "y": 109.390625,
+            "w": 682,
+            "h": 682
+          },
+          "width": 682,
+          "height": 682
+        }
+      ],
+      "stationPoints": [
+        {
+          "event": "mock_evt_b1",
+          "x": 239,
+          "y": 353
+        },
+        {
+          "event": "mock_evt_b2",
+          "x": 379,
+          "y": 268
+        }
+      ],
+      "stationRects": [
+        {
+          "x": 999.1875,
+          "y": 484.390625,
+          "w": 6.125,
+          "h": 16.5
+        },
+        {
+          "x": 1139.1875,
+          "y": 399.390625,
+          "w": 6.125,
+          "h": 16.5
+        }
+      ],
+      "markers": 0,
+      "mapSame": true,
+      "maps": 1,
+      "focus": "plan-tab",
+      "transitioning": false,
+      "detail": true,
+      "overflow": false,
+      "sdk": "Leaflet",
+      "mask": "none",
+      "shadow": "none",
+      "events": [
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true,
+          "actual": {
+            "x": 0,
+            "y": 0,
+            "w": 1440,
+            "h": 900
+          },
+          "target": {
+            "x": 763.21875,
+            "y": 140.390625,
+            "w": 619.1875,
+            "h": 619.1875
+          },
+          "atTarget": false
+        },
+        {
+          "phase": "entering",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true,
+          "actual": {
+            "x": 0,
+            "y": 0,
+            "w": 1440,
+            "h": 900
+          },
+          "target": {
+            "x": 763.21875,
+            "y": 140.390625,
+            "w": 619.1875,
+            "h": 619.1875
+          },
+          "atTarget": false
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_a",
+          "same": true,
+          "actual": {
+            "x": 763.1875,
+            "y": 140.390625,
+            "w": 619.1875,
+            "h": 619.1875
+          },
+          "target": {
+            "x": 763.21875,
+            "y": 140.390625,
+            "w": 619.1875,
+            "h": 619.1875
+          },
+          "atTarget": true
+        },
+        {
+          "phase": "detail",
+          "active": true,
+          "plan": "plan_mock_b",
+          "same": true,
+          "actual": {
+            "x": 763.1875,
+            "y": 140.390625,
+            "w": 619.1875,
+            "h": 619.1875
+          },
+          "target": {
+            "x": 763.21875,
+            "y": 140.390625,
+            "w": 619.1875,
+            "h": 619.1875
+          },
+          "atTarget": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "desktop-b-one-map": {
+      "assert": "pass"
+    },
+    "desktop-b-no-overflow": {
+      "assert": "pass"
+    },
+    "desktop-switch-model": {
+      "assert": "pass"
+    }
+  },
+  "log": [
+    "shot desktop-explore",
+    "shot desktop-entering",
+    "shot desktop-detail",
+    "shot desktop-detail-b",
+    "Error: waitFor timeout (6000ms): window.WanderItineraryFocus?.phase===\"explore\"\n    at waitFor (file:///Users/lmy/.lody/repos/local---e13ea63c064f/worktrees/b56dd9d9-0ca8-44b5-aaed-8ac6a021e6d9/docs/issue-37/capture.mjs:84:198)\n    at async file:///Users/lmy/.lody/repos/local---e13ea63c064f/worktrees/b56dd9d9-0ca8-44b5-aaed-8ac6a021e6d9/docs/issue-37/capture.mjs:147:35",
+    "shot fatal"
+  ]
+}

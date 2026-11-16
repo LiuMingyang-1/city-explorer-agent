@@ -1,0 +1,1327 @@
+{
+  "profile": "real-amap-original-gcj-fixture",
+  "failures": [],
+  "metrics": {
+    "initial": {
+      "ready": true,
+      "hasSDK": true,
+      "phase": "explore",
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "frame": {
+        "x": 763.21875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "maps": 1,
+      "canvases": [
+        {
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 1440,
+            "h": 900
+          },
+          "width": 1440,
+          "height": 900
+        }
+      ],
+      "stations": [],
+      "scenes": [
+        "·西安城墙5A",
+        "·大雁塔5A",
+        "·大明宫5A",
+        "·大唐芙蓉园5A",
+        "·西安碑林博物馆5A",
+        "·兵马俑5A",
+        "·华清宫5A",
+        "·陕西历史博物馆4A",
+        "·小雁塔4A",
+        "·西安半坡博物馆4A",
+        "·汉城湖4A",
+        "·广仁寺4A",
+        "·大唐西市4A",
+        "·曲江海洋极地公园4A",
+        "·陕西自然博物馆4A",
+        "·秦岭野生动物园4A",
+        "·诗经里4A"
+      ],
+      "activities": 0,
+      "status": "",
+      "visibility": "visible"
+    },
+    "generated": {
+      "ready": true,
+      "hasSDK": true,
+      "phase": "explore",
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "frame": {
+        "x": 763.21875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "maps": 1,
+      "canvases": [
+        {
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 1440,
+            "h": 900
+          },
+          "width": 1440,
+          "height": 900
+        }
+      ],
+      "stations": [
+        {
+          "title": "方案 B · 1. Mock 城南小展",
+          "rect": {
+            "x": 330.5,
+            "y": 621.234375,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 B · 2. Mock 周末市集",
+          "rect": {
+            "x": 470.3125,
+            "y": 536.65625,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 A · 1. Mock 光影展",
+          "rect": {
+            "x": 889.734375,
+            "y": 480.28125,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 A · 2. Mock 阅读分享",
+          "rect": {
+            "x": 1006.25,
+            "y": 395.703125,
+            "w": 24,
+            "h": 24
+          }
+        }
+      ],
+      "scenes": [
+        "·西安城墙5A",
+        "·西安碑林博物馆5A",
+        "·小雁塔4A"
+      ],
+      "activities": 1,
+      "status": "",
+      "visibility": "visible"
+    },
+    "desktop-a": {
+      "ready": true,
+      "hasSDK": true,
+      "phase": "detail",
+      "map": {
+        "x": 763.1875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "frame": {
+        "x": 763.21875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "maps": 1,
+      "canvases": [
+        {
+          "rect": {
+            "x": 763.1875,
+            "y": 140.390625,
+            "w": 619,
+            "h": 619
+          },
+          "width": 619,
+          "height": 619
+        }
+      ],
+      "stations": [
+        {
+          "title": "方案 A · 1. Mock 光影展",
+          "rect": {
+            "x": 1002.421875,
+            "y": 480.171875,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 A · 2. Mock 阅读分享",
+          "rect": {
+            "x": 1118.9375,
+            "y": 395.59375,
+            "w": 24,
+            "h": 24
+          }
+        }
+      ],
+      "scenes": [],
+      "activities": 0,
+      "status": "",
+      "visibility": "visible"
+    },
+    "desktop-a-ready": {
+      "assert": "pass"
+    },
+    "desktop-a-single-map": {
+      "assert": "pass"
+    },
+    "desktop-a-geometry": {
+      "ready": true,
+      "hasSDK": true,
+      "phase": "detail",
+      "map": {
+        "x": 763.1875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "frame": {
+        "x": 763.21875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "maps": 1,
+      "canvases": [
+        {
+          "rect": {
+            "x": 763.1875,
+            "y": 140.390625,
+            "w": 619,
+            "h": 619
+          },
+          "width": 619,
+          "height": 619
+        }
+      ],
+      "stations": [
+        {
+          "title": "方案 A · 1. Mock 光影展",
+          "rect": {
+            "x": 1002.421875,
+            "y": 480.171875,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 A · 2. Mock 阅读分享",
+          "rect": {
+            "x": 1118.9375,
+            "y": 395.59375,
+            "w": 24,
+            "h": 24
+          }
+        }
+      ],
+      "scenes": [],
+      "activities": 0,
+      "status": "",
+      "visibility": "visible",
+      "assert": "pass"
+    },
+    "desktop-a-stations": {
+      "ready": true,
+      "hasSDK": true,
+      "phase": "detail",
+      "map": {
+        "x": 763.1875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "frame": {
+        "x": 763.21875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "maps": 1,
+      "canvases": [
+        {
+          "rect": {
+            "x": 763.1875,
+            "y": 140.390625,
+            "w": 619,
+            "h": 619
+          },
+          "width": 619,
+          "height": 619
+        }
+      ],
+      "stations": [
+        {
+          "title": "方案 A · 1. Mock 光影展",
+          "rect": {
+            "x": 1002.421875,
+            "y": 480.171875,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 A · 2. Mock 阅读分享",
+          "rect": {
+            "x": 1118.9375,
+            "y": 395.59375,
+            "w": 24,
+            "h": 24
+          }
+        }
+      ],
+      "scenes": [],
+      "activities": 0,
+      "status": "",
+      "visibility": "visible",
+      "assert": "pass"
+    },
+    "desktop-a-safe-circle": {
+      "values": [
+        0.1163402859423714,
+        0.11618583055643054
+      ],
+      "assert": "pass"
+    },
+    "desktop-a-canvas": {
+      "0": {
+        "rect": {
+          "x": 763.1875,
+          "y": 140.390625,
+          "w": 619,
+          "h": 619
+        },
+        "width": 619,
+        "height": 619
+      },
+      "assert": "pass"
+    },
+    "desktop-stable": {
+      "ready": true,
+      "hasSDK": true,
+      "phase": "detail",
+      "map": {
+        "x": 763.1875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "frame": {
+        "x": 763.21875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "maps": 1,
+      "canvases": [
+        {
+          "rect": {
+            "x": 763.1875,
+            "y": 140.390625,
+            "w": 619,
+            "h": 619
+          },
+          "width": 619,
+          "height": 619
+        }
+      ],
+      "stations": [
+        {
+          "title": "方案 A · 1. Mock 光影展",
+          "rect": {
+            "x": 1002.421875,
+            "y": 480.171875,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 A · 2. Mock 阅读分享",
+          "rect": {
+            "x": 1118.9375,
+            "y": 395.59375,
+            "w": 24,
+            "h": 24
+          }
+        }
+      ],
+      "scenes": [],
+      "activities": 0,
+      "status": "",
+      "visibility": "visible"
+    },
+    "desktop-stable-stations": {
+      "assert": "pass"
+    },
+    "desktop-b": {
+      "ready": true,
+      "hasSDK": true,
+      "phase": "detail",
+      "map": {
+        "x": 763.1875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "frame": {
+        "x": 763.21875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "maps": 1,
+      "canvases": [
+        {
+          "rect": {
+            "x": 763.1875,
+            "y": 140.390625,
+            "w": 619,
+            "h": 619
+          },
+          "width": 619,
+          "height": 619
+        }
+      ],
+      "stations": [
+        {
+          "title": "方案 B · 1. Mock 城南小展",
+          "rect": {
+            "x": 990.78125,
+            "y": 480.171875,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 B · 2. Mock 周末市集",
+          "rect": {
+            "x": 1130.578125,
+            "y": 395.59375,
+            "w": 24,
+            "h": 24
+          }
+        }
+      ],
+      "scenes": [],
+      "activities": 0,
+      "status": "",
+      "visibility": "visible"
+    },
+    "desktop-b-ready": {
+      "assert": "pass"
+    },
+    "desktop-b-single-map": {
+      "assert": "pass"
+    },
+    "desktop-b-geometry": {
+      "ready": true,
+      "hasSDK": true,
+      "phase": "detail",
+      "map": {
+        "x": 763.1875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "frame": {
+        "x": 763.21875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "maps": 1,
+      "canvases": [
+        {
+          "rect": {
+            "x": 763.1875,
+            "y": 140.390625,
+            "w": 619,
+            "h": 619
+          },
+          "width": 619,
+          "height": 619
+        }
+      ],
+      "stations": [
+        {
+          "title": "方案 B · 1. Mock 城南小展",
+          "rect": {
+            "x": 990.78125,
+            "y": 480.171875,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 B · 2. Mock 周末市集",
+          "rect": {
+            "x": 1130.578125,
+            "y": 395.59375,
+            "w": 24,
+            "h": 24
+          }
+        }
+      ],
+      "scenes": [],
+      "activities": 0,
+      "status": "",
+      "visibility": "visible",
+      "assert": "pass"
+    },
+    "desktop-b-stations": {
+      "ready": true,
+      "hasSDK": true,
+      "phase": "detail",
+      "map": {
+        "x": 763.1875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "frame": {
+        "x": 763.21875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "maps": 1,
+      "canvases": [
+        {
+          "rect": {
+            "x": 763.1875,
+            "y": 140.390625,
+            "w": 619,
+            "h": 619
+          },
+          "width": 619,
+          "height": 619
+        }
+      ],
+      "stations": [
+        {
+          "title": "方案 B · 1. Mock 城南小展",
+          "rect": {
+            "x": 990.78125,
+            "y": 480.171875,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 B · 2. Mock 周末市集",
+          "rect": {
+            "x": 1130.578125,
+            "y": 395.59375,
+            "w": 24,
+            "h": 24
+          }
+        }
+      ],
+      "scenes": [],
+      "activities": 0,
+      "status": "",
+      "visibility": "visible",
+      "assert": "pass"
+    },
+    "desktop-b-safe-circle": {
+      "values": [
+        0.1320387107146244,
+        0.13184148188486033
+      ],
+      "assert": "pass"
+    },
+    "desktop-b-canvas": {
+      "0": {
+        "rect": {
+          "x": 763.1875,
+          "y": 140.390625,
+          "w": 619,
+          "h": 619
+        },
+        "width": 619,
+        "height": 619
+      },
+      "assert": "pass"
+    },
+    "desktop-returned": {
+      "ready": true,
+      "hasSDK": true,
+      "phase": "explore",
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "frame": {
+        "x": 763.21875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "maps": 1,
+      "canvases": [
+        {
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 1440,
+            "h": 900
+          },
+          "width": 1440,
+          "height": 900
+        }
+      ],
+      "stations": [
+        {
+          "title": "方案 A · 1. Mock 光影展",
+          "rect": {
+            "x": 1437.328125,
+            "y": 339.328125,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 A · 2. Mock 阅读分享",
+          "rect": {
+            "x": 1553.84375,
+            "y": 254.75,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 B · 1. Mock 城南小展",
+          "rect": {
+            "x": 878.09375,
+            "y": 480.28125,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 B · 2. Mock 周末市集",
+          "rect": {
+            "x": 1017.890625,
+            "y": 395.703125,
+            "w": 24,
+            "h": 24
+          }
+        }
+      ],
+      "scenes": [
+        "·西安城墙5A",
+        "·西安碑林博物馆5A",
+        "·小雁塔4A",
+        "·大唐西市4A"
+      ],
+      "activities": 1,
+      "status": "",
+      "visibility": "visible"
+    },
+    "desktop-restored-routes": {
+      "ready": true,
+      "hasSDK": true,
+      "phase": "explore",
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "frame": {
+        "x": 763.21875,
+        "y": 140.390625,
+        "w": 619.1875,
+        "h": 619.1875
+      },
+      "maps": 1,
+      "canvases": [
+        {
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 1440,
+            "h": 900
+          },
+          "width": 1440,
+          "height": 900
+        }
+      ],
+      "stations": [
+        {
+          "title": "方案 A · 1. Mock 光影展",
+          "rect": {
+            "x": 1437.328125,
+            "y": 339.328125,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 A · 2. Mock 阅读分享",
+          "rect": {
+            "x": 1553.84375,
+            "y": 254.75,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 B · 1. Mock 城南小展",
+          "rect": {
+            "x": 878.09375,
+            "y": 480.28125,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 B · 2. Mock 周末市集",
+          "rect": {
+            "x": 1017.890625,
+            "y": 395.703125,
+            "w": 24,
+            "h": 24
+          }
+        }
+      ],
+      "scenes": [
+        "·西安城墙5A",
+        "·西安碑林博物馆5A",
+        "·小雁塔4A",
+        "·大唐西市4A"
+      ],
+      "activities": 1,
+      "status": "",
+      "visibility": "visible",
+      "assert": "pass"
+    },
+    "narrow-a": {
+      "ready": true,
+      "hasSDK": true,
+      "phase": "detail",
+      "map": {
+        "x": 169.1875,
+        "y": 64,
+        "w": 202.796875,
+        "h": 202.796875
+      },
+      "frame": {
+        "x": 169.203125,
+        "y": 64,
+        "w": 202.796875,
+        "h": 202.796875
+      },
+      "maps": 1,
+      "canvases": [
+        {
+          "rect": {
+            "x": 169.1875,
+            "y": 64,
+            "w": 203,
+            "h": 203
+          },
+          "width": 203,
+          "height": 203
+        }
+      ],
+      "stations": [
+        {
+          "title": "方案 A · 1. Mock 光影展",
+          "rect": {
+            "x": 200.421875,
+            "y": 195.78125,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 A · 2. Mock 阅读分享",
+          "rect": {
+            "x": 316.9375,
+            "y": 111.203125,
+            "w": 24,
+            "h": 24
+          }
+        }
+      ],
+      "scenes": [],
+      "activities": 0,
+      "status": "",
+      "visibility": "visible"
+    },
+    "narrow-a-ready": {
+      "assert": "pass"
+    },
+    "narrow-a-single-map": {
+      "assert": "pass"
+    },
+    "narrow-a-geometry": {
+      "ready": true,
+      "hasSDK": true,
+      "phase": "detail",
+      "map": {
+        "x": 169.1875,
+        "y": 64,
+        "w": 202.796875,
+        "h": 202.796875
+      },
+      "frame": {
+        "x": 169.203125,
+        "y": 64,
+        "w": 202.796875,
+        "h": 202.796875
+      },
+      "maps": 1,
+      "canvases": [
+        {
+          "rect": {
+            "x": 169.1875,
+            "y": 64,
+            "w": 203,
+            "h": 203
+          },
+          "width": 203,
+          "height": 203
+        }
+      ],
+      "stations": [
+        {
+          "title": "方案 A · 1. Mock 光影展",
+          "rect": {
+            "x": 200.421875,
+            "y": 195.78125,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 A · 2. Mock 阅读分享",
+          "rect": {
+            "x": 316.9375,
+            "y": 111.203125,
+            "w": 24,
+            "h": 24
+          }
+        }
+      ],
+      "scenes": [],
+      "activities": 0,
+      "status": "",
+      "visibility": "visible",
+      "assert": "pass"
+    },
+    "narrow-a-stations": {
+      "ready": true,
+      "hasSDK": true,
+      "phase": "detail",
+      "map": {
+        "x": 169.1875,
+        "y": 64,
+        "w": 202.796875,
+        "h": 202.796875
+      },
+      "frame": {
+        "x": 169.203125,
+        "y": 64,
+        "w": 202.796875,
+        "h": 202.796875
+      },
+      "maps": 1,
+      "canvases": [
+        {
+          "rect": {
+            "x": 169.1875,
+            "y": 64,
+            "w": 203,
+            "h": 203
+          },
+          "width": 203,
+          "height": 203
+        }
+      ],
+      "stations": [
+        {
+          "title": "方案 A · 1. Mock 光影展",
+          "rect": {
+            "x": 200.421875,
+            "y": 195.78125,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 A · 2. Mock 阅读分享",
+          "rect": {
+            "x": 316.9375,
+            "y": 111.203125,
+            "w": 24,
+            "h": 24
+          }
+        }
+      ],
+      "scenes": [],
+      "activities": 0,
+      "status": "",
+      "visibility": "visible",
+      "assert": "pass"
+    },
+    "narrow-a-safe-circle": {
+      "values": [
+        0.3549384372731649,
+        0.3550188249442618
+      ],
+      "assert": "pass"
+    },
+    "narrow-a-canvas": {
+      "0": {
+        "rect": {
+          "x": 169.1875,
+          "y": 64,
+          "w": 203,
+          "h": 203
+        },
+        "width": 203,
+        "height": 203
+      },
+      "assert": "pass"
+    },
+    "narrow-stable": {
+      "ready": true,
+      "hasSDK": true,
+      "phase": "detail",
+      "map": {
+        "x": 169.1875,
+        "y": 64,
+        "w": 202.796875,
+        "h": 202.796875
+      },
+      "frame": {
+        "x": 169.203125,
+        "y": 64,
+        "w": 202.796875,
+        "h": 202.796875
+      },
+      "maps": 1,
+      "canvases": [
+        {
+          "rect": {
+            "x": 169.1875,
+            "y": 64,
+            "w": 203,
+            "h": 203
+          },
+          "width": 203,
+          "height": 203
+        }
+      ],
+      "stations": [
+        {
+          "title": "方案 A · 1. Mock 光影展",
+          "rect": {
+            "x": 200.421875,
+            "y": 195.78125,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 A · 2. Mock 阅读分享",
+          "rect": {
+            "x": 316.9375,
+            "y": 111.203125,
+            "w": 24,
+            "h": 24
+          }
+        }
+      ],
+      "scenes": [],
+      "activities": 0,
+      "status": "",
+      "visibility": "visible"
+    },
+    "narrow-stable-stations": {
+      "assert": "pass"
+    },
+    "narrow-b": {
+      "ready": true,
+      "hasSDK": true,
+      "phase": "detail",
+      "map": {
+        "x": 169.1875,
+        "y": 64,
+        "w": 202.796875,
+        "h": 202.796875
+      },
+      "frame": {
+        "x": 169.203125,
+        "y": 64,
+        "w": 202.796875,
+        "h": 202.796875
+      },
+      "maps": 1,
+      "canvases": [
+        {
+          "rect": {
+            "x": 169.1875,
+            "y": 64,
+            "w": 203,
+            "h": 203
+          },
+          "width": 203,
+          "height": 203
+        }
+      ],
+      "stations": [
+        {
+          "title": "方案 B · 1. Mock 城南小展",
+          "rect": {
+            "x": 195.75,
+            "y": 191.5625,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 B · 2. Mock 周末市集",
+          "rect": {
+            "x": 321.609375,
+            "y": 115.421875,
+            "w": 24,
+            "h": 24
+          }
+        }
+      ],
+      "scenes": [],
+      "activities": 0,
+      "status": "",
+      "visibility": "visible"
+    },
+    "narrow-b-ready": {
+      "assert": "pass"
+    },
+    "narrow-b-single-map": {
+      "assert": "pass"
+    },
+    "narrow-b-geometry": {
+      "ready": true,
+      "hasSDK": true,
+      "phase": "detail",
+      "map": {
+        "x": 169.1875,
+        "y": 64,
+        "w": 202.796875,
+        "h": 202.796875
+      },
+      "frame": {
+        "x": 169.203125,
+        "y": 64,
+        "w": 202.796875,
+        "h": 202.796875
+      },
+      "maps": 1,
+      "canvases": [
+        {
+          "rect": {
+            "x": 169.1875,
+            "y": 64,
+            "w": 203,
+            "h": 203
+          },
+          "width": 203,
+          "height": 203
+        }
+      ],
+      "stations": [
+        {
+          "title": "方案 B · 1. Mock 城南小展",
+          "rect": {
+            "x": 195.75,
+            "y": 191.5625,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 B · 2. Mock 周末市集",
+          "rect": {
+            "x": 321.609375,
+            "y": 115.421875,
+            "w": 24,
+            "h": 24
+          }
+        }
+      ],
+      "scenes": [],
+      "activities": 0,
+      "status": "",
+      "visibility": "visible",
+      "assert": "pass"
+    },
+    "narrow-b-stations": {
+      "ready": true,
+      "hasSDK": true,
+      "phase": "detail",
+      "map": {
+        "x": 169.1875,
+        "y": 64,
+        "w": 202.796875,
+        "h": 202.796875
+      },
+      "frame": {
+        "x": 169.203125,
+        "y": 64,
+        "w": 202.796875,
+        "h": 202.796875
+      },
+      "maps": 1,
+      "canvases": [
+        {
+          "rect": {
+            "x": 169.1875,
+            "y": 64,
+            "w": 203,
+            "h": 203
+          },
+          "width": 203,
+          "height": 203
+        }
+      ],
+      "stations": [
+        {
+          "title": "方案 B · 1. Mock 城南小展",
+          "rect": {
+            "x": 195.75,
+            "y": 191.5625,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 B · 2. Mock 周末市集",
+          "rect": {
+            "x": 321.609375,
+            "y": 115.421875,
+            "w": 24,
+            "h": 24
+          }
+        }
+      ],
+      "scenes": [],
+      "activities": 0,
+      "status": "",
+      "visibility": "visible",
+      "assert": "pass"
+    },
+    "narrow-b-safe-circle": {
+      "values": [
+        0.3625847044020914,
+        0.36276535979038804
+      ],
+      "assert": "pass"
+    },
+    "narrow-b-canvas": {
+      "0": {
+        "rect": {
+          "x": 169.1875,
+          "y": 64,
+          "w": 203,
+          "h": 203
+        },
+        "width": 203,
+        "height": 203
+      },
+      "assert": "pass"
+    },
+    "narrow-returned": {
+      "ready": true,
+      "hasSDK": true,
+      "phase": "explore",
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "frame": {
+        "x": 169.203125,
+        "y": 64,
+        "w": 202.796875,
+        "h": 202.796875
+      },
+      "maps": 1,
+      "canvases": [
+        {
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 390,
+            "h": 844
+          },
+          "width": 390,
+          "height": 844
+        }
+      ],
+      "stations": [
+        {
+          "title": "方案 A · 1. Mock 光影展",
+          "rect": {
+            "x": 672.328125,
+            "y": 79.234375,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 A · 2. Mock 阅读分享",
+          "rect": {
+            "x": 788.84375,
+            "y": -5.34375,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 B · 1. Mock 城南小展",
+          "rect": {
+            "x": 113.09375,
+            "y": 220.1875,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 B · 2. Mock 周末市集",
+          "rect": {
+            "x": 252.890625,
+            "y": 135.609375,
+            "w": 24,
+            "h": 24
+          }
+        }
+      ],
+      "scenes": [
+        "·西安城墙5A",
+        "·小雁塔4A"
+      ],
+      "activities": 2,
+      "status": "",
+      "visibility": "visible"
+    },
+    "narrow-restored-routes": {
+      "ready": true,
+      "hasSDK": true,
+      "phase": "explore",
+      "map": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "frame": {
+        "x": 169.203125,
+        "y": 64,
+        "w": 202.796875,
+        "h": 202.796875
+      },
+      "maps": 1,
+      "canvases": [
+        {
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 390,
+            "h": 844
+          },
+          "width": 390,
+          "height": 844
+        }
+      ],
+      "stations": [
+        {
+          "title": "方案 A · 1. Mock 光影展",
+          "rect": {
+            "x": 672.328125,
+            "y": 79.234375,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 A · 2. Mock 阅读分享",
+          "rect": {
+            "x": 788.84375,
+            "y": -5.34375,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 B · 1. Mock 城南小展",
+          "rect": {
+            "x": 113.09375,
+            "y": 220.1875,
+            "w": 24,
+            "h": 24
+          }
+        },
+        {
+          "title": "方案 B · 2. Mock 周末市集",
+          "rect": {
+            "x": 252.890625,
+            "y": 135.609375,
+            "w": 24,
+            "h": 24
+          }
+        }
+      ],
+      "scenes": [
+        "·西安城墙5A",
+        "·小雁塔4A"
+      ],
+      "activities": 2,
+      "status": "",
+      "visibility": "visible",
+      "assert": "pass"
+    }
+  },
+  "log": [
+    "shot initial",
+    "shot generated",
+    "shot desktop-entering",
+    "shot desktop-detail-a",
+    "shot desktop-detail-b",
+    "shot desktop-returned",
+    "shot narrow-entering",
+    "shot narrow-detail-a",
+    "shot narrow-detail-b",
+    "shot narrow-returned"
+  ]
+}
