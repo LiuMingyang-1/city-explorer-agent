@@ -13,8 +13,13 @@
 - `frontend/mascot-card.css`：`.glass-card` 上 `--mascot-w/--mascot-left/--mascot-top` 变量驱动
   boop-face 的 `--face-size`。欢迎态约 64–88px（`clamp(64,4.11vw+26,88)`，随标题字号对应的
   可用空间缩放），对话态/历史展开态 52px；移动端欢迎 60px、对话 48px。
-  `.welcome h1` 用 `text-indent` 只缩进问候行，问题行保持全宽——不增加纵向占用，
-  与右上「新聊天」同一头部区域。`prefers-reduced-motion` 下尺寸过渡即时生效。
+  `prefers-reduced-motion` 下尺寸过渡即时生效。
+- 问候排版（M4 修）：`.greet-line` 块包问候+句号，首行 `text-indent` 让出头像；
+  `padding-right:80px` 预留右上「新聊天」位，`white-space:normal` 允许长问候自然折行。
+  约束视口（`max-height:700px` 桌面 / `max-width:700px` 移动端）下头像底缘会越过第二行，
+  此时 h1 整体 `padding-left`（= 头像右缘+6px-卡片左内边距，`--card-pad-l` 变量镜像
+  style.css 各断点），问候列改为头像右侧通排的两行 lockup、零纵向增长；
+  问候语同时降为单行 `text-overflow:ellipsis`。高视口布局不变。
 - `chat.js` 四个挂点（全部在既有 `isCurrent()` 代际守卫内）：
   `deliver` 开始 `begin()`→thinking；`onProgress` 按 `stage` 映射
   `searching_events→searching、exploring_plans/routing→thinking、validating_schedule→validating`；
@@ -58,10 +63,26 @@ clarification/error/retry/newChat、旧代迟到结果与进度的代际隔离�
 历史切换复位、挂载失败降级。`npm run typecheck`、`npm run check:frontend`
 （已含 `node --check frontend/mascot-card.js`）及 50 个相关前端回归全部通过。
 
+## M4 排版修复（layout-fix/）
+
+针对 M2 QA 的 F1（第二行标题伸进头像下缘）与 F2（长问候被卡缘硬裁）：
+
+- 证据：`layout-fix/verify-layout.mjs`（CDP，复用 QA 的 Range.getClientRects 行级探针），
+  `layout-fix/metrics.json` + `v*-welcome.png` / `v*-long-greeting.png`，44/44 断言通过。
+- 覆盖视口：1440×900、1440×680（矮宽）、1024×600、900×800（高窄）、800×480、320×568(DPR2)。
+- F1 修复判定：所有视口问候各行文字与头像矩形零相交（原 1024/800/320 三处 FAIL 全消）。
+- F2 修复判定：1440 高视口长问候自然折行且全部行在卡片内（无 clip）；
+  约束视口（1024/800/1440s/320）问候单行省略号，`greet-line` 可视盒右缘在
+  「新聊天」左缘之前（264≤269 / 207≤220 等），无重叠。
+- 320×568 对话态/复位态复验：sameNode、`happy` 48px、复位 `idle` 60px、碰撞为零。
+
+
+
 ## 仍需 QA
 
 - 真实后端流（非 mock）下进度密度、取消/超时/断连的表情形态与恢复。
 - `prefers-reduced-motion` 实机走查（代码路径已覆盖，未做系统级截图）。
 - 短窗口桌面（高 ~600px）与横屏平板的余量确认；欢迎尺寸在窄桌面收敛到 ~64–70px。
 - 历史展开态形象缩到 52px 是否保留（当前随 `.history-expanded` 缩放）。
-- 多语言/长问候语下 `text-indent` 的排版余量。
+- 超长问候（>20 字）在高视口自然折行会推高 welcome 区；约束视口为单行省略，
+  若产品要两可见行需另行设计。
