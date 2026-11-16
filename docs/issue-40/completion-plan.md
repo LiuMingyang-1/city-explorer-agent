@@ -15,10 +15,10 @@
 
 | 文件 | 责任 |
 | --- | --- |
-| `frontend/mascot-team.js` | 编排层唯一实现：`createMascotTeam(container, opts)`，契约见 `mascot-states.md` §3.4。持有 round token、分身 Map、等待池、嵌套/孤儿集、墓碑集；管理克隆 DOM（boop-face + DOM 徽标/title）与槽位轮换；`applyEvent` 返回 `{mainFace}` 建议。 |
+| `frontend/mascot-team.js` | 编排层唯一实现：`createMascotTeam(container, opts)`，契约见 `mascot-states.md` §3.4。`begin()`→`{round,mainFace:'thinking'}`；`applyEvent(evt,round)`/`settle(kind,round)`/`cancel(round)` 必填 token，≠当前则返回 `null` 零副作用；`snapshot()` 含 `round`；`destroy()` 永闭合。持有分身 Map、等待池、嵌套/孤儿集、墓碑集；管理克隆 DOM（boop-face + DOM 徽标/title）与槽位轮换。 |
 | `frontend/mascot-team-preview.html` | 独立预览页骨架：主脸区、分身条（3 槽+`+N` 池徽标）、事件控制台、场景步骤器、事件日志、RM 开关、「离线模拟·非真实后端」横幅。 |
 | `frontend/mascot-team-preview.css` | 预览页独立样式（仿 `mascot-preview.css` 自洽，不改全局）。 |
-| `frontend/mascot-team-preview.js` | 驱动器：`createWanderMascot` 注入 `createMascotTeam`；本地 `SIM_*` 事件构造器（逐字段仿 `progress.ts` wire 形状，`type`/`type` 缺省都与契约一致）；按钮与场景步骤点击时即时 `team.applyEvent(...)`，并把事件 JSON 追加进日志列表。 |
+| `frontend/mascot-team-preview.js` | 驱动器：`createWanderMascot` 注入 `createMascotTeam`；`begin()` 返回的 `round` 存进本地变量，之后**每次** `applyEvent/settle/cancel` 都显式带上（token 是本地参数，不进 SIM_* payload）；`cancel`/`begin` 后重新捕获。本地 `SIM_*` 事件构造器（逐字段仿 `progress.ts` wire 形状，`type`/缺省 `type` 都与契约一致）；按钮与场景步骤点击时即时发事件，并把事件 JSON 追加进日志列表。 |
 | `test/frontend-mascot-team.test.ts` | 编排层单测，仿 `test/frontend-mascot-card.test.ts` 的 vm fixture 模式，`createMascot` 注入假实现断言 DOM/返回值。 |
 
 **可复用 import**：`wander-mascot.js`（`createWanderMascot`、`HAT_PALETTES`）、`wander-mascot-motion.js`（无需直接引用）。
@@ -53,15 +53,18 @@ RM 开关:   checkbox 给全部 boop-face 置 motion="reduce"
 ### 2.4 诚实性红线（F2 同样适用）
 
 - 事件只由**手动点击**发出；不设 `setTimeout` 驱动的自动剧本，不用计时器伪造业务完成（装饰动画时长属姿态层，不在此列）。
-- 页面全程挂「离线模拟」标识；SIM_ 事件构造器只造 `mascot-states.md` §1 列出的真实字段，不发明 wire 上没有的键。
-- `tool_call` 只当结束事件用；无 spawned 不建分身；`plan_id` 徽标文案写「派发」不写「方案」。
+- 页面全程挂「离线模拟」标识；SIM_ 事件构造器只造 `mascot-states.md` §1 列出的真实字段，JSON 键与 #39 契约一一对应，不发明 wire 上没有的键（`round` 是调用参数不是事件字段）。
+- `tool_call` 只当结束事件用：分身侧规范呈现 = 徽标「已检索」脉冲 + 真实 `result_count`，**不切 searching、不举镜**；无 spawned 不建分身；`plan_id` 徽标文案写「派发」不写「方案」。
+- **stage 无权清理分身**：任何 stage 帧到达都只更新主脸/相位；pending 分身只被同 id `subagent_done` 或 settle/cancel/reset/destroy 移除。validating 时仍有 pending 为合法画面，不伪造完成。
 
 ### 2.5 单测要点（`frontend-mascot-team.test.ts`）
 
 - `type ?? "stage"` 归一；spawn:done 配对、重复 spawned/done、未知 id、idle 相位事件忽略
+- **round 隔离**：`begin()` 新轮后，旧 round 的 `applyEvent`/`settle`/`cancel` 全返回 `null` 且零副作用；`snapshot().round` 正确；`destroy()` 后一切 noop
+- **stage 不回收**：exploring_plans 重复到达/routing/validating 到达时 pending 分身保持存活，仅同 id done 使其退场
 - 槽位轮换、>3 溢出计数与补位、嵌套（异 parent_run_id）归入聚合
-- cancel/settle 清场与墓碑；round token 隔离
-- `applyEvent`/`settle`/`cancel` 返回的 mainFace 建议值全表断言（对照 §2.1 总表）
+- cancel/settle 清场与墓碑；settle 时仍 pending 的分身按"轮次关闭"移除（不记 done）
+- `applyEvent`/`settle`/`cancel` 返回的 mainFace 建议值全表断言（对照 `mascot-states.md` §2.1 总表）
 
 ### 2.6 实测项（交付时记录，不编数）
 
@@ -70,6 +73,6 @@ RM 开关:   checkbox 给全部 boop-face 置 motion="reduce"
 
 ## 3. F2 之后（不归本计划执行）
 
-- **#41 生产接线**：`mascot-card.js` facade 内嵌 `createMascotTeam`（容器挂在卡片头主脸旁）；`chat.js` `onProgress` 增调 `team.applyEvent(progress)`、`deliver` 首尾调 `begin/settle`、`wander:reset` 调 `cancel`。旧 `STAGE_STATE` 映射退役由团队层接管。
+- **#41 生产接线**：`mascot-card.js` facade 内嵌 `createMascotTeam`（容器挂在卡片头主脸旁）；`deliver` 闭包捕获 `const {round}=team.begin()`，`onProgress` 调 `team.applyEvent(progress,round)`，结果/失败调 `team.settle(kind,round)`，`wander:reset` 调 `team.cancel(round)`——旧请求的迟到帧天然被 token 挡掉。旧 `STAGE_STATE` 映射退役由团队层接管。
 - **#43**：`tool_call.args_summary` 的 `near=lat,lng` 仅供检索涟漪定位参考，分身不落位。
 - **#38 合入后复核**：候选上限落地为 3 时，等待池路径仍保留（信号量 8 的共享池不因 UI 上限收缩）。
