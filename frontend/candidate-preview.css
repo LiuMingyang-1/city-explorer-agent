@@ -1,0 +1,66 @@
+/* Map candidate layer — issue #41 (I41-D). Styles for WanderCandidates markers
+   only; every rule is scoped under .wander-candidate-* so route/activity/scene
+   layers are untouched. Durations track module timers: highlight ≤480ms,
+   settle fade ≤450ms. Reduced-motion removes all animation. */
+
+.wander-candidate-dot {
+  width: 10px; height: 10px; border-radius: 999px;
+  background: #a9b09e; border: 2px solid #fff;
+  box-shadow: 0 1px 4px #29392e55;
+}
+.wander-candidate-dot[data-palette="sand"]  { background: #cfb88c; }
+.wander-candidate-dot[data-palette="clay"]  { background: #ba8e77; }
+.wander-candidate-dot[data-palette="moss"]  { background: #82916f; }
+.wander-candidate-dot[data-palette="neutral"] { background: #a9b09e; }
+
+/* done.stops 高亮短拍（模块 ≤480ms 后清 class 并收锚）。 */
+.wander-candidate-dot.highlight { animation: cp-pulse .48s ease-out 2; }
+@keyframes cp-pulse {
+  0%   { box-shadow: 0 0 0 0 #cfb88cbb; }
+  100% { box-shadow: 0 0 0 9px #cfb88c00; }
+}
+
+/* settle 落选灰显（≤450ms 后整层回收）。 */
+.wander-candidate-dot.dim {
+  background: #b7bcb0; border-color: #e9e9dd;
+  opacity: .55; box-shadow: none;
+}
+
+/* 分身地图锚点：真实 boop-face + 派发序字母 chip + 任务 title。
+   帽色由 wander-mascot 实例 palette 呈现，data-palette 仅作容器标记。 */
+.wander-candidate-anchor {
+  position: relative; display: grid; justify-items: center;
+  width: 72px; pointer-events: none;
+}
+.wander-candidate-anchor boop-face {
+  display: block; width: 42px; height: 42px;
+  filter: drop-shadow(0 2px 4px #29392e55);
+}
+.wander-candidate-letter {
+  position: absolute; top: -3px; right: 8px; z-index: 1;
+  min-width: 17px; height: 17px; padding: 0 5px;
+  display: grid; place-items: center;
+  border-radius: 999px; background: #29392e; color: #f0efe2;
+  font-size: 10px; letter-spacing: .5px; line-height: 1;
+  pointer-events: none;
+}
+.wander-candidate-title {
+  margin-top: 1px; max-width: 88px; padding: 0 5px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 10px; line-height: 15px; color: #5a6b54;
+  background: #f0efe2d9; border-radius: 7px;
+  pointer-events: none;
+}
+
+/* 入场 FLIP：从卡片主脸 rect 装饰性飞向真实锚点，仅入场一帧窗口。
+   transform 只作用在 marker 内容节点，地理锚定不变，move/resize 不漂移。 */
+.wander-candidate-anchor.flip-enter {
+  transform: translate(var(--flip-x, 0px), var(--flip-y, 0px)) scale(.55);
+  opacity: 0;
+  transition: transform .45s cubic-bezier(.2,.7,.3,1), opacity .45s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wander-candidate-dot.highlight { animation: none; }
+  .wander-candidate-anchor.flip-enter { transition: none; transform: none; opacity: 1; }
+}

@@ -145,8 +145,8 @@ event: progress  data: {"stage":"searching_events","message":"正在检索活动
 event: progress  data: {"type":"tool_call","tool_call_id":"tc_1","name":"search_events","args_summary":"date=2026-11-14 类别=展览","result_count":12,"status":"completed","duration_ms":34,"message":"search_events date=2026-11-14 类别=展览：12 条"}
 event: progress  data: {"stage":"exploring_plans","message":"正在并行探路方案 A 与方案 B","plan_ids":["A","B"]}
 event: progress  data: {"type":"subagent_spawned","subagent_id":"sess_child_a","plan_id":"A","parent_run_id":"run_parent","title":"曲江看展方案","task_summary":"2026-11-14 下午曲江方向看展探路","message":"正在派发子任务「曲江看展方案」"}
-event: progress  data: {"type":"tool_call","tool_call_id":"tc_7","name":"search_events","args_summary":"date=2026-11-14 类别=展览","result_count":5,"status":"completed","duration_ms":21,"subagent_id":"sess_child_a","message":"search_events date=2026-11-14 类别=展览：5 条"}
-event: progress  data: {"type":"subagent_done","subagent_id":"sess_child_a","plan_id":"A","status":"completed","kind":"itinerary","stops_count":3,"title":"曲江看展方案","summary":"曲江看展阅读线","child_run_id":"run_child_a","child_run_status":"completed","message":"子任务完成：3 站 曲江看展阅读线"}
+event: progress  data: {"type":"tool_call","tool_call_id":"tc_7","name":"search_events","args_summary":"date=2026-11-14 类别=展览","result_count":5,"status":"completed","duration_ms":21,"subagent_id":"sess_child_a","candidates":[{"event_id":"evt_31","latitude":34.2186,"longitude":108.9531},{"event_id":"evt_87","latitude":34.2301,"longitude":108.9602}],"message":"search_events date=2026-11-14 类别=展览：5 条"}
+event: progress  data: {"type":"subagent_done","subagent_id":"sess_child_a","plan_id":"A","status":"completed","kind":"itinerary","stops_count":3,"stops":[{"event_id":"evt_31","latitude":34.2186,"longitude":108.9531},{"event_id":"evt_44","latitude":34.2244,"longitude":108.9402}],"title":"曲江看展方案","summary":"曲江看展阅读线","child_run_id":"run_child_a","child_run_status":"completed","message":"子任务完成：3 站 曲江看展阅读线"}
 event: progress  data: {"stage":"routing","message":"正在获取站间道路路线","plan_ids":[…]}
 event: progress  data: {"stage":"validating_schedule","message":"正在校验路线时间","plan_ids":[…]}
 event: result    data: <ChatResult JSON，同 /api/chat 响应>
@@ -170,11 +170,15 @@ event: error     data: {"error":{"code":"…","message":"…","retryable":false}
   方案标号（"A"/"B"…，与 exploring_plans.plan_ids 同源，取不到为 null）；
   `title` ≤40 码点（缺省取 task 裁剪）；`task_summary` ≤160 码点。
 - **subagent_done**：`{type,subagent_id,plan_id,status,kind?,stops_count,
-  title,summary,child_run_id,child_run_status,message}`。`status` =
+  stops?,title,summary,child_run_id,child_run_status,message}`。`status` =
   回传父模型的派发终态 `"completed"|"failed"|"cancelled"`；`title` ≤40
   码点（与 spawned 同源，必填）；`stops_count` 仅 completed+itinerary
   为站点数否则 null；`kind` 为 `"itinerary"|"clarification"`（非 completed
   省略）；`summary` 为行程摘要/追问/失败原因 ≤160 码点。
+  `stops` 仅 completed+itinerary 透出：按行程站序的真实站点
+  `[{event_id,latitude,longitude}]`（GCJ-02，≤24 条、event_id 去重、
+  缺库/无坐标站如实跳过；终态 gate——close 降级 failed/取消后绝不带出），
+  其余情形字段整体省略。
   `child_run_id` / `child_run_status` 为**事件发射瞬间**子会话最新 run
   的 DB 状态快照（`listRunsBySession.at(-1)` 如实抄录，查无为 null）：
   - 快照可与父视角 `status` 不同——父取消/子超时 → `status:"cancelled"`
@@ -183,13 +187,16 @@ event: error     data: {"error":{"code":"…","message":"…","retryable":false}
   - 消费者**不得**据 `child_run_status` 猜测子 run 已终结；确认终态需
     另行查询会话库。服务端不做 running→终态的追帧补发。
 - **tool_call**：`{type,tool_call_id,name,args_summary,result_count,status,
-  duration_ms?,subagent_id?,message}`。tool_execution_end 即发：
+  duration_ms?,subagent_id?,candidates?,message}`。tool_execution_end 即发：
   `tool_call_id` = Pi 调用 ID（start/end 配对）；`args_summary` = 参数
   白名单单行摘要 ≤160 码点（search_events 的 type/date/category/keyword/
   near/radiusKm；delegate_task 的 title|task；estimate_travel 起止+mode；
   web_search query；未知工具给安全默认摘要，不回传原始入参 JSON）；
   `result_count` = 命中数（`details.count` 有限数时透出，error 时 null）；
   `status` = `"completed"|"error"`。
+  `candidates` 仅 `search_events` 成功时透出：`structuredContent.events`
+  的真实命中坐标 `[{event_id,latitude,longitude}]`（GCJ-02，按结果原序
+  ≤16 条、event_id 去重；其余工具/error/提取不出恒省略）。
 - **subagent_id 盖章**：父会话原生事件无 `subagent_id`；被派发子会话内部
   产出的事件（tool_call 等实体级事件）一律盖章为 child sessionId 上达。
   stage 属本轮私有叙事不透传，子会话的 stage 不会出现在父流中。

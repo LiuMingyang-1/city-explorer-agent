@@ -1,0 +1,134 @@
+{
+  "mode": "probe",
+  "at": "2026-11-16T12:59:43.589Z",
+  "metrics": {
+    "flood-visible-cap": {
+      "assert": "pass",
+      "live": 3
+    },
+    "flood-overflow-honest": {
+      "assert": "pass",
+      "overflowChip": "+1"
+    },
+    "flood-settled-clean": {
+      "assert": "pass"
+    },
+    "flood-no-errors": {
+      "assert": "pass",
+      "errs": []
+    },
+    "renderfail-anchors-up": {
+      "assert": "pass",
+      "anchoredBefore": 1
+    },
+    "renderfail-render-invoked": {
+      "assert": "pass",
+      "failCalls": 1
+    },
+    "renderfail-anchors-revoked": {
+      "assert": "pass",
+      "anchored": [],
+      "anchorEls": 0
+    },
+    "renderfail-card-faces-back": {
+      "assert": "pass",
+      "cardFaces": [
+        "false"
+      ]
+    },
+    "renderfail-points-kept": {
+      "assert": "pass",
+      "subs": [
+        {
+          "id": "rf1",
+          "title": "渲染失败探针子任务",
+          "letter": "A",
+          "palette": "sand",
+          "status": "working",
+          "points": 3,
+          "stops": 0,
+          "retired": false,
+          "anchored": false
+        }
+      ]
+    },
+    "renderfail-recovery": {
+      "assert": "pass",
+      "recovered": {
+        "round": 2,
+        "closed": false,
+        "destroyed": false,
+        "subs": [
+          {
+            "id": "rf1",
+            "title": "渲染失败探针子任务",
+            "letter": "A",
+            "palette": "sand",
+            "status": "working",
+            "points": 4,
+            "stops": 0,
+            "retired": false,
+            "anchored": true
+          }
+        ],
+        "aggregate": 0,
+        "anchored": [
+          "rf1"
+        ],
+        "dots": 4,
+        "anchors": 1,
+        "dropped": 0
+      }
+    },
+    "renderfail-no-fatal": {
+      "assert": "pass",
+      "errs": []
+    },
+    "lateimport-degraded-identity": {
+      "assert": "pass",
+      "degraded": [
+        {
+          "face": true,
+          "letter": "A",
+          "title": "曲江看展探路方案"
+        },
+        {
+          "face": true,
+          "letter": "B",
+          "title": "城南市集签售探路方案"
+        }
+      ]
+    },
+    "lateimport-no-zombie-face": {
+      "assert": "pass",
+      "revived": 0
+    },
+    "lateimport-no-errors": {
+      "assert": "pass",
+      "errs": []
+    },
+    "fade-reset-subs-zero": {
+      "assert": "pass",
+      "midFade": {
+        "round": 4,
+        "closed": true,
+        "destroyed": false,
+        "subs": [],
+        "aggregate": 0,
+        "anchored": [],
+        "dots": 0,
+        "anchors": 0,
+        "dropped": 0
+      }
+    },
+    "fade-reset-no-repaint": {
+      "assert": "pass",
+      "dotsAfter": 0
+    },
+    "probe-no-errors": {
+      "assert": "pass",
+      "errs": []
+    }
+  },
+  "failures": []
+}

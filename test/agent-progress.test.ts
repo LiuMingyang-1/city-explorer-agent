@@ -6,6 +6,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  PROGRESS_CANDIDATE_LIMIT,
+  PROGRESS_POINT_ID_MAX,
+  PROGRESS_POINTS_BYTE_LIMIT,
+  PROGRESS_STOP_LIMIT,
   PROGRESS_TEXT_LIMIT,
   clipText,
   type ToolCallEvent,
@@ -132,6 +136,121 @@ test("toolCallEvent：name/args_summary/result_count/status/duration_ms", () => 
   assert.equal(web.result_count, 2);
 });
 
+const eventRow = (id: string, latitude = 34.2, longitude = 108.9) => ({ id, title: id, latitude, longitude });
+
+test("toolCallEvent candidates：仅成功 search_events 透真实候选，有序去重有界", () => {
+  const events = [
+    eventRow("evt_1"),
+    eventRow("evt_2", 34.3, 108.8),
+    eventRow("evt_1"), // 重复 id 去重
+    { id: "", latitude: 34.2, longitude: 108.9 }, // 空 id 跳过
+    { id: "evt_bad_lat", latitude: 91, longitude: 108.9 }, // 非法纬度跳过
+    { id: "evt_bad_lng", latitude: 34.2, longitude: 181 }, // 非法经度跳过
+    { id: "evt_nan", latitude: Number.NaN, longitude: 108.9 },
+    { latitude: 34.2, longitude: 108.9 }, // 缺 id 跳过
+    eventRow("evt_3"),
+  ];
+  const call = toolCallEvent({
+    toolCallId: "tc_c",
+    name: "search_events",
+    args: {},
+    result: { details: { count: events.length }, structuredContent: { events } },
+    isError: false,
+  });
+  assert.deepEqual(
+    call.candidates,
+    [
+      { event_id: "evt_1", latitude: 34.2, longitude: 108.9 },
+      { event_id: "evt_2", latitude: 34.3, longitude: 108.8 },
+      { event_id: "evt_3", latitude: 34.2, longitude: 108.9 },
+    ],
+  );
+
+  // 超过 16 条按结果原序截断；字节预算独立兜底（≤8KiB）。
+  const many = Array.from({ length: 40 }, (_, i) => eventRow(`evt_${i}`));
+  const capped = toolCallEvent({
+    toolCallId: "tc_cap",
+    name: "search_events",
+    args: {},
+    result: { details: { count: 40 }, structuredContent: { events: many } },
+    isError: false,
+  });
+  assert.equal(capped.candidates?.length, PROGRESS_CANDIDATE_LIMIT);
+  assert.equal(capped.candidates?.[0].event_id, "evt_0");
+  assert.ok(
+    new TextEncoder().encode(JSON.stringify(capped.candidates)).length <=
+      PROGRESS_POINTS_BYTE_LIMIT,
+  );
+  // 极端长真实 id：不截断冒充身份——超过 ID_MAX 整条跳过；
+  // 多条多字节 id 顶到字节预算即停，绝不超帧。
+  const fat = Array.from({ length: 20 }, (_, i) =>
+    eventRow(`长_${"界".repeat(PROGRESS_POINT_ID_MAX)}_${i}`),
+  ).concat([eventRow("evt_tail")]);
+  const fatCall = toolCallEvent({
+    toolCallId: "tc_fat",
+    name: "search_events",
+    args: {},
+    result: { structuredContent: { events: fat } },
+    isError: false,
+  });
+  assert.deepEqual(
+    fatCall.candidates?.map((c) => c.event_id),
+    ["evt_tail"],
+  );
+  const huge = Array.from({ length: 20 }, (_, i) =>
+    eventRow(`长_${"界".repeat(200)}_${i}`),
+  ); // 每条 ~670B，20 条 >8KiB
+  const hugeCall = toolCallEvent({
+    toolCallId: "tc_huge",
+    name: "search_events",
+    args: {},
+    result: { structuredContent: { events: huge } },
+    isError: false,
+  });
+  assert.ok((hugeCall.candidates?.length ?? 0) < 20);
+  assert.ok(
+    new TextEncoder().encode(JSON.stringify(hugeCall.candidates)).length <=
+      PROGRESS_POINTS_BYTE_LIMIT,
+  );
+});
+
+test("toolCallEvent candidates：error/非 search/缺 structuredContent 一律省略", () => {
+  const events = [eventRow("evt_1")];
+  const errored = toolCallEvent({
+    toolCallId: "tc1",
+    name: "search_events",
+    args: {},
+    result: { structuredContent: { events } },
+    isError: true,
+  });
+  assert.equal("candidates" in errored, false);
+  const otherTool = toolCallEvent({
+    toolCallId: "tc2",
+    name: "web_search",
+    args: {},
+    result: { structuredContent: { events } },
+    isError: false,
+  });
+  assert.equal("candidates" in otherTool, false);
+  const noStructured = toolCallEvent({
+    toolCallId: "tc3",
+    name: "search_events",
+    args: {},
+    result: { details: { count: 3 } },
+    isError: false,
+  });
+  assert.equal("candidates" in noStructured, false);
+  // structuredContent.events 全被校验跳过 → 字段整体省略，不冒充空集合语义。
+  const allBad = toolCallEvent({
+    toolCallId: "tc4",
+    name: "search_events",
+    args: {},
+    result: { structuredContent: { events: [{ id: "x" }, "junk", null] } },
+    isError: false,
+  });
+  assert.equal("candidates" in allBad, false);
+});
+
 test("subagent_spawned/done：关联 id、终态、摘要裁剪与 message", () => {
   const spawned = subagentSpawnedEvent({
     subagentId: "sess_child",
@@ -185,6 +304,112 @@ test("subagent_spawned/done：关联 id、终态、摘要裁剪与 message", () 
   assert.equal(cancelled.stops_count, null);
   assert.equal(cancelled.child_run_status, null);
   assert.ok(!("kind" in cancelled));
+});
+
+test("subagentDoneEvent stops：仅 completed+itinerary 透出，行程序/去重/有界/终态 gate", () => {
+  const stops = [
+    { event_id: "evt_a", latitude: 34.2, longitude: 108.9 },
+    { event_id: "evt_b", latitude: 34.3, longitude: 108.8 },
+    { event_id: "evt_a", latitude: 34.2, longitude: 108.9 }, // 重复站去重
+    { event_id: "evt_bad", latitude: -91, longitude: 108.9 }, // 非法坐标跳过
+    { event_id: "x".repeat(PROGRESS_POINT_ID_MAX + 1), latitude: 34.2, longitude: 108.9 },
+  ];
+  const done = subagentDoneEvent({
+    subagentId: "sess_child",
+    planId: "A",
+    status: "completed",
+    kind: "itinerary",
+    stopsCount: 4,
+    stops,
+    title: "方案",
+    summary: "s",
+    childRunId: "run_c",
+    childRunStatus: "completed",
+  });
+  assert.deepEqual(done.stops, [
+    { event_id: "evt_a", latitude: 34.2, longitude: 108.9 },
+    { event_id: "evt_b", latitude: 34.3, longitude: 108.8 },
+  ]);
+
+  // close 降级/取消/追问：stops 入参即便已给也随终态省略，不漏进失败帧。
+  for (const [status, kind] of [
+    ["failed", undefined],
+    ["cancelled", undefined],
+    ["completed", "clarification"],
+  ] as const) {
+    const gated = subagentDoneEvent({
+      subagentId: "s",
+      planId: null,
+      status,
+      ...(kind !== undefined ? { kind } : {}),
+      stops,
+      title: "t",
+      summary: "x",
+      childRunId: null,
+    });
+    assert.equal("stops" in gated, false);
+  }
+
+  // completed+itinerary 但无 stops 入参/全部校验失败 → 字段省略而非空数组。
+  const empty = subagentDoneEvent({
+    subagentId: "s",
+    planId: null,
+    status: "completed",
+    kind: "itinerary",
+    title: "t",
+    summary: "x",
+    childRunId: null,
+  });
+  assert.equal("stops" in empty, false);
+  const allBad = subagentDoneEvent({
+    subagentId: "s",
+    planId: null,
+    status: "completed",
+    kind: "itinerary",
+    stops: [{ event_id: "", latitude: 1, longitude: 1 }],
+    title: "t",
+    summary: "x",
+    childRunId: null,
+  });
+  assert.equal("stops" in allBad, false);
+
+  // 条数与字节双上限：24 条封顶；超长 id 顶到 8KiB 即停。
+  const many = Array.from({ length: 40 }, (_, i) => ({
+    event_id: `evt_${i}`,
+    latitude: 34.2,
+    longitude: 108.9,
+  }));
+  const capped = subagentDoneEvent({
+    subagentId: "s",
+    planId: null,
+    status: "completed",
+    kind: "itinerary",
+    stops: many,
+    title: "t",
+    summary: "x",
+    childRunId: null,
+  });
+  assert.equal(capped.stops?.length, PROGRESS_STOP_LIMIT);
+  const fat = Array.from({ length: 24 }, (_, i) => ({
+    event_id: `长_${"界".repeat(200)}_${i}`,
+    latitude: 34.2,
+    longitude: 108.9,
+  }));
+  const fatDone = subagentDoneEvent({
+    subagentId: "s",
+    planId: null,
+    status: "completed",
+    kind: "itinerary",
+    stops: fat,
+    title: "t",
+    summary: "x",
+    childRunId: null,
+  });
+  assert.ok((fatDone.stops?.length ?? 0) < 24);
+  assert.ok(
+    new TextEncoder().encode(JSON.stringify(fatDone.stops)).length <=
+      PROGRESS_POINTS_BYTE_LIMIT,
+  );
 });
 
 test("stampSubagent：未归属实体事件补盖 child id", () => {

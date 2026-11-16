@@ -79,6 +79,17 @@ test("主会话：tool_execution_end 发 tool_call 完成帧（入参摘要/真�
   // 真实跑过的工具有单调时钟耗时；父会话原生事件不带 subagent_id。
   assert.equal(typeof call.duration_ms, "number");
   assert.equal(call.subagent_id, undefined);
+  // candidates：structuredContent.events 的真实命中（GCJ-02），
+  // 与直接查库同序同值，event_id 即 EventView.event_id。
+  const searched = await repo.search({ date: DAY1, category: "展览" });
+  assert.deepEqual(
+    call.candidates,
+    searched.slice(0, 16).map((e) => ({
+      event_id: e.id,
+      latitude: e.latitude,
+      longitude: e.longitude,
+    })),
+  );
   // 时序：searching stage（start 推导）→ tool_call（end）→ validating stage。
   const idx = events.indexOf(call);
   const stages = events.map((e, i) => ({ i, stage: (e as { stage?: string }).stage }));
@@ -122,6 +133,8 @@ test("主会话：工具 isError → tool_call 错误帧（result_count 恒 null
   assert.equal(call.result_count, null);
   assert.equal(call.args_summary, "query=陕历博 预约");
   assert.equal(typeof call.duration_ms, "number");
+  // error 帧恒无 candidates；非 search_events 工具也不带。
+  assert.equal("candidates" in call, false);
   assertMessages(events);
 });
 
@@ -262,6 +275,16 @@ test("子会话：内部 tool_call 盖章 subagent_id 透父 sink；stage 不透
   assert.equal(
     stamped[0].result_count,
     (await repository.search({ date: DAY1, category: "展览" })).length,
+  );
+  // 盖章帧同时携带真实候选坐标：分身据此落位，坐标与子查询真实结果一致。
+  const childSearched = await repository.search({ date: DAY1, category: "展览" });
+  assert.deepEqual(
+    stamped[0].candidates,
+    childSearched.slice(0, 16).map((e) => ({
+      event_id: e.id,
+      latitude: e.latitude,
+      longitude: e.longitude,
+    })),
   );
 
   // 父会话自身 delegate_task 帧：无盖章；result_count 按真实

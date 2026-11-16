@@ -1,0 +1,211 @@
+{
+  "mode": "stub",
+  "at": "2026-11-16T11:46:05.717Z",
+  "metrics": {
+    "map-layer-ready": {
+      "assert": "pass",
+      "mode": "stub"
+    },
+    "candidates-drawn": {
+      "assert": "pass",
+      "dots": 2
+    },
+    "anchor-mounted": {
+      "assert": "pass",
+      "anchors": 1
+    },
+    "anchor-real-boopface": {
+      "assert": "pass",
+      "anchorFaces": 1
+    },
+    "mid-snapshot": {
+      "round": 1,
+      "closed": false,
+      "destroyed": false,
+      "subs": [
+        {
+          "id": "sess_mock_child_a",
+          "title": "曲江看展方案",
+          "letter": "A",
+          "palette": "sand",
+          "status": "working",
+          "points": 2,
+          "stops": 0,
+          "retired": false,
+          "anchored": true
+        },
+        {
+          "id": "sess_mock_child_b",
+          "title": "城南市集方案",
+          "letter": "B",
+          "palette": "clay",
+          "status": "working",
+          "points": 0,
+          "stops": 0,
+          "retired": false,
+          "anchored": false
+        }
+      ],
+      "aggregate": 0,
+      "anchored": [
+        "sess_mock_child_a"
+      ],
+      "dots": 2,
+      "anchors": 1,
+      "dropped": 0
+    },
+    "anchor-identity-real": {
+      "assert": "pass",
+      "subs": [
+        {
+          "id": "sess_mock_child_a",
+          "title": "曲江看展方案",
+          "letter": "A",
+          "palette": "sand",
+          "status": "working",
+          "points": 2,
+          "stops": 0,
+          "retired": false,
+          "anchored": true
+        },
+        {
+          "id": "sess_mock_child_b",
+          "title": "城南市集方案",
+          "letter": "B",
+          "palette": "clay",
+          "status": "working",
+          "points": 0,
+          "stops": 0,
+          "retired": false,
+          "anchored": false
+        }
+      ]
+    },
+    "card-clone-anchored-flag": {
+      "assert": "pass",
+      "clones": [
+        {
+          "id": "sess_mock_child_a",
+          "anchored": "true",
+          "faceHidden": true
+        },
+        {
+          "id": "sess_mock_child_b",
+          "anchored": "false",
+          "faceHidden": false
+        }
+      ]
+    },
+    "settle-reclaimed": {
+      "assert": "pass",
+      "snap": {
+        "round": 1,
+        "closed": true,
+        "destroyed": false,
+        "subs": [],
+        "aggregate": 0,
+        "anchored": [],
+        "dots": 0,
+        "anchors": 0,
+        "dropped": 0
+      }
+    },
+    "anchor-events": [
+      {
+        "round": 1,
+        "id": "sess_mock_child_a",
+        "anchored": true,
+        "t": 4740
+      },
+      {
+        "round": 1,
+        "id": "sess_mock_child_a",
+        "anchored": false,
+        "t": 5390
+      }
+    ],
+    "anchor-event-roundtrip": {
+      "assert": "pass",
+      "log": [
+        {
+          "round": 1,
+          "id": "sess_mock_child_a",
+          "anchored": true,
+          "t": 4740
+        },
+        {
+          "round": 1,
+          "id": "sess_mock_child_a",
+          "anchored": false,
+          "t": 5390
+        }
+      ]
+    },
+    "no-anchor-for-candidateless-clone": {
+      "assert": "pass",
+      "log": [
+        {
+          "round": 1,
+          "id": "sess_mock_child_a",
+          "anchored": true,
+          "t": 4740
+        },
+        {
+          "round": 1,
+          "id": "sess_mock_child_a",
+          "anchored": false,
+          "t": 5390
+        }
+      ]
+    },
+    "post-settle-dots-zero": {
+      "assert": "pass",
+      "dots": 0
+    },
+    "post-settle-anchors-zero": {
+      "assert": "pass"
+    },
+    "adopted-handed-to-routes": {
+      "assert": "pass",
+      "routeDots": 4
+    },
+    "no-page-errors": {
+      "assert": "pass",
+      "errs": []
+    },
+    "cancel-clears-layer": {
+      "assert": "pass",
+      "dots": 0,
+      "anchors": 0
+    },
+    "cancel-releases-anchor": {
+      "assert": "pass",
+      "log": [
+        {
+          "round": 2,
+          "id": "sess_mock_child_a",
+          "anchored": true,
+          "t": 13774
+        },
+        {
+          "round": 2,
+          "id": "sess_mock_child_a",
+          "anchored": false,
+          "t": 13899
+        }
+      ]
+    },
+    "rm-anchor-no-flip": {
+      "assert": "pass"
+    },
+    "320-anchor-present": {
+      "assert": "pass",
+      "anchors": 1
+    },
+    "320-no-horizontal-scroll": {
+      "assert": "pass",
+      "w": 320
+    }
+  },
+  "failures": []
+}

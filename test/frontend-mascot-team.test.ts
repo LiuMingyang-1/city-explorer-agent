@@ -21,10 +21,11 @@ interface Team {
   applyEvent(evt: unknown, round?: number): { mainFace?: string } | null;
   settle(kind: string, round?: number): { mainFace?: string } | null;
   cancel(round?: number): { mainFace?: string } | null;
+  setAnchored(id: string, anchored: boolean, round?: number): { anchored: boolean } | null;
   destroy(): void;
   snapshot(): {
     round: number | null; phase: string; beat: string | null;
-    clones: { id: string; title: string; letter: string; palette: string; status: string; activity: string }[];
+    clones: { id: string; title: string; letter: string; palette: string; status: string; activity: string; anchored: boolean }[];
     overflow: number; nested: number; active: number; pending: number; finished: number; destroyed: boolean;
   };
 }
@@ -421,6 +422,45 @@ test('非 reduced：入退场为装饰拍——墓碑先行、DOM 拍后移除�
   assert.equal(clones(container).length, 0);
 });
 
+test('setAnchored：严格 token、只切显示不动 pending；等待池补位继承锚点', () => {
+  const { team, container } = boot();
+  const { round } = team.begin()!;
+  assert.throws(() => team.setAnchored('a', true), /round token/);
+  assert.equal(team.setAnchored('a', true, round + 9), null, 'stale token noop');
+  assert.equal(team.setAnchored('ghost', true, round), null, '未知 id noop');
+  team.applyEvent(spawn('a'), round);
+  const el = clones(container)[0]!;
+  assert.equal(el.attrs.get('data-subagent-id'), 'a', '挂载元素标真实归属 id');
+  assert.equal(el.attrs.get('data-anchored'), 'false');
+  assert.equal(team.setAnchored('a', true, round)?.anchored, true);
+  assert.equal(el.attrs.get('data-anchored'), 'true');
+  assert.equal(team.snapshot().pending, 1, 'pending 簿记不变');
+  assert.equal(team.snapshot().clones[0]!.anchored, true);
+  assert.equal(team.setAnchored('a', false, round)?.anchored, false);
+  assert.equal(el.attrs.get('data-anchored'), 'false', '离屏/取消恢复卡片脸');
+
+  // 等待池分身：无 DOM 也可先记锚点，补位挂载时带出
+  for (const id of ['b', 'c', 'd', 'e']) team.applyEvent(spawn(id), round);
+  assert.equal(team.snapshot().overflow, 2, 'd/e 在等待池');
+  team.setAnchored('e', true, round);
+  team.applyEvent(done('b'), round);                          // d 先补位
+  team.applyEvent(done('c'), round);                          // e 补位
+  const eEl = clones(container).find(x => x.attrs.get('data-subagent-id') === 'e')!;
+  assert.equal(eEl.attrs.get('data-anchored'), 'true', '补位分身继承锚点显隐');
+
+  // done 与轮次终结不受锚点影响；终结轮 token 失效
+  team.applyEvent(done('a'), round);
+  assert.equal(team.snapshot().pending, 2);
+  team.settle('answer', round);
+  assert.equal(team.setAnchored('e', false, round), null, '已终结轮 noop');
+});
+
+test('data-anchored CSS：实例 scope 隐藏脸但保留徽标/title', () => {
+  const css = readFileSync(new URL('../frontend/mascot-team.css', import.meta.url), 'utf8');
+  assert.ok(/\.mascot-team \.mascot-team-clone\[data-anchored="true"\] boop-face\s*\{[^}]*visibility:\s*hidden/.test(css),
+    'anchored 规则 scope 在 .mascot-team 内且只隐藏脸');
+});
+
 test('snapshot 形态：round/phase/beat/clones/overflow/nested/active/pending/finished', () => {
   const { team } = boot();
   const { round } = team.begin()!;
@@ -430,7 +470,8 @@ test('snapshot 形态：round/phase/beat/clones/overflow/nested/active/pending/f
   assert.equal(snap.round, round);
   assert.equal(snap.phase, 'exploring');
   assert.equal(snap.beat, 'dispatching');
-  assert.equal(JSON.stringify(Object.keys(snap.clones[0]!)), '["id","title","letter","palette","status","activity"]');
+  assert.equal(JSON.stringify(Object.keys(snap.clones[0]!)), '["id","title","letter","palette","status","activity","anchored"]');
+  assert.equal(snap.clones[0]!.anchored, false);
   assert.equal(snap.clones[0]!.letter, 'A');
   assert.equal(snap.clones[0]!.status, 'working');
   assert.equal(snap.nested, 1);
