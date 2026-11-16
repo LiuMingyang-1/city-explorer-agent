@@ -11,7 +11,7 @@
 // draws and every anchor reports anchored=false so the card keeps its faces.
 (() => {
 const PER_SUB_LIMIT=32,TOTAL_LIMIT=96,STOP_LIMIT=24,HIGHLIGHT_MS=480,FADE_MS=450,FLIP_MS=60;
-let round=null,closed=true,destroyed=false,epoch=0;
+let round=null,closed=true,destroyed=false,epoch=0,renderSeq=0;
 let context={clones:[],origin:null},dropped=0;
 const subs=new Map(),anchored=new Set(),timers=new Set();
 let mascotModule=null,renderQueued=false;
@@ -108,9 +108,12 @@ async function render(){
  if(destroyed||round===null)return;
  const map=mapApi();
  if(!map||!map.ready)return;               // recorded only; wander:map-ready retries
- const r=round,ep=epoch;
+ const r=round,ep=epoch,seq=++renderSeq;
  const ok=await map.render(buildSpec()).catch(()=>false);
- if(destroyed||round!==r||epoch!==ep)return;  // stale: a newer round/teardown owns the layer
+ // epoch catches cross-round staleness; renderSeq catches same-round races: a
+ // superseded render (the renderer itself may report it stale via `false`)
+ // must not clear, revoke, or decorate over the newer render's layer.
+ if(destroyed||round!==r||epoch!==ep||seq!==renderSeq)return;
  if(ok!==true){
   // Current-round failure: clear the renderer and revoke every real anchor so
   // the card restores faces; subs keep their real points and the next

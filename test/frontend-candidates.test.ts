@@ -191,6 +191,54 @@ test('a stale render failure cannot clear a newer round',async()=>{
  assert.equal(h.specLog.at(-1).dots.length,1);
 });
 
+test('a superseded render resolving late cannot wipe the newer spec',async()=>{
+ const h=setupPreview(),api=h.api;
+ // Faithful narrow renderer: an internal epoch like WanderAMap.candidates' —
+ // a superseded call resolves `false` without touching markers it did not apply.
+ const pending:{mine:number;spec:any;res:(v:boolean)=>void}[]=[];let inner=0;const applied=new Set<string>();
+ h.renderer.render=(spec:any)=>{h.specLog.push(spec);h.anchorCb.fn=spec.onAnchor;const mine=++inner;
+  return new Promise<boolean>(res=>pending.push({mine,spec,res}));};
+ const complete=(i:number)=>{const p=pending[i];
+  if(p.mine!==inner){p.res(false);return;}
+  for(const id of[...applied])if(!p.spec.anchors.some((a:any)=>a.id===id)){applied.delete(id);h.anchorCb.fn(id,false);}
+  for(const a of p.spec.anchors)if(!applied.has(a.id)){applied.add(a.id);h.anchorCb.fn(a.id,true);}
+  p.res(true);};
+ api.begin(1);
+ api.applyEvent(candEvt('s1',[{event_id:'e1',latitude:34.2,longitude:108.9}]),1,ctx1);
+ await flush();                                      // render A pending
+ api.applyEvent(candEvt('s1',[{event_id:'e2',latitude:34.21,longitude:108.91}]),1);
+ await flush();                                      // render B pending
+ assert.equal(pending.length,2);
+ complete(1);                                        // B (newest) applies: 2 dots + real anchor
+ await flush();
+ assert.equal(h.specLog.at(-1).dots.length,2);
+ assert.deepEqual({...h.anchorEvents.at(-1)},{round:1,subagent_id:'s1',anchored:true});
+ const clearedAfter=h.cleared;
+ complete(0);                                        // A resolves stale → renderer returns false
+ await flush();
+ assert.equal(h.cleared,clearedAfter,'a superseded render failure never clears newer markers');
+ assert.equal(h.anchorEvents.at(-1).anchored,true,'B anchor stays anchored');
+ assert.equal(api.snapshot().subs[0].points,2);
+});
+
+test('a superseded render resolving true cannot act on newer state',async()=>{
+ const h=setupPreview(),api=h.api;
+ const pending:((v:boolean)=>void)[]=[];let points=0;
+ h.renderer.render=(spec:any)=>{h.specLog.push(spec);h.anchorCb.fn=spec.onAnchor;return new Promise(r=>pending.push(r));};
+ h.renderer.point=()=>{points++;return{x:200,y:200};};
+ api.begin(1);
+ api.applyEvent(candEvt('s1',[{event_id:'e1',latitude:34.2,longitude:108.9}]),1,ctx1);
+ await flush();
+ api.applyEvent(candEvt('s1',[{event_id:'e2',latitude:34.21,longitude:108.91}]),1);
+ await flush();
+ pending[1](true);h.anchorCb.fn('s1',true);await flush();   // newest succeeds + entrance decorates once
+ assert(points>0,'entrance ran for the newest render');
+ const pts=points,clearedAfter=h.cleared;
+ pending[0](true);await flush();                            // stale resolves true late
+ assert.equal(points,pts,'stale success re-runs no decoration');
+ assert.equal(h.cleared,clearedAfter,'stale success clears nothing');
+});
+
 test('a late mascot import never creates a face for a dead round',async()=>{
  const h=setupPreview(),api=h.api;
  const calls:any[]=[];let resolveModule:(m:any)=>void=()=>{};
