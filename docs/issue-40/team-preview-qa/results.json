@@ -1,0 +1,283 @@
+{
+  "at": "2026-11-16T03:45:27.317Z",
+  "metrics": {
+    "module-ready": true,
+    "team-3-visible-faces": {
+      "assert": "pass",
+      "faces": 3
+    },
+    "team-3-clone-info": [
+      {
+        "crown": "#cfb88c",
+        "title": "湖东咖啡与老书店散步",
+        "titleHasChildren": false,
+        "badge": "A",
+        "badgeHasChildren": false
+      },
+      {
+        "crown": "#ba8e77",
+        "title": "老城巷子与美术馆半日",
+        "titleHasChildren": false,
+        "badge": "B",
+        "badgeHasChildren": false
+      },
+      {
+        "crown": "#82916f",
+        "title": "滨江日落骑行线",
+        "titleHasChildren": false,
+        "badge": "C",
+        "badgeHasChildren": false
+      }
+    ],
+    "team-3-hat-palettes": {
+      "assert": "pass",
+      "crowns": [
+        "#cfb88c",
+        "#ba8e77",
+        "#82916f"
+      ]
+    },
+    "team-3-distinct-shadow-roots": {
+      "assert": "pass"
+    },
+    "team-3-titles-textcontent": {
+      "assert": "pass",
+      "titles": [
+        "湖东咖啡与老书店散步",
+        "老城巷子与美术馆半日",
+        "滨江日落骑行线"
+      ]
+    },
+    "team-3-badges-textcontent": {
+      "assert": "pass",
+      "badges": [
+        "A",
+        "B",
+        "C"
+      ]
+    },
+    "team-3-snapshot": {
+      "assert": "pass",
+      "phase": "exploring",
+      "beat": "dispatching",
+      "round": 1
+    },
+    "team-3-mainface-thinking": {
+      "assert": "pass",
+      "state": "thinking"
+    },
+    "clone-instance-stable-after-tool": {
+      "assert": "pass"
+    },
+    "stage-repeat-keeps-pending": {
+      "assert": "pass",
+      "clones": [
+        {
+          "id": "sub-a",
+          "title": "湖东咖啡与老书店散步",
+          "letter": "A",
+          "palette": "sand",
+          "status": "working",
+          "activity": "searched"
+        }
+      ],
+      "phase": "validating"
+    },
+    "stage-validating-mainface": {
+      "assert": "pass",
+      "state": "validating"
+    },
+    "team-2-visible-faces": {
+      "assert": "pass",
+      "faces": 2
+    },
+    "overflow-3-visible": {
+      "assert": "pass",
+      "faces": 3
+    },
+    "overflow-waiting-count": {
+      "assert": "pass",
+      "overflow": 2,
+      "text": "+2"
+    },
+    "overflow-backfill": {
+      "assert": "pass",
+      "clones": [
+        "sub-d",
+        "sub-e",
+        "sub-c"
+      ],
+      "overflow": 0
+    },
+    "partial-fail-others-alive": {
+      "assert": "pass",
+      "clones": [
+        "sub-a:working",
+        "sub-c:working"
+      ]
+    },
+    "partial-fail-mainface-not-confused": {
+      "assert": "pass",
+      "state": "thinking"
+    },
+    "tombstone-ghost-clone": null,
+    "tombstone-not-revived": {
+      "assert": "pass",
+      "finished": 1
+    },
+    "nested-aggregated-not-toplevel": {
+      "assert": "pass",
+      "nested": 1,
+      "clones": [
+        "sub-a"
+      ]
+    },
+    "round-token-increments": {
+      "assert": "pass",
+      "r1": 9,
+      "r2": 10
+    },
+    "stale-event-rejected": {
+      "assert": "pass",
+      "before": 0,
+      "after": 0
+    },
+    "stale-probe-returns-null": {
+      "assert": "pass",
+      "ret": null
+    },
+    "no-token-probes": {
+      "apply": {
+        "threw": "TypeError: mascot-team.applyEvent: round token is required"
+      },
+      "settle": {
+        "threw": "TypeError: mascot-team.settle: round token is required"
+      },
+      "cancel": {
+        "threw": "TypeError: mascot-team.cancel: round token is required"
+      }
+    },
+    "no-token-strictly-rejected": {
+      "assert": "pass",
+      "apply": {
+        "threw": "TypeError: mascot-team.applyEvent: round token is required"
+      },
+      "settle": {
+        "threw": "TypeError: mascot-team.settle: round token is required"
+      },
+      "cancel": {
+        "threw": "TypeError: mascot-team.cancel: round token is required"
+      }
+    },
+    "cancel-clears-clones": {
+      "assert": "pass",
+      "faces": 0
+    },
+    "cancel-mainface-idle": {
+      "assert": "pass",
+      "state": "idle"
+    },
+    "cancel-only-main-face-left": {
+      "assert": "pass"
+    },
+    "disconnect-mainface-confused": {
+      "assert": "pass",
+      "state": "confused"
+    },
+    "clarify-mainface-asking": {
+      "assert": "pass",
+      "state": "asking"
+    },
+    "zero-settled-no-clones": {
+      "assert": "pass",
+      "phase": "done"
+    },
+    "zero-mainface-happy": {
+      "assert": "pass",
+      "state": "happy"
+    },
+    "ooo-all-settled": {
+      "assert": "pass",
+      "phase": "done"
+    },
+    "rm-all-instances-reduce": {
+      "assert": "pass",
+      "attrs": [
+        "reduce",
+        "reduce",
+        "reduce",
+        "reduce"
+      ]
+    },
+    "rm-clones-still-spawn": {
+      "assert": "pass",
+      "clones": 3
+    },
+    "perf-headless": {
+      "note": "headless Chromium 测量值（force-device-scale-factor=1），不能冒称真笔记本性能",
+      "faces4": {
+        "fps": 60.1,
+        "usedJSHeapMB": 2.52
+      },
+      "faces1": {
+        "fps": 59.8,
+        "usedJSHeapMB": 3.03
+      }
+    },
+    "clear-instance-regression": {
+      "assert": "pass"
+    },
+    "320-no-horizontal-scroll": {
+      "assert": "pass",
+      "scrollWidth": 320,
+      "layoutViewport": 320
+    },
+    "320-title-metrics": [
+      {
+        "sw": 100,
+        "cw": 84
+      },
+      {
+        "sw": 100,
+        "cw": 84
+      },
+      {
+        "sw": 70,
+        "cw": 70
+      }
+    ],
+    "log-wire-no-round-key": {
+      "assert": "pass"
+    },
+    "destroy-empties-strip": {
+      "assert": "pass"
+    },
+    "destroy-is-permanent": {
+      "assert": "pass",
+      "ret": null,
+      "faces": 0
+    }
+  },
+  "failures": [],
+  "log": [
+    "shot 01-combo-3",
+    "shot 02-stage-repeat-pending-alive",
+    "shot 03-combo-1",
+    "shot 04-combo-2",
+    "shot 05-overflow-5",
+    "shot 06-overflow-backfill",
+    "shot 07-partial-fail",
+    "shot 08-tombstone",
+    "shot 09-nested-done",
+    "shot 10-stale-rejected",
+    "shot 11-cancel-reset",
+    "shot 12-disconnect-confused",
+    "shot 13-clarify-asking",
+    "shot 13b-zero-direct",
+    "shot 14-ooo-done",
+    "shot 15-rm-3clones",
+    "shot 16-320-3clones",
+    "shot 17-320-rm",
+    "shot 18-log"
+  ]
+}

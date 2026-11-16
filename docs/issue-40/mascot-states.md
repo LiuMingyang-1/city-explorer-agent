@@ -117,6 +117,7 @@ stage 到达时分身仍 pending 是**合法状态**（stage 只管父脸/父相
 
 - 可见槽位上限 3（对齐 #38 的 1–3 动态候选上限）；#38 未 merge、信号量实为共享池 `DEFAULT_SUBAGENT_MAX_CONCURRENT=8`，>3 并发为真实可能。
 - 溢出：超出 3 的存活分身进等待池聚合徽标（`+N`，按 spawned−done 真实计数）；槽位空出按 spawn 先后补位，保留真实 id/title——不丢弃、不虚增。
+- 退场过渡控制：非 reduced 下 done 的分身播 ≤380ms 装饰退场，**此时 DOM 可见脸恒 ≤maxVisible**——若等待池分身需补位，在途退场元素立即让位移除（真实到达优先于装饰拍）；无补位需求时装饰拍正常播完。reduced 下无退场拍、done 即移除。
 - 合法形态：无 delegate 零分身、1/2/3 分身、部分失败他者继续、嵌套聚合；每种都是预览必演场景。
 
 ### 3.3 生命周期
@@ -139,11 +140,13 @@ const team = createMascotTeam(container, {
 });
 const { round } = team.begin();   // → {round, mainFace:'thinking'}；round token+1、清场，
                                 //   token 由调用方在请求闭包内捕获（本地参数，不进任何 payload）
-team.applyEvent(evt, round);      // PlannerProcessEvent + 本轮 token；round ≠ 当前 → 返回 null、零副作用
-team.settle(kind, round);         // 'plans'|'itinerary'|'answer'|'clarification'|'error'；同上守卫
+team.applyEvent(evt, round);      // PlannerProcessEvent + 本轮 token；缺 token 抛 TypeError（严格拒绝）；
+                                  //   destroyed/已终结/round ≠ 当前 → 返回 null、零副作用
+team.settle(kind, round);         // 'plans'|'itinerary'|'answer'|'clarification'|'error'；同上守卫，未知 kind 抛错
 team.cancel(round);               // 取消/reset/代际切换：全量拆除 → idle；同上守卫
 team.destroy();                   // 永闭合：移除容器内全部节点，之后一切调用 noop（snapshot 除外）
-team.snapshot();                  // {round, phase, beat, clones:[{id,title,letter,palette,status}], overflow, nested}
+team.snapshot();                  // {round, phase, beat, clones:[{id,title,letter,palette,status,activity}],
+                                  //  overflow, nested, active, pending, finished, destroyed}
 // begin → {round, mainFace:'thinking'}；applyEvent/settle/cancel → { mainFace?: MASCOT_STATE } | null：
 // 建议的主脸表情切换（null=保持或 token 不符），由 facade/预览驱动器落地；团队层不拥有主脸元素。
 ```
@@ -168,7 +171,7 @@ mascot.setHat(false);
 
 - vendored BoopFace Lite 目录 192KB（上限 350KB），钉 `ceb0580b5f8ee8b93f206920baba5265d7d7d482`（`assets/vendor/boopface/SOURCE.md`）。
 - 自研控制器：`wander-mascot.js` 10.6KB + `wander-mascot-motion.js` 2.0KB ≈12.6KB（上限 20KB）；`mascot-card.js` 2.4KB。
-- 团队层 `mascot-team.js` + 徽标目标 ≤8KB；每分身增量 = 1 个 shadow DOM + 共享 extension draw hook（upstream 每脸一条 rAF）。F2 预览页须实测 4 脸并存帧率/内存，不引用编造数字。
+- 团队层 `mascot-team.js` 实测 12.7KB raw（gzip ≈4.6KB），上限定为 **≤16KB raw**（内部原估 8KB 偏紧，为可读性/正确性上调；预览驱动器 `mascot-team-preview.js` 22.6KB raw/gzip 7.1KB 不计入运行时预算——预览页独立资产）。每分身增量 = 1 个 shadow DOM + 共享 extension draw hook（upstream 每脸一条 rAF）。
 - 无运行时 CDN、图片或新框架。
 - vendor 边界：控制器依赖钉版 SVG 内部结构（`head`/`headMotion`/`defs`/eyes 顺序）与少量内部接口（`_updateBlink`/`_startMorph`/`_expressionLock`/extension `draw` hook）；upstream 升级须重新验证，不追 latest。
 

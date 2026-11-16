@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>漫游 · 分身排练场</title>
+  <link rel="stylesheet" href="mascot-team-preview.css">
+</head>
+<body>
+  <div class="offline-banner" role="note">
+    <strong>离线模拟 · 非真实后端</strong>
+    <span>每个事件都由手动点击逐条发出，没有定时器推进业务相位；round token 是本地调用参数，不会写进 wire JSON。</span>
+  </div>
+  <main>
+    <header class="top">
+      <a class="brand" href="/">漫游 WANDER</a>
+      <span class="crumb">分身排练场 / I40-F2b</span>
+    </header>
+
+    <section class="stage" aria-label="形象舞台">
+      <div class="introduction">
+        <p class="eyebrow">一张圆脸，三顶帽子。</p>
+        <h1>小分队<br>排练场。</h1>
+        <p class="description">主脸跟随父轮相位，分身按真实 <code>subagent_*</code> 事件入场退场。帽色只是槽位记号，徽标字母是派发序，不是最终方案。</p>
+      </div>
+
+      <div class="main-face-card" aria-label="主脸">
+        <boop-face id="main-face" size="176" color="#26382d" auto-sleep="0" press-squeeze="false" antenna-drag="false" motion="auto"></boop-face>
+        <div class="face-meta">
+          <span class="chip phase" id="phase-chip">相位 idle</span>
+          <span class="chip beat" id="beat-chip" hidden>节拍</span>
+          <span class="chip" id="face-chip">表情 idle</span>
+        </div>
+        <div class="round-row" aria-label="round token（本地参数）">
+          <span class="round-chip current" id="round-current">round —</span>
+          <span class="round-chip stale" id="round-stale" hidden>stale —</span>
+        </div>
+      </div>
+
+      <div class="team-card" aria-label="分身条">
+        <div class="team-head">
+          <h2>分身条</h2>
+          <span class="hint">槽位帽色 sand → clay → moss · 可见上限 3</span>
+        </div>
+        <div id="team-strip" class="team-strip" aria-live="polite"></div>
+        <div class="snapshot" id="snapshot-view">
+          <span class="snap-chip" id="snap-pending">存活 0</span>
+          <span class="snap-chip" id="snap-waiting">等待 +0</span>
+          <span class="snap-chip" id="snap-nested">嵌套 0</span>
+          <span class="snap-chip wide" id="snap-clones">—</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="console" aria-label="事件控制台">
+      <div class="group">
+        <h3>生命周期</h3>
+        <div class="row">
+          <button type="button" id="btn-begin" class="primary">发送请求 · begin()</button>
+          <button type="button" id="btn-cancel">用户取消 · cancel()</button>
+        </div>
+        <p class="group-sub">结果 settle(kind)</p>
+        <div class="row">
+          <button type="button" data-settle="plans">plans</button>
+          <button type="button" data-settle="itinerary">itinerary</button>
+          <button type="button" data-settle="answer">answer</button>
+          <button type="button" data-settle="clarification">clarification</button>
+          <button type="button" data-settle="error">断连/失败 · error</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <h3>父 stage</h3>
+        <div class="row">
+          <button type="button" data-stage="searching_events">searching_events</button>
+          <button type="button" data-stage="exploring_plans">exploring_plans</button>
+          <button type="button" data-stage="routing">routing</button>
+          <button type="button" data-stage="validating_schedule">validating_schedule</button>
+        </div>
+        <p class="hint">stage 只更新主脸与父相位；重复到达也不回收 pending 分身。</p>
+      </div>
+
+      <div class="group">
+        <h3>分身 spawn / done</h3>
+        <div class="row" id="spawn-presets">
+          <button type="button" data-preset="0">派发 A · 湖东咖啡散步线</button>
+          <button type="button" data-preset="1">派发 B · 老城巷子美术馆</button>
+          <button type="button" data-preset="2">派发 C · 滨江日落骑行</button>
+        </div>
+        <div class="row fields">
+          <input id="spawn-id" type="text" placeholder="subagent_id" aria-label="subagent_id">
+          <input id="spawn-plan" type="text" placeholder="plan_id（派发序）" aria-label="plan_id" maxlength="4">
+          <input id="spawn-title" type="text" placeholder="title ≤40" aria-label="title">
+          <input id="spawn-parent" type="text" placeholder="parent_run_id" aria-label="parent_run_id">
+          <button type="button" id="btn-spawn-custom">自定义 spawn</button>
+        </div>
+        <div class="row fields">
+          <input id="done-id" list="done-ids" type="text" placeholder="done 目标 subagent_id" aria-label="done 目标分身">
+          <datalist id="done-ids"></datalist>
+          <select id="done-status" aria-label="done status">
+            <option value="completed">completed</option>
+            <option value="failed">failed</option>
+            <option value="cancelled">cancelled</option>
+          </select>
+          <button type="button" id="btn-done">发送 done</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <h3>tool_call（结束事件）</h3>
+        <div class="row fields">
+          <input id="tool-sub" type="text" placeholder="盖章 subagent_id（可空）" aria-label="盖章 subagent_id">
+          <input id="tool-name" type="text" value="search_events" aria-label="tool name">
+          <input id="tool-count" type="number" value="7" min="0" aria-label="result_count">
+        </div>
+        <div class="row">
+          <button type="button" id="btn-tool">盖章 tool_call</button>
+          <button type="button" id="btn-tool-error">盖章 error</button>
+          <button type="button" id="btn-tool-orphan">未知 id 盖章</button>
+          <button type="button" id="btn-tool-plain">无盖章 tool_call</button>
+        </div>
+        <p class="hint">结束事件：规范呈现 = 徽标脉冲 + 真实 result_count，不伪「正在检索」。</p>
+      </div>
+    </section>
+
+    <section class="scenarios" aria-label="场景步骤器">
+      <div class="scenario-head">
+        <h2>剧本步骤器</h2>
+        <span class="hint">选中剧本后逐点「下一步」，每步只发一个真实形状的事件。</span>
+      </div>
+      <div class="scenario-body">
+        <div class="scenario-list" id="scenario-list" role="listbox" aria-label="选择剧本"></div>
+        <div class="scenario-steps">
+          <ol id="step-list"></ol>
+          <div class="row">
+            <button type="button" id="btn-next-step" class="primary" disabled>下一步</button>
+            <button type="button" id="btn-reset-scenario">重置剧本</button>
+            <span class="hint" id="scenario-status">未选剧本</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="log-panel" aria-label="事件日志">
+      <div class="log-head">
+        <h2>事件日志</h2>
+        <span class="hint">JSON 与 wire 一一对应；round 徽章是本地参数，不在 JSON 里。</span>
+      </div>
+      <ol id="event-log" class="event-log"></ol>
+    </section>
+
+    <footer class="foot">
+      <label class="rm-toggle"><input id="rm-toggle" type="checkbox"> 减弱动态效果（motion="reduce"，覆盖全部实例）</label>
+      <span>圆脸 + 渔夫帽 · BoopFace <a href="assets/vendor/boopface/LICENSE">MIT</a> · 编排层 frontend/mascot-team.js</span>
+    </footer>
+    <p id="load-error" role="alert" hidden>编排层 <code>mascot-team.js</code> 尚未就位：页面框架可查看，团队行为待模块落地后验证。</p>
+  </main>
+  <script type="module" src="mascot-team-preview.js"></script>
+</body>
+</html>

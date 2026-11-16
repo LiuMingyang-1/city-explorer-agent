@@ -1,0 +1,273 @@
+/* 分身排练场 · offline simulator — self-contained, mirrors mascot-preview.css tone */
+:root {
+  --paper: #f5f4ec;
+  --ink: #29392e;
+  --ink-soft: #5a6b54;
+  --ink-faint: #7b8375;
+  --line: #29392e26;
+  --moss: #768666;
+  --sand: #c8ad7b;
+  --clay: #ba8e77;
+  --accent: #526e45;
+  --warn: #a8542f;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+  font-synthesis: none;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at 12% 8%, #82916f14, transparent 34%),
+    radial-gradient(circle at 88% 92%, #c8ad7b1a, transparent 30%),
+    var(--paper);
+}
+button, a, input, select { -webkit-tap-highlight-color: transparent; }
+button { font: inherit; cursor: pointer; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 3px;
+}
+button:disabled { opacity: .45; cursor: default; }
+
+/* ——— offline banner ——— */
+.offline-banner {
+  display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline;
+  padding: 8px 20px;
+  background: var(--ink); color: #f0efe2;
+  font-size: 11px; letter-spacing: .6px;
+}
+.offline-banner strong { color: var(--sand); letter-spacing: 1.5px; }
+.offline-banner span { color: #c9cdbd; }
+
+main { max-width: 1180px; margin: auto; padding: 26px 40px 30px; }
+.top {
+  display: flex; justify-content: space-between; align-items: center;
+  padding-bottom: 18px; border-bottom: 1px solid var(--line);
+  font-size: 12px; letter-spacing: 1px;
+}
+.brand { color: inherit; text-decoration: none; font-weight: 600; letter-spacing: 3px; }
+.crumb { color: var(--ink-faint); }
+
+/* ——— stage: intro / main face / team strip ——— */
+.stage {
+  display: grid; grid-template-columns: .9fr .8fr 1.5fr; gap: 26px;
+  align-items: center; padding: 30px 0 22px;
+}
+.eyebrow { font-size: 12px; letter-spacing: 2px; color: #798574; margin: 0; }
+h1 {
+  font-family: "Songti SC", "STSong", serif;
+  font-size: clamp(38px, 4.6vw, 58px); font-weight: 500;
+  line-height: 1.28; letter-spacing: 3px; margin: 16px 0 18px;
+}
+.description { font-size: 13px; color: var(--ink-faint); line-height: 1.9; margin: 0; }
+.description code { font-size: 11px; background: #29392e0d; padding: 1px 5px; border-radius: 4px; }
+
+.main-face-card {
+  display: grid; justify-items: center; gap: 10px;
+  padding: 20px 16px 16px;
+  border: 1px solid var(--line); border-radius: 18px;
+  background: #fbfaf3;
+}
+.main-face-card boop-face { filter: drop-shadow(0 14px 16px #29392e14); }
+.face-meta, .round-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.chip, .round-chip, .snap-chip {
+  font-size: 10px; letter-spacing: .8px; line-height: 1;
+  padding: 5px 9px; border-radius: 999px;
+  border: 1px solid var(--line); color: var(--ink-soft);
+  background: #fff8;
+}
+.chip.phase { border-color: var(--moss); color: #44543c; font-weight: 600; }
+.chip.beat { border-color: var(--clay); color: var(--warn); }
+.round-chip.current { background: var(--ink); color: #f0efe2; border-color: var(--ink); }
+.round-chip.stale { border-style: dashed; color: var(--ink-faint); }
+
+.team-card {
+  min-width: 0; padding: 18px 18px 14px;
+  border: 1px solid var(--line); border-radius: 18px; background: #fbfaf3;
+}
+.team-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+h2 { font-family: "Songti SC", "STSong", serif; font-size: 21px; font-weight: 500; letter-spacing: 2px; margin: 0; white-space: nowrap; }
+.hint { font-size: 10.5px; color: var(--ink-faint); line-height: 1.6; }
+.team-strip {
+  min-height: 108px; margin: 12px 0 10px;
+  display: flex; align-items: center; gap: 14px;
+}
+.team-strip:empty::after {
+  content: "等待真实 subagent_spawned — 分身不会凭 stage 出现";
+  font-size: 11px; color: var(--ink-faint); letter-spacing: .5px;
+}
+/* module tags the container itself with .mascot-team; host provides layout defaults */
+#team-strip.mascot-team, #team-strip .mascot-team { display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; }
+#team-strip .mascot-team-clone {
+  display: grid; justify-items: center; gap: 5px; position: relative;
+  min-width: 56px;
+}
+#team-strip .mascot-team-badge {
+  position: absolute; top: -4px; right: 2px; z-index: 1;
+  min-width: 18px; height: 18px; padding: 0 5px;
+  display: grid; place-items: center;
+  border-radius: 999px; background: var(--ink); color: #f0efe2;
+  font-size: 10px; letter-spacing: .5px; line-height: 1;
+}
+#team-strip .mascot-team-title {
+  max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 10px; color: var(--ink-soft); text-align: center;
+}
+#team-strip .mascot-team-note {
+  min-height: 11px; font-size: 9px; color: var(--ink-faint); letter-spacing: .3px;
+}
+#team-strip .mascot-team-overflow {
+  align-self: center;
+  padding: 6px 10px; border: 1px dashed var(--line); border-radius: 999px;
+  font-size: 11px; color: var(--ink-soft); background: #fff8;
+}
+@media (max-width: 360px) {
+  #team-strip .mascot-team { gap: 10px; }
+  #team-strip .mascot-team-title { max-width: 84px; }
+}
+.snapshot { display: flex; flex-wrap: wrap; gap: 6px; border-top: 1px dashed var(--line); padding-top: 10px; }
+.snap-chip.wide { flex-basis: 100%; border-style: dashed; line-height: 1.5; white-space: normal; }
+
+/* ——— console ——— */
+.console {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;
+  padding: 6px 0 18px;
+}
+.group {
+  padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px;
+  background: #fbfaf366;
+}
+.group h3 {
+  margin: 0 0 10px; font-size: 11px; font-weight: 600;
+  letter-spacing: 2px; color: var(--ink-soft); text-transform: uppercase;
+}
+.group-sub { margin: 10px 0 6px; font-size: 10px; color: var(--ink-faint); letter-spacing: 1px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.row + .row, .row + .hint { margin-top: 8px; }
+.group button {
+  font-size: 12px; padding: 7px 12px;
+  border: 1px solid var(--line); border-radius: 8px;
+  background: #fff; color: var(--ink);
+  transition: border-color .15s, transform .15s;
+}
+.group button:hover { border-color: var(--accent); }
+.group button:active { transform: translateY(1px); }
+.group button.primary, #btn-next-step {
+  background: var(--ink); color: #f0efe2; border-color: var(--ink);
+}
+.fields input, .fields select {
+  font: inherit; font-size: 12px; padding: 7px 9px;
+  border: 1px solid var(--line); border-radius: 8px; background: #fff;
+  color: var(--ink); min-width: 0;
+}
+.fields input { width: 130px; flex: 1 1 110px; }
+.fields input#spawn-title { flex: 2 1 150px; }
+
+/* ——— scenarios ——— */
+.scenarios { padding: 4px 0 18px; }
+.scenario-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 10px; }
+.scenario-body { display: grid; grid-template-columns: 240px 1fr; gap: 14px; }
+.scenario-list {
+  display: grid; gap: 6px; align-content: start;
+  max-height: 340px; overflow: auto; padding-right: 4px;
+}
+.scenario-list button {
+  text-align: left; font-size: 12px; padding: 8px 11px;
+  border: 1px solid var(--line); border-radius: 10px; background: #fff;
+  color: var(--ink);
+}
+.scenario-list button[aria-selected="true"] {
+  border-color: var(--accent); background: #526e4514;
+}
+.scenario-list button .tag {
+  display: inline-block; margin-right: 6px; font-size: 10px;
+  color: var(--ink-faint); letter-spacing: 1px;
+}
+.scenario-steps {
+  border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px;
+  background: #fbfaf366; min-width: 0;
+}
+#step-list { margin: 0 0 12px; padding-left: 22px; }
+#step-list li {
+  font-size: 12px; padding: 4px 6px; color: var(--ink-faint);
+  border-radius: 6px;
+}
+#step-list li.current { color: var(--ink); background: #c8ad7b26; font-weight: 600; }
+#step-list li.done { color: var(--ink-soft); text-decoration: line-through; text-decoration-color: #29392e55; }
+#step-list li .wire {
+  display: block; font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 10px; color: var(--ink-faint); margin-top: 2px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+#scenario-status { letter-spacing: .5px; }
+
+/* ——— log ——— */
+.log-panel { padding-bottom: 16px; }
+.log-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 8px; }
+.event-log {
+  margin: 0; padding: 0; list-style: none;
+  max-height: 300px; overflow: auto;
+  border: 1px solid var(--line); border-radius: 14px; background: #232d26;
+}
+.event-log li {
+  display: grid; grid-template-columns: 86px 58px 1fr; gap: 10px;
+  padding: 8px 14px; border-bottom: 1px solid #ffffff10;
+  font-size: 11px; align-items: baseline;
+}
+.event-log li:last-child { border-bottom: 0; }
+.event-log .kind {
+  font-size: 9.5px; letter-spacing: 1px; color: var(--sand);
+  text-transform: uppercase;
+}
+.event-log li.ctl .kind { color: #9fb98a; }
+.event-log li.stale .kind { color: #c08080; }
+.event-log .rtag {
+  font-size: 9.5px; color: #aab3a2; font-family: ui-monospace, Menlo, monospace;
+}
+.event-log li.stale .rtag { color: #c08080; text-decoration: line-through; }
+.event-log .wire-json {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 10.5px;
+  color: #d9ddcf; overflow-wrap: anywhere; line-height: 1.55;
+}
+.event-log .ret { display: block; color: #8d9c84; margin-top: 2px; }
+.event-log .ret.null { color: #c08080; }
+
+/* ——— footer / error ——— */
+.foot {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px;
+  padding-top: 16px; border-top: 1px solid var(--line);
+  font-size: 11px; color: var(--ink-faint);
+}
+.rm-toggle { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-soft); }
+.rm-toggle input { accent-color: #6d805c; }
+.foot a { color: inherit; }
+#load-error {
+  margin: 14px 0 0; padding: 12px 16px;
+  border: 1px dashed var(--warn); border-radius: 10px;
+  background: #a8542f12; color: var(--warn); font-size: 12px;
+}
+#load-error code { font-size: 11px; }
+
+/* ——— small screens: keep faces un-cramped at 320 CSS px ——— */
+@media (max-width: 900px) {
+  main { padding: 20px 18px 24px; }
+  .stage { grid-template-columns: 1fr; gap: 16px; padding: 22px 0 16px; }
+  .introduction { text-align: center; }
+  .introduction br { display: none; }
+  h1 { font-size: 34px; margin: 10px 0 12px; }
+  .console { grid-template-columns: 1fr; }
+  .scenario-body { grid-template-columns: 1fr; }
+  .scenario-list { grid-auto-flow: column; grid-auto-columns: max-content; max-height: none; overflow-x: auto; padding-bottom: 6px; }
+  .main-face-card boop-face { max-width: 150px; }
+}
+@media (max-width: 360px) {
+  main { padding: 16px 12px 20px; }
+  h1 { font-size: 30px; letter-spacing: 2px; }
+  .team-card, .main-face-card { padding: 14px 10px 12px; }
+  .group button { font-size: 11px; padding: 6px 9px; }
+  .event-log li { grid-template-columns: 64px 44px 1fr; gap: 6px; padding: 7px 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .group button { transition: none; }
+}
