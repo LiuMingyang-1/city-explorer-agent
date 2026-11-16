@@ -7,7 +7,8 @@
 运行下方开发命令后，访问 `/mascot-preview.html` 查看圆脸配渔夫帽的独立原型。
 支持苔绿／沙色帽子、摘帽对比、7 种表情状态，以及同步的 56px 头像预览。
 寻找状态会举起放大镜并扫视，退出时放下；减少动态效果时保持静态道具。
-帽子挂在 BoopFace 的头部运动组上；聊天主界面尚未接入。
+帽子挂在 BoopFace 的头部运动组上；`mascot-card.js/css` 已把主形象接入聊天卡片左上角，
+欢迎态大、对话态小，表情跟随真实请求生命周期（预览验证见 `docs/mascot-card-preview/`）。
 BoopFace Lite 已固定版本并保存在 `assets/vendor/boopface/`，来源与 MIT 许可证见该目录。
 可复用形象控制器在 `wander-mascot.js`，预览交互在 `mascot-preview.js`，不修改上游源码。
 状态触发与后续接入方案见 [形象状态设计](../docs/issue-40/mascot-states.md)。

@@ -14,6 +14,7 @@ function appendMessage(role,text){const {message,bubble}=makeMessage(role);bubbl
 function itineraryText(itinerary,events){return window.WanderPlans.summary({itinerary,events});}
 function appendItinerary(itinerary,events){return window.WanderPlans.append({itinerary,events});}
 function showSendError(text,error,chip){
+ window.WanderMascot?.fail?.();
  const {message,bubble}=makeMessage('assistant');
  const detail=error?.name==='AbortError'?'请求超时':error?.message||'网络异常';
  const note=document.createElement('span');note.textContent='本次回复未完成（'+detail+'）。';bubble.append(note);
@@ -31,7 +32,7 @@ function buildChatBody(text,chip){
 }
 async function deliver(text,chip,retried=false){
  const generation=window.WanderHistory?.generation(),isCurrent=()=>!window.WanderHistory||generation===window.WanderHistory.generation(),sentChip=chip;
- const request=new AbortController();activeChatRequest=request;state.busy=true;updateSendButton();
+ const request=new AbortController();activeChatRequest=request;state.busy=true;updateSendButton();window.WanderMascot?.begin?.();
  const pending=document.createElement('div');pending.className='message assistant';
  const label=document.createElement('span');label.className='message-label';label.textContent=window.WanderTransport.mock?'漫游 · 示例演示':'漫游 · 正在规划';
  const status=document.createElement('div');status.className='bubble planning-progress';status.setAttribute('role','status');status.setAttribute('aria-live','polite');status.textContent='正在连接城市向导';pending.append(label,status);$('messages').append(pending);scrollMessages();
@@ -40,9 +41,10 @@ async function deliver(text,chip,retried=false){
  try{
   const data=await window.WanderTransport.request(buildChatBody(text,sentChip),{signal:request.signal,isCurrent,
    onMeta:meta=>{if(isCurrent()&&typeof meta.session_id==='string')state.sessionId=meta.session_id;},
-   onProgress:progress=>{if(isCurrent()){clearTimeout(slow);status.textContent=String(progress.message||stageNames[progress.stage]||'正在整理方案').slice(0,160);scrollMessages();}}
+   onProgress:progress=>{if(isCurrent()){clearTimeout(slow);status.textContent=String(progress.message||stageNames[progress.stage]||'正在整理方案').slice(0,160);window.WanderMascot?.progress?.(progress.stage);scrollMessages();}}
   });
   if(!isCurrent())return;pending.remove();
+  window.WanderMascot?.finish?.(data?.kind);
   if(data&&typeof data.session_id==='string'&&data.session_id)state.sessionId=data.session_id;
   if(data&&(data.kind==='plans'||data.kind==='itinerary'))window.WanderPlans.append(data);
   else if(data&&data.kind==='clarification'&&typeof data.question==='string'&&data.question)appendMessage('assistant',data.question);

@@ -1,0 +1,15 @@
+/* Card mascot: one boop-face lives in the card's top-left header strip,
+   opposite the new-chat button. It grows in the welcome state, shrinks for
+   conversations and expanded history, and never enters #welcome, .weather
+   or #messages, so welcome exits and scrolling cannot carry it away. */
+.glass-card{--mascot-w:clamp(64px,calc(4.11vw + 26px),88px);--mascot-left:20px;--mascot-top:12px}
+.glass-card.has-conversation,.glass-card:not(.has-conversation).history-expanded{--mascot-w:52px;--mascot-top:8px}
+.card-mascot{position:absolute;left:var(--mascot-left);top:var(--mascot-top);--face-size:var(--mascot-w);pointer-events:none;filter:drop-shadow(0 10px 12px #29392e14);transition:width .38s cubic-bezier(.22,.8,.32,1),height .38s cubic-bezier(.22,.8,.32,1),left .38s cubic-bezier(.22,.8,.32,1),top .38s cubic-bezier(.22,.8,.32,1)}
+/* The greeting line yields its left edge to the mascot; the question line
+   keeps the full width. text-indent affects only the first line. */
+.welcome h1{text-indent:calc(var(--mascot-w) + var(--mascot-left) - 20px)}
+@media(max-width:700px){
+ .glass-card{--mascot-w:60px;--mascot-left:14px;--mascot-top:8px}
+ .glass-card.has-conversation,.glass-card:not(.has-conversation).history-expanded{--mascot-w:48px;--mascot-top:9px}
+}
+@media(prefers-reduced-motion:reduce){.card-mascot{transition:none}}
