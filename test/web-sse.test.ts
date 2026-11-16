@@ -483,3 +483,65 @@ test("客户端断连：close → abort 语义与 /api/chat 相同", async (t) =
   req.destroy();
   await until(() => captured?.aborted === true && sendSettled, "abort propagated");
 });
+
+test("issue#39 新类型帧：经同一 progress 事件名原样透传", async (t) => {
+  // 契约 §4.1：subagent_spawned/subagent_done/tool_call 复用 progress 帧
+  // （http 层不感知类型），载荷原样序列化、字段零增删。
+  const SPAWNED = {
+    type: "subagent_spawned",
+    subagent_id: "sess_child_a",
+    plan_id: "A",
+    parent_run_id: "run_p",
+    title: "曲江看展方案",
+    task_summary: "2026-11-14 曲江方向探路",
+    message: "正在派发子任务「曲江看展方案」",
+  };
+  const DONE = {
+    type: "subagent_done",
+    subagent_id: "sess_child_a",
+    plan_id: "A",
+    status: "completed",
+    kind: "itinerary",
+    stops_count: 2,
+    title: "曲江看展方案",
+    summary: "曲江看展线",
+    child_run_id: "run_c",
+    child_run_status: "completed",
+    message: "子任务完成：2 站 曲江看展线",
+  };
+  const TOOL = {
+    type: "tool_call",
+    tool_call_id: "tc_1",
+    name: "search_events",
+    args_summary: "date=2026-11-14",
+    result_count: 7,
+    status: "completed",
+    duration_ms: 21,
+    subagent_id: "sess_child_a",
+    message: "search_events date=2026-11-14：7 条",
+  };
+  const svc = fakeService({
+    send: async (_u, _m, options) => {
+      options?.onSession?.("sess_1");
+      options?.onProgress?.(PROGRESS_SEARCH);
+      options?.onProgress?.(SPAWNED);
+      options?.onProgress?.(TOOL);
+      options?.onProgress?.(DONE);
+      return RESULT;
+    },
+  });
+  const { base, close } = await start(svc, { sseHeartbeatMs: 0 });
+  t.after(close);
+
+  const reply = await postStream(base, { message: "hi" });
+  const { frames } = parseSse(reply.body);
+  assert.deepEqual(
+    frames.map((f) => f.event),
+    ["meta", "progress", "progress", "progress", "progress", "result"],
+  );
+  assert.deepEqual(frames[1].data, PROGRESS_SEARCH); // 旧 stage 帧形状不变
+  assert.deepEqual(frames[2].data, SPAWNED);
+  assert.deepEqual(frames[3].data, TOOL);
+  assert.deepEqual(frames[4].data, DONE);
+  assert.deepEqual(frames[5].data, RESULT);
+});

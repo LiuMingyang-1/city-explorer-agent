@@ -49,7 +49,8 @@ type ProgressSink = (e: PlannerProcessEvent) => void;   // 观察回调
 ```
 
 - `subagent_spawned`：`{type, subagent_id, plan_id, parent_run_id, title, task_summary, message}`
-- `subagent_done`：`{type, subagent_id, plan_id, status("completed"|"failed"|"cancelled"), kind?("itinerary"|"clarification"), stops_count(number|null), summary, child_run_id, child_run_status(RunStatus|null), message}`
+- `subagent_done`：`{type, subagent_id, plan_id, status("completed"|"failed"|"cancelled"), kind?("itinerary"|"clarification"), stops_count(number|null), title, summary, child_run_id, child_run_status(RunStatus|null), message}`
+  （契约修订：`title` 必填 ≤40 码点，与 spawned 同源——I39-2 发射时回传派发 title，分身退场景气泡可直接复用。）
 - `tool_call`：`{type, tool_call_id, name, args_summary, result_count(number|null), status("completed"|"error"), duration_ms?, subagent_id?, message}`
 - `stage`（PlannerProgress）：`{type?, stage, message, plan_ids, subagent_id?}`
 
@@ -92,7 +93,8 @@ type ProgressSink = (e: PlannerProcessEvent) => void;   // 观察回调
 
 - `args_summary` 白名单摘要（search_events 的 type/date/category/keyword/
   near/radiusKm；delegate_task 的 title|task；estimate_travel 起止+mode；
-  web_search query），未知工具退化为 JSON 裁剪；不回传完整入参/结果内容。
+  web_search query）；**未知工具不给原始 JSON，给安全默认摘要**（契约修订，
+  具体形态以 progress.ts 实现为准）；不回传完整入参/结果内容。
 - 全部文本字段 `clipText` ≤160 码点单行；工具入参均为模型产出标量，
   无密钥路径，但仍限长控制帧大小。
 

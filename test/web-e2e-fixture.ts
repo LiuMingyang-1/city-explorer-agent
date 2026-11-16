@@ -23,7 +23,7 @@ import { createSqliteSessionRepository } from "../src/session/sqlite.ts";
 import { createChatHandler } from "../src/web/http.ts";
 import { createWebServer, listen } from "../src/web/server.ts";
 import { createChatService } from "../src/web/service.ts";
-import type { ManagedChatService } from "../src/web/service.ts";
+import type { ChatPlannerFactory, ManagedChatService } from "../src/web/service.ts";
 import { BASE, CONFIG, makeStreamFn } from "./e2e-fixture.ts";
 
 export interface Reply {
@@ -130,7 +130,13 @@ export function seededEventsPath(dir: string): string {
  */
 export async function openWeb(
   t: TestContext,
-  options: { eventsPath: string; sessionsPath: string; streamFn?: StreamFn },
+  options: {
+    eventsPath: string;
+    sessionsPath: string;
+    streamFn?: StreamFn;
+    /** 自定义 planner 工厂（如注入短 subagentTimeoutMs）；缺省走 service 默认。 */
+    createPlanner?: ChatPlannerFactory;
+  },
 ): Promise<WebStack> {
   const repository = createSqliteEventRepository(options.eventsPath);
   const sessions = createSqliteSessionRepository(options.sessionsPath);
@@ -139,6 +145,7 @@ export async function openWeb(
     config: CONFIG,
     repository,
     sessions,
+    createPlanner: options.createPlanner,
     streamFn: options.streamFn ?? makeStreamFn(faux).streamFn,
     currentDate: BASE,
   });

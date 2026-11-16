@@ -5,7 +5,25 @@ event: progress
 data: {"request_id":"req_mock_new","stage":"searching_events","message":"正在检索活动","plan_ids":[]}
 
 event: progress
+data: {"request_id":"req_mock_new","type":"tool_call","tool_call_id":"tc_mock_1","name":"search_events","args_summary":"date=2026-11-14 类别=展览","result_count":12,"status":"completed","duration_ms":34,"message":"search_events date=2026-11-14 类别=展览：12 条"}
+
+event: progress
 data: {"request_id":"req_mock_new","stage":"exploring_plans","message":"正在并行探路方案 A 与方案 B","plan_ids":["plan_mock_a","plan_mock_b"]}
+
+event: progress
+data: {"request_id":"req_mock_new","type":"subagent_spawned","subagent_id":"sess_mock_child_a","plan_id":"A","parent_run_id":"run_mock_parent","title":"曲江看展方案","task_summary":"2026-11-14 下午曲江方向看展探路","message":"正在派发子任务「曲江看展方案」"}
+
+event: progress
+data: {"request_id":"req_mock_new","type":"subagent_spawned","subagent_id":"sess_mock_child_b","plan_id":"B","parent_run_id":"run_mock_parent","title":"城南市集方案","task_summary":"2026-11-14 下午城南艺术市集探路","message":"正在派发子任务「城南市集方案」"}
+
+event: progress
+data: {"request_id":"req_mock_new","type":"tool_call","tool_call_id":"tc_mock_2","name":"search_events","args_summary":"date=2026-11-14 类别=展览","result_count":5,"status":"completed","duration_ms":18,"subagent_id":"sess_mock_child_a","message":"search_events date=2026-11-14 类别=展览：5 条"}
+
+event: progress
+data: {"request_id":"req_mock_new","type":"subagent_done","subagent_id":"sess_mock_child_a","plan_id":"A","status":"completed","kind":"itinerary","stops_count":2,"title":"曲江看展方案","summary":"曲江看展阅读线","child_run_id":"run_mock_child_a","child_run_status":"completed","message":"子任务完成：2 站 曲江看展阅读线"}
+
+event: progress
+data: {"request_id":"req_mock_new","type":"subagent_done","subagent_id":"sess_mock_child_b","plan_id":"B","status":"completed","kind":"itinerary","stops_count":2,"title":"城南市集方案","summary":"城南艺术市集线","child_run_id":"run_mock_child_b","child_run_status":"completed","message":"子任务完成：2 站 城南艺术市集线"}
 
 event: progress
 data: {"request_id":"req_mock_new","stage":"routing","message":"正在获取站间道路路线","plan_ids":["plan_mock_a","plan_mock_b"]}
