@@ -56,7 +56,7 @@
 | 文档 | 内容 |
 | --- | --- |
 | [product-plan.md](planning/product-plan.md) | 产品定位、目标体验、数据方案与边界 |
-| [roadmap.md](planning/roadmap.md) | 下一阶段共识与 Agent/前端/爬虫分工拆解 |
+| [roadmap.md](planning/roadmap.md) | 下一阶段共识、Agent/前端/爬虫分工拆解与 AI 深度可视化主线（§5） |
 | [nightly-static-events-plan.md](planning/nightly-static-events-plan.md) | 夜间静态活动数据方案与平台调研记录 |
 | [xian-bootstrap-and-nightly-plan.md](planning/xian-bootstrap-and-nightly-plan.md) | 西安初始构建与夜间采集总体规划 |
 | [xian-real-events-data-plan.md](planning/xian-real-events-data-plan.md) | 真实活动数据方案（阶段 A/B） |
