@@ -142,20 +142,63 @@ Issue #19 起新增第四形态 answer（普通问答）：
 ```
 event: meta      data: {"session_id":"…"}                    // 会话确定后立即发
 event: progress  data: {"stage":"searching_events","message":"正在检索活动","plan_ids":[]}
+event: progress  data: {"type":"tool_call","tool_call_id":"tc_1","name":"search_events","args_summary":"date=2026-11-14 类别=展览","result_count":12,"status":"completed","duration_ms":34,"message":"search_events date=2026-11-14 类别=展览：12 条"}
 event: progress  data: {"stage":"exploring_plans","message":"正在并行探路方案 A 与方案 B","plan_ids":["A","B"]}
+event: progress  data: {"type":"subagent_spawned","subagent_id":"sess_child_a","plan_id":"A","parent_run_id":"run_parent","title":"曲江看展方案","task_summary":"2026-11-14 下午曲江方向看展探路","message":"正在派发子任务「曲江看展方案」"}
+event: progress  data: {"type":"tool_call","tool_call_id":"tc_7","name":"search_events","args_summary":"date=2026-11-14 类别=展览","result_count":5,"status":"completed","duration_ms":21,"subagent_id":"sess_child_a","message":"search_events date=2026-11-14 类别=展览：5 条"}
+event: progress  data: {"type":"subagent_done","subagent_id":"sess_child_a","plan_id":"A","status":"completed","kind":"itinerary","stops_count":3,"title":"曲江看展方案","summary":"曲江看展阅读线","child_run_id":"run_child_a","child_run_status":"completed","message":"子任务完成：3 站 曲江看展阅读线"}
 event: progress  data: {"stage":"routing","message":"正在获取站间道路路线","plan_ids":[…]}
 event: progress  data: {"stage":"validating_schedule","message":"正在校验路线时间","plan_ids":[…]}
 event: result    data: <ChatResult JSON，同 /api/chat 响应>
 event: error     data: {"error":{"code":"…","message":"…","retryable":false}}
 ```
 
-- stage 枚举：`searching_events` | `exploring_plans` | `routing` | `validating_schedule`。
-  由服务端从 Agent 工具执行事件推导：search_events 首次调用 → searching_events；
-  delegate_task 执行中 → exploring_plans；行程校验/纠正 → validating_schedule；
-  legs 算路 → routing。clarification/answer 轮可不发 progress；轮内
-  工具调用仍按上表推导（web_search 无对应 stage）。
+### 4.1 progress 帧载荷（PlannerProcessEvent 联合）
+
+所有过程事件共用 `event: progress` 通道（单帧保序），`data.type` 为判别键：
+
+- **stage**（兼容帧，恒无 `type` 键）：`{stage,message,plan_ids}`。
+  stage 枚举：`searching_events` | `exploring_plans` | `routing` |
+  `validating_schedule`。由服务端从 Agent 工具执行事件推导：search_events
+  首次调用 → searching_events；delegate_task 执行中 → exploring_plans；
+  行程校验/纠正 → validating_schedule；legs 算路 → routing。
+  clarification/answer 轮可不发 progress；轮内工具调用仍按上表推导
+  （web_search 无对应 stage）。消费端判别：`event.type ?? "stage"`。
+- **subagent_spawned**：`{type,subagent_id,plan_id,parent_run_id,title,
+  task_summary,message}`。createChildSession 成功即发射——分身入场的
+  真实锚点。`subagent_id` = 子会话 ID；`plan_id` = 父轮按派发序分配的
+  方案标号（"A"/"B"…，与 exploring_plans.plan_ids 同源，取不到为 null）；
+  `title` ≤40 码点（缺省取 task 裁剪）；`task_summary` ≤160 码点。
+- **subagent_done**：`{type,subagent_id,plan_id,status,kind?,stops_count,
+  title,summary,child_run_id,child_run_status,message}`。`status` =
+  回传父模型的派发终态 `"completed"|"failed"|"cancelled"`；`title` ≤40
+  码点（与 spawned 同源，必填）；`stops_count` 仅 completed+itinerary
+  为站点数否则 null；`kind` 为 `"itinerary"|"clarification"`（非 completed
+  省略）；`summary` 为行程摘要/追问/失败原因 ≤160 码点。
+  `child_run_id` / `child_run_status` 为**事件发射瞬间**子会话最新 run
+  的 DB 状态快照（`listRunsBySession.at(-1)` 如实抄录，查无为 null）：
+  - 快照可与父视角 `status` 不同——父取消/子超时 → `status:"cancelled"`
+    （派发语义），而此刻子 run 可能尚未收尾，快照如实为 `"running"`；
+    启动失败前已建半成品 run 时 `runId`/`status` 同样如实抄录。
+  - 消费者**不得**据 `child_run_status` 猜测子 run 已终结；确认终态需
+    另行查询会话库。服务端不做 running→终态的追帧补发。
+- **tool_call**：`{type,tool_call_id,name,args_summary,result_count,status,
+  duration_ms?,subagent_id?,message}`。tool_execution_end 即发：
+  `tool_call_id` = Pi 调用 ID（start/end 配对）；`args_summary` = 参数
+  白名单单行摘要 ≤160 码点（search_events 的 type/date/category/keyword/
+  near/radiusKm；delegate_task 的 title|task；estimate_travel 起止+mode；
+  web_search query；未知工具给安全默认摘要，不回传原始入参 JSON）；
+  `result_count` = 命中数（`details.count` 有限数时透出，error 时 null）；
+  `status` = `"completed"|"error"`。
+- **subagent_id 盖章**：父会话原生事件无 `subagent_id`；被派发子会话内部
+  产出的事件（tool_call 等实体级事件）一律盖章为 child sessionId 上达。
+  stage 属本轮私有叙事不透传，子会话的 stage 不会出现在父流中。
+- **message 恒非空单行**：每个事件带 ≤160 码点人类可读文案；旧前端逐帧
+  展示 `progress.message`，兼容无需前端改动。所有文本字段裁剪为单行，
+  不回传完整工具入参/结果内容。
 - 心跳：每 15s 一行 `: ping` 注释。
-- 客户端断连 → 与 /api/chat 相同的 abort 语义；正常 result/error 事件后关闭流。
+- 客户端断连 → 与 /api/chat 相同的 abort 语义（后续帧不再可达，终态
+  以会话库为准）；正常 result/error 事件后关闭流。
 - POST /api/chat 旧端点保留不变（前端可择一接入）。
 
 ## 5. GET /api/events（近期活动只读）

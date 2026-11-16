@@ -21,6 +21,9 @@ import type { ExplorerAgentOptions } from "./explorer-agent.ts";
 import { PersistentRuntime } from "./persistent/runtime.ts";
 import type { ActiveDispatchTurn } from "./persistent/runtime.ts";
 export type { ActiveDispatchTurn };
+import { safeEmit, stageProgress, toolCallEvent } from "./progress.ts";
+import type { PlannerProgressStage, ProgressSink } from "./progress.ts";
+export type { PlannerProcessEvent, PlannerProgress, ProgressSink } from "./progress.ts";
 import {
   extractEventIds,
   lastAssistantText,
@@ -60,23 +63,13 @@ export type PlannerTurn =
 export type PlannerErrorTurn = Extract<PlannerTurn, { kind: "error" }>;
 
 /**
- * 流式端点（POST /api/chat/stream）的 progress 阶段枚举，对应
- * docs/contracts/agent-api.md §4：由 Agent 工具执行事件与校验时机推导——
- * search_events → searching_events、delegate_task → exploring_plans、
- * 行程校验/纠正 → validating_schedule、legs 算路 → routing（预留）。
+ * 流式端点（POST /api/chat/stream）的 progress 阶段枚举与过程事件联合，
+ * 契约见 ./progress.ts 与 docs/contracts/agent-api.md §4：由 Agent 工具
+ * 执行事件与校验时机推导——search_events → searching_events、
+ * delegate_task → exploring_plans、行程校验/纠正 → validating_schedule、
+ * legs 算路 → routing；子任务/工具调用细粒度事件同通道透出。
  */
-export type PlannerProgressStage =
-  | "searching_events"
-  | "exploring_plans"
-  | "routing"
-  | "validating_schedule";
-
-/** 一次阶段进度上报；plan_ids 为该阶段关联的方案标号（无关联方案为空）。 */
-export interface PlannerProgress {
-  stage: PlannerProgressStage;
-  message: string;
-  plan_ids: string[];
-}
+export type { PlannerProgressStage } from "./progress.ts";
 
 /**
  * 取消/关闭信号下统一的 error turn：abort(reason) 的字符串原因透传给
@@ -121,10 +114,10 @@ export interface PlannerPromptOptions {
    */
   referencedEvent?: ReferencedEvent;
   /**
-   * 阶段进度回调（流式端点用）：本轮内同步触发、可多次；相同 stage+plan_ids
-   * 的连续上报去重。回调抛错被吞掉，不影响本轮规划。
+   * 过程事件回调（流式端点用）：本轮内同步触发、可多次；相同 stage+plan_ids
+   * 的连续上报去重，其余事件各发一次。回调抛错被吞掉，不影响本轮规划。
    */
-  onProgress?: (progress: PlannerProgress) => void;
+  onProgress?: ProgressSink;
 }
 
 /** referenced_event_id 查库解析后的点选活动描述：注入 prompt 上下文用。 */
@@ -194,31 +187,15 @@ function errorText(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-/** 各阶段的对外文案；exploring_plans 按已派发方案动态拼。 */
-function progressMessage(stage: PlannerProgressStage, planIds: string[]): string {
-  switch (stage) {
-    case "searching_events":
-      return "正在检索活动";
-    case "exploring_plans": {
-      const names = planIds.map((id) => `方案 ${id}`);
-      return names.length > 1
-        ? `正在并行探路${names.join(" 与")}`
-        : `正在探路${names[0] ?? "候选方案"}`;
-    }
-    case "routing":
-      return "正在获取站间道路路线";
-    case "validating_schedule":
-      return "正在校验路线时间";
-  }
-}
-
 /** 一轮内的进度上报状态；仅 performTurn 挂接了 onProgress 时存在。 */
 interface TurnProgress {
-  sink: (progress: PlannerProgress) => void;
+  sink: ProgressSink;
   /** 上一次已上报的 stage:plan_ids 键——连续重复上报不打扰观察者。 */
   lastKey?: string;
   /** 本轮已派发的 delegate_task 按序标号 A、B…，作 plan_ids 用。 */
   delegatePlanIds: string[];
+  /** toolCallId → 方案标号：dispatch 上下文据此给子任务事件回填 plan_id。 */
+  delegatePlanIdByCall: Map<string, string>;
 }
 
 /**
@@ -253,7 +230,7 @@ export class PlannerSession {
     this.unsubscribeTrace = options.agent.subscribe((event) => {
       if (event.type === "tool_execution_start") {
         pending.set(event.toolCallId, { toolName: event.toolName, args: event.args });
-        this.noteToolProgress(event.toolName);
+        this.noteToolProgress(event.toolName, event.toolCallId);
       } else if (event.type === "tool_execution_end") {
         const start = pending.get(event.toolCallId);
         pending.delete(event.toolCallId);
@@ -263,6 +240,28 @@ export class PlannerSession {
           isError: event.isError,
           durationMs: event.durationMs,
         });
+        // tool_call 实体级事件：start 的入参经 pending 回填、耗时/结果取 end
+        // 真实值；仅本轮挂接了 onProgress 才发射。子会话的 PlannerSession
+        // 走同一路径，其 sink 即 dispatch 透传缝——盖章 subagent_id 后
+        // 上达父 sink（docs/issue-39/coordination.md §8）。
+        const progress = this.progress;
+        if (progress) {
+          try {
+            safeEmit(
+              progress.sink,
+              toolCallEvent({
+                toolCallId: event.toolCallId,
+                name: event.toolName,
+                args: start?.args,
+                result: event.result,
+                isError: event.isError,
+                durationMs: event.durationMs,
+              }),
+            );
+          } catch {
+            // 事件构造/发射是观察路径：任何异常不拖垮本轮规划。
+          }
+        }
       }
     });
   }
@@ -345,11 +344,11 @@ export class PlannerSession {
    */
   async performTurn(
     text: string,
-    control?: { signal?: AbortSignal; onProgress?: (progress: PlannerProgress) => void },
+    control?: { signal?: AbortSignal; onProgress?: ProgressSink },
   ): Promise<PlannerTurn> {
     const signal = control?.signal;
     this.progress = control?.onProgress
-      ? { sink: control.onProgress, delegatePlanIds: [] }
+      ? { sink: control.onProgress, delegatePlanIds: [], delegatePlanIdByCall: new Map() }
       : undefined;
     try {
       return await this.runCorrectionLoop(text, signal);
@@ -359,17 +358,28 @@ export class PlannerSession {
   }
 
   /** 工具执行事件 → 阶段进度（契约 §4）；未挂接 onProgress 时为空转。 */
-  private noteToolProgress(toolName: string): void {
+  private noteToolProgress(toolName: string, toolCallId: string): void {
     if (toolName === SEARCH_EVENTS_TOOL) {
       this.emitProgress("searching_events");
     } else if (toolName === DELEGATE_TASK_TOOL && this.progress) {
-      // 每个并行子任务按派发序记一个方案标号（A、B…）；plan_ids 即全集。
+      // 每个并行子任务按派发序记一个方案标号（A、B…）；plan_ids 即全集，
+      // toolCallId → 标号留给 dispatch 上下文给子任务事件回填 plan_id。
       const n = this.progress.delegatePlanIds.length;
-      this.progress.delegatePlanIds.push(
-        n < 26 ? String.fromCharCode(65 + n) : `P${n + 1}`,
-      );
+      const planId = n < 26 ? String.fromCharCode(65 + n) : `P${n + 1}`;
+      this.progress.delegatePlanIds.push(planId);
+      this.progress.delegatePlanIdByCall.set(toolCallId, planId);
       this.emitProgress("exploring_plans");
     }
+  }
+
+  /**
+   * 一次 delegate_task 调用对应的方案标号；dispatch 上下文
+   * （ActiveDispatchTurn.planIdForToolCall）经它给 subagent_* 事件回填
+   * plan_id。无本轮进度挂接或未知调用 → undefined。
+   * @internal
+   */
+  planIdForToolCall(toolCallId: string): string | undefined {
+    return this.progress?.delegatePlanIdByCall.get(toolCallId);
   }
 
   /**
@@ -384,11 +394,7 @@ export class PlannerSession {
     const key = `${stage}:${planIds.join(",")}`;
     if (key === progress.lastKey) return;
     progress.lastKey = key;
-    try {
-      progress.sink({ stage, message: progressMessage(stage, planIds), plan_ids: planIds });
-    } catch {
-      // 进度回调是观察者：抛错不拖垮本轮规划。
-    }
+    safeEmit(progress.sink, stageProgress(stage, planIds));
   }
 
   /** performTurn 的纠正循环本体（进度挂接/复位由外壳负责）。 */

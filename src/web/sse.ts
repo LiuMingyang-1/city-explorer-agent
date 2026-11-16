@@ -11,13 +11,15 @@
  */
 
 import type { ServerResponse } from "node:http";
+import type { PlannerProcessEvent } from "../agent/progress.ts";
 
-/** progress 事件的线上契约（snake_case，与 planner 层 PlannerProgress 同形）。 */
-export interface ChatProgress {
-  stage: "searching_events" | "exploring_plans" | "routing" | "validating_schedule";
-  message: string;
-  plan_ids: string[];
-}
+/**
+ * progress 事件的线上契约（snake_case，与 planner 层 PlannerProcessEvent 同形）：
+ * 既有 4 个 stage 帧保持旧形状 {stage,message,plan_ids}；issue #39 新增
+ * subagent_spawned / subagent_done / tool_call 同经 progress 帧透出，
+ * 以 data.type 判别（stage 帧省略 type，消费端按 ?? "stage" 归一）。
+ */
+export type ChatProgress = PlannerProcessEvent;
 
 /** error 事件的线上契约。 */
 export interface ChatStreamError {

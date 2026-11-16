@@ -4,6 +4,12 @@ data: {"schema_version":"2.0","request_id":"req_mock_failure","session_id":"sess
 event: progress
 data: {"request_id":"req_mock_failure","stage":"searching_events","message":"正在检索活动","plan_ids":[]}
 
+event: progress
+data: {"request_id":"req_mock_failure","type":"subagent_spawned","subagent_id":"sess_mock_child_x","plan_id":"A","parent_run_id":"run_mock_parent","title":"曲江看展方案","task_summary":"2026-11-14 曲江方向探路","message":"正在派发子任务「曲江看展方案」"}
+
+event: progress
+data: {"request_id":"req_mock_failure","type":"subagent_done","subagent_id":"sess_mock_child_x","plan_id":"A","status":"failed","stops_count":null,"title":"曲江看展方案","summary":"子任务规划失败","child_run_id":"run_mock_child_x","child_run_status":"failed","message":"子任务失败：子任务规划失败"}
+
 event: error
 data: {"schema_version":"2.0","request_id":"req_mock_failure","session_id":"sess_mock_001","error":{"code":"PLANNING_FAILED","message":"本次未能生成可用方案，请重试。","retryable":true}}
 
