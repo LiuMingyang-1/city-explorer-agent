@@ -11,6 +11,11 @@ import type { IncomingHttpHeaders, Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { test } from "node:test";
 import type { Itinerary } from "../src/itinerary/types.ts";
+import type {
+  SubagentDoneEvent,
+  SubagentSpawnedEvent,
+  ToolCallEvent,
+} from "../src/agent/progress.ts";
 import { createChatHandler } from "../src/web/http.ts";
 import type { WebChatOptions } from "../src/web/http.ts";
 import { createSseWriter } from "../src/web/sse.ts";
@@ -487,7 +492,7 @@ test("客户端断连：close → abort 语义与 /api/chat 相同", async (t) =
 test("issue#39 新类型帧：经同一 progress 事件名原样透传", async (t) => {
   // 契约 §4.1：subagent_spawned/subagent_done/tool_call 复用 progress 帧
   // （http 层不感知类型），载荷原样序列化、字段零增删。
-  const SPAWNED = {
+  const SPAWNED: SubagentSpawnedEvent = {
     type: "subagent_spawned",
     subagent_id: "sess_child_a",
     plan_id: "A",
@@ -496,7 +501,7 @@ test("issue#39 新类型帧：经同一 progress 事件名原样透传", async (
     task_summary: "2026-11-14 曲江方向探路",
     message: "正在派发子任务「曲江看展方案」",
   };
-  const DONE = {
+  const DONE: SubagentDoneEvent = {
     type: "subagent_done",
     subagent_id: "sess_child_a",
     plan_id: "A",
@@ -509,7 +514,7 @@ test("issue#39 新类型帧：经同一 progress 事件名原样透传", async (
     child_run_status: "completed",
     message: "子任务完成：2 站 曲江看展线",
   };
-  const TOOL = {
+  const TOOL: ToolCallEvent = {
     type: "tool_call",
     tool_call_id: "tc_1",
     name: "search_events",

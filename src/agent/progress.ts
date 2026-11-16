@@ -50,7 +50,8 @@ export interface PlannerProgress {
   stage: PlannerProgressStage;
   message: string;
   plan_ids: string[];
-  /** 源自被派发子会话时盖章为 child sessionId；父会话原生事件省略。 */
+  /** 子会话 stage 不透传（本轮私有叙事），父流中实际不出现盖章 stage 帧；
+   *  字段仅为联合判别一致性保留。父会话原生事件恒省略。 */
   subagent_id?: string;
 }
 
@@ -84,6 +85,8 @@ export interface SubagentDoneEvent {
   kind?: "itinerary" | "clarification";
   /** completed+itinerary 时为站点数；其余情形 null。 */
   stops_count: number | null;
+  /** 子任务标题（与 spawned.title 同源必填，≤40 码点）：前端按 title 归属 done。 */
+  title: string;
   /** 单行摘要：行程 summary / 追问问题 / 失败或取消原因（≤160 码点）。 */
   summary: string;
   /** 子会话本次派发的 run ID（查无则 null）。 */
@@ -93,7 +96,10 @@ export interface SubagentDoneEvent {
   message: string;
 }
 
-/** 单次工具执行结束即发射：检索涟漪与工具统计的事件源。 */
+/**
+ * 单次工具执行结束即发射：#42 思考轨迹面板的工具节点（tool_call_id/subagent_id
+ * 归属）与 #43 检索涟漪（args_summary/result_count）同源的真实事件源。
+ */
 export interface ToolCallEvent {
   type: "tool_call";
   /** Pi agent 的本次调用 ID（tool_execution_start/end 配对键，会话内唯一）。 */
@@ -102,7 +108,8 @@ export interface ToolCallEvent {
   name: string;
   /** 参数白名单单行摘要（≤160 码点；不回传完整入参）。 */
   args_summary: string;
-  /** 命中/产出条目数：结果 details.count 为有限数时透出，其余 null。 */
+  /** 命中/产出条目数：按真实 details 语义推导（见 toolResultCount），
+   *  推导不出为 null——绝不虚构命中数。 */
   result_count: number | null;
   status: "completed" | "error";
   /** execute 耗时（单调时钟毫秒）；工具未运行时缺省。 */
@@ -170,15 +177,16 @@ export function safeEmit(sink: ProgressSink | undefined, event: PlannerProcessEv
 
 /**
  * 工具入参 → 单行摘要（白名单字段，≤160 码点）：键名与 tools.ts /
- * travel-tool.ts / web-search.ts / delegate.ts 的参数 schema 对应；
- * 未知工具退化为整参 JSON 裁剪——参数均为模型产出标量，不含密钥，
- * 但仍经 clipText 控制帧大小。
+ * travel-tool.ts / web-search.ts / delegate.ts 的参数 schema 对应。
+ * 未知工具不透原参（模型产出可能夹带未预期的敏感字段，键名/值都不回传），
+ * 只报参数项数；也不走 JSON.stringify——循环引用/BigInt 会抛，观察路径
+ * 必须不抛。
  */
 export function summarizeToolArgs(toolName: string, args: unknown): string {
-  if (args === null || typeof args !== "object") {
-    return clipText(args === undefined || args === null ? "" : String(args));
-  }
-  const a = args as Record<string, unknown>;
+  const a = (args !== null && typeof args === "object" ? args : {}) as Record<
+    string,
+    unknown
+  >;
   switch (toolName) {
     case "search_events": {
       const near = a.near as { lat?: unknown; lng?: unknown } | undefined;
@@ -211,15 +219,45 @@ export function summarizeToolArgs(toolName: string, args: unknown): string {
     case "web_search":
       return clipText(`query=${typeof a.query === "string" ? a.query : ""}`);
     default:
-      return clipText(JSON.stringify(args) ?? "");
+      // 安全默认：只报参数项数（标量入参按 1 计），不透键名与值。
+      try {
+        const count =
+          args !== null && typeof args === "object"
+            ? Object.keys(a).length
+            : args === undefined || args === null
+              ? 0
+              : 1;
+        return clipText(`${count} 项参数`);
+      } catch {
+        return "";
+      }
   }
 }
 
-/** tool_execution_end.result（AgentToolResult）→ 命中数：仅 details.count 为有限数时透出。 */
-export function toolResultCount(result: unknown): number | null {
-  if (result === null || typeof result !== "object") return null;
-  const count = (result as { details?: { count?: unknown } }).details?.count;
-  return typeof count === "number" && Number.isFinite(count) ? count : null;
+/**
+ * tool_execution_end.result（AgentToolResult）→ 命中/产出条目数：按真实
+ * details 语义推导——details.count 为有限数直接用（search_events）；其次按
+ * 工具已知结果形态（web_search 的 results[]、delegate_task 的
+ * itinerary.stops[]）取真实长度；语义不明或缺 details → null，不凑假命中数。
+ */
+export function toolResultCount(toolName: string, result: unknown): number | null {
+  const details =
+    result !== null && typeof result === "object"
+      ? (result as { details?: unknown }).details
+      : undefined;
+  if (details === null || typeof details !== "object") return null;
+  const d = details as Record<string, unknown>;
+  if (typeof d.count === "number" && Number.isFinite(d.count)) return d.count;
+  switch (toolName) {
+    case "web_search":
+      return Array.isArray(d.results) ? d.results.length : null;
+    case "delegate_task": {
+      const stops = (d.itinerary as { stops?: unknown } | undefined)?.stops;
+      return Array.isArray(stops) ? stops.length : null;
+    }
+    default:
+      return null;
+  }
 }
 
 /** tool_execution_end → tool_call 事件（args 由对应的 start 事件捕获传入）。 */
@@ -233,7 +271,7 @@ export function toolCallEvent(input: {
   subagentId?: string;
 }): ToolCallEvent {
   const argsSummary = summarizeToolArgs(input.name, input.args);
-  const resultCount = input.isError ? null : toolResultCount(input.result);
+  const resultCount = input.isError ? null : toolResultCount(input.name, input.result);
   const message = input.isError
     ? `${input.name} 失败`
     : `${input.name}${argsSummary !== "" ? ` ${argsSummary}` : ""}` +
@@ -271,18 +309,21 @@ export function subagentSpawnedEvent(input: {
   };
 }
 
-/** 派发终了 → subagent_done 事件；status/summary 由调用方按真实结果填入。 */
+/** 派发终了 → subagent_done 事件；status/summary 由调用方按真实结果填入，
+ *  title 必填（与 spawned 同源：入参 title 缺省取 task 裁剪，≤40 码点）。 */
 export function subagentDoneEvent(input: {
   subagentId: string;
   planId: string | null;
   status: SubagentDoneStatus;
   kind?: "itinerary" | "clarification";
   stopsCount?: number | null;
+  title: string;
   summary: string;
   childRunId: string | null;
   childRunStatus?: RunStatus | null;
 }): SubagentDoneEvent {
   const summary = clipText(input.summary);
+  const title = clipText(input.title, 40);
   const stopsCount = input.stopsCount ?? null;
   const message =
     input.status === "completed"
@@ -299,6 +340,7 @@ export function subagentDoneEvent(input: {
     status: input.status,
     ...(input.kind !== undefined ? { kind: input.kind } : {}),
     stops_count: stopsCount,
+    title,
     summary,
     child_run_id: input.childRunId,
     child_run_status: input.childRunStatus ?? null,
@@ -307,9 +349,9 @@ export function subagentDoneEvent(input: {
 }
 
 /**
- * 子会话透传盖章：child 内部事件（stage/tool_call）经 dispatch 上下文
- * 转发到父 sink 时标上其 subagent_id（= child sessionId），父会话原生
- * 事件不带此字段。消费端据此归属事件来源。
+ * 子会话透传盖章：child 内部实体级事件（tool_call；stage 属本轮私有叙事
+ * 不透传）经 dispatch 上下文转发到父 sink 时标上其 subagent_id
+ * （= child sessionId），父会话原生事件不带此字段。消费端据此归属事件来源。
  */
 export function stampSubagent(
   event: PlannerProcessEvent,

@@ -52,18 +52,48 @@ test("summarizeToolArgs：白名单摘要且单行有界", () => {
     "e1→e2 walking",
   );
   assert.equal(summarizeToolArgs("web_search", { query: "闭馆 时间" }), "query=闭馆 时间");
-  assert.equal(summarizeToolArgs("unknown_tool", { a: 1 }), '{"a":1}');
   assert.equal(summarizeToolArgs("search_events", {}), "全部活动");
   const long = summarizeToolArgs("search_events", { keyword: "k".repeat(500) });
   assert.ok([...long].length <= PROGRESS_TEXT_LIMIT);
   assert.ok(!long.includes("\n"));
 });
 
-test("toolResultCount：仅 details.count 有限数透出", () => {
-  assert.equal(toolResultCount({ details: { count: 7 } }), 7);
-  assert.equal(toolResultCount({ details: { count: Number.NaN } }), null);
-  assert.equal(toolResultCount({ details: {} }), null);
-  assert.equal(toolResultCount(null), null);
+test("summarizeToolArgs：未知工具给安全默认摘要，不透原参且绝不抛", () => {
+  // 只报参数项数：键名/值都不出现在摘要里（原参可能夹带敏感字段）。
+  assert.equal(summarizeToolArgs("unknown_tool", { a: 1, b: 2 }), "2 项参数");
+  const sensitive = summarizeToolArgs("unknown_tool", { secret_key: "sk-live-123" });
+  assert.equal(sensitive, "1 项参数");
+  assert.ok(!sensitive.includes("sk-live-123") && !sensitive.includes("secret_key"));
+  // 非标量入参按 1 项计；空入参 0 项。
+  assert.equal(summarizeToolArgs("unknown_tool", "raw"), "1 项参数");
+  assert.equal(summarizeToolArgs("unknown_tool", undefined), "0 项参数");
+  // 循环引用/BigInt：旧 JSON.stringify 路径会抛，现路径不抛。
+  const circular: Record<string, unknown> = {};
+  circular.self = circular;
+  assert.doesNotThrow(() => summarizeToolArgs("unknown_tool", circular));
+  assert.doesNotThrow(() => summarizeToolArgs("unknown_tool", { n: BigInt(9) }));
+});
+
+test("toolResultCount：按真实 details 语义推导，推导不出为 null", () => {
+  // details.count 为有限数时优先（search_events 及任何如实报数的工具）。
+  assert.equal(toolResultCount("search_events", { details: { count: 7 } }), 7);
+  assert.equal(toolResultCount("mystery_tool", { details: { count: 4 } }), 4);
+  assert.equal(toolResultCount("search_events", { details: { count: Number.NaN } }), null);
+  // 已知工具的真实结果形态：web_search.results[]、delegate_task.itinerary.stops[]。
+  assert.equal(toolResultCount("web_search", { details: { results: [{}, {}, {}] } }), 3);
+  assert.equal(toolResultCount("web_search", { details: { query: "q" } }), null);
+  assert.equal(
+    toolResultCount("delegate_task", { details: { itinerary: { stops: [{}, {}] } } }),
+    2,
+  );
+  assert.equal(toolResultCount("delegate_task", { details: { status: "completed" } }), null);
+  // 无条目数语义 → null，不凑假命中数。
+  assert.equal(
+    toolResultCount("estimate_travel", { details: { duration_seconds: 900 } }),
+    null,
+  );
+  assert.equal(toolResultCount("search_events", { details: {} }), null);
+  assert.equal(toolResultCount("search_events", null), null);
 });
 
 test("toolCallEvent：name/args_summary/result_count/status/duration_ms", () => {
@@ -90,6 +120,15 @@ test("toolCallEvent：name/args_summary/result_count/status/duration_ms", () => 
   assert.equal(failed.status, "error");
   assert.equal(failed.result_count, null);
   assert.equal(failed.duration_ms, undefined);
+  // web_search 无 details.count：命中数按真实 results[] 推导。
+  const web = toolCallEvent({
+    toolCallId: "tc3",
+    name: "web_search",
+    args: { query: "闭馆" },
+    result: { details: { query: "闭馆", results: [{}, {}] } },
+    isError: false,
+  });
+  assert.equal(web.result_count, 2);
 });
 
 test("subagent_spawned/done：关联 id、终态、摘要裁剪与 message", () => {
@@ -112,18 +151,33 @@ test("subagent_spawned/done：关联 id、终态、摘要裁剪与 message", () 
     status: "completed",
     kind: "itinerary",
     stopsCount: 3,
+    title: "曲江看展方案",
     summary: "曲江看展线",
     childRunId: "run_child",
     childRunStatus: "completed",
   });
   assert.equal(done.stops_count, 3);
+  assert.equal(done.title, "曲江看展方案");
   assert.equal(done.child_run_status, "completed");
   assert.ok(done.message.includes("3 站"));
+
+  // title 必填且按 ≤40 码点裁剪（与 spawned 同源）。
+  const longTitle = subagentDoneEvent({
+    subagentId: "sess_child",
+    planId: null,
+    status: "failed",
+    title: `超长${"题".repeat(80)}`,
+    summary: "启动子任务失败：x",
+    childRunId: null,
+  });
+  assert.ok([...longTitle.title].length <= 40);
+  assert.ok(longTitle.title.endsWith("…"));
 
   const cancelled = subagentDoneEvent({
     subagentId: "sess_child",
     planId: null,
     status: "cancelled",
+    title: "曲江看展方案",
     summary: "父请求已取消",
     childRunId: null,
   });

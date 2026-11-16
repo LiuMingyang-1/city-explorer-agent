@@ -4,9 +4,9 @@ import { Type } from "typebox";
 import type { EventRepository } from "../data/repository.ts";
 import type { Itinerary, PlanningConstraints } from "../itinerary/types.ts";
 import type { SessionRepository } from "../session/repository.ts";
-import type { LeaseWriter, Session } from "../session/types.ts";
+import type { LeaseWriter, RunStatus, Session } from "../session/types.ts";
 import { isSessionError } from "../session/types.ts";
-import { safeEmit, stampSubagent } from "./progress.ts";
+import { safeEmit, stampSubagent, subagentDoneEvent, subagentSpawnedEvent } from "./progress.ts";
 import type { ProgressSink } from "./progress.ts";
 import type { PlannerTurn } from "./session.ts";
 
@@ -280,7 +280,7 @@ export function createDelegateTaskTool(
       "返回 JSON：completed 时含候选 itinerary 与所选 events 元信息；failed/cancelled 时含 error。" +
       "常规单线规划或需先追问的场景请直接用 search_events / clarify，不要派子任务。",
     parameters: delegateTaskParameters,
-    execute: async (_toolCallId, params, parentSignal) => {
+    execute: async (toolCallId, params, parentSignal) => {
       const task = typeof params.task === "string" ? params.task.trim() : "";
       if (!task) {
         return toResult({
@@ -361,6 +361,59 @@ export function createDelegateTaskTool(
               error: `创建子任务会话失败：${errorText(error)}`,
             });
           }
+          // 分身入场即发 spawned（协调文档 §7.1）；plan_id 与父轮
+          // exploring_plans 同源（planIdForToolCall 按 toolCallId 反查）。
+          const planId = ctx.planIdForToolCall?.(toolCallId) ?? null;
+          const spawned = subagentSpawnedEvent({
+            subagentId: childSession.sessionId,
+            planId,
+            parentRunId: ctx.runId,
+            title: params.title,
+            task,
+          });
+          safeEmit(ctx.onProgress, spawned);
+          // 派发终了即发 done（§7.3）：status/kind/summary/stops_count 与
+          // 回传父模型的 details 同源，child_run_* 抄录 DB 持久化终态
+          // （running 不伪装成终态）。每次 spawn 至多且最终恰一个 done：
+          // 正常路径都经 finish，异常分支由下方 catch 幂等补发。
+          let doneEmitted = false;
+          const emitDone = (
+            details: DelegateTaskDetails,
+            childRunStatus?: RunStatus | null,
+          ): void => {
+            doneEmitted = true;
+            safeEmit(
+              ctx.onProgress,
+              subagentDoneEvent({
+                subagentId: childSession.sessionId,
+                planId,
+                // 契约必填 title：与 spawned.title 同源（入参 title 缺省取
+                // task 裁剪 ≤40 码点），前端按它把 done 归属到分身。
+                title: spawned.title,
+                status: details.status,
+                ...(details.kind !== undefined ? { kind: details.kind } : {}),
+                stopsCount:
+                  details.status === "completed" && details.kind === "itinerary"
+                    ? (details.itinerary?.stops.length ?? null)
+                    : null,
+                summary:
+                  details.status === "completed"
+                    ? details.kind === "clarification"
+                      ? (details.question ?? "")
+                      : (details.itinerary?.summary ?? "")
+                    : (details.error ?? ""),
+                childRunId: details.runId,
+                childRunStatus: childRunStatus ?? null,
+              }),
+            );
+          };
+          const finish = (
+            details: DelegateTaskDetails,
+            childRunStatus?: RunStatus | null,
+          ): AgentToolResult<DelegateTaskDetails> => {
+            emitDone(details, childRunStatus);
+            return toResult(details);
+          };
           let child: ChildPlannerHandle;
           try {
             child = await options.spawnChild({
@@ -371,12 +424,23 @@ export function createDelegateTaskTool(
               depth: ctx.depth + 1,
             });
           } catch (error) {
-            return toResult({
-              status: "failed",
-              sessionId: childSession.sessionId,
-              runId: null,
-              error: `启动子任务失败：${errorText(error)}`,
-            });
+            // 启动失败：实现方可能已建半成品子 run——如实读取其持久化
+            // runId/status 填入 details/done，查无才 null，不伪造终态。
+            // status 维持既有父模型语义：启动期 combined 已 abort 也如实
+            // 报 failed（旧实现同样不区分，父据此走降级兜底）。
+            const lastRun = await options.sessions
+              .listRunsBySession(ctx.userId, childSession.sessionId)
+              .then((runs) => runs.at(-1))
+              .catch(() => undefined);
+            return finish(
+              {
+                status: "failed",
+                sessionId: childSession.sessionId,
+                runId: lastRun?.runId ?? null,
+                error: `启动子任务失败：${errorText(error)}`,
+              },
+              lastRun?.status ?? null,
+            );
           }
           try {
             let turn: PlannerTurn;
@@ -412,56 +476,75 @@ export function createDelegateTaskTool(
               }
             }
             // 子 run 由 spawnChild 侧建立；最新一条即本次派发的 run。
-            const runId = await options.sessions
+            // child_run_status 如实抄录持久化状态：父超时/取消瞬间子 run
+            // 可能仍 running——以 DB 为权威，不伪装成终态（契约 §4）。
+            const lastRun = await options.sessions
               .listRunsBySession(ctx.userId, childSession.sessionId)
-              .then((runs) => runs.at(-1)?.runId ?? null)
-              .catch(() => null);
+              .then((runs) => runs.at(-1))
+              .catch(() => undefined);
+            const runId = lastRun?.runId ?? null;
+            const childRunStatus = lastRun?.status ?? null;
             if (timedOut || parentAborted) {
-              return toResult({
-                status: "cancelled",
-                sessionId: childSession.sessionId,
-                runId,
-                error: cancelError(),
-              });
+              return finish(
+                {
+                  status: "cancelled",
+                  sessionId: childSession.sessionId,
+                  runId,
+                  error: cancelError(),
+                },
+                childRunStatus,
+              );
             }
             if (turn.kind === "error") {
-              return toResult({
-                status: "failed",
-                sessionId: childSession.sessionId,
-                runId,
-                error: turn.message,
-              });
+              return finish(
+                {
+                  status: "failed",
+                  sessionId: childSession.sessionId,
+                  runId,
+                  error: turn.message,
+                },
+                childRunStatus,
+              );
             }
             if (turn.kind === "clarification") {
-              return toResult({
-                status: "completed",
-                kind: "clarification",
-                sessionId: childSession.sessionId,
-                runId,
-                question: turn.question,
-              });
+              return finish(
+                {
+                  status: "completed",
+                  kind: "clarification",
+                  sessionId: childSession.sessionId,
+                  runId,
+                  question: turn.question,
+                },
+                childRunStatus,
+              );
             }
             if (turn.kind === "answer") {
               // 子任务把派发当成普通问答处理：如实回报为失败并附回答摘要，
               // 父 Agent 按既有降级准则改用 search_events 自行兜底。
-              return toResult({
-                status: "failed",
-                sessionId: childSession.sessionId,
-                runId,
-                error: `子任务返回普通回答而非行程：${turn.text.slice(0, 200)}`,
-              });
+              return finish(
+                {
+                  status: "failed",
+                  sessionId: childSession.sessionId,
+                  runId,
+                  error: `子任务返回普通回答而非行程：${turn.text.slice(0, 200)}`,
+                },
+                childRunStatus,
+              );
             }
             // child 也可能产出 comparison：委派结果统一取首个（active）
             // plan，父 Agent 汇总阶段再决定是否输出双方案。
             const itinerary =
               turn.kind === "comparison" ? turn.plans[0]?.itinerary : turn.itinerary;
             if (itinerary === undefined) {
-              return toResult({
-                status: "failed",
-                sessionId: childSession.sessionId,
-                runId,
-                error: "子任务返回的双方案为空",
-              });
+              return finish(
+                {
+                  status: "failed",
+                  sessionId: childSession.sessionId,
+                  runId,
+                  error: "子任务返回的双方案为空",
+                },
+                childRunStatus,
+              );
             }
             // event_id 断链修复：按去重保序取回所选活动的校验/决策元信息，
             // 父 Agent 无需重跑 search_events 即可核对时间窗并合并站点。
@@ -485,15 +568,37 @@ export function createDelegateTaskTool(
                 budgetNote: event.budgetNote,
               });
             }
-            return toResult({
-              status: "completed",
-              kind: "itinerary",
-              sessionId: childSession.sessionId,
-              runId,
-              constraints: turn.constraints,
-              itinerary,
-              events,
-            });
+            return finish(
+              {
+                status: "completed",
+                kind: "itinerary",
+                sessionId: childSession.sessionId,
+                runId,
+                constraints: turn.constraints,
+                itinerary,
+                events,
+              },
+              childRunStatus,
+            );
+          } catch (error) {
+            // spawned 已发出但未能走到终了回报（如活动元信息查询异常）：
+            // 幂等补恰一个 failed done 保持 spawn/done 1:1，再上抛。
+            if (!doneEmitted) {
+              const lastRun = await options.sessions
+                .listRunsBySession(ctx.userId, childSession.sessionId)
+                .then((runs) => runs.at(-1))
+                .catch(() => undefined);
+              emitDone(
+                {
+                  status: "failed",
+                  sessionId: childSession.sessionId,
+                  runId: lastRun?.runId ?? null,
+                  error: `子任务派发异常：${errorText(error)}`,
+                },
+                lastRun?.status ?? null,
+              );
+            }
+            throw error;
           } finally {
             await child.close();
           }

@@ -21,7 +21,7 @@ import type { ExplorerAgentOptions } from "./explorer-agent.ts";
 import { PersistentRuntime } from "./persistent/runtime.ts";
 import type { ActiveDispatchTurn } from "./persistent/runtime.ts";
 export type { ActiveDispatchTurn };
-import { safeEmit, stageProgress } from "./progress.ts";
+import { safeEmit, stageProgress, toolCallEvent } from "./progress.ts";
 import type { PlannerProgressStage, ProgressSink } from "./progress.ts";
 export type { PlannerProcessEvent, PlannerProgress, ProgressSink } from "./progress.ts";
 import {
@@ -240,6 +240,28 @@ export class PlannerSession {
           isError: event.isError,
           durationMs: event.durationMs,
         });
+        // tool_call 实体级事件：start 的入参经 pending 回填、耗时/结果取 end
+        // 真实值；仅本轮挂接了 onProgress 才发射。子会话的 PlannerSession
+        // 走同一路径，其 sink 即 dispatch 透传缝——盖章 subagent_id 后
+        // 上达父 sink（docs/issue-39/coordination.md §8）。
+        const progress = this.progress;
+        if (progress) {
+          try {
+            safeEmit(
+              progress.sink,
+              toolCallEvent({
+                toolCallId: event.toolCallId,
+                name: event.toolName,
+                args: start?.args,
+                result: event.result,
+                isError: event.isError,
+                durationMs: event.durationMs,
+              }),
+            );
+          } catch {
+            // 事件构造/发射是观察路径：任何异常不拖垮本轮规划。
+          }
+        }
       }
     });
   }
