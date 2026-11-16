@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>漫游 · 小伙伴试衣间</title>
+  <link rel="stylesheet" href="mascot-preview.css">
+</head>
+<body>
+  <main>
+    <header><a href="/">漫游 WANDER</a><span>小伙伴试衣间 / 01</span></header>
+    <section class="workbench" aria-labelledby="title">
+      <div class="introduction"><p class="eyebrow">出门，带上好心情。</p><h1 id="title">一起去<br>逛逛吧。</h1><p class="description">一顶小帽子，一个漫游搭子。</p></div>
+      <div class="character">
+        <div class="avatar-stage"><boop-face id="wander-face" size="280" color="#26382d" auto-sleep="0" press-squeeze="false" antenna-drag="false"></boop-face></div>
+        <p class="caption" id="caption" role="status">准备好了，今天去哪儿？</p>
+      </div>
+      <aside aria-label="造型设置"><p class="eyebrow">帽子颜色</p><div class="swatches"><button type="button" class="swatch moss" data-palette="moss" aria-label="苔绿" aria-pressed="true"></button><button type="button" class="swatch sand" data-palette="sand" aria-label="沙色" aria-pressed="false"></button></div><p id="color-name">苔绿 / MOSS</p><label class="hat-toggle"><input id="hat-toggle" type="checkbox" checked>戴上帽子</label><div class="small-preview" aria-label="聊天头像尺寸预览"><boop-face id="small-face" size="56" color="#26382d" auto-sleep="0" motion="auto" press-squeeze="false" antenna-drag="false"></boop-face><span>聊天里的大小</span></div></aside>
+    </section>
+    <nav class="expressions" aria-label="试试表情"><span>试试它的反应</span><button type="button" data-action="idle" aria-pressed="true">待机</button><button type="button" data-action="thinking" aria-pressed="false">专注</button><button type="button" data-action="searching" aria-pressed="false">拿放大镜</button><button type="button" data-action="validating" aria-pressed="false">检查</button><button type="button" data-action="happy" aria-pressed="false">开心</button><button type="button" data-action="asking" aria-pressed="false">询问</button><button type="button" data-action="confused" aria-pressed="false">困惑</button></nav>
+    <footer><span>圆脸 + 渔夫帽 · 造型预览</span><span>脸部动画来自 BoopFace · <a href="assets/vendor/boopface/LICENSE">MIT</a></span></footer>
+    <p id="load-error" role="alert" hidden>小伙伴暂时没加载出来，请刷新试试。</p>
+  </main>
+  <script type="module" src="mascot-preview.js"></script>
+</body>
+</html>
