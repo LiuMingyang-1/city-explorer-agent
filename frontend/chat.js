@@ -7,7 +7,9 @@ window.updateChatLayout=updateChatLayout;
 function makeMessage(role){
  $('empty-state')?.remove();const message=document.createElement('div');message.className='message '+role;
  const label=document.createElement('span');label.className='message-label';label.textContent=role==='user'?'你':'漫游 · 城市向导';
- const bubble=document.createElement('div');bubble.className='bubble';message.append(label,bubble);$('messages').append(message);scrollMessages();return {message,bubble};
+ const avatar=document.createElement('span');avatar.className='message-avatar '+(role==='user'?'user-avatar':'assistant-avatar');avatar.setAttribute('aria-hidden','true');
+ if(role==='user')window.WanderUserAvatar?.attach(avatar);else window.WanderMascot?.attach(avatar);
+ const bubble=document.createElement('div');bubble.className='bubble';message.append(avatar,label,bubble);$('messages').append(message);scrollMessages();return {message,bubble};
 }
 function appendMessage(role,text){const {message,bubble}=makeMessage(role);bubble.textContent=text;state.messages.push({role,text});updateChatLayout();return message;}
 // Retain these entry points for existing local history snapshots.
@@ -32,10 +34,10 @@ function buildChatBody(text,chip){
 async function deliver(text,chip,retried=false){
  const generation=window.WanderHistory?.generation(),isCurrent=()=>!window.WanderHistory||generation===window.WanderHistory.generation(),sentChip=chip;
  const request=new AbortController();activeChatRequest=request;state.busy=true;updateSendButton();
+ const {message:pending,bubble:status}=makeMessage('assistant');
  const mascotRound=window.WanderMascot?.begin?.()?.round;
- const pending=document.createElement('div');pending.className='message assistant';
- const label=document.createElement('span');label.className='message-label';label.textContent=window.WanderTransport.mock?'漫游 · 示例演示':'漫游 · 正在规划';
- const status=document.createElement('div');status.className='bubble planning-progress';status.setAttribute('role','status');status.setAttribute('aria-live','polite');status.textContent='正在连接城市向导';pending.append(label,status);$('messages').append(pending);scrollMessages();
+ pending.querySelector('.message-label').textContent=window.WanderTransport.mock?'漫游 · 示例演示':'漫游 · 正在规划';
+ status.classList.add('planning-progress');status.setAttribute('role','status');status.setAttribute('aria-live','polite');status.textContent='正在连接城市向导';
  const stageNames={searching_events:'正在检索活动',exploring_plans:'正在比较方案 A 与方案 B',routing:'正在获取站间道路路线',validating_schedule:'正在校验路线时间'};
  const slow=setTimeout(()=>{if(isCurrent())status.textContent='仍在规划中，请稍候…';},15000);
  try{

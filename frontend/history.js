@@ -169,6 +169,7 @@
   const planText=window.WanderPlans?.summary(entry.latestPlan),isPlan=m=>m?.role==='assistant'&&m.text===planText;
   const planIndex=planText?('planIndex' in entry?(Number.isInteger(entry.planIndex)&&entry.messages[entry.planIndex]?.role==='assistant'?entry.planIndex:-1):entry.messages.map(isPlan).lastIndexOf(true)):-1;
   entry.messages.forEach((m,index)=>{if(index===planIndex)window.WanderPlans.append(entry.latestPlan,{drawMap:false});else appendMessage(m.role,m.text);});
+  window.WanderMascot?.freezeAll?.();
   collapseNow();moveComposer(from);
   function finish(){
    if(restoreEpoch!==epoch)return;

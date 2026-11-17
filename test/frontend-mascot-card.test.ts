@@ -39,13 +39,14 @@ function bootMounted(opts: Parameters<typeof setup>[0] = {}, { teamDelay = false
     ? 'window.__fakeTeamModule = new Promise(resolve => window.__resolveTeam = resolve)'
     : 'window.__fakeTeamModule = Promise.resolve(window.__teamModule)');
   h.run(mountableSource);
+  h.run("window.__avatarSlot=document.createElement('span');document.querySelector('.glass-card').append(window.__avatarSlot);window.WanderMascot.attach(window.__avatarSlot);");
   return h;
 }
 
 type Harness = ReturnType<typeof boot>;
 const card = (h: Harness) => h.$('card');
 const mascot = (h: Harness) => h.run('window.WanderMascot.state');
-const mountedFace = (h: Harness) => card(h).children.find(c => String(c.className).split(' ').includes('card-mascot'));
+const mountedFace = (h: Harness) => h.run('window.__avatarSlot').children.find((c: Element) => c.className.split(' ').includes('message-mascot'));
 const sse = (body: string) => new Response(body, { headers: { 'Content-Type': 'text/event-stream' } });
 const tick = () => new Promise(resolve => setImmediate(resolve));
 async function until(check: () => boolean, message: string) {
@@ -345,4 +346,30 @@ test('I41-R1：>400 全生命周期帧溢出→本轮 team 展示禁用，不回
   const r2 = h.run('window.WanderMascot.begin().round');
   apply(h, spawn('z'), r2);
   await until(() => cloneEls(h).length === 1, '下一轮 team 展示恢复');
+});
+
+test('message avatars: only the newest slot mounts after a delayed import', async () => {
+  const h = bootMounted();
+  const old = h.run('window.__avatarSlot');
+  h.run(`window.__newSlot=document.createElement('span');window.WanderMascot.attach(window.__newSlot);`);
+  await until(() => h.run('window.__newSlot.children.some(c=>c.className==="message-mascot")'), 'latest slot mounts');
+  assert.equal(old.children.some((c: Element) => c.className === 'message-mascot'), false);
+  h.run('window.WanderMascot.freezeAll()');
+  assert.equal(h.run('window.__newSlot.children.some(c=>c.className==="message-mascot")'), false);
+});
+
+test('message avatars: historical replay before import stays entirely static', async () => {
+  const h = bootMounted();
+  h.run('window.WanderMascot.freezeAll()');
+  await tick(); await tick();
+  assert.equal(mountedFace(h), undefined, 'late module must not revive frozen history');
+});
+
+test('message avatars: reset before import cannot revive an old conversation', async () => {
+  const h = bootMounted();
+  h.run('window.dispatchEvent(new Event("wander:reset"))');
+  await tick(); await tick();
+  assert.equal(mountedFace(h), undefined);
+  h.run('window.WanderMascot.attach(window.__avatarSlot)');
+  assert.ok(mountedFace(h), 'a new assistant message can mount normally');
 });
