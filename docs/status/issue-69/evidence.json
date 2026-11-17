@@ -1,0 +1,213 @@
+{
+  "date": "2026-11-17",
+  "timezone": "Asia/Shanghai",
+  "base_commit": "8e16a04",
+  "sdk": "AMap JS API 2.0 (real network)",
+  "environment": "Linux headless Chromium, local source served through test HTTP adapter and outbound proxy; private runtime credentials are not retained",
+  "matrix": [
+    {
+      "scenario": "cold-cache-disabled",
+      "browser": "156.0.8078.79",
+      "cache_disabled": true,
+      "network": "unthrottled via proxy",
+      "webgl_context_available": true,
+      "amap_ready": true,
+      "provider": "amap",
+      "renderer": "dom",
+      "destroyed_instances": [],
+      "leaflet_present": false,
+      "logo_count": 1,
+      "status": "高德地图 · 兼容渲染模式",
+      "uncaught_errors": []
+    },
+    {
+      "scenario": "normal-cache",
+      "browser": "156.0.8078.79",
+      "cache_disabled": false,
+      "network": "unthrottled via proxy",
+      "webgl_context_available": true,
+      "amap_ready": true,
+      "provider": "amap",
+      "renderer": "dom",
+      "destroyed_instances": [],
+      "leaflet_present": false,
+      "logo_count": 1,
+      "status": "高德地图 · 兼容渲染模式",
+      "uncaught_errors": []
+    },
+    {
+      "scenario": "normal-cache-refresh",
+      "browser": "156.0.8078.79",
+      "cache_disabled": false,
+      "network": "unthrottled via proxy",
+      "webgl_context_available": true,
+      "amap_ready": true,
+      "provider": "amap",
+      "renderer": "dom",
+      "destroyed_instances": [],
+      "leaflet_present": false,
+      "logo_count": 1,
+      "status": "高德地图 · 兼容渲染模式",
+      "uncaught_errors": []
+    },
+    {
+      "scenario": "slow-network",
+      "browser": "156.0.8078.79",
+      "cache_disabled": false,
+      "network": {
+        "latency_ms": 150,
+        "download_bytes_per_second": 786432,
+        "upload_bytes_per_second": 262144
+      },
+      "webgl_context_available": true,
+      "amap_ready": true,
+      "provider": "amap",
+      "renderer": "dom",
+      "destroyed_instances": [],
+      "leaflet_present": false,
+      "logo_count": 1,
+      "status": "高德地图 · 兼容渲染模式",
+      "uncaught_errors": []
+    },
+    {
+      "scenario": "baseline-no-webgl",
+      "browser": "156.0.8078.79",
+      "cache_disabled": false,
+      "network": "unthrottled via proxy",
+      "webgl_context_available": false,
+      "amap_ready": false,
+      "provider": "OSM raster (confirmed in screenshot)",
+      "renderer": null,
+      "destroyed_instances": [
+        {
+          "dom": true,
+          "baseRender": "d"
+        }
+      ],
+      "leaflet_present": true,
+      "logo_count": 0,
+      "status": "",
+      "uncaught_errors": []
+    },
+    {
+      "scenario": "patched-no-webgl",
+      "browser": "156.0.8078.79",
+      "cache_disabled": false,
+      "network": "unthrottled via proxy",
+      "webgl_context_available": false,
+      "amap_ready": true,
+      "provider": "amap",
+      "renderer": "dom",
+      "destroyed_instances": [],
+      "leaflet_present": false,
+      "logo_count": 1,
+      "status": "高德地图 · 兼容渲染模式",
+      "uncaught_errors": []
+    }
+  ],
+  "controlled_config_disabled_then_retry": {
+    "name": "real-fallback-retry",
+    "version": "156.0.8078.79",
+    "before": {
+      "provider": "osm",
+      "status": "OpenStreetMap · 高德未配置或未启用",
+      "location": {
+        "lat": 34.25,
+        "lng": 108.94,
+        "name": "恢复验证地点"
+      },
+      "zoom": 13,
+      "zoomControls": 1,
+      "diagnostic": {
+        "attempt": 1,
+        "renderer": null,
+        "lastFailure": {
+          "attempt": 1,
+          "stage": "config",
+          "code": "missing-js-key",
+          "level": "error",
+          "at": 1794914495188
+        },
+        "events": [
+          {
+            "attempt": 1,
+            "stage": "config",
+            "code": "missing-js-key",
+            "level": "error",
+            "at": 1794914495188
+          }
+        ],
+        "fallback": {
+          "provider": "osm",
+          "reason": "initialization-failed"
+        }
+      }
+    },
+    "after": {
+      "provider": "amap",
+      "status": "高德地图 · 兼容渲染模式",
+      "location": {
+        "lat": 34.248419,
+        "lng": 108.944666,
+        "name": "恢复验证地点",
+        "coordinateSystem": "GCJ02",
+        "wgs84": {
+          "lat": 34.25,
+          "lng": 108.94
+        }
+      },
+      "leafletPane": 0,
+      "zoomControls": 1,
+      "oldZoomControls": 0,
+      "stops": 4,
+      "labels": [
+        "恢复验证地点"
+      ],
+      "sdkScripts": 1,
+      "diagnostic": {
+        "attempt": 2,
+        "renderer": "dom",
+        "lastFailure": null,
+        "events": [
+          {
+            "attempt": 1,
+            "stage": "config",
+            "code": "missing-js-key",
+            "level": "error",
+            "at": 1794914495188
+          },
+          {
+            "attempt": 2,
+            "stage": "renderer",
+            "code": "dom",
+            "level": "info",
+            "at": 1794914501695
+          },
+          {
+            "attempt": 2,
+            "stage": "ready",
+            "code": "dom",
+            "level": "info",
+            "at": 1794914501739
+          }
+        ],
+        "fallback": {
+          "provider": "osm",
+          "reason": "initialization-failed"
+        }
+      }
+    },
+    "fallbackLines": 2,
+    "errors": []
+  },
+  "other_browsers": {
+    "Firefox 159": "Launch failed in execution environment: Could not find profile folder; no product conclusion",
+    "WebKit 27.2": "Missing host shared libraries; not run",
+    "Windows/macOS/Safari/physical devices": "not run"
+  },
+  "limitations": [
+    "All actual SDK sessions selected DOM mode; actual WebGL renderer is not validated by this matrix.",
+    "Configuration/SDK timeout, plugin, conversion and constructor faults are covered separately by deterministic regression tests, not claimed as real deployment outages.",
+    "Only the existing Sites runtime configuration was used, without changing deployment or environment secrets."
+  ]
+}

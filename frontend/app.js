@@ -31,31 +31,83 @@ let map,tiles,locationMarker,routeLayer;
 let highlightedPlaces=[];
 const pinDraw={tower:'<path d="M3 11h10M4 11V7h8v4M3 7h10L8 3 3 7ZM8 1v2M5 13h6"/>',wall:'<path d="M2 13V5h3V3h2v2h3V3h2v2h2v8M2 9h12M7 13v-2h2v2"/>',museum:'<path d="m2 5 6-3 6 3H2Zm1 2v5m4-5v5m3-5v5m3-5v5M1 14h14"/>'};
 function showMapStatus(text){$('map-status').textContent=text;$('map-status').hidden=!text;}
-async function initFallbackMap(){
-try{await window.WanderAMap?.loadFallback();}catch{}
-if(window.L){
- map=L.map('map',{zoomControl:false,minZoom:3,maxZoom:19,attributionControl:true}).setView([DEFAULT.lat,DEFAULT.lng],11);
- // OpenFreeMap vector tiles with a small, locally hosted style. Leaflet owns interactions.
- initBasemap();
- L.control.zoom({position:'bottomright'}).addTo(map);
- // Curated 4A/5A attractions remain visible, with labels placed to avoid overlap.
- places.forEach(place=>{place.marker=L.marker([place.lat,place.lng],{icon:placeIcon(place),title:(place.officialName||place.name)+(place.rating?' · '+place.rating+'A':''),riseOnHover:true});place.marker.on('click',()=>{state.manual=true;selectLocation(place.lat,place.lng,place.name,14);window.WanderActivities?.openNearby(place);});});
- map.on('moveend zoomend resize',()=>{updatePlaceMarkers();window.dispatchEvent(new Event('wander:viewport'));});
- updatePlaceMarkers();
- window.dispatchEvent(new Event('wander:map-ready'));
- setTimeout(autoLocate,3000);
-}else{showMapStatus('地图组件加载失败，请刷新重试');setTimeout(autoLocate,0);}
-
+let mapEpoch=0,initializingMap,stopFallbackBasemap=()=>{},mapProvider='loading',fallbackProvider='fallback',fallbackReason=null;
+const mapFailures={config:'配置获取失败',sdk:'组件加载失败',plugin:'附加功能加载失败',coordinates:'坐标服务暂不可用',attractions:'部分景点暂未加载',renderer:'渲染初始化失败',initialization:'初始化失败'};
+function providerStatus(provider=mapProvider){
+ mapProvider=provider;const box=$('map-provider-status'),text=$('map-provider-message'),retry=$('map-retry');
+ const diagnostic=window.WanderAMap?.diagnostics,issue=diagnostic?.lastFailure;
+ box.dataset.provider=provider;
+ retry.hidden=provider==='amap';retry.disabled=provider==='loading';
+ if(provider==='loading'){box.hidden=false;text.textContent='正在加载高德地图…';return;}
+ if(provider==='amap'){
+  const warning=diagnostic?.events.filter(e=>e.attempt===diagnostic.attempt&&e.level==='warning'&&['plugin','coordinates','attractions'].includes(e.stage)).at(-1);
+  const suffix=warning?mapFailures[warning.stage]:diagnostic?.renderer==='dom'?'兼容渲染模式':'';
+  box.hidden=!suffix;text.textContent='高德地图'+(suffix?' · '+suffix:'');return;
+ }
+ box.hidden=false;
+ const reason=issue?.code==='disabled'||issue?.code?.startsWith('missing-')?'未配置或未启用':mapFailures[issue?.stage]||'暂不可用';
+ text.textContent=(provider==='osm'?'OpenStreetMap':provider==='openfreemap'?'OpenFreeMap':'备用地图')+' · 高德'+reason;
 }
-async function initializeMap(){
- try{
-  const enabled=await window.WanderAMap?.init({places,onSelect:location=>{
+function clearFallbackMap(){
+ mapEpoch++;stopFallbackBasemap();stopFallbackBasemap=()=>{};
+ window.dispatchEvent(new Event('wander:map-changing'));window.WanderPlans?.cancelDraw?.();
+ if(map){map.stop?.();map.remove();}map=null;tiles=null;locationMarker=null;routeLayer=null;
+ places.forEach(place=>{delete place.marker;delete place.renderKey;});++state.revision;++searchId;
+}
+function announceMap(){
+ window.dispatchEvent(new Event('wander:map-ready'));
+ if(state.latestPlan){window.WanderPlans?.draw(state.latestPlan);if(!window.WanderAMap?.ready&&!['WGS84','WGS-84'].includes(String(state.latestPlan.coordinate_system||'WGS84').toUpperCase()))showMapStatus('备用地图暂不显示高德坐标路线，可重试高德后查看');}
+}
+async function initFallbackMap(){
+ const epoch=mapEpoch;
+ try{await window.WanderAMap?.loadFallback();}catch{}
+ if(epoch!==mapEpoch)return;
+ if(window.L){
+  map=L.map('map',{zoomControl:false,minZoom:3,maxZoom:19,attributionControl:true}).setView([DEFAULT.lat,DEFAULT.lng],11);
+  providerStatus('fallback');initBasemap();
+  L.control.zoom({position:'bottomright'}).addTo(map);
+  places.forEach(place=>{place.marker=L.marker([place.lat,place.lng],{icon:placeIcon(place),title:(place.officialName||place.name)+(place.rating?' · '+place.rating+'A':''),riseOnHover:true});place.marker.on('click',()=>{state.manual=true;selectLocation(place.lat,place.lng,place.name,14);window.WanderActivities?.openNearby(place);});});
+  map.on('moveend zoomend resize',()=>{updatePlaceMarkers();window.dispatchEvent(new Event('wander:viewport'));});
+  updatePlaceMarkers();announceMap();
+  setTimeout(()=>{if(epoch===mapEpoch)autoLocate();},3000);
+ }else{providerStatus('unavailable');showMapStatus('地图组件加载失败，可重试高德');}
+}
+function initializeMap(){
+ if(initializingMap)return initializingMap;
+ if(window.WanderAMap?.ready)return Promise.resolve(true);
+ // Keep the working fallback while configuration/SDK retry is in flight.
+ let saved=null;
+ const capture=()=>map?{location:{...state.location},center:map.getCenter(),zoom:map.getZoom(),revision:state.revision}:null;
+ providerStatus('loading');
+ initializingMap=(async()=>{
+  let removed=false;
+  const enabled=await window.WanderAMap?.init({places,beforeCreate:()=>{saved=capture();clearFallbackMap();removed=true;},onSelect:location=>{
    const revision=++state.revision;state.location=location;setLocationText(location.name);$('location-status').textContent='';updateWeather(location.lat,location.lng,revision);
   }});
-  if(enabled){showMapStatus('');window.dispatchEvent(new Event('wander:map-ready'));if(state.latestPlan)window.WanderPlans?.draw(state.latestPlan);setTimeout(autoLocate,0);return;}
- }catch{window.WanderAMap?.dispose();showMapStatus('高德暂不可用，已保留备用地图');}
- initFallbackMap();
+  if(enabled){
+   providerStatus('amap');
+   if(saved){
+    const original=saved.location.coordinateSystem==='GCJ02'?saved.location.wgs84:saved.location;
+    if(original){try{await window.WanderAMap.select(original.lat,original.lng,saved.location.name,saved.zoom);}catch{showMapStatus('已恢复高德，原地点暂未定位，可重新搜索');}}
+    if(!state.latestPlan&&state.location.name===saved.location.name){try{await window.WanderAMap.restoreView(saved.center,saved.zoom);}catch{}}
+   }
+   announceMap();const epoch=mapEpoch;setTimeout(()=>{if(epoch===mapEpoch)autoLocate();},0);return true;
+  }
+  if(!map){
+   // beforeCreate already released Leaflet if native construction failed.
+   if(!removed)clearFallbackMap();
+   const original=saved?.location.coordinateSystem==='GCJ02'?saved.location.wgs84:saved?.location;
+   state.location=original?{...original,name:saved.location.name}:{...DEFAULT};
+   await initFallbackMap();
+   if(saved&&map){if(original)selectLocation(original.lat,original.lng,saved.location.name,saved.zoom);map.setView(saved.center,saved.zoom,{animate:false});}
+  }else providerStatus(fallbackProvider);
+  return false;
+ })().catch(()=>{providerStatus(map?'fallback':'unavailable');showMapStatus('地图初始化未完成，可重试高德');return false;}).finally(()=>{initializingMap=null;const button=$('map-retry');button.disabled=false;});
+ return initializingMap;
 }
+$('map-retry').addEventListener('click',()=>initializeMap());
+window.addEventListener('wander:map-diagnostic',event=>{if(event.detail.level==='warning'&&window.WanderAMap?.ready)providerStatus('amap');});
+window.WanderMaps={retry:initializeMap,get provider(){return mapProvider;},get diagnostics(){return {...window.WanderAMap?.diagnostics,fallback:{provider:fallbackProvider,reason:fallbackReason}};}};
 initializeMap();
 
 function placeIcon(place,direction='right',label=true){
@@ -85,32 +137,38 @@ function updatePlaceMarkers(names){
 }
 function locationLabel(name){const label=document.createElement('span');label.textContent=name;return label;}
 async function initBasemap(){
- let fallback=false,loadTimer;
- function useRaster(){
-  if(fallback)return;fallback=true;clearTimeout(loadTimer);
-  if(tiles){try{map.removeLayer(tiles);}catch{}tiles=null;}
+ const target=map,epoch=mapEpoch;let fallback=false,loadTimer,disposed=false,renderer;
+ const current=()=>!disposed&&epoch===mapEpoch&&map===target;
+ stopFallbackBasemap=()=>{disposed=true;clearTimeout(loadTimer);};
+ function useRaster(reason='vector-unavailable'){
+  if(!current()||fallback)return;fallbackReason=reason;fallback=true;clearTimeout(loadTimer);
+  if(tiles){try{target.removeLayer(tiles);}catch{}tiles=null;}
   tiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
    maxZoom:19,updateWhenIdle:true,updateWhenZooming:false,keepBuffer:1,
    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'
-  }).addTo(map);
-  let failures=0;tiles.on('tileerror',()=>{if(++failures>=4)showMapStatus('地图暂时无法连接，请稍后重试');});
-  tiles.on('loading',()=>{failures=0;});
-  tiles.on('load',()=>{if(failures===0)showMapStatus('');autoLocate();});
+  }).addTo(target);fallbackProvider='osm';providerStatus('osm');
+  let failures=0;tiles.on('tileerror',()=>{if(current()&&++failures>=4)showMapStatus('备用地图暂时无法连接，可重试高德');});
+  tiles.on('loading',()=>{if(current())failures=0;});
+  tiles.on('load',()=>{if(current()){if(failures===0)showMapStatus('');autoLocate();}});
  }
  try{
-  if(!window.maplibregl||!L.maplibreGL)throw new Error('Vector renderer unavailable');
-  const style=await fetchJSON('assets/quiet-map.json');
+  if(!window.maplibregl||!L.maplibreGL){useRaster('assets-unavailable');return;}
+  if(typeof window.maplibregl.supported==='function'&&!window.maplibregl.supported()){useRaster('webgl-unavailable');return;}
+  const style=await fetchJSON('assets/quiet-map.json');if(!current())return;
   window.maplibregl.setWorkerCount(2);
   tiles=L.maplibreGL({style,interactive:false,padding:.05,updateInterval:32,
    pixelRatio:Math.min(window.devicePixelRatio||1,1.5),fadeDuration:0,
    localIdeographFontFamily:'sans-serif',maxTileCacheSize:80,
    attributionControl:{customAttribution:'<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> · <a href="https://openmaptiles.org" target="_blank" rel="noopener">OpenMapTiles</a> · &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'}
-  }).addTo(map);
-  const renderer=tiles.getMaplibreMap();let failures=0;
-  renderer.once('load',()=>{clearTimeout(loadTimer);if(!fallback){showMapStatus('');autoLocate();}});
-  renderer.on('error',()=>{if(++failures>=3)useRaster();});
-  loadTimer=setTimeout(()=>{if(!renderer.loaded())useRaster();},15000);
- }catch{useRaster();}
+  });
+  // A failed WebGL constructor leaves the bridge half-mounted. Its original
+  // onRemove dereferences a missing renderer, preventing Leaflet event cleanup.
+  const remove=tiles.onRemove;tiles.onRemove=function(host){if(this.getMaplibreMap())return remove?.call(this,host);this.getContainer?.()?.remove();};
+  tiles.addTo(target);renderer=tiles.getMaplibreMap();let failures=0;
+  renderer.once('load',()=>{if(!current())return;clearTimeout(loadTimer);if(!fallback){fallbackProvider='openfreemap';providerStatus('openfreemap');showMapStatus('');autoLocate();}});
+  renderer.on('error',()=>{if(current()&&++failures>=3)useRaster('tile-errors');});
+  loadTimer=setTimeout(()=>{if(current()&&!renderer.loaded())useRaster('load-timeout');},15000);
+ }catch{useRaster('initialization-failed');}
 }
 
 async function fetchJSON(url){const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),10000);try{const response=await fetch(url,{signal:controller.signal,headers:{Accept:'application/json'}});if(!response.ok)throw new Error('HTTP '+response.status);return await response.json();}finally{clearTimeout(timer);}}

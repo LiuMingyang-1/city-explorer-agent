@@ -45,7 +45,7 @@ async function nativeHarness(){
  h.run(source('amap.js'));h.run(source('itinerary-map.js'));h.run(source('plans.js'));
  const sdk=h.context.window.WanderAMap;h.context.updatePlaceMarkers=()=>sdk.updatePlaces();
  assert.equal(await sdk.init({places:[{name:'outside scenic',lat:34.3,lng:109,kind:'museum',rating:4}],onSelect(){}}),true);
- const model=h.context.window.WanderPlans.normalize(structuredClone(payload));
+ await sdk.placesReady;const model=h.context.window.WanderPlans.normalize(structuredClone(payload));
  function publish(active:boolean,phase:string,model:any){const value={active,phase,model};h.context.window.WanderItineraryFocus=value;h.context.window.dispatchEvent(new h.context.CustomEvent('wander:itinerary-focus',{detail:value}));}
  const routeLayers=()=>[...layers].filter(l=>l.options.extData||l.options.content?.className==='native-route-dot');
  return {...h,sdk,model,mapNode,native,created,layers,fits,publish,routeLayers,maps:()=>maps,resizes:()=>resizes};

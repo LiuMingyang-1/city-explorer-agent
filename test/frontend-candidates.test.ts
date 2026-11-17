@@ -472,7 +472,7 @@ function setupAmap(){
   Map:class extends MapMock{constructor(_id:string,o:Record<string,unknown>){super(o)}},ToolBar:class{},Marker,
   Polyline:class extends Marker{},Geocoder:class{},Weather:class{}};
  const document={createElement:()=>new Element(),head:{append(script:Element&{onload:()=>void}){scripts.push(script.src);queueMicrotask(script.onload)}},getElementById:()=>null,querySelector:()=>({getBoundingClientRect:()=>({left:28,right:450,top:28,bottom:872,height:844})})};
- const context=vm.createContext({window:{dispatchEvent(){},AMap:sdk,location:{href:'https://city.example/'}},document,URL,console,Event,innerWidth:1440,setTimeout:()=>0,clearTimeout(){},fetch:async()=>({ok:true,json:async()=>({enabled:true,jsKey:'test-js-key',serviceHost:'/_AMapService',style:'amap://styles/light',backendCoordinateSystem:'WGS84'})}),showMapStatus(){},state:{},queueMicrotask});
+ const context=vm.createContext({window:{dispatchEvent(){},AMap:sdk,location:{href:'https://city.example/'}},document,URL,console,Event,AbortController,innerWidth:1440,setTimeout:()=>0,clearTimeout(){},fetch:async()=>({ok:true,json:async()=>({enabled:true,jsKey:'test-js-key',serviceHost:'/_AMapService',style:'amap://styles/light',backendCoordinateSystem:'WGS84'})}),showMapStatus(){},state:{},queueMicrotask});
  vm.runInContext(routeVisualsSource,context);vm.runInContext(mapLayoutSource,context);vm.runInContext(amapSource,context);
  return {context,calls,scripts,maps,markers,instances,provider:context.window.WanderAMap};
 }
@@ -502,7 +502,7 @@ test('renderer epoch guards stale renders and convert stays the single entry',as
  assert.equal(await first,false,'stale spec must not draw');
  assert.equal(await second,true);
  assert.equal(h.markers.filter(m=>m.options.zIndex===160&&m.attachedMap).length,1);
- assert.equal(h.calls.length,1,'GCJ-02 points pass through convert without SDK calls');
+ assert.equal(h.calls.length,0,'GCJ-02 points pass through convert without SDK calls');
 });
 
 test('anchor visibility follows viewport and focus, reporting only real transitions',async()=>{

@@ -1,7 +1,7 @@
 'use strict';
 // Native AMap provider. Existing GPS/OSM samples retain their source coordinates.
 (() => {
- let native,config,onSelect,selectedMarker,ready=false,selectionEpoch=0,routeEpoch=0,searchEpoch=0,restoreScreen=null;
+ let native,config,onSelect,selectedMarker,ready=false,selectionEpoch=0,routeEpoch=0,searchEpoch=0,initEpoch=0,configRequest;
  let routes=[],scenes=[],currentNames=[],selectedPosition=null,selectedName='',activityMarkers=[],activitiesEpoch=0;
  const converted=new Map(),addresses=new Map();
  let stopRouteAnimation,routeStrokes=[],fitLayers=[],creditObserver,creditNode,creditCanvas;
@@ -28,20 +28,64 @@
  const point=p=>[typeof p.getLng==='function'?p.getLng():p.lng,typeof p.getLat==='function'?p.getLat():p.lat];
  function visibility(item,show){if(item.visible!==show){item.marker.setMap(show?native:null);item.visible=show;}}
  function call(invoke,{errorFirst=false}={}){return new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('高德地图服务超时')),10000);try{invoke((status,result)=>{clearTimeout(timer);if(errorFirst?status==null:status==='complete')resolve(result);else reject(new Error('高德地图服务暂不可用'));});}catch{clearTimeout(timer);reject(new Error('高德地图服务暂不可用'));}});}
- function loadSDK(jsKey,serviceHost){return new Promise((resolve,reject)=>{
+ // Diagnostics contain only fixed stage/code values, never upstream text or URLs.
+ const diagnostics=[];let attempt=0,lastFailure=null,renderer=null,sdkPromise,placesReady=Promise.resolve();
+ function report(stage,code,level='error'){
+  const entry={attempt,stage,code,level,at:Date.now()};diagnostics.push(entry);if(diagnostics.length>60)diagnostics.shift();
+  if(level==='error')lastFailure=entry;
+  if(typeof CustomEvent==='function')window.dispatchEvent(new CustomEvent('wander:map-diagnostic',{detail:entry}));
+  return entry;
+ }
+ function failure(stage,code){const error=new Error(stage+':'+code);error.stage=stage;error.code=code;return error;}
+ function timeout(promise,ms,stage,code){return new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(failure(stage,code)),ms);promise.then(value=>{clearTimeout(timer);resolve(value);},error=>{clearTimeout(timer);reject(error);});});}
+ async function readConfig(epoch){
+  for(let i=0;i<2;i++){
+   configRequest=new AbortController();const controller=configRequest,timer=setTimeout(()=>controller.abort(),12000);
+   try{
+    const response=await fetch('/api/map-config',{credentials:'same-origin',cache:'no-store',signal:controller.signal});
+    if(!response.ok)throw failure('config','http-'+response.status);
+    let value;try{value=await response.json();}catch{throw failure('config','invalid-response');}
+    if(!value||typeof value.enabled!=='boolean')throw failure('config','invalid-response');
+    return value;
+   }catch(error){
+    if(epoch!==initEpoch)throw failure('lifecycle','cancelled');
+    const issue=error.stage?error:failure('config',controller.signal.aborted?'timeout':'network');
+    report(issue.stage,issue.code,i===0?'warning':'error');
+    if(i===1)throw issue;
+   }finally{clearTimeout(timer);if(configRequest===controller)configRequest=null;}
+  }
+ }
+ function loadSDK(jsKey,serviceHost){
   window._AMapSecurityConfig={serviceHost:new URL(serviceHost,window.location.href).href};
- // The SDK misdetects WebGL on capable browsers (e.g. Retina DPR quirks, GPU blocklist) and would rasterize the basemap; this forces the vector path so features/showLabel still apply.
- window.forceWebGL=true;
- // Safari's check also rejects screens whose long edge×DPR exceeds 4096, which forceWebGL cannot bypass; lend the SDK a small screen until the renderer is chosen.
- try{const ua=typeof navigator==='undefined'?'':navigator.userAgent,safariUA=/safari/i.test(ua)&&!/chrom(e|ium)|android|edg/i.test(ua);
- if(safariUA&&Math.max(screen.width,screen.height)*Math.min(2,devicePixelRatio||1)>4096){const real=window.screen;window.screen=Object.create(real,{width:{value:1024},height:{value:640},availWidth:{value:1024},availHeight:{value:640}});restoreScreen=()=>{window.screen=real;restoreScreen=null;};}}catch{}
-  const script=document.createElement('script'),timer=setTimeout(()=>reject(new Error('高德组件加载超时')),15000);
-  script.src='https://webapi.amap.com/maps?v=2.0&key='+encodeURIComponent(jsKey);script.async=true;
-  script.onerror=()=>{clearTimeout(timer);reject(new Error('高德组件加载失败'));};
-  script.onload=()=>{window.AMap.plugin(['AMap.PlaceSearch','AMap.Geocoder','AMap.Weather','AMap.ToolBar'],()=>{clearTimeout(timer);resolve();});};
-  document.head.append(script);
- });}
+  if(window.AMap?.Map)return Promise.resolve();
+  // Keep one in-flight script after timeout: a late SDK may be reused on retry,
+  // but cannot create a map or commit an obsolete initialization by itself.
+  if(!sdkPromise){
+   sdkPromise=new Promise((resolve,reject)=>{
+    const script=document.createElement('script');
+    script.src='https://webapi.amap.com/maps?v=2.0&key='+encodeURIComponent(jsKey);script.async=true;
+    script.onerror=()=>{script.onload=script.onerror=null;script.remove();reject(failure('sdk','network'));};
+    script.onload=()=>{script.onload=script.onerror=null;if(window.AMap?.Map)resolve();else reject(failure('sdk','invalid-api'));};
+    document.head.append(script);
+   });
+   sdkPromise.catch(()=>{sdkPromise=null;});
+  }
+  return timeout(sdkPromise,20000,'sdk','timeout');
+ }
+ const pluginPromises=new Map();
+ async function plugin(name){
+  const operationAttempt=attempt;
+  if(window.AMap?.[name])return;
+  if(!pluginPromises.has(name)){
+   const pending=timeout(new Promise((resolve,reject)=>{
+    try{window.AMap.plugin(['AMap.'+name],()=>window.AMap[name]?resolve():reject(failure('plugin','unavailable')));}catch{reject(failure('plugin','load-failed'));}
+   }),15000,'plugin','timeout');
+   pluginPromises.set(name,pending);pending.catch(()=>pluginPromises.delete(name));
+  }
+  try{await pluginPromises.get(name);}catch(error){if(attempt===operationAttempt)report('plugin',error.code||'load-failed','warning');throw error;}
+ }
  async function convert(points,system='WGS84'){
+  const operationAttempt=attempt;
   if(!points.every(p=>Array.isArray(p)&&valid(p[1],p[0])))throw new Error('坐标无效');
   if(['GCJ02','GCJ-02'].includes(String(system).toUpperCase()))return points;
   if(!['WGS84','WGS-84'].includes(String(system).toUpperCase()))throw new Error('坐标系尚不支持');
@@ -50,14 +94,16 @@
    // The SDK normalizes its input array in place into LngLat objects.
    // Keep numeric originals intact for cache keys and callers (including route data).
    const batch=missing.slice(at,at+40),sdkInput=batch.map(p=>[p[0],p[1]]);
-   const result=await call(callback=>window.AMap.convertFrom(sdkInput,'gps',callback));
-   if(!Array.isArray(result.locations)||result.locations.length!==batch.length)throw new Error('坐标转换未完成');
+   let result;try{result=await call(callback=>window.AMap.convertFrom(sdkInput,'gps',callback));}
+   catch(error){if(attempt===operationAttempt)report('coordinates',/超时/.test(error.message)?'timeout':'service-failed','warning');throw error;}
+   if(!Array.isArray(result.locations)||result.locations.length!==batch.length||result.locations.some(p=>!p||!valid(point(p)[1],point(p)[0]))){if(attempt===operationAttempt)report('coordinates','invalid-response','warning');throw new Error('坐标转换未完成');}
    batch.forEach((p,i)=>converted.set(key(p),point(result.locations[i])));
   }
   return points.map(p=>converted.get(key(p)));
  }
  async function address(lng,lat){
   const cacheKey=key([lng,lat]);if(addresses.has(cacheKey))return addresses.get(cacheKey);
+  await plugin('Geocoder');
   const result=await call(callback=>new window.AMap.Geocoder({extensions:'base'}).getAddress([lng,lat],callback));
   if(!result.regeocode)throw new Error('地址暂不可用');addresses.set(cacheKey,result.regeocode);return result.regeocode;
  }
@@ -177,37 +223,60 @@
   const x=p.getX?.()??p.x,y=p.getY?.()??p.y;
   return rect?{x:rect.left+x,y:rect.top+y}:{x,y};
  }
- async function init({places=[],onSelect:callback}={}){
-  try{const response=await fetch('/api/map-config',{credentials:'same-origin'});if(!response.ok)return false;config=await response.json();}catch{return false;}
-  if(!config.enabled)return false;onSelect=callback;
-  await loadSDK(config.jsKey,config.serviceHost);
-  const inputs=[[108.95,34.27],...places.map(p=>[p.lng,p.lat])],positions=await convert(inputs);
-  native=new window.AMap.Map('map',{center:positions[0],zoom:11,viewMode:'2D',mapStyle:config.style,features:['bg','road'],showLabel:false,showBuildingBlock:false,isHotspot:false,resizeEnable:true});
-  restoreScreen?.();
-  // The DOM fallback renderer bakes labels into raster tiles and ignores features/showLabel/mapStyle; the quiet basemap serves those browsers instead.
-  if(native.isDOMMode?.()||native.baseRender==='d'){try{native.destroy();}catch{}native=null;return false;}
-  // A style applied asynchronously can reset constructor flags; re-assert them when the basemap or its style finishes loading.
-  const quiet=()=>{try{native.setFeatures?.(['bg','road']);native.set?.('showLabel',false);}catch{}syncAttribution();};quiet();
-  native.on('complete',quiet);native.on('styleChanged',quiet);native.on('styleLoaded',quiet);
-  // A documented dock also keeps the control low before attribution arrives.
-  try{native.addControl(new window.AMap.ToolBar({position:'RB',offset:[28,80]}));}catch{}
-  places.forEach((place,index)=>{
-   const content=document.createElement('div');content.className='place-wrap direction-right';
-   const dot=document.createElement('span');dot.className='place-dot';dot.textContent='·';
-   const name=document.createElement('span');name.className='place-name';name.textContent=place.name;
-   if(place.rating){const rating=document.createElement('span');rating.className='place-rating';rating.textContent=place.rating+'A';name.append(rating);}content.append(dot,name);
-   const position=positions[index+1],marker=new window.AMap.Marker({position,content,anchor:'center',title:place.officialName||place.name,zIndex:150});
-   marker.on('click',()=>{state.manual=true;select(place.lat,place.lng,place.name,14).catch(()=>showMapStatus('地点暂不可用'));window.WanderActivities?.openNearby(place);});scenes.push({place,position,marker,content,visible:false});
-  });
-  ready=true;const moved=()=>{syncAttribution();updateRouteWidths();updatePlaces();window.dispatchEvent(new Event('wander:viewport'));};native.on('moveend',moved);native.on('zoomend',moved);native.on('resize',moved);native.on('zoomchange',updateRouteWidths);updatePlaces();
-  onSelect({lat:positions[0][1],lng:positions[0][0],name:'西安市',coordinateSystem:'GCJ02',wgs84:{lat:34.27,lng:108.95}});
-  return true;
+ // Fixed Xi'an bootstrap center in GCJ-02, derived from the repository's
+ // wgs84ToGcj02({lat:34.27,lng:108.95}). Do not interpret WGS coordinates as GCJ.
+ const XI_AN_GCJ=[108.95467940704778,34.268431458802404];
+ async function init({places=[],onSelect:callback,beforeCreate}={}){
+  if(native)dispose();else configRequest?.abort();
+  const epoch=++initEpoch;attempt++;lastFailure=null;renderer=null;onSelect=callback;
+  try{
+   const value=await readConfig(epoch);if(epoch!==initEpoch)return false;config=value;
+   if(!config.enabled){report('config',['missing-js-key','missing-security-config'].includes(config.reason)?config.reason:'disabled');return false;}
+   if(typeof config.jsKey!=='string'||!config.jsKey||typeof config.serviceHost!=='string'||!config.serviceHost){report('config','invalid-response');return false;}
+   // One bounded retry for a transient script network failure. Timeout retains
+   // the shared script and offers an explicit retry via the fallback UI.
+   try{await loadSDK(config.jsKey,config.serviceHost);}catch(error){if(error.code!=='network')throw error;report('sdk','network','warning');if(epoch!==initEpoch)return false;await loadSDK(config.jsKey,config.serviceHost);}
+   if(epoch!==initEpoch)return false;
+   beforeCreate?.();
+   try{native=new window.AMap.Map('map',{center:[...XI_AN_GCJ],zoom:11,viewMode:'2D',mapStyle:config.style,features:['bg','road'],showLabel:false,showBuildingBlock:false,isHotspot:false,resizeEnable:true});}
+   catch{throw failure('renderer','initialization-failed');}
+   // DOM is a supported SDK renderer. Its denser raster labels are preferable
+   // to discarding an otherwise usable AMap on devices without WebGL.
+   renderer=native.isDOMMode?.()||native.baseRender==='d'?'dom':'webgl';report('renderer',renderer,'info');
+   const current=native,quiet=()=>{if(epoch!==initEpoch||native!==current)return;try{native.setFeatures?.(['bg','road']);native.set?.('showLabel',false);}catch{}syncAttribution();};quiet();
+   native.on('complete',quiet);native.on('styleChanged',quiet);native.on('styleLoaded',quiet);
+   ready=true;
+   const moved=()=>{if(epoch!==initEpoch||native!==current)return;syncAttribution();updateRouteWidths();updatePlaces();window.dispatchEvent(new Event('wander:viewport'));};
+   native.on('moveend',moved);native.on('zoomend',moved);native.on('resize',moved);native.on('zoomchange',updateRouteWidths);
+   // Optional plugins and curated markers cannot decide the basemap provider.
+   plugin('ToolBar').then(()=>{if(epoch===initEpoch&&ready)native.addControl(new window.AMap.ToolBar({position:'RB',offset:[28,80]}));}).catch(()=>{});
+   placesReady=(async()=>{
+    try{
+     const positions=places.length?await convert(places.map(p=>[p.lng,p.lat])):[];
+     if(epoch!==initEpoch||!ready)return;
+     places.forEach((place,index)=>{
+      const content=document.createElement('div');content.className='place-wrap direction-right';
+      const dot=document.createElement('span');dot.className='place-dot';dot.textContent='·';
+      const name=document.createElement('span');name.className='place-name';name.textContent=place.name;
+      if(place.rating){const rating=document.createElement('span');rating.className='place-rating';rating.textContent=place.rating+'A';name.append(rating);}content.append(dot,name);
+      const position=positions[index],marker=new window.AMap.Marker({position,content,anchor:'center',title:place.officialName||place.name,zIndex:150});
+      marker.on('click',()=>{state.manual=true;select(place.lat,place.lng,place.name,14).catch(()=>showMapStatus('地点暂不可用'));window.WanderActivities?.openNearby(place);});scenes.push({place,position,marker,content,visible:false});
+     });
+     updatePlaces();
+    }catch{if(epoch===initEpoch&&ready)report('attractions','unavailable','warning');}
+   })();
+   callback?.({lat:XI_AN_GCJ[1],lng:XI_AN_GCJ[0],name:'西安市',coordinateSystem:'GCJ02',wgs84:{lat:34.27,lng:108.95}});
+   report('ready',renderer,'info');return true;
+  }catch(error){
+   if(epoch!==initEpoch)return false;
+   report(error.stage||'initialization',error.code||'failed');dispose();return false;
+  }
  }
  async function search(query){
   const epoch=++searchEpoch;let place;
-  try{const result=await call(callback=>new window.AMap.PlaceSearch({city:'西安',citylimit:false,pageSize:1}).search(query,callback));place=result.poiList?.pois?.[0];}catch{}
+  try{await plugin('PlaceSearch');const result=await call(callback=>new window.AMap.PlaceSearch({city:'西安',citylimit:false,pageSize:1}).search(query,callback));place=result.poiList?.pois?.[0];}catch{}
   if(epoch!==searchEpoch)return;
-  if(!place?.location){const result=await call(callback=>new window.AMap.Geocoder({city:'西安'}).getLocation(query,callback));place=result.geocodes?.[0];}
+  if(!place?.location){await plugin('Geocoder');const result=await call(callback=>new window.AMap.Geocoder({city:'西安'}).getLocation(query,callback));place=result.geocodes?.[0];}
   if(epoch!==searchEpoch)return;if(!place?.location)throw new Error('没有找到这个地点');
   const [lng,lat]=point(place.location);await select(lat,lng,place.name||place.formattedAddress||query,14,{system:'GCJ02'});
  }
@@ -215,7 +284,7 @@
  async function weather(lat,lng){
   const a=await address(lng,lat),adcode=a.addressComponent?.adcode;
   if(typeof adcode!=='string'||!adcode)throw new Error('天气地区暂不可用');
-  const live=await call(callback=>new window.AMap.Weather().getLive(adcode,callback),{errorFirst:true});
+  await plugin('Weather');const live=await call(callback=>new window.AMap.Weather().getLive(adcode,callback),{errorFirst:true});
   if(live?.temperature==null||String(live.temperature).trim()===''||!Number.isFinite(Number(live.temperature)))throw new Error('天气温度暂不可用');
   return live;
  }
@@ -313,16 +382,23 @@
   return location;
  }
 
- async function loadFallback(){
-  for(const href of ['assets/leaflet.css','assets/maplibre-gl.css']){const link=document.createElement('link');link.rel='stylesheet';link.href=href;document.head.append(link);}
-  for(const [global,src] of [['L','assets/leaflet.js'],['maplibregl','assets/maplibre-gl.js'],['returnExports','assets/leaflet-maplibre-gl.js']]){
-   if(window[global])continue;await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=src;script.onload=resolve;script.onerror=reject;document.head.append(script);});
-  }
+ let fallbackAssets,stylesAdded=false;
+ function loadFallback(){
+  if(fallbackAssets)return fallbackAssets;
+  fallbackAssets=(async()=>{
+   if(!stylesAdded){stylesAdded=true;for(const href of ['assets/leaflet.css','assets/maplibre-gl.css']){const link=document.createElement('link');link.rel='stylesheet';link.href=href;document.head.append(link);}}
+   for(const [loaded,src] of [[()=>window.L,'assets/leaflet.js'],[()=>window.maplibregl,'assets/maplibre-gl.js'],[()=>window.L?.maplibreGL,'assets/leaflet-maplibre-gl.js']]){
+    if(loaded())continue;
+    try{await timeout(new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=src;script.onload=resolve;script.onerror=reject;document.head.append(script);}),15000,'fallback','asset-timeout');}
+    catch(error){if(!window.L)throw error;break;}
+   }
+  })();fallbackAssets.catch(()=>{fallbackAssets=null;});return fallbackAssets;
  }
  function cancelPending(){selectionEpoch++;searchEpoch++;}
- function dispose(){ready=false;activitiesEpoch++;activityMarkers=[];cancelPending();clearRoutes();clearCandidateMarks();candidateAnchorListener=null;native?.destroy();native=null;clearAttribution();scenes=[];selectedPosition=null;selectedName='';}
+ function dispose(){initEpoch++;configRequest?.abort();configRequest=null;ready=false;activitiesEpoch++;activityMarkers=[];cancelPending();clearRoutes();clearCandidateMarks();candidateAnchorListener=null;try{native?.destroy();}catch{}native=null;clearAttribution();scenes=[];selectedMarker=null;selectedPosition=null;selectedName='';}
  window.WanderAMap={init,dispose,cancelPending,loadFallback,convert,select,search,weather,updatePlaces,setActivities,getViewport,drawPlans,clearRoutes,resize,fitRoutes,backendLocation,
  // Narrow candidate renderer for WanderCandidates only — not general map access.
  candidates:{render:renderCandidates,clear:clearCandidateMarks,refresh(){updateCandidateLayer();},point:candidatePoint,get ready(){return ready;}},
- get ready(){return ready;}};
+ async restoreView(center,zoom){const epoch=initEpoch,selection=selectionEpoch,[p]=await convert([[center.lng,center.lat]],'WGS84');if(epoch===initEpoch&&selection===selectionEpoch&&ready)native.setZoomAndCenter(zoom,p);},
+ get diagnostics(){return {attempt,renderer,lastFailure:lastFailure?{...lastFailure}:null,events:diagnostics.map(e=>({...e}))};},get placesReady(){return placesReady;},get ready(){return ready;}};
 })();

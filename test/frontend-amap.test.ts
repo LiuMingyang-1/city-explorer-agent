@@ -9,7 +9,7 @@ function setup(){
  class MapMock {shiftX=0;zoom=11;getZoom(){return this.zoom};listeners=new Map<string,Function>();constructor(options:Record<string,unknown>){maps.push(options);instances.push(this)}addControl(){}add(){}remove(){}on(name:string,callback:Function){this.listeners.set(name,callback)}destroy(){}setZoomAndCenter(){}setFitView(layers:any[],_immediate:boolean,padding:any[]){fits.push(layers);paddings.push(padding)}getSize(){return {width:1440,height:900}}lngLatToContainer(p:number[]){return {x:800+(p[0]!-108.95)*20000+this.shiftX,y:400-(p[1]!-34.27)*20000}}}
  const sdk={convertFrom(batch:number[][],_type:string,callback:(s:string,r:object)=>void){calls.push(batch.length);const locations=batch.map(p=>({lng:p[0]!+.006,lat:p[1]!+.004}));locations.forEach((p,i)=>{(batch as unknown[])[i]=p;});callback('complete',{locations})},plugin(_p:unknown,done:()=>void){done()},Pixel:class{x:number;y:number;constructor(x:number,y:number){this.x=x;this.y=y}},Map:class extends MapMock{constructor(_id:string,options:Record<string,unknown>){super(options)}},ToolBar:class{constructor(o:{position:string;offset:number[]}){maps.push({toolbar:o})}},Marker,Polyline:class extends Marker{constructor(o:Record<string,unknown>){super(o);lines.push(o)}},Geocoder:class{getAddress(_point:unknown,cb:(s:string,r:object)=>void){cb('complete',{regeocode:{addressComponent:{adcode:'610100',district:'雁塔区'}}})}},Weather:class{getLive(_city:string,cb:(s:string|null,r:object)=>void){cb(null,{temperature:'22',weather:'晴'})}}};
  const document={createElement:()=>new Element(),head:{append(script:Element&{onload:()=>void}){scripts.push(script.src);queueMicrotask(script.onload)}},querySelector:()=>({getBoundingClientRect:()=>({left:28,right:450,top:28,bottom:872,height:844})})};
- const context=vm.createContext({window:{dispatchEvent(){},AMap:sdk,location:{href:'https://city.example/'}},document,URL,console,Event,innerWidth:1440,setTimeout:()=>0,clearTimeout(){},fetch:async()=>({ok:true,json:async()=>({enabled:true,jsKey:'test-js-key',serviceHost:'/_AMapService',style:'amap://styles/light',backendCoordinateSystem:'WGS84'})}),showMapStatus(){},state:{},});
+ const context=vm.createContext({window:{dispatchEvent(){},AMap:sdk,location:{href:'https://city.example/'}},document,URL,console,Event,AbortController,innerWidth:1440,setTimeout:()=>0,clearTimeout(){},fetch:async()=>({ok:true,json:async()=>({enabled:true,jsKey:'test-js-key',serviceHost:'/_AMapService',style:'amap://styles/light',backendCoordinateSystem:'WGS84'})}),showMapStatus(){},state:{},});
  vm.runInContext(readFileSync(new URL('../frontend/route-visuals.js',import.meta.url),'utf8'),context);
  vm.runInContext(readFileSync(new URL('../frontend/map-layout.js',import.meta.url),'utf8'),context);
  vm.runInContext(readFileSync(new URL('../frontend/amap.js',import.meta.url),'utf8'),context);
@@ -25,10 +25,10 @@ test('native map uses official conversion in batches, caches WGS coordinates and
 
 test('native initialization keeps the simple theme and exposes no security code to the SDK',async()=>{
  const h=setup();assert.equal(await h.provider.init({places:[{lat:34.25,lng:108.94,name:'西安城墙',rating:5}],onSelect:(location:Record<string,unknown>)=>h.selections.push(location)}),true);
- assert.equal((h.maps[1]!.toolbar as {position:string}).position,'RB');
+ await h.provider.placesReady;assert.equal((h.maps[1]!.toolbar as {position:string}).position,'RB');
  assert.equal(h.provider.ready,true);assert.equal(h.maps[0]!.mapStyle,'amap://styles/light');assert.equal(h.maps[0]!.showLabel,false);
  assert.deepEqual(JSON.parse(JSON.stringify(h.context.window._AMapSecurityConfig)),{serviceHost:'https://city.example/_AMapService'});
- assert.equal(h.selections[0]!.coordinateSystem,'GCJ02');assert(h.scripts[0]!.startsWith('https://webapi.amap.com/maps?'));
+ assert.equal(h.selections[0]!.coordinateSystem,'GCJ02');assert.equal(h.scripts.length,0,'reuse an already loaded SDK');
  await h.provider.select(34.3,109,'搜索结果',14,{system:'GCJ02'});assert.equal(h.calls.length,1);
  assert.equal(h.provider.backendLocation(h.selections.at(-1)),null,'Native GCJ search is not mislabeled as legacy WGS');
  assert.deepEqual(JSON.parse(JSON.stringify(h.provider.backendLocation(h.selections[0]))),{lat:34.27,lng:108.95});
@@ -46,7 +46,7 @@ test('native route renderer converts WGS geometry once and uses GCJ geometry unc
 test('current backend receives GCJ and fallback WGS locations are omitted',async()=>{
  const h=setup();h.context.fetch=async()=>({ok:true,json:async()=>({enabled:true,jsKey:'test-js-key',serviceHost:'/_AMapService',style:'amap://styles/light',backendCoordinateSystem:'GCJ02'})});
  await h.provider.init({places:[],onSelect:(loc:Record<string,unknown>)=>h.selections.push(loc)});
- assert.deepEqual(JSON.parse(JSON.stringify(h.provider.backendLocation(h.selections[0]))),{lat:34.274,lng:108.956});
+ assert.deepEqual(JSON.parse(JSON.stringify(h.provider.backendLocation(h.selections[0]))),{lat:34.268431458802404,lng:108.95467940704778});
  await h.provider.select(34.3,109,'高德搜索',14,{system:'GCJ02'});
  assert.deepEqual(JSON.parse(JSON.stringify(h.provider.backendLocation(h.selections.at(-1)))),{lat:34.3,lng:109});
  assert.equal(h.provider.backendLocation({lat:34.27,lng:108.95,name:'WGS fallback'}),null);
@@ -105,7 +105,7 @@ test('retained bubbles show fresh response data and only disappeared points are 
 
 test('curated attraction markers also avoid redundant same-map attachment',async()=>{
  const h=setup();await h.provider.init({places:[{lat:34.25,lng:108.94,name:'城墙',rating:5}],onSelect:()=>{}});
- const marker=h.markers.find(m=>m.options.title==='城墙');const initial=marker.mapCalls.length;
+ await h.provider.placesReady;const marker=h.markers.find(m=>m.options.title==='城墙');const initial=marker.mapCalls.length;
  h.instances[0].listeners.get('moveend')();h.provider.updatePlaces();assert.equal(marker.mapCalls.length,initial);
 });
 
@@ -143,4 +143,85 @@ test('attribution follows the original copyright border box and releases observe
  await h.provider.init({places:[],onSelect:()=>{}});assert(canvas.classList.contains('amap-attribution-layout'));assert(!shell.classList.contains('amap-attribution-layout'),'credit variables must live on the outer canvas even with a map shell');assert.equal(writes.at(-1),'19px');
  height=48.5;callback();assert.equal(writes.at(-1),'49px');
  h.provider.dispose();assert(!canvas.classList.contains('amap-attribution-layout'));assert(disconnected>0);const count=writes.length;callback();assert.equal(writes.length,count,'a late old-map observer cannot change the current layout');
+});
+
+const flushStartup=async()=>{for(let i=0;i<18;i++)await Promise.resolve();};
+function startupTimers(h:ReturnType<typeof setup>){
+ let id=0;const timers=new Map<number,{fn:()=>void;ms:number}>();
+ h.context.setTimeout=(fn:()=>void,ms:number)=>{timers.set(++id,{fn,ms});return id};h.context.clearTimeout=(id:number)=>timers.delete(id);
+ return {fire(ms:number){for(const [id,timer] of [...timers])if(timer.ms===ms){timers.delete(id);timer.fn();}},timers};
+}
+
+test('DOM renderer stays on AMap without forceWebGL or spoofing the screen',async()=>{
+ const h=setup();h.context.window.AMap.Map.prototype.baseRender='d';
+ assert.equal(await h.provider.init({onSelect:()=>{}}),true);assert.equal(h.provider.ready,true);
+ assert.equal(h.provider.diagnostics.renderer,'dom');assert.equal(h.context.window.forceWebGL,undefined);
+ assert.equal(h.provider.diagnostics.lastFailure,null);
+});
+
+test('nonessential plugin and conversion failures do not select another basemap',async()=>{
+ const h=setup(),clock=startupTimers(h);delete h.context.window.AMap.ToolBar;delete h.context.window.AMap.Weather;
+ h.context.window.AMap.plugin=()=>{};
+ h.context.window.AMap.convertFrom=(_p:unknown,_type:unknown,cb:Function)=>cb('error',{info:'secret-upstream-url?key=do-not-log'});
+ assert.equal(await h.provider.init({places:[{lat:34.2,lng:108.9,name:'故障景点'}],onSelect:()=>{}}),true);
+ await h.provider.placesReady;clock.fire(15000);await flushStartup();
+ assert.equal(h.provider.ready,true);assert.equal(h.instances.length,1);
+ const events=h.provider.diagnostics.events;assert(events.some((e:any)=>e.stage==='coordinates'&&e.code==='service-failed'));
+ assert(events.some((e:any)=>e.stage==='plugin'&&e.code==='timeout'));
+ assert(!JSON.stringify(events).includes('do-not-log'));assert.equal(h.provider.diagnostics.lastFailure,null);
+});
+
+test('config transient failure is retried without caching; disabled and HTTP failures have distinct safe diagnostics',async()=>{
+ const h=setup();let count=0;const original=h.context.fetch;
+ h.context.fetch=async(url:string,options:any)=>{assert.equal(options.cache,'no-store');assert(options.signal);if(++count===1)throw new Error('https://private/?key=do-not-log');return original(url,options)};
+ assert.equal(await h.provider.init({onSelect:()=>{}}),true);assert.equal(count,2);
+ assert(h.provider.diagnostics.events.some((e:any)=>e.stage==='config'&&e.code==='network'&&e.level==='warning'));
+ h.provider.dispose();h.context.fetch=async()=>({ok:true,json:async()=>({enabled:false,reason:'unexpected-secret'})});
+ assert.equal(await h.provider.init(),false);assert.equal(h.provider.diagnostics.lastFailure.code,'disabled');
+ h.context.fetch=async()=>({ok:false,status:503});assert.equal(await h.provider.init(),false);
+ assert.equal(h.provider.diagnostics.lastFailure.code,'http-503');assert(!JSON.stringify(h.provider.diagnostics).includes('do-not-log'));
+});
+
+test('configuration timeout aborts both attempts and does not leave startup pending',async()=>{
+ const h=setup(),clock=startupTimers(h);let aborted=0;
+ h.context.fetch=(_url:string,{signal}:any)=>new Promise((_resolve,reject)=>signal.addEventListener('abort',()=>{aborted++;reject(new Error('aborted'));}));
+ const init=h.provider.init();clock.fire(12000);await flushStartup();clock.fire(12000);
+ assert.equal(await init,false);assert.equal(aborted,2);assert.equal(h.provider.diagnostics.lastFailure.code,'timeout');
+});
+
+test('SDK network retry creates one map; missing API and renderer failure are diagnosed separately',async()=>{
+ const h=setup(),sdk=h.context.window.AMap;delete h.context.window.AMap;let scripts=0;
+ h.context.document.head.append=(script:any)=>{scripts++;queueMicrotask(()=>{if(scripts===1)script.onerror();else{h.context.window.AMap=sdk;script.onload();}})};
+ assert.equal(await h.provider.init({onSelect:()=>{}}),true);assert.equal(scripts,2);assert.equal(h.instances.length,1);
+ h.provider.dispose();h.context.window.AMap.Map=class{constructor(){throw new Error('key=do-not-log')}};
+ assert.equal(await h.provider.init(),false);assert.equal(h.provider.diagnostics.lastFailure.stage,'renderer');
+ assert(!JSON.stringify(h.provider.diagnostics).includes('do-not-log'));
+ const missing=setup();delete missing.context.window.AMap;missing.context.document.head.append=(script:any)=>queueMicrotask(()=>script.onload());
+ assert.equal(await missing.provider.init(),false);assert.equal(missing.provider.diagnostics.lastFailure.code,'invalid-api');
+});
+
+test('late SDK after timeout is reused only by explicit retry and never creates an obsolete map',async()=>{
+ const h=setup(),clock=startupTimers(h),sdk=h.context.window.AMap;delete h.context.window.AMap;const scripts:any[]=[];
+ h.context.document.head.append=(script:any)=>scripts.push(script);
+ const first=h.provider.init({onSelect:()=>{}});await flushStartup();assert.equal(scripts.length,1);clock.fire(20000);
+ assert.equal(await first,false);assert.equal(h.provider.diagnostics.lastFailure.code,'timeout');
+ h.context.window.AMap=sdk;scripts[0].onload();await flushStartup();assert.equal(h.instances.length,0);
+ assert.equal(await h.provider.init({onSelect:()=>{}}),true);assert.equal(scripts.length,1);assert.equal(h.instances.length,1);
+});
+
+test('dispose during loading cancels map creation and late attraction callbacks cannot attach to the next map',async()=>{
+ const h=setup(),sdk=h.context.window.AMap;delete h.context.window.AMap;let script:any;
+ h.context.document.head.append=(node:any)=>{script=node};const old=h.provider.init({onSelect:()=>{}});await flushStartup();h.provider.dispose();
+ h.context.window.AMap=sdk;script.onload();assert.equal(await old,false);assert.equal(h.instances.length,0);
+ let convert:Function=()=>{};sdk.convertFrom=(_p:unknown,_type:unknown,cb:Function)=>{convert=cb};
+ assert.equal(await h.provider.init({places:[{lat:34.2,lng:108.9,name:'过期景点'}],onSelect:()=>{}}),true);
+ h.provider.dispose();assert.equal(await h.provider.init({onSelect:()=>{}}),true);
+ convert('complete',{locations:[{lat:34.204,lng:108.906}]});await flushStartup();assert.equal(h.markers.length,0,'late old marker batch cannot enter the new map');
+});
+
+test('an obsolete config response cannot overwrite the active coordinate system',async()=>{
+ const h=setup();let finish:Function=()=>{},count=0;
+ h.context.fetch=()=>{if(++count===1)return new Promise(resolve=>{finish=()=>resolve({ok:true,json:async()=>({enabled:false,backendCoordinateSystem:'WGS84'})});});return Promise.resolve({ok:true,json:async()=>({enabled:true,jsKey:'new-key',serviceHost:'/_AMapService',backendCoordinateSystem:'GCJ02'})});};
+ const old=h.provider.init();await flushStartup();assert.equal(await h.provider.init({onSelect:()=>{}}),true);finish();assert.equal(await old,false);
+ assert.deepEqual(JSON.parse(JSON.stringify(h.provider.backendLocation({lat:34.2,lng:108.9,coordinateSystem:'GCJ02'}))),{lat:34.2,lng:108.9});assert.equal(h.instances.length,1);
 });
