@@ -1,9 +1,7 @@
 'use strict';
 // Coordinates the one live SDK canvas with the UI's changing map shell.
 // The UI owns phase timing; resize and camera updates never create another map.
-// While the shell transitions, animation frames run a throttled sync: DOM-level
-// resizes stay per-frame while WebGL resizes, marker layout and camera fits
-// follow coarse cadences, and one complete sync lands once geometry settles.
+// Shell motion is composited; the SDK sees stable destination geometry.
 (() => {
  let fullModel=null,choose,internalDraw=false,raf=0,lastSize='',lastFit='',revision=0;
  let glAt=0,fitAt=0,markersAt=0,markersFocus=null;
@@ -52,9 +50,12 @@
   const element=refs().map;if(!element)return;
   const width=element.clientWidth,height=element.clientHeight;if(!width||!height)return;
   const size=width+','+height,changed=size!==lastSize;lastSize=size;
+  // A transform animation changes no layout size. Do not re-enter SDK work
+  // on its animation frames; complete syncs still handle panels and redraws.
+  if(throttled&&!changed&&!force)return;
   const now=Date.now();
   if(window.WanderAMap?.ready){
-   if(changed||force||!throttled)window.WanderAMap.resize();
+   if(changed||force)window.WanderAMap.resize();
   }else if(typeof map!=='undefined'&&map){
    if(changed||force)map.stop?.();
    if(changed||force||!throttled){

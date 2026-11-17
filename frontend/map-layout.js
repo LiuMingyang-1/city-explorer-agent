@@ -11,7 +11,9 @@
    // and station number badges inside the clearly readable area: deepest on
    // the left where the feather reaches furthest, moderate top and bottom,
    // shallowest on the right. Map-local coords.
-   let left=width*.2,right=width*.11,top=height*.15,bottom=height*.15;
+   // Reserve room for the route-owned name bubbles as well as the feather.
+   const labelSide=Math.min(100,width*.32);
+   let left=Math.max(width*.2,labelSide),right=Math.max(width*.11,labelSide),top=Math.max(height*.15,84),bottom=height*.15;
    if(typeof focus==='number'&&focus<1){
     const base=routeFrame({width,height,card:window.WanderItineraryMap?.exploreCard||card,panels,focus:false});
     const blend=(a,b)=>a+(b-a)*focus;

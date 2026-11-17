@@ -1,7 +1,7 @@
 /* Issue 37 experiment: one live map canvas and an independent itinerary. The canvas shrinks into a full-height region hugging the right edge while its rim melts unevenly into the paper, so the itinerary reads beside a living map rather than inside a card layout. */
 :root{--focus-map-w:min(58vw,940px);--focus-map-h:100dvh;--itinerary-duration:820ms;--itinerary-ease:cubic-bezier(.22,.75,.22,1);--itinerary-paper:#f0f3e9}
 .canvas{background:var(--itinerary-paper)}
-#map-shell{position:absolute;left:0;top:0;width:100%;height:100%;z-index:0;overflow:hidden;transition:left var(--itinerary-duration) var(--itinerary-ease),top var(--itinerary-duration) var(--itinerary-ease),width var(--itinerary-duration) var(--itinerary-ease),height var(--itinerary-duration) var(--itinerary-ease)}
+#map-shell{position:absolute;left:0;top:0;width:100%;height:100%;z-index:0;overflow:hidden;transform-origin:0 0}
 #map-shell #map{position:absolute;inset:0;width:100%;height:100%;transform:none}
 body.itinerary-focus #map-shell{left:calc(100% - var(--focus-map-w));top:0;width:var(--focus-map-w);height:var(--focus-map-h)}
 /* Irregular dissolve, not an even ring: two off-center radials keep the upper-right and the lower-middle strong while a weak third one varies the falloff, so the readable area reads as an organic patch. Four linear seals guarantee the rim itself always reaches paper — deepest on the left (~24%), moderate top and bottom, lightest on the right where the map stays nearly solid to the screen edge — and a faint uniform wash underneath keeps the whole region in the paper's tonal range. The overlay lives on the shell itself, so the edges melt during the same beat as the resize and fade back out while leaving. */
@@ -34,9 +34,14 @@ body.itinerary-focus #plan-detail{opacity:1;transform:translateX(0);pointer-even
 #plan-detail .commute-row{padding:17px 5px 17px 20px;margin-left:26px}
 #plan-detail button:focus-visible,#plan-detail a:focus-visible{outline:2px solid #7c966c;outline-offset:4px}
 body.itinerary-focus .map-status{left:auto;right:6vw;bottom:30px;max-width:38vw}
-body.itinerary-transition #map-shell{pointer-events:none;will-change:left,top,width,height}
+body.itinerary-transition #map-shell{pointer-events:none;will-change:transform}
 body.itinerary-transition .glass-card{will-change:transform,opacity}
 @media(min-width:1600px){#plan-detail{top:48px;bottom:40px}}
 @media(max-width:1000px) and (min-width:701px){:root{--focus-map-w:56vw}#plan-detail{left:4vw;width:min(480px,42vw);padding-right:16px}#plan-detail .plan-detail-eyebrow{display:none}#plan-detail .event-card{grid-template-columns:78px minmax(0,1fr);padding:14px;gap:10px 13px}#plan-detail .event-cover{width:78px;height:96px}#plan-detail .event-title{font-size:15px}}
 @media(max-width:700px){:root{--focus-map-w:min(56vw,260px);--focus-map-h:min(34dvh,300px)}#plan-detail{inset:18px 18px 0;width:auto;max-width:none;padding:0}#plan-detail .plan-detail-top{width:calc(100% - var(--focus-map-w) - 8px);min-height:36px}#plan-detail .plan-detail-eyebrow{display:none}#plan-detail .plan-detail-title{width:calc(100% - var(--focus-map-w) - 14px);min-height:calc(var(--focus-map-h) + 10px);display:flex;align-items:center;font-size:clamp(22px,6vw,30px);margin:20px 0 12px;line-height:1.6;letter-spacing:-.5px}#plan-detail>.plan-switch{max-width:none;margin-bottom:16px}#plan-detail .plan-detail-scroll{padding-right:2px;padding-bottom:25px}#plan-detail .event-card{grid-template-columns:78px minmax(0,1fr);padding:13px;gap:10px 12px;border-radius:16px}#plan-detail .event-cover{width:78px;height:94px}#plan-detail .event-title{font-size:15px}#plan-detail .itinerary-summary{font-size:12px;margin-bottom:18px}body.itinerary-focus .map-status{right:18px;bottom:12px;max-width:70vw}}
 @media(prefers-reduced-motion:reduce){#map-shell,#map-shell:after,.glass-card,#plan-detail{transition:none!important}}
+
+/* Route-owned labels use event coordinates and leave with their route layer. */
+.route-stop,.native-route-dot{position:relative}
+.route-stop-name{position:absolute;left:50%;bottom:calc(100% + 10px);transform:translateX(-50%);width:max-content;max-width:clamp(72px,12vw,160px);padding:6px 10px;border:1px solid #b7c8ad;border-radius:12px;background:#f9fbf4f5;color:#3f5438;box-shadow:0 3px 12px #3f543814;font-size:12px;font-weight:500;line-height:1.5;white-space:normal;overflow-wrap:anywhere;text-align:center}
+.route-stop-name:after{content:"";position:absolute;left:50%;bottom:-5px;width:8px;height:8px;background:#f9fbf4;transform:translateX(-50%) rotate(45deg);border-right:1px solid #b7c8ad;border-bottom:1px solid #b7c8ad}

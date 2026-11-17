@@ -288,13 +288,14 @@
      routeStrokes.push({layers,selected,width:style.width});
     }else{
      const content=document.createElement('div');content.className='native-route-dot';content.style.background=color;content.style.opacity=selected?'1':'.72';content.title='方案 '+item.plan.label+' · '+(item.i+1)+'. '+item.event.title;content.textContent=String(item.i+1);
+     if(selected&&window.WanderItineraryFocus?.active){const label=document.createElement('span');label.className='route-stop-name';label.textContent=String(item.event.title||item.event.venue_name||item.event.event_id);content.append(label);}
      const marker=new window.AMap.Marker({position:translated[item.pointIndex],content,anchor:'center',zIndex:selected?300:200});
      marker.on('click',()=>{choose?.(item.plan.plan_id);window.WanderActivities?.openEvents([item.event],{placeName:item.event.venue_name,coordinateSystem:model.coordinate_system});});routes.push(marker);if(selected)activeLayers.push(marker);
     }
    });native.add(routes);fitLayers=activeLayers;
    if(fit&&activeLayers.length)fitRoutes();
    window.WanderItineraryMap?.routesReady?.();
-   stopRouteAnimation=visuals.animate(segments);
+   if(!window.WanderItineraryFocus?.active)stopRouteAnimation=visuals.animate(segments);
   }catch{if(epoch===routeEpoch)showMapStatus('路线暂不可用');}
  }
  function resize(){if(!ready)return;native.resize?.();}
