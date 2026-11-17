@@ -6,14 +6,11 @@
  }
  function routeFrame({width,height,card,panels=[],focus=window.WanderItineraryMap?.focusProgress??window.WanderItineraryFocus?.active}){
   if(focus){
-   // The focus map is a full-height region hugging the right edge, and its
-   // rim melts into the paper at uneven depths. Per-axis insets keep routes
-   // and station number badges inside the clearly readable area: deepest on
-   // the left where the feather reaches furthest, moderate top and bottom,
-   // shallowest on the right. Map-local coords.
-   // Reserve room for the route-owned name bubbles as well as the feather.
+   // Map-local insets reserve route labels and the soft rim. Desktop's left
+   // feather is bounded at 56px rather than growing with the reclaimed width.
+   // Compact maps still reserve their proportional rim and label space.
    const labelSide=Math.min(100,width*.32);
-   let left=Math.max(width*.2,labelSide),right=Math.max(width*.11,labelSide),top=Math.max(height*.15,84),bottom=height*.15;
+   let left=Math.max(Math.min(56,width*.2),labelSide),right=Math.max(width*.11,labelSide),top=Math.max(height*.15,84),bottom=height*.15;
    if(typeof focus==='number'&&focus<1){
     const base=routeFrame({width,height,card:window.WanderItineraryMap?.exploreCard||card,panels,focus:false});
     const blend=(a,b)=>a+(b-a)*focus;

@@ -1,0 +1,1761 @@
+{
+  "profile": "after",
+  "provider": "AMap",
+  "failures": [],
+  "metrics": {
+    "focus-1920": {
+      "phase": "detail",
+      "sdk": "AMap",
+      "shell": {
+        "left": 640,
+        "top": 0,
+        "width": 1280,
+        "height": 1080,
+        "right": 1920,
+        "bottom": 1080
+      },
+      "map": {
+        "left": 640,
+        "top": 0,
+        "width": 1280,
+        "height": 1080,
+        "right": 1920,
+        "bottom": 1080
+      },
+      "frame": {
+        "left": 640,
+        "top": 0,
+        "width": 1280,
+        "height": 1080,
+        "right": 1920,
+        "bottom": 1080
+      },
+      "detail": {
+        "left": 96,
+        "top": 48,
+        "width": 560,
+        "height": 992,
+        "right": 656,
+        "bottom": 1040
+      },
+      "card": {
+        "left": 96,
+        "top": 356.59375,
+        "width": 528,
+        "height": 211.59375,
+        "right": 624,
+        "bottom": 568.1875
+      },
+      "overflow": false,
+      "stations": [
+        {
+          "rect": {
+            "left": 1189.34375,
+            "top": 570.28125,
+            "width": 24,
+            "height": 24,
+            "right": 1213.34375,
+            "bottom": 594.28125
+          },
+          "hit": true
+        },
+        {
+          "rect": {
+            "left": 1305.84375,
+            "top": 485.703125,
+            "width": 24,
+            "height": 24,
+            "right": 1329.84375,
+            "bottom": 509.703125
+          },
+          "hit": true
+        }
+      ],
+      "zoom": [
+        {
+          "rect": {
+            "left": 1862,
+            "top": 920,
+            "width": 30,
+            "height": 60,
+            "right": 1892,
+            "bottom": 980
+          },
+          "visible": true
+        }
+      ],
+      "maps": 1
+    },
+    "focus-1920-sdk": {
+      "assert": "pass"
+    },
+    "focus-1920-geometry": {
+      "assert": "pass"
+    },
+    "focus-1920-overflow": {
+      "assert": "pass"
+    },
+    "focus-1920-one-map": {
+      "assert": "pass"
+    },
+    "focus-1920-content-gap": {
+      "gap": 16,
+      "assert": "pass"
+    },
+    "focus-1920-fills-right": {
+      "assert": "pass"
+    },
+    "focus-1920-stations": {
+      "stations": [
+        {
+          "rect": {
+            "left": 1189.34375,
+            "top": 570.28125,
+            "width": 24,
+            "height": 24,
+            "right": 1213.34375,
+            "bottom": 594.28125
+          },
+          "hit": true
+        },
+        {
+          "rect": {
+            "left": 1305.84375,
+            "top": 485.703125,
+            "width": 24,
+            "height": 24,
+            "right": 1329.84375,
+            "bottom": 509.703125
+          },
+          "hit": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "focus-1920-native-station-hit": {
+      "assert": "pass"
+    },
+    "focus-1920-zoom": {
+      "assert": "pass"
+    },
+    "focus-2560": {
+      "phase": "detail",
+      "sdk": "AMap",
+      "shell": {
+        "left": 672,
+        "top": 0,
+        "width": 1888,
+        "height": 1080,
+        "right": 2560,
+        "bottom": 1080
+      },
+      "map": {
+        "left": 672,
+        "top": 0,
+        "width": 1888,
+        "height": 1080,
+        "right": 2560,
+        "bottom": 1080
+      },
+      "frame": {
+        "left": 672,
+        "top": 0,
+        "width": 1888,
+        "height": 1080,
+        "right": 2560,
+        "bottom": 1080
+      },
+      "detail": {
+        "left": 128,
+        "top": 48,
+        "width": 560,
+        "height": 992,
+        "right": 688,
+        "bottom": 1040
+      },
+      "card": {
+        "left": 128,
+        "top": 356.59375,
+        "width": 528,
+        "height": 211.59375,
+        "right": 656,
+        "bottom": 568.1875
+      },
+      "overflow": false,
+      "stations": [
+        {
+          "rect": {
+            "left": 1491.890625,
+            "top": 570.28125,
+            "width": 24,
+            "height": 24,
+            "right": 1515.890625,
+            "bottom": 594.28125
+          },
+          "hit": true
+        },
+        {
+          "rect": {
+            "left": 1608.40625,
+            "top": 485.703125,
+            "width": 24,
+            "height": 24,
+            "right": 1632.40625,
+            "bottom": 509.703125
+          },
+          "hit": true
+        }
+      ],
+      "zoom": [
+        {
+          "rect": {
+            "left": 2502,
+            "top": 920,
+            "width": 30,
+            "height": 60,
+            "right": 2532,
+            "bottom": 980
+          },
+          "visible": true
+        }
+      ],
+      "maps": 1
+    },
+    "focus-2560-sdk": {
+      "assert": "pass"
+    },
+    "focus-2560-geometry": {
+      "assert": "pass"
+    },
+    "focus-2560-overflow": {
+      "assert": "pass"
+    },
+    "focus-2560-one-map": {
+      "assert": "pass"
+    },
+    "focus-2560-content-gap": {
+      "gap": 16,
+      "assert": "pass"
+    },
+    "focus-2560-fills-right": {
+      "assert": "pass"
+    },
+    "focus-2560-stations": {
+      "stations": [
+        {
+          "rect": {
+            "left": 1491.890625,
+            "top": 570.28125,
+            "width": 24,
+            "height": 24,
+            "right": 1515.890625,
+            "bottom": 594.28125
+          },
+          "hit": true
+        },
+        {
+          "rect": {
+            "left": 1608.40625,
+            "top": 485.703125,
+            "width": 24,
+            "height": 24,
+            "right": 1632.40625,
+            "bottom": 509.703125
+          },
+          "hit": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "focus-2560-native-station-hit": {
+      "assert": "pass"
+    },
+    "focus-2560-zoom": {
+      "assert": "pass"
+    },
+    "focus-1440": {
+      "phase": "detail",
+      "sdk": "AMap",
+      "shell": {
+        "left": 603.1875,
+        "top": 0,
+        "width": 836.796875,
+        "height": 900,
+        "right": 1439.984375,
+        "bottom": 900
+      },
+      "map": {
+        "left": 603.1875,
+        "top": 0,
+        "width": 836.796875,
+        "height": 900,
+        "right": 1439.984375,
+        "bottom": 900
+      },
+      "frame": {
+        "left": 603.203125,
+        "top": 0,
+        "width": 836.796875,
+        "height": 900,
+        "right": 1440,
+        "bottom": 900
+      },
+      "detail": {
+        "left": 72,
+        "top": 36,
+        "width": 547.1875,
+        "height": 834,
+        "right": 619.1875,
+        "bottom": 870
+      },
+      "card": {
+        "left": 72,
+        "top": 343.015625,
+        "width": 515.1875,
+        "height": 211.59375,
+        "right": 587.1875,
+        "bottom": 554.609375
+      },
+      "overflow": false,
+      "stations": [
+        {
+          "rect": {
+            "left": 951.421875,
+            "top": 480.28125,
+            "width": 24,
+            "height": 24,
+            "right": 975.421875,
+            "bottom": 504.28125
+          },
+          "hit": true
+        },
+        {
+          "rect": {
+            "left": 1067.9375,
+            "top": 395.703125,
+            "width": 24,
+            "height": 24,
+            "right": 1091.9375,
+            "bottom": 419.703125
+          },
+          "hit": true
+        }
+      ],
+      "zoom": [
+        {
+          "rect": {
+            "left": 1381.984375,
+            "top": 740,
+            "width": 30,
+            "height": 60,
+            "right": 1411.984375,
+            "bottom": 800
+          },
+          "visible": true
+        }
+      ],
+      "maps": 1
+    },
+    "focus-1440-sdk": {
+      "assert": "pass"
+    },
+    "focus-1440-geometry": {
+      "assert": "pass"
+    },
+    "focus-1440-overflow": {
+      "assert": "pass"
+    },
+    "focus-1440-one-map": {
+      "assert": "pass"
+    },
+    "focus-1440-content-gap": {
+      "gap": 16,
+      "assert": "pass"
+    },
+    "focus-1440-fills-right": {
+      "assert": "pass"
+    },
+    "focus-1440-stations": {
+      "stations": [
+        {
+          "rect": {
+            "left": 951.421875,
+            "top": 480.28125,
+            "width": 24,
+            "height": 24,
+            "right": 975.421875,
+            "bottom": 504.28125
+          },
+          "hit": true
+        },
+        {
+          "rect": {
+            "left": 1067.9375,
+            "top": 395.703125,
+            "width": 24,
+            "height": 24,
+            "right": 1091.9375,
+            "bottom": 419.703125
+          },
+          "hit": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "focus-1440-native-station-hit": {
+      "assert": "pass"
+    },
+    "focus-1440-zoom": {
+      "assert": "pass"
+    },
+    "focus-1024": {
+      "phase": "detail",
+      "sdk": "AMap",
+      "shell": {
+        "left": 424.3125,
+        "top": 0,
+        "width": 599.671875,
+        "height": 768,
+        "right": 1023.984375,
+        "bottom": 768
+      },
+      "map": {
+        "left": 424.3125,
+        "top": 0,
+        "width": 599.671875,
+        "height": 768,
+        "right": 1023.984375,
+        "bottom": 768
+      },
+      "frame": {
+        "left": 424.328125,
+        "top": 0,
+        "width": 599.671875,
+        "height": 768,
+        "right": 1024,
+        "bottom": 768
+      },
+      "detail": {
+        "left": 51.1875,
+        "top": 36,
+        "width": 389.109375,
+        "height": 702,
+        "right": 440.296875,
+        "bottom": 738
+      },
+      "card": {
+        "left": 51.1875,
+        "top": 327.28125,
+        "width": 357.109375,
+        "height": 211.59375,
+        "right": 408.296875,
+        "bottom": 538.875
+      },
+      "overflow": false,
+      "stations": [
+        {
+          "rect": {
+            "left": 654.046875,
+            "top": 414.28125,
+            "width": 24,
+            "height": 24,
+            "right": 678.046875,
+            "bottom": 438.28125
+          },
+          "hit": true
+        },
+        {
+          "rect": {
+            "left": 770.5625,
+            "top": 329.703125,
+            "width": 24,
+            "height": 24,
+            "right": 794.5625,
+            "bottom": 353.703125
+          },
+          "hit": true
+        }
+      ],
+      "zoom": [
+        {
+          "rect": {
+            "left": 965.984375,
+            "top": 615.84375,
+            "width": 30,
+            "height": 60,
+            "right": 995.984375,
+            "bottom": 675.84375
+          },
+          "visible": true
+        }
+      ],
+      "maps": 1
+    },
+    "focus-1024-sdk": {
+      "assert": "pass"
+    },
+    "focus-1024-geometry": {
+      "assert": "pass"
+    },
+    "focus-1024-overflow": {
+      "assert": "pass"
+    },
+    "focus-1024-one-map": {
+      "assert": "pass"
+    },
+    "focus-1024-content-gap": {
+      "gap": 16.015625,
+      "assert": "pass"
+    },
+    "focus-1024-fills-right": {
+      "assert": "pass"
+    },
+    "focus-1024-stations": {
+      "stations": [
+        {
+          "rect": {
+            "left": 654.046875,
+            "top": 414.28125,
+            "width": 24,
+            "height": 24,
+            "right": 678.046875,
+            "bottom": 438.28125
+          },
+          "hit": true
+        },
+        {
+          "rect": {
+            "left": 770.5625,
+            "top": 329.703125,
+            "width": 24,
+            "height": 24,
+            "right": 794.5625,
+            "bottom": 353.703125
+          },
+          "hit": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "focus-1024-native-station-hit": {
+      "assert": "pass"
+    },
+    "focus-1024-zoom": {
+      "assert": "pass"
+    },
+    "focus-823": {
+      "phase": "detail",
+      "sdk": "AMap",
+      "shell": {
+        "left": 362.578125,
+        "top": 0,
+        "width": 460.40625,
+        "height": 880,
+        "right": 822.984375,
+        "bottom": 880
+      },
+      "map": {
+        "left": 362.578125,
+        "top": 0,
+        "width": 460.40625,
+        "height": 880,
+        "right": 822.984375,
+        "bottom": 880
+      },
+      "frame": {
+        "left": 362.59375,
+        "top": 0,
+        "width": 460.40625,
+        "height": 880,
+        "right": 823,
+        "bottom": 880
+      },
+      "detail": {
+        "left": 32.90625,
+        "top": 36,
+        "width": 345.65625,
+        "height": 814,
+        "right": 378.5625,
+        "bottom": 850
+      },
+      "card": {
+        "left": 32.90625,
+        "top": 350.1875,
+        "width": 319.65625,
+        "height": 187.265625,
+        "right": 352.5625,
+        "bottom": 537.453125
+      },
+      "overflow": false,
+      "stations": [
+        {
+          "rect": {
+            "left": 522.3125,
+            "top": 470.28125,
+            "width": 24,
+            "height": 24,
+            "right": 546.3125,
+            "bottom": 494.28125
+          },
+          "hit": true
+        },
+        {
+          "rect": {
+            "left": 638.828125,
+            "top": 385.703125,
+            "width": 24,
+            "height": 24,
+            "right": 662.828125,
+            "bottom": 409.703125
+          },
+          "hit": true
+        }
+      ],
+      "zoom": [
+        {
+          "rect": {
+            "left": 764.984375,
+            "top": 720,
+            "width": 30,
+            "height": 60,
+            "right": 794.984375,
+            "bottom": 780
+          },
+          "visible": true
+        }
+      ],
+      "maps": 1
+    },
+    "focus-823-sdk": {
+      "assert": "pass"
+    },
+    "focus-823-geometry": {
+      "assert": "pass"
+    },
+    "focus-823-overflow": {
+      "assert": "pass"
+    },
+    "focus-823-one-map": {
+      "assert": "pass"
+    },
+    "focus-823-content-gap": {
+      "gap": 10.015625,
+      "assert": "pass"
+    },
+    "focus-823-fills-right": {
+      "assert": "pass"
+    },
+    "focus-823-stations": {
+      "stations": [
+        {
+          "rect": {
+            "left": 522.3125,
+            "top": 470.28125,
+            "width": 24,
+            "height": 24,
+            "right": 546.3125,
+            "bottom": 494.28125
+          },
+          "hit": true
+        },
+        {
+          "rect": {
+            "left": 638.828125,
+            "top": 385.703125,
+            "width": 24,
+            "height": 24,
+            "right": 662.828125,
+            "bottom": 409.703125
+          },
+          "hit": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "focus-823-native-station-hit": {
+      "assert": "pass"
+    },
+    "focus-823-zoom": {
+      "assert": "pass"
+    },
+    "focus-701": {
+      "phase": "detail",
+      "sdk": "AMap",
+      "shell": {
+        "left": 306.453125,
+        "top": 0,
+        "width": 394.53125,
+        "height": 800,
+        "right": 700.984375,
+        "bottom": 800
+      },
+      "map": {
+        "left": 306.453125,
+        "top": 0,
+        "width": 394.53125,
+        "height": 800,
+        "right": 700.984375,
+        "bottom": 800
+      },
+      "frame": {
+        "left": 306.46875,
+        "top": 0,
+        "width": 394.53125,
+        "height": 800,
+        "right": 701,
+        "bottom": 800
+      },
+      "detail": {
+        "left": 28.03125,
+        "top": 36,
+        "width": 294.40625,
+        "height": 734,
+        "right": 322.4375,
+        "bottom": 770
+      },
+      "card": {
+        "left": 28.03125,
+        "top": 350.1875,
+        "width": 268.40625,
+        "height": 187.265625,
+        "right": 296.4375,
+        "bottom": 537.453125
+      },
+      "overflow": false,
+      "stations": [
+        {
+          "rect": {
+            "left": 433.6875,
+            "top": 430.28125,
+            "width": 24,
+            "height": 24,
+            "right": 457.6875,
+            "bottom": 454.28125
+          },
+          "hit": true
+        },
+        {
+          "rect": {
+            "left": 550.203125,
+            "top": 345.703125,
+            "width": 24,
+            "height": 24,
+            "right": 574.203125,
+            "bottom": 369.703125
+          },
+          "hit": true
+        }
+      ],
+      "zoom": [
+        {
+          "rect": {
+            "left": 642.984375,
+            "top": 644,
+            "width": 30,
+            "height": 60,
+            "right": 672.984375,
+            "bottom": 704
+          },
+          "visible": true
+        }
+      ],
+      "maps": 1
+    },
+    "focus-701-sdk": {
+      "assert": "pass"
+    },
+    "focus-701-geometry": {
+      "assert": "pass"
+    },
+    "focus-701-overflow": {
+      "assert": "pass"
+    },
+    "focus-701-one-map": {
+      "assert": "pass"
+    },
+    "focus-701-content-gap": {
+      "gap": 10.015625,
+      "assert": "pass"
+    },
+    "focus-701-fills-right": {
+      "assert": "pass"
+    },
+    "focus-701-stations": {
+      "stations": [
+        {
+          "rect": {
+            "left": 433.6875,
+            "top": 430.28125,
+            "width": 24,
+            "height": 24,
+            "right": 457.6875,
+            "bottom": 454.28125
+          },
+          "hit": true
+        },
+        {
+          "rect": {
+            "left": 550.203125,
+            "top": 345.703125,
+            "width": 24,
+            "height": 24,
+            "right": 574.203125,
+            "bottom": 369.703125
+          },
+          "hit": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "focus-701-native-station-hit": {
+      "assert": "pass"
+    },
+    "focus-701-zoom": {
+      "assert": "pass"
+    },
+    "focus-700": {
+      "phase": "detail",
+      "sdk": "AMap",
+      "shell": {
+        "left": 440,
+        "top": 0,
+        "width": 260,
+        "height": 286.953125,
+        "right": 700,
+        "bottom": 286.953125
+      },
+      "map": {
+        "left": 440,
+        "top": 0,
+        "width": 260,
+        "height": 286.953125,
+        "right": 700,
+        "bottom": 286.953125
+      },
+      "frame": {
+        "left": 440,
+        "top": 0,
+        "width": 260,
+        "height": 286.953125,
+        "right": 700,
+        "bottom": 286.953125
+      },
+      "detail": {
+        "left": 18,
+        "top": 18,
+        "width": 664,
+        "height": 826,
+        "right": 682,
+        "bottom": 844
+      },
+      "card": {
+        "left": 18,
+        "top": 533.75,
+        "width": 662,
+        "height": 185.265625,
+        "right": 680,
+        "bottom": 719.015625
+      },
+      "overflow": false,
+      "stations": [
+        {
+          "rect": {
+            "left": 511.1875,
+            "top": 185.9375,
+            "width": 24,
+            "height": 24,
+            "right": 535.1875,
+            "bottom": 209.9375
+          },
+          "hit": false
+        },
+        {
+          "rect": {
+            "left": 604.796875,
+            "top": 118,
+            "width": 24,
+            "height": 24,
+            "right": 628.796875,
+            "bottom": 142
+          },
+          "hit": false
+        }
+      ],
+      "zoom": [
+        {
+          "rect": {
+            "left": 655,
+            "top": 151.953125,
+            "width": 30,
+            "height": 60,
+            "right": 685,
+            "bottom": 211.953125
+          },
+          "visible": true
+        }
+      ],
+      "maps": 1
+    },
+    "focus-700-sdk": {
+      "assert": "pass"
+    },
+    "focus-700-geometry": {
+      "assert": "pass"
+    },
+    "focus-700-overflow": {
+      "assert": "pass"
+    },
+    "focus-700-one-map": {
+      "assert": "pass"
+    },
+    "focus-700-stations": {
+      "stations": [
+        {
+          "rect": {
+            "left": 511.1875,
+            "top": 185.9375,
+            "width": 24,
+            "height": 24,
+            "right": 535.1875,
+            "bottom": 209.9375
+          },
+          "hit": false
+        },
+        {
+          "rect": {
+            "left": 604.796875,
+            "top": 118,
+            "width": 24,
+            "height": 24,
+            "right": 628.796875,
+            "bottom": 142
+          },
+          "hit": false
+        }
+      ],
+      "assert": "pass"
+    },
+    "focus-700-zoom": {
+      "assert": "pass"
+    },
+    "focus-390": {
+      "phase": "detail",
+      "sdk": "AMap",
+      "shell": {
+        "left": 171.59375,
+        "top": 0,
+        "width": 218.390625,
+        "height": 286.953125,
+        "right": 389.984375,
+        "bottom": 286.953125
+      },
+      "map": {
+        "left": 171.59375,
+        "top": 0,
+        "width": 218.390625,
+        "height": 286.953125,
+        "right": 389.984375,
+        "bottom": 286.953125
+      },
+      "frame": {
+        "left": 171.609375,
+        "top": 0,
+        "width": 218.390625,
+        "height": 286.953125,
+        "right": 390,
+        "bottom": 286.953125
+      },
+      "detail": {
+        "left": 18,
+        "top": 18,
+        "width": 354,
+        "height": 826,
+        "right": 372,
+        "bottom": 844
+      },
+      "card": {
+        "left": 18,
+        "top": 533.75,
+        "width": 352,
+        "height": 185.265625,
+        "right": 370,
+        "bottom": 719.015625
+      },
+      "overflow": false,
+      "stations": [
+        {
+          "rect": {
+            "left": 229.34375,
+            "top": 180.453125,
+            "width": 24,
+            "height": 24,
+            "right": 253.34375,
+            "bottom": 204.453125
+          },
+          "hit": false
+        },
+        {
+          "rect": {
+            "left": 307.828125,
+            "top": 123.484375,
+            "width": 24,
+            "height": 24,
+            "right": 331.828125,
+            "bottom": 147.484375
+          },
+          "hit": false
+        }
+      ],
+      "zoom": [
+        {
+          "rect": {
+            "left": 344.984375,
+            "top": 151.953125,
+            "width": 30,
+            "height": 60,
+            "right": 374.984375,
+            "bottom": 211.953125
+          },
+          "visible": true
+        }
+      ],
+      "maps": 1
+    },
+    "focus-390-sdk": {
+      "assert": "pass"
+    },
+    "focus-390-geometry": {
+      "assert": "pass"
+    },
+    "focus-390-overflow": {
+      "assert": "pass"
+    },
+    "focus-390-one-map": {
+      "assert": "pass"
+    },
+    "focus-390-stations": {
+      "stations": [
+        {
+          "rect": {
+            "left": 229.34375,
+            "top": 180.453125,
+            "width": 24,
+            "height": 24,
+            "right": 253.34375,
+            "bottom": 204.453125
+          },
+          "hit": false
+        },
+        {
+          "rect": {
+            "left": 307.828125,
+            "top": 123.484375,
+            "width": 24,
+            "height": 24,
+            "right": 331.828125,
+            "bottom": 147.484375
+          },
+          "hit": false
+        }
+      ],
+      "assert": "pass"
+    },
+    "focus-390-zoom": {
+      "assert": "pass"
+    },
+    "focus-320": {
+      "phase": "detail",
+      "sdk": "AMap",
+      "shell": {
+        "left": 140.796875,
+        "top": 0,
+        "width": 179.1875,
+        "height": 193.109375,
+        "right": 319.984375,
+        "bottom": 193.109375
+      },
+      "map": {
+        "left": 140.796875,
+        "top": 0,
+        "width": 179.1875,
+        "height": 193.109375,
+        "right": 319.984375,
+        "bottom": 193.109375
+      },
+      "frame": {
+        "left": 140.8125,
+        "top": 0,
+        "width": 179.1875,
+        "height": 193.109375,
+        "right": 320,
+        "bottom": 193.109375
+      },
+      "detail": {
+        "left": 18,
+        "top": 18,
+        "width": 284,
+        "height": 550,
+        "right": 302,
+        "bottom": 568
+      },
+      "card": {
+        "left": 18,
+        "top": 462.703125,
+        "width": 282,
+        "height": 185.265625,
+        "right": 300,
+        "bottom": 647.96875
+      },
+      "overflow": false,
+      "stations": [
+        {
+          "rect": {
+            "left": 186.0625,
+            "top": 135.40625,
+            "width": 24,
+            "height": 24,
+            "right": 210.0625,
+            "bottom": 159.40625
+          },
+          "hit": false
+        },
+        {
+          "rect": {
+            "left": 250.515625,
+            "top": 88.625,
+            "width": 24,
+            "height": 24,
+            "right": 274.515625,
+            "bottom": 112.625
+          },
+          "hit": false
+        }
+      ],
+      "zoom": [
+        {
+          "rect": {
+            "left": 274.984375,
+            "top": 58.109375,
+            "width": 30,
+            "height": 60,
+            "right": 304.984375,
+            "bottom": 118.109375
+          },
+          "visible": true
+        }
+      ],
+      "maps": 1
+    },
+    "focus-320-sdk": {
+      "assert": "pass"
+    },
+    "focus-320-geometry": {
+      "assert": "pass"
+    },
+    "focus-320-overflow": {
+      "assert": "pass"
+    },
+    "focus-320-one-map": {
+      "assert": "pass"
+    },
+    "focus-320-stations": {
+      "stations": [
+        {
+          "rect": {
+            "left": 186.0625,
+            "top": 135.40625,
+            "width": 24,
+            "height": 24,
+            "right": 210.0625,
+            "bottom": 159.40625
+          },
+          "hit": false
+        },
+        {
+          "rect": {
+            "left": 250.515625,
+            "top": 88.625,
+            "width": 24,
+            "height": 24,
+            "right": 274.515625,
+            "bottom": 112.625
+          },
+          "hit": false
+        }
+      ],
+      "assert": "pass"
+    },
+    "focus-320-zoom": {
+      "assert": "pass"
+    },
+    "switch-b": {
+      "phase": "detail",
+      "sdk": "AMap",
+      "shell": {
+        "left": 603.1875,
+        "top": 0,
+        "width": 836.796875,
+        "height": 900,
+        "right": 1439.984375,
+        "bottom": 900
+      },
+      "map": {
+        "left": 603.1875,
+        "top": 0,
+        "width": 836.796875,
+        "height": 900,
+        "right": 1439.984375,
+        "bottom": 900
+      },
+      "frame": {
+        "left": 603.203125,
+        "top": 0,
+        "width": 836.796875,
+        "height": 900,
+        "right": 1440,
+        "bottom": 900
+      },
+      "detail": {
+        "left": 72,
+        "top": 36,
+        "width": 547.1875,
+        "height": 834,
+        "right": 619.1875,
+        "bottom": 870
+      },
+      "card": {
+        "left": 72,
+        "top": 343.015625,
+        "width": 515.1875,
+        "height": 211.59375,
+        "right": 587.1875,
+        "bottom": 554.609375
+      },
+      "overflow": false,
+      "stations": [
+        {
+          "rect": {
+            "left": 939.78125,
+            "top": 480.28125,
+            "width": 24,
+            "height": 24,
+            "right": 963.78125,
+            "bottom": 504.28125
+          },
+          "hit": true
+        },
+        {
+          "rect": {
+            "left": 1079.578125,
+            "top": 395.703125,
+            "width": 24,
+            "height": 24,
+            "right": 1103.578125,
+            "bottom": 419.703125
+          },
+          "hit": true
+        }
+      ],
+      "zoom": [
+        {
+          "rect": {
+            "left": 1381.984375,
+            "top": 740,
+            "width": 30,
+            "height": 60,
+            "right": 1411.984375,
+            "bottom": 800
+          },
+          "visible": true
+        }
+      ],
+      "maps": 1
+    },
+    "switch-b-sdk": {
+      "assert": "pass"
+    },
+    "switch-b-geometry": {
+      "assert": "pass"
+    },
+    "switch-b-overflow": {
+      "assert": "pass"
+    },
+    "switch-b-one-map": {
+      "assert": "pass"
+    },
+    "switch-b-content-gap": {
+      "gap": 16,
+      "assert": "pass"
+    },
+    "switch-b-fills-right": {
+      "assert": "pass"
+    },
+    "switch-b-stations": {
+      "stations": [
+        {
+          "rect": {
+            "left": 939.78125,
+            "top": 480.28125,
+            "width": 24,
+            "height": 24,
+            "right": 963.78125,
+            "bottom": 504.28125
+          },
+          "hit": true
+        },
+        {
+          "rect": {
+            "left": 1079.578125,
+            "top": 395.703125,
+            "width": 24,
+            "height": 24,
+            "right": 1103.578125,
+            "bottom": 419.703125
+          },
+          "hit": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "switch-b-native-station-hit": {
+      "assert": "pass"
+    },
+    "switch-b-zoom": {
+      "assert": "pass"
+    },
+    "exit-full-map": {
+      "left": 0,
+      "width": 1440,
+      "height": 900,
+      "assert": "pass"
+    },
+    "resize-during-entry": {
+      "phase": "detail",
+      "sdk": "AMap",
+      "shell": {
+        "left": 640,
+        "top": 0,
+        "width": 1280,
+        "height": 1080,
+        "right": 1920,
+        "bottom": 1080
+      },
+      "map": {
+        "left": 640,
+        "top": 0,
+        "width": 1280,
+        "height": 1080,
+        "right": 1920,
+        "bottom": 1080
+      },
+      "frame": {
+        "left": 640,
+        "top": 0,
+        "width": 1280,
+        "height": 1080,
+        "right": 1920,
+        "bottom": 1080
+      },
+      "detail": {
+        "left": 96,
+        "top": 48,
+        "width": 560,
+        "height": 992,
+        "right": 656,
+        "bottom": 1040
+      },
+      "card": {
+        "left": 96,
+        "top": 356.59375,
+        "width": 528,
+        "height": 211.59375,
+        "right": 624,
+        "bottom": 568.1875
+      },
+      "overflow": false,
+      "stations": [
+        {
+          "rect": {
+            "left": 1177.6875,
+            "top": 570.28125,
+            "width": 24,
+            "height": 24,
+            "right": 1201.6875,
+            "bottom": 594.28125
+          },
+          "hit": true
+        },
+        {
+          "rect": {
+            "left": 1317.5,
+            "top": 485.703125,
+            "width": 24,
+            "height": 24,
+            "right": 1341.5,
+            "bottom": 509.703125
+          },
+          "hit": true
+        }
+      ],
+      "zoom": [
+        {
+          "rect": {
+            "left": 1862,
+            "top": 920,
+            "width": 30,
+            "height": 60,
+            "right": 1892,
+            "bottom": 980
+          },
+          "visible": true
+        }
+      ],
+      "maps": 1
+    },
+    "resize-during-entry-sdk": {
+      "assert": "pass"
+    },
+    "resize-during-entry-geometry": {
+      "assert": "pass"
+    },
+    "resize-during-entry-overflow": {
+      "assert": "pass"
+    },
+    "resize-during-entry-one-map": {
+      "assert": "pass"
+    },
+    "resize-during-entry-content-gap": {
+      "gap": 16,
+      "assert": "pass"
+    },
+    "resize-during-entry-fills-right": {
+      "assert": "pass"
+    },
+    "resize-during-entry-stations": {
+      "stations": [
+        {
+          "rect": {
+            "left": 1177.6875,
+            "top": 570.28125,
+            "width": 24,
+            "height": 24,
+            "right": 1201.6875,
+            "bottom": 594.28125
+          },
+          "hit": true
+        },
+        {
+          "rect": {
+            "left": 1317.5,
+            "top": 485.703125,
+            "width": 24,
+            "height": 24,
+            "right": 1341.5,
+            "bottom": 509.703125
+          },
+          "hit": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "resize-during-entry-native-station-hit": {
+      "assert": "pass"
+    },
+    "resize-during-entry-zoom": {
+      "assert": "pass"
+    },
+    "rapid-reentry": {
+      "phase": "detail",
+      "sdk": "AMap",
+      "shell": {
+        "left": 640,
+        "top": 0,
+        "width": 1280,
+        "height": 1080,
+        "right": 1920,
+        "bottom": 1080
+      },
+      "map": {
+        "left": 640,
+        "top": 0,
+        "width": 1280,
+        "height": 1080,
+        "right": 1920,
+        "bottom": 1080
+      },
+      "frame": {
+        "left": 640,
+        "top": 0,
+        "width": 1280,
+        "height": 1080,
+        "right": 1920,
+        "bottom": 1080
+      },
+      "detail": {
+        "left": 96,
+        "top": 48,
+        "width": 560,
+        "height": 992,
+        "right": 656,
+        "bottom": 1040
+      },
+      "card": {
+        "left": 96,
+        "top": 356.59375,
+        "width": 528,
+        "height": 211.59375,
+        "right": 624,
+        "bottom": 568.1875
+      },
+      "overflow": false,
+      "stations": [
+        {
+          "rect": {
+            "left": 1177.6875,
+            "top": 570.28125,
+            "width": 24,
+            "height": 24,
+            "right": 1201.6875,
+            "bottom": 594.28125
+          },
+          "hit": true
+        },
+        {
+          "rect": {
+            "left": 1317.5,
+            "top": 485.703125,
+            "width": 24,
+            "height": 24,
+            "right": 1341.5,
+            "bottom": 509.703125
+          },
+          "hit": true
+        }
+      ],
+      "zoom": [
+        {
+          "rect": {
+            "left": 1862,
+            "top": 920,
+            "width": 30,
+            "height": 60,
+            "right": 1892,
+            "bottom": 980
+          },
+          "visible": true
+        }
+      ],
+      "maps": 1
+    },
+    "rapid-reentry-sdk": {
+      "assert": "pass"
+    },
+    "rapid-reentry-geometry": {
+      "assert": "pass"
+    },
+    "rapid-reentry-overflow": {
+      "assert": "pass"
+    },
+    "rapid-reentry-one-map": {
+      "assert": "pass"
+    },
+    "rapid-reentry-content-gap": {
+      "gap": 16,
+      "assert": "pass"
+    },
+    "rapid-reentry-fills-right": {
+      "assert": "pass"
+    },
+    "rapid-reentry-stations": {
+      "stations": [
+        {
+          "rect": {
+            "left": 1177.6875,
+            "top": 570.28125,
+            "width": 24,
+            "height": 24,
+            "right": 1201.6875,
+            "bottom": 594.28125
+          },
+          "hit": true
+        },
+        {
+          "rect": {
+            "left": 1317.5,
+            "top": 485.703125,
+            "width": 24,
+            "height": 24,
+            "right": 1341.5,
+            "bottom": 509.703125
+          },
+          "hit": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "rapid-reentry-native-station-hit": {
+      "assert": "pass"
+    },
+    "rapid-reentry-zoom": {
+      "assert": "pass"
+    },
+    "reduced": {
+      "phase": "detail",
+      "sdk": "AMap",
+      "shell": {
+        "left": 640,
+        "top": 0,
+        "width": 1280,
+        "height": 1080,
+        "right": 1920,
+        "bottom": 1080
+      },
+      "map": {
+        "left": 640,
+        "top": 0,
+        "width": 1280,
+        "height": 1080,
+        "right": 1920,
+        "bottom": 1080
+      },
+      "frame": {
+        "left": 640,
+        "top": 0,
+        "width": 1280,
+        "height": 1080,
+        "right": 1920,
+        "bottom": 1080
+      },
+      "detail": {
+        "left": 96,
+        "top": 48,
+        "width": 560,
+        "height": 992,
+        "right": 656,
+        "bottom": 1040
+      },
+      "card": {
+        "left": 96,
+        "top": 356.59375,
+        "width": 528,
+        "height": 211.59375,
+        "right": 624,
+        "bottom": 568.1875
+      },
+      "overflow": false,
+      "stations": [
+        {
+          "rect": {
+            "left": 1177.6875,
+            "top": 570.28125,
+            "width": 24,
+            "height": 24,
+            "right": 1201.6875,
+            "bottom": 594.28125
+          },
+          "hit": true
+        },
+        {
+          "rect": {
+            "left": 1317.5,
+            "top": 485.703125,
+            "width": 24,
+            "height": 24,
+            "right": 1341.5,
+            "bottom": 509.703125
+          },
+          "hit": true
+        }
+      ],
+      "zoom": [
+        {
+          "rect": {
+            "left": 1862,
+            "top": 920,
+            "width": 30,
+            "height": 60,
+            "right": 1892,
+            "bottom": 980
+          },
+          "visible": true
+        }
+      ],
+      "maps": 1
+    },
+    "reduced-sdk": {
+      "assert": "pass"
+    },
+    "reduced-geometry": {
+      "assert": "pass"
+    },
+    "reduced-overflow": {
+      "assert": "pass"
+    },
+    "reduced-one-map": {
+      "assert": "pass"
+    },
+    "reduced-content-gap": {
+      "gap": 16,
+      "assert": "pass"
+    },
+    "reduced-fills-right": {
+      "assert": "pass"
+    },
+    "reduced-stations": {
+      "stations": [
+        {
+          "rect": {
+            "left": 1177.6875,
+            "top": 570.28125,
+            "width": 24,
+            "height": 24,
+            "right": 1201.6875,
+            "bottom": 594.28125
+          },
+          "hit": true
+        },
+        {
+          "rect": {
+            "left": 1317.5,
+            "top": 485.703125,
+            "width": 24,
+            "height": 24,
+            "right": 1341.5,
+            "bottom": 509.703125
+          },
+          "hit": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "reduced-native-station-hit": {
+      "assert": "pass"
+    },
+    "reduced-zoom": {
+      "assert": "pass"
+    },
+    "panel": {
+      "visible": true
+    },
+    "details-open": {
+      "assert": "pass"
+    }
+  },
+  "log": [
+    "shot focus-1920",
+    "shot focus-2560",
+    "shot focus-1440",
+    "shot focus-1024",
+    "shot focus-823",
+    "shot focus-701",
+    "shot focus-700",
+    "shot focus-390",
+    "shot focus-320",
+    "shot switch-b",
+    "shot returned",
+    "shot resize-during-entry",
+    "shot rapid-reentry",
+    "shot reduced",
+    "shot activity-detail"
+  ]
+}
