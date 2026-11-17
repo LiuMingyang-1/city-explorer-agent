@@ -1,17 +1,32 @@
 /* CSS adaptation of the original JS SDK elements, not an SDK position option. */
+.canvas{--map-zoom-right:28px;--map-zoom-bottom:45px}
 .canvas.amap-attribution-layout{--amap-credit-height:16px;--amap-credit-band:calc(var(--amap-credit-height) + 56px)}
+.canvas.amap-attribution-layout{--map-zoom-bottom:var(--amap-credit-band)}
 .amap-attribution-layout #map .amap-logo{left:auto!important;right:16px!important;bottom:calc(var(--amap-credit-height) + 16px)!important}
 .amap-attribution-layout #map .amap-copyright{left:auto!important;right:16px!important;bottom:8px!important;max-width:calc(100% - 32px);width:max-content;height:auto!important;white-space:normal;text-align:right;color:#40573b!important;background:#ffffffd9;padding:1px 5px;border-radius:3px}
 .amap-attribution-layout #map .amap-copyright a,.amap-attribution-layout #map .amap-copyright span{color:inherit!important}
-.amap-attribution-layout #map .amap-toolbar{right:28px!important;bottom:calc(var(--amap-credit-band) + 16px)!important}
+/* Reset the opposite SDK insets too: a leftover top stretches a bottom dock. */
+.canvas #map .amap-toolbar{top:auto!important;left:auto!important;right:var(--map-zoom-right)!important;bottom:var(--map-zoom-bottom)!important;display:flex;flex-direction:column}
+.canvas #map .leaflet-control-zoom{margin:0 var(--map-zoom-right) var(--map-zoom-bottom) 0!important}
 .amap-attribution-layout .preferences-panel{bottom:var(--amap-credit-band)}
 .amap-attribution-layout .activity-detail{max-height:calc(100dvh - var(--amap-credit-band) - 86px);min-height:min(340px,calc(100dvh - var(--amap-credit-band) - 86px))}
 @media(max-width:700px){
  /* Reserve a visible attribution strip, rather than covering the mobile card. */
  .amap-attribution-layout .glass-card{bottom:var(--amap-credit-band);height:calc(55dvh - var(--amap-credit-band) + 12px);min-height:min(calc(432px - var(--amap-credit-band)),calc(100dvh - var(--amap-credit-band) - 12px));max-height:calc(572px - var(--amap-credit-band))}
- .amap-attribution-layout #map .amap-toolbar{bottom:calc(max(55dvh,420px) + 28px)!important}
- .amap-attribution-layout:has(.activity-detail:not([hidden])) #map .amap-toolbar,
- .amap-attribution-layout:has(.preferences-panel:not([hidden])) #map .amap-toolbar{visibility:hidden}
+ .canvas,.canvas.amap-attribution-layout{--map-zoom-right:15px;--map-zoom-bottom:calc(min(max(55dvh,420px),calc(100dvh - 24px)) + 25px)}
+}
+
+/* Keep both providers above the focus map's feather, instead of the old card. */
+body.itinerary-focus .canvas{--map-zoom-bottom:max(var(--amap-credit-band,45px),min(12dvh,100px))}
+@media(max-width:700px){body.itinerary-focus .canvas{--map-zoom-bottom:var(--amap-credit-band,45px)}}
+/* Wide panels leave usable map space on their left. Compact panels cover the
+   remaining map; temporarily hide controls and restore them when closed. */
+@media(min-width:1101px){
+ .canvas:has(.activity-detail:not([hidden])){--map-zoom-right:calc(clamp(300px,31vw,460px) + 52px)}
+ .canvas:has(.preferences-panel:not([hidden])){--map-zoom-right:calc(clamp(320px,31vw,430px) + 52px)}
+}
+@media(max-width:1100px){
+ .canvas:has(.activity-detail:not([hidden]),.preferences-panel:not([hidden])) #map :is(.amap-toolbar,.leaflet-control-zoom){visibility:hidden}
 }
 
 /* Keep SDK-provided links reachable; never synthesize or replace a URL. */

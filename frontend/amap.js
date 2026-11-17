@@ -11,8 +11,10 @@
  const candidateMarkers=new Map(),candidateAnchors=new Map();
  const CANDIDATE_MARGIN=60;
  function syncAttribution(){
-  const host=document.getElementById?.('map'),copy=host?.querySelector?.('.amap-copyright');if(!copy||!host.parentElement)return;
-  creditCanvas=host.parentElement;creditCanvas.classList.add('amap-attribution-layout');
+  const host=document.getElementById?.('map'),copy=host?.querySelector?.('.amap-copyright'),canvas=host?.closest?.('.canvas');if(!copy||!canvas)return;
+  // The live map is inside #map-shell. Layout variables and panel selectors
+  // belong on the outer canvas, not that resizable map-only wrapper.
+  creditCanvas=canvas;creditCanvas.classList.add('amap-attribution-layout');
   const measure=()=>{if(creditNode!==copy||!creditCanvas||!copy.isConnected)return;const value=Math.ceil(copy.getBoundingClientRect().height)||16;creditCanvas.style.setProperty('--amap-credit-height',value+'px');};
   if(copy!==creditNode){creditObserver?.disconnect();creditNode=copy;if(typeof ResizeObserver==='function'){creditObserver=new ResizeObserver(measure);creditObserver.observe(copy,{box:'border-box'});}}
   measure();
@@ -187,8 +189,8 @@
   // A style applied asynchronously can reset constructor flags; re-assert them when the basemap or its style finishes loading.
   const quiet=()=>{try{native.setFeatures?.(['bg','road']);native.set?.('showLabel',false);}catch{}syncAttribution();};quiet();
   native.on('complete',quiet);native.on('styleChanged',quiet);native.on('styleLoaded',quiet);
-  // JS API 2 uses CSS positions. A control failure must not discard the map.
-  try{native.addControl(new window.AMap.ToolBar({position:{right:'28px',bottom:'65px'}}));}catch{}
+  // A documented dock also keeps the control low before attribution arrives.
+  try{native.addControl(new window.AMap.ToolBar({position:'RB',offset:[28,80]}));}catch{}
   places.forEach((place,index)=>{
    const content=document.createElement('div');content.className='place-wrap direction-right';
    const dot=document.createElement('span');dot.className='place-dot';dot.textContent='·';
