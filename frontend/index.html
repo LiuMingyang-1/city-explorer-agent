@@ -13,12 +13,13 @@
   <link rel="stylesheet" href="weather-layout.css?v=issue35-1">
   <link rel="stylesheet" href="motion-plans.css?v=motion-1"><link rel="stylesheet" href="motion-panels.css?v=motion-1"><link rel="stylesheet" href="motion-buttons.css?v=issue20-1"><link rel="stylesheet" href="motion-history.css?v=issue16-1">
   <link rel="stylesheet" href="itinerary-focus.css?v=issue37-4">
-  <script src="route-visuals.js?v=route-18" defer></script><script src="map-layout.js?v=aligned-8" defer></script><script src="places.js?v=places-1" defer></script><script src="amap.js?v=route-18" defer></script><script src="candidate-preview.js?v=issue41-1" defer></script><script src="app.js?v=answer-1" defer></script><script src="itinerary-map.js?v=issue37-3" defer></script><script src="plans.js?v=route-18" defer></script><script src="transport.js?v=answer-1" defer></script><script src="chat.js?v=answer-1" defer></script>
+  <script src="user-avatar.js?v=issue62-1" defer></script>
+  <script src="route-visuals.js?v=route-18" defer></script><script src="map-layout.js?v=aligned-8" defer></script><script src="places.js?v=places-1" defer></script><script src="amap.js?v=route-18" defer></script><script src="candidate-preview.js?v=issue41-1" defer></script><script src="app.js?v=answer-1" defer></script><script src="itinerary-map.js?v=issue37-3" defer></script><script src="plans.js?v=route-18" defer></script><script src="transport.js?v=answer-1" defer></script><script src="chat.js?v=issue62-1" defer></script>
   <script src="chat-motion.js?v=issue34-1" defer></script>
-  <script src="mascot-card.js?v=issue41-1" defer></script>
-  <script src="history.js?v=issue16-1" defer></script><script src="activities.js?v=aligned-5" defer></script><script src="preferences.js?v=aligned-5" defer></script><script src="auth.js?v=auth-2" defer></script>
+  <script src="mascot-card.js?v=issue62-1" defer></script>
+  <script src="history.js?v=issue62-1" defer></script><script src="activities.js?v=aligned-5" defer></script><script src="preferences.js?v=aligned-5" defer></script><script src="auth.js?v=issue62-1" defer></script>
   <link rel="stylesheet" href="chat-history-layout.css?v=issue36-1">
-  <link rel="stylesheet" href="mascot-card.css?v=issue41-1">
+  <link rel="stylesheet" href="mascot-card.css?v=issue62-1">
   <link rel="stylesheet" href="mascot-team.css?v=issue41-1">
   <link rel="stylesheet" href="candidate-preview.css?v=issue41-1">
 </head>
@@ -28,7 +29,7 @@
     <div id="itinerary-map-frame" aria-hidden="true"></div>
     <div class="global-entry">
       <button id="preferences-open" class="preferences-open" type="button" aria-label="记忆" aria-controls="preferences-panel" aria-expanded="false" title="记忆"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/><path d="M17.599 6.5a3 3 0 0 0 .399-1.375"/><path d="M6.003 5.125A3 3 0 0 0 6.401 6.5"/><path d="M3.477 10.896a4 4 0 0 1 .585-.396"/><path d="M19.938 10.5a4 4 0 0 1 .585.396"/><path d="M6 18a4 4 0 0 1-1.967-.516"/><path d="M19.967 17.484A4 4 0 0 1 18 18"/></svg><span>记忆</span></button>
-      <button id="auth-open" class="auth-open" type="button" aria-haspopup="dialog" aria-controls="auth-panel" aria-expanded="false" aria-label="登录账号"><span id="auth-avatar" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.4" r="3.5"/><path d="M5.9 19.4c1-3.2 3.3-4.9 6.1-4.9s5.1 1.7 6.1 4.9"/></svg></span></button>
+      <button id="auth-open" class="auth-open" type="button" aria-haspopup="dialog" aria-controls="auth-panel" aria-expanded="false" aria-label="登录账号"><span id="auth-avatar" class="user-avatar" data-user-avatar aria-hidden="true"></span></button>
       <div id="auth-panel" class="auth-panel" role="dialog" aria-label="账号登录" hidden>
         <form id="auth-form" class="auth-form">
           <label for="auth-username-input">用户名</label>

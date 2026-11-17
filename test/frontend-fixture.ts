@@ -80,6 +80,12 @@ export function setup({ entries = [] as ReturnType<typeof saved>[], pending = []
         finish: value => resolve({ ok: true, status: 200, json: async () => value }) }));
     },
   });
+  $('auth-avatar').setAttribute('data-user-avatar','');
+  (context.document as any).querySelectorAll = (selector: string) => {
+    const walk = (el: Element): Element[] => [el, ...el.children.flatMap(walk)];
+    return [...new Set([...elements.values()].flatMap(walk))].filter(el => selector === '[data-user-avatar]' && el.attrs.has('data-user-avatar'));
+  };
+  vm.runInContext(readFileSync(new URL('../frontend/user-avatar.js', import.meta.url), 'utf8'),context);
   vm.runInContext(routeVisualsSource,context);
   vm.runInContext(mapLayoutSource,context);
   if (api) { vm.runInContext(plansSource, context);vm.runInContext(transportSource, context);vm.runInContext(chatSource, context); }

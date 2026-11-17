@@ -1,6 +1,6 @@
 'use strict';
-// Card mascot + clone-team facade (issue #41). One persistent boop-face lives
-// in the card header; per-request subagent clones mount into #mascot-team-strip
+// Message mascot + clone-team facade. Only the latest assistant row owns a
+// live boop-face; older rows use inert SVG images. Subagent clones mount into #mascot-team-strip
 // via mascot-team.js, an ES module loaded lazily behind the face module.
 // The facade stays synchronous so chat.js can drive everything before either
 // import resolves: begin() mints a local monotonic round and the current
@@ -20,7 +20,37 @@
  function commit(next){pending=next;current=next;if(controller)try{controller.setState(next);}catch{/* a broken face must not break chat */}}
  const card=document.querySelector('.glass-card');
  const strip=document.getElementById?.('mascot-team-strip')||document.querySelector?.('#mascot-team-strip')||null;
- let face=null;
+ let face=null,activeSlot=null,createMascot=null,staticAvatar='';
+ let slots=[];
+ function snapshot(){
+  const svg=face?.shadowRoot?.querySelector('svg');
+  if(!svg)return staticAvatar;
+  // An image gives each snapshot its own SVG id namespace (hat masks and clips).
+  const copy=svg.cloneNode(true);copy.setAttribute('xmlns','http://www.w3.org/2000/svg');
+  const style=document.createElementNS('http://www.w3.org/2000/svg','style');
+  style.textContent=[...face.shadowRoot.querySelectorAll('style')].map(s=>s.textContent).join('\n');
+  copy.prepend(style);
+  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(copy.outerHTML);
+ }
+ function paintStatic(slot,src=staticAvatar){
+  slot.replaceChildren();
+  if(src){const img=document.createElement('img');img.src=src;img.alt='';slot.append(img);}
+  else slot.textContent='漫';
+ }
+ function freeze(){
+  if(activeSlot)paintStatic(activeSlot,snapshot());
+  face?.remove();face=null;controller=null;activeSlot=null;
+ }
+ function mount(slot){
+  if(!createMascot)return;
+  freeze();slot.replaceChildren();slot.textContent='';
+  face=document.createElement('boop-face');face.className='message-mascot';
+  for(const [key,value]of Object.entries({'aria-hidden':'true',color:'#26382d','auto-sleep':'0','press-squeeze':'false','antenna-drag':'false',motion:'auto'}))face.setAttribute(key,value);
+  slot.append(face);activeSlot=slot;
+  try{controller=createMascot(face,{palette:'moss',pointerFollow:false});if(pending!=='idle')commit(pending);}
+  catch(error){face.remove();face=null;controller=null;activeSlot=null;paintStatic(slot);console.error('消息头像初始化失败:',error);}
+ }
+
  let round=0,open=false;              // open: live round not yet settled/cancelled
  let team=null,teamRound=null;        // lazily imported orchestrator + its own round token
  let buffer=[];                       // ordered real frames awaiting the team import
@@ -73,6 +103,8 @@
  }
  const api={
   get state(){return current;},
+  attach(slot){freeze();paintStatic(slot);activeSlot=slot;if(createMascot)mount(slot);else slots.push(slot);},
+  freezeAll(){freeze();},
   begin(){
    round+=1;open=true;teamRound=null;buffer=[];overflowed=false;anchoredIds.clear();
    commit('thinking');
@@ -118,7 +150,7 @@
   },
  };
  window.WanderMascot=api;
- window.addEventListener('wander:reset',()=>{if(open)api.cancel(round);else commit('idle');});
+ window.addEventListener('wander:reset',()=>{if(open)api.cancel(round);else commit('idle');freeze();slots=[];});
  window.addEventListener('wander:candidate-anchor',event=>{
   // The map layer reports real anchors as {round,subagent_id,anchored} — only
   // the live round applies; the flag replays into clones that mount later.
@@ -129,17 +161,13 @@
  });
  if(!card)return;
  Promise.resolve().then(()=>import('./wander-mascot.js')).then(({createWanderMascot})=>{
-  face=document.createElement('boop-face');
-  face.className='card-mascot';
-  face.setAttribute('aria-hidden','true');
-  face.setAttribute('color','#26382d');
-  face.setAttribute('auto-sleep','0');
-  face.setAttribute('press-squeeze','false');
-  face.setAttribute('antenna-drag','false');
-  face.setAttribute('motion','auto');
-  card.append(face);
-  controller=createWanderMascot(face,{palette:'moss',pointerFollow:true});
-  if(pending!=='idle')commit(pending);
+  createMascot=createWanderMascot;
+  // Build a detached idle template: no frame loop or fixed header mascot.
+  face=document.createElement('boop-face');face.setAttribute('color','#26382d');
+  createMascot(face,{palette:'moss',pointerFollow:false});staticAvatar=snapshot();face=null;
+  const latest=activeSlot;activeSlot=null;
+  for(const slot of slots)paintStatic(slot);
+  slots=[];if(latest)mount(latest);
   Promise.resolve().then(()=>import('./mascot-team.js')).then(({createMascotTeam})=>{
    if(!strip)return;
    try{team=createMascotTeam(strip,{createMascot:(el,opts)=>createWanderMascot(el,opts),cloneSize:44});onTeamReady();}
