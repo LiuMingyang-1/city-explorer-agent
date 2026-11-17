@@ -57,14 +57,15 @@ async function deliver(text,chip,retried=false){
   // A stale session (different anonymous cookie/browser, wiped session db) is unrecoverable for the backend; drop it and continue as a fresh conversation instead of dead-ending every later message.
   if((error?.code==='not_found'||error?.message==='session not found')&&state.sessionId&&!retried){state.sessionId=null;window.WanderHistory?.capture();appendMessage('assistant','原会话已失效，本次以新对话继续。');return await deliver(text,sentChip,true);}
   showSendError(text,error,sentChip);}
- finally{clearTimeout(slow);pending.remove();if(isCurrent()){if(state.eventChip===sentChip)clearEventChip();activeChatRequest=null;state.busy=false;updateSendButton();window.WanderHistory?.capture();$('message-input').focus({preventScroll:true});}}
+ finally{clearTimeout(slow);pending.remove();if(isCurrent()){activeChatRequest=null;state.busy=false;updateSendButton();window.WanderHistory?.capture();$('message-input').focus({preventScroll:true});}}
 }
 async function sendMessage(text){
- text=String(text).trim();const chip=state.eventChip;
+ text=String(text).trim();const chip=state.eventChip?{...state.eventChip}:null;
  if(!text&&chip)text=chip.kind==='add'?'请把「'+chip.title+'」加入我的行程':'帮我看看「'+chip.title+'」适不适合加进行程';
  if(!text||!ready||state.busy)return;
  const motion=!state.messages.length?window.WanderChatMotion?.prepareFirstSend():null;
- state.manual=true;window.WanderHistory?.setExpanded(false,{immediate:true});const message=appendMessage('user',text);$('message-input').value='';window.WanderHistory?.capture();motion?.(message,scrollMessages);await deliver(text,chip);
+ // Consume the UI draft once; deliver/retry own the snapshot and never clear later drafts.
+ state.manual=true;clearEventChip();window.WanderHistory?.setExpanded(false,{immediate:true});const message=appendMessage('user',text);$('message-input').value='';window.WanderHistory?.capture();motion?.(message,scrollMessages);await deliver(text,chip);
 }
 window.sendMessage=sendMessage;
 function updateSendButton(){$('send-button').disabled=!ready||state.busy||(!$('message-input').value.trim()&&!state.eventChip);}
