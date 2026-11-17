@@ -1,0 +1,6 @@
+.map-provider-status{position:absolute;z-index:610;right:80px;bottom:100px;max-width:min(420px,45vw);display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid #bfcebb;border-radius:12px;background:#fffffff2;color:#405744;font-size:11px;box-shadow:0 3px 14px #30473412}
+.map-provider-status[hidden]{display:none}
+.map-provider-status button{flex-shrink:0;border:1px solid #b8c6b1;border-radius:16px;background:#e6efdb;color:#334c37;padding:6px 10px;font-size:11px}
+.map-provider-status button[hidden]{display:none}
+.map-provider-status button:disabled{opacity:.55;cursor:wait}
+@media(max-width:700px){.map-provider-status{top:18px;bottom:auto;left:12px;right:auto;max-width:calc(100% - 145px);flex-wrap:wrap;gap:6px}}
