@@ -16,7 +16,7 @@ import type {
   SubagentSpawnedEvent,
   ToolCallEvent,
 } from "../src/agent/progress.ts";
-import { createChatHandler } from "../src/web/http.ts";
+import { createChatHandler } from "./authenticated-handler-fixture.ts";
 import type { WebChatOptions } from "../src/web/http.ts";
 import { createSseWriter } from "../src/web/sse.ts";
 import type { ChatProgress } from "../src/web/sse.ts";

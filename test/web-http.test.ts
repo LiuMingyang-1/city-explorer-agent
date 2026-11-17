@@ -9,7 +9,7 @@ import type { IncomingHttpHeaders, Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { test } from "node:test";
 import type { Itinerary } from "../src/itinerary/types.ts";
-import { createChatHandler } from "../src/web/http.ts";
+import { createChatHandler } from "./authenticated-handler-fixture.ts";
 import type { WebChatOptions } from "../src/web/http.ts";
 import { ChatClientError } from "../src/web/types.ts";
 import type {

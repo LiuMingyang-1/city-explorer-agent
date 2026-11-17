@@ -19,7 +19,7 @@ function showSendError(text,error,chip){
  const {message,bubble}=makeMessage('assistant');
  const detail=error?.name==='AbortError'?'请求超时':error?.message||'网络异常';
  const note=document.createElement('span');note.textContent='本次回复未完成（'+detail+'）。';bubble.append(note);
- if(error?.retryable!==false){const retry=document.createElement('button');retry.type='button';retry.className='retry-button';retry.textContent='重试';retry.addEventListener('click',()=>{if(state.busy)return;message.remove();deliver(text,chip);});bubble.append(retry);}
+ if(error?.retryable!==false){const retry=document.createElement('button');retry.type='button';retry.className='retry-button';retry.textContent='重试';retry.addEventListener('click',()=>{if(state.busy||!window.WanderAuth?.requireLogin())return;message.remove();deliver(text,chip);});bubble.append(retry);}
  scrollMessages();
 }
 function buildChatBody(text,chip){
@@ -32,6 +32,7 @@ function buildChatBody(text,chip){
  return body;
 }
 async function deliver(text,chip,retried=false){
+ if(!window.WanderAuth?.requireLogin())return;
  const generation=window.WanderHistory?.generation(),isCurrent=()=>!window.WanderHistory||generation===window.WanderHistory.generation(),sentChip=chip;
  const request=new AbortController();activeChatRequest=request;state.busy=true;updateSendButton();
  const {message:pending,bubble:status}=makeMessage('assistant');
@@ -53,6 +54,7 @@ async function deliver(text,chip,retried=false){
   else if(data&&data.kind==='answer'&&typeof data.text==='string'&&data.text)appendMessage('assistant',data.text);
   else throw new Error('收到的方案格式暂不支持');
  }catch(error){if(!isCurrent())return;pending.remove();
+  if(error?.status===401){if(!$('message-input').value)$('message-input').value=text;if(sentChip&&!state.eventChip)attachEventChip(sentChip);window.WanderAuth?.expire();return;}
   window.WanderMascot?.settle?.({kind:'error'},mascotRound);
   // A stale session (different anonymous cookie/browser, wiped session db) is unrecoverable for the backend; drop it and continue as a fresh conversation instead of dead-ending every later message.
   if((error?.code==='not_found'||error?.message==='session not found')&&state.sessionId&&!retried){state.sessionId=null;window.WanderHistory?.capture();appendMessage('assistant','原会话已失效，本次以新对话继续。');return await deliver(text,sentChip,true);}
@@ -63,6 +65,7 @@ async function sendMessage(text){
  text=String(text).trim();const chip=state.eventChip;
  if(!text&&chip)text=chip.kind==='add'?'请把「'+chip.title+'」加入我的行程':'帮我看看「'+chip.title+'」适不适合加进行程';
  if(!text||!ready||state.busy)return;
+ if(!window.WanderAuth?.requireLogin())return;
  const motion=!state.messages.length?window.WanderChatMotion?.prepareFirstSend():null;
  state.manual=true;window.WanderHistory?.setExpanded(false,{immediate:true});const message=appendMessage('user',text);$('message-input').value='';window.WanderHistory?.capture();motion?.(message,scrollMessages);await deliver(text,chip);
 }

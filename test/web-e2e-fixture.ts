@@ -20,7 +20,7 @@ import { seedDatabase } from "../src/data/seed.ts";
 import { createSqliteEventRepository } from "../src/data/sqlite.ts";
 import type { SessionRepository } from "../src/session/repository.ts";
 import { createSqliteSessionRepository } from "../src/session/sqlite.ts";
-import { createChatHandler } from "../src/web/http.ts";
+import { createChatHandler } from "./authenticated-handler-fixture.ts";
 import { createWebServer, listen } from "../src/web/server.ts";
 import { createChatService } from "../src/web/service.ts";
 import type { ChatPlannerFactory, ManagedChatService } from "../src/web/service.ts";

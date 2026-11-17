@@ -29,6 +29,7 @@
   try{
    const response=await fetch(window.WANDER_CONFIG?.memoryEndpoint||'/api/memory',{method,credentials:'same-origin',signal:controller.signal,
     headers:method==='PUT'?{'Content-Type':'application/json',Accept:'application/json'}:{Accept:'application/json'},...(method==='PUT'?{body:JSON.stringify({content})}:{})});
+   if(response.status===401){window.WanderAuth?.expire();throw new Error('请先登录后查看或保存偏好');}
    if(!response.ok)throw new Error(response.status===404?'偏好服务尚未连接，请稍后重试':response.status===413?'内容过长，请精简后保存':'偏好服务暂不可用，请稍后重试');
    if(method==='DELETE'){if(response.status!==204)throw new Error('未能确认清空结果，请重新加载');return {content:'',updated_at:null};}
    const data=await response.json();if(!valid(data))throw new Error('偏好数据格式暂不支持');return data;
@@ -79,6 +80,7 @@
  function open(){returnFocus=document.activeElement;slideIn();$('preferences-open').setAttribute('aria-expanded','true');window.WanderAMap?.updatePlaces?.();$('preferences-close').focus({preventScroll:true});if(loaded&&dirty()){status('你有尚未保存的修改。');update();return;}return load();}
  function close(){slideOut();confirmClear=false;update();$('preferences-open').setAttribute('aria-expanded','false');window.WanderAMap?.updatePlaces?.();(returnFocus||$('preferences-open')).focus({preventScroll:true});}
  async function save(){
+  if(!window.WanderAuth?.requireLogin())return;
   const content=input.value.trim();if(busy||!loaded||!content||content.length>8000||!dirty())return;
   const epoch=++requestEpoch;busy=true;confirmClear=false;status('正在保存偏好…');update();
   try{const data=await api('PUT',content);if(epoch!==requestEpoch)return;saved=data;input.value=saved.content;status(demo?'演示偏好已保存到当前浏览器。':'偏好已保存，下次规划会参考这些内容。');}
@@ -86,6 +88,7 @@
   finally{if(epoch===requestEpoch){busy=false;update();}}
  }
  async function clear(){
+  if(!window.WanderAuth?.requireLogin())return;
   if(busy||!loaded||!saved.content&&!input.value.trim())return;
   if(!confirmClear){confirmClear=true;status('再次点击“确认清空”，删除已保存的偏好。');update();return;}
   const epoch=++requestEpoch;busy=true;status('正在清空偏好…');update();

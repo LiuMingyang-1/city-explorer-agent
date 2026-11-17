@@ -75,7 +75,7 @@
   try{
    if(mock)return await mockRequest(body,options);
    const response=await fetch(window.WANDER_CONFIG?.chatEndpoint||'/api/chat/stream',{method:'POST',body:JSON.stringify(body),credentials:'same-origin',signal:controller.signal,headers:{Accept:'application/json, text/event-stream','Content-Type':'application/json'}});
-   if(!response.ok)throw failure(await response.json().catch(()=>null),'HTTP '+response.status);
+   if(!response.ok){const error=failure(await response.json().catch(()=>null),'HTTP '+response.status);error.status=response.status;throw error;}
    if((response.headers?.get('Content-Type')||'').includes('text/event-stream'))return await readStream(response,options);
    return await response.json();
   }finally{clearTimeout(timer);signal?.removeEventListener('abort',abort);}

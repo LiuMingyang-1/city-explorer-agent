@@ -93,6 +93,6 @@ export function setup({ entries = [] as ReturnType<typeof saved>[], pending = []
   if (auth) vm.runInContext(authSource, context);
   // Without the auth module nothing resolves identity: settle to guest like
   // an instantly-answered anonymous /api/me, flushing the pending bucket.
-  else vm.runInContext('window.WanderHistory.setIdentity("guest")', context);
+  else { vm.runInContext('window.WanderHistory.setIdentity("guest")', context); context.window.WanderAuth={requireLogin:()=>true}; }
   return { $, state, context, requests, storage, media, stored: (key = historyBase + '.guest') => JSON.parse(storage.get(key) ?? '[]'), run: (code: string) => vm.runInContext(code, context) };
 }
