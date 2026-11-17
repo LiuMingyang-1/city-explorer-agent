@@ -19,26 +19,42 @@ const ctx1={clones:[{id:'s1',title:'曲江看展',letter:'A',palette:'sand'}],or
 function setupPreview(){
  const specLog:any[]=[];const anchorCb:{fn:any}= {fn:null};let cleared=0;
  const media={matches:false};
+ // WAAPI probe: every element gets a spy animate() whose finished promise
+ // stays pending until the test resolves it (or real code cancels it).
+ const animCalls:{keyframes:any;options:any;cancelled:boolean;resolve:()=>void}[]=[];
+ const mkEl=()=>{const el=new Element();
+  (el as any).animate=(keyframes:any,options:any)=>{const h={keyframes,options,cancelled:false,resolve:()=>{}} as any;
+   h.finished=new Promise<void>((r:any)=>h.resolve=r);animCalls.push(h);
+   return {cancel(){h.cancelled=true},finished:h.finished,onfinish:null};};
+  return el;};
+ const body=new Element();
  let timerSeq=0;const timers=new Map<number,{cancelled:boolean}>();
  const win=Object.assign(new EventTarget(),{location:{search:''}});
  const context=vm.createContext({
   window:win,console,URL,
-  document:{createElement:()=>new Element(),getElementById:()=>null,querySelector:()=>null},
+  document:{createElement:()=>mkEl(),body,getElementById:()=>null,querySelector:()=>null},
   Event,Promise,queueMicrotask,
   CustomEvent:class extends Event{detail:any;constructor(t:string,i?:any){super(t);this.detail=i?.detail;}},
   matchMedia:()=>media,
   setTimeout:(cb:()=>void,ms=0)=>{if(ms>500)return 0;const id=++timerSeq,token={cancelled:false};timers.set(id,token);queueMicrotask(()=>{timers.delete(id);if(!token.cancelled)cb();});return id;},
   clearTimeout:(id:number)=>{const t=timers.get(id);if(t)t.cancelled=true;timers.delete(id);},
  });
+ // The real renderer reports anchor visibility transitions inside render();
+ // the stub mirrors that so decorateEntrance sees anchored subs immediately.
+ let anchoredNow=new Set<string>();
  const renderer={get ready(){return true},
-  render(spec:any){specLog.push(spec);anchorCb.fn=spec.onAnchor;return Promise.resolve(true);},
-  clear(){cleared++},refresh(){},point(){return{x:200,y:200}}};
+  render(spec:any){specLog.push(spec);anchorCb.fn=spec.onAnchor;
+   const now=new Set<string>((spec.anchors??[]).map((a:any)=>a.id));
+   for(const id of now)if(!anchoredNow.has(id))anchorCb.fn?.(id,true);
+   for(const id of anchoredNow)if(!now.has(id))anchorCb.fn?.(id,false);
+   anchoredNow=now;return Promise.resolve(true);},
+  clear(){cleared++;anchoredNow=new Set()},refresh(){},point(){return{x:200,y:200}}};
  context.window.WanderAMap={candidates:renderer};
  const anchorEvents:any[]=[];
  win.addEventListener('wander:candidate-anchor',(e:any)=>anchorEvents.push(e.detail));
  vm.runInContext(previewSource,context);
  const api=context.window.WanderCandidates;
- return {context,specLog,anchorCb,anchorEvents,api,renderer,media,get cleared(){return cleared}};
+ return {context,specLog,anchorCb,anchorEvents,api,renderer,media,animCalls,body,get cleared(){return cleared}};
 }
 
 test('candidate facade requires round tokens and ignores stale rounds',async()=>{
@@ -282,6 +298,136 @@ test('a missing or degraded map records without drawing and resets cleanly',asyn
  // wander:reset tears down an open round the same way facade.cancel does.
  h.context.window.dispatchEvent(new Event('wander:reset'));
  assert.equal(api.snapshot().subs.length,0);
+});
+
+// ---- Entrance flight: fixed overlay proxy + WAAPI (decorative only) ----
+const flightProxy=(h:any)=>h.body.children.find((c:any)=>c.classes.has('wander-candidate-flight'));
+const anchorNode=(h:any)=>h.specLog.map((s:any)=>s.anchors).flat().at(-1)?.node;
+
+test('entrance rides a fixed proxy from the card face to the geo point, then lands',async()=>{
+ const h=setupPreview(),api=h.api;api.begin(1);
+ api.applyEvent(spawnEvt('s1','曲江看展'),1);
+ api.applyEvent(candEvt('s1',[{event_id:'e1',latitude:34.2,longitude:108.9}]),1,ctx1);
+ await flush();
+ assert.equal(h.animCalls.length,1,'WAAPI drives exactly one flight');
+ const call=h.animCalls[0];
+ assert(call.options.duration>=450&&call.options.duration<=650,'flight sits in the visible beat window');
+ const first=call.keyframes[0].transform,last=call.keyframes.at(-1).transform;
+ assert.match(first,/^translate\(84px,84px\)/,'starts at the ctx.origin face center (40+44,40+44)');
+ assert.match(last,/translate\(200px,200px\)/,'ends at the real geo point from map.point()');
+ const proxy=flightProxy(h);
+ assert(proxy,'proxy is mounted on document.body');
+ assert.equal(api.snapshot().subs[0].flying,true);
+ assert.equal(anchorNode(h).children.length,0,'marker shell is empty while its visual flies');
+ call.resolve();await flush();
+ assert.equal(api.snapshot().subs[0].flying,false);
+ assert(!h.body.children.includes(proxy),'proxy leaves the DOM after landing');
+ const inner=anchorNode(h).children[0];
+ assert(inner?.classes.has('wander-candidate-visual'),'visual returns inside the real anchor');
+ assert.equal(inner.children.length,3,'face + letter + title all land');
+});
+
+test('flight origin prefers the clone strip row over the card-face fallback',async()=>{
+ const h=setupPreview(),api=h.api;
+ const strip=new Element(),row=new Element(),face=new Element();
+ (row as any).getAttribute=(n:string)=>n==='data-subagent-id'?'s1':null;
+ (row as any).querySelector=(sel:string)=>sel==='boop-face'?face:null;
+ (row as any).getBoundingClientRect=()=>({left:500,top:300,width:56,height:80});
+ (face as any).getBoundingClientRect=()=>({left:500,top:300,width:44,height:44});
+ (strip as any).querySelectorAll=(sel:string)=>sel==='[data-subagent-id]'?[row]:[];
+ (h.context.document as any).getElementById=(id:string)=>id==='mascot-team-strip'?strip:null;
+ api.begin(1);
+ api.applyEvent(spawnEvt('s1','曲江看展'),1);
+ api.applyEvent(candEvt('s1',[{event_id:'e1',latitude:34.2,longitude:108.9}]),1,ctx1);
+ await flush();
+ assert.equal(h.animCalls.length,1);
+ assert.match(h.animCalls[0].keyframes[0].transform,/^translate\(522px,322px\)/,'clone face center (500+22,300+22), not ctx.origin');
+});
+
+test('reduced-motion and missing WAAPI/origin all land the anchor directly',async()=>{
+ const h=setupPreview();h.media.matches=true;const api=h.api;api.begin(1);
+ api.applyEvent(candEvt('s1',[{event_id:'e1',latitude:34.2,longitude:108.9}]),1,ctx1);
+ await flush();
+ assert.equal(h.animCalls.length,0,'RM: no flight, no proxy');
+ assert(!flightProxy(h));
+ assert.equal(anchorNode(h).children.length,1,'anchor displays in place immediately');
+ const h2=setupPreview();const api2=h2.api;
+ h2.context.document.createElement=()=>{const el=new Element();(el as any).animate=undefined;return el;};
+ api2.begin(1);
+ api2.applyEvent(candEvt('s1',[{event_id:'e1',latitude:34.2,longitude:108.9}]),1,ctx1);
+ await flush();
+ assert.equal(h2.animCalls.length,0,'no WAAPI → direct display');
+ assert(!flightProxy(h2));assert.equal(anchorNode(h2).children.length,1);
+ const h3=setupPreview();const api3=h3.api;api3.begin(1);
+ api3.applyEvent(candEvt('s1',[{event_id:'e1',latitude:34.2,longitude:108.9}]),1,{clones:ctx1.clones});
+ await flush();
+ assert.equal(h3.animCalls.length,0,'no origin → direct display');
+ assert.equal(anchorNode(h3).children.length,1);
+});
+
+test('cancel/reset/settle mid-flight leaves no proxy, animation, or stale callback',async()=>{
+ for(const end of ['cancel','reset','settle']as const){
+  const h=setupPreview(),api=h.api;api.begin(1);
+  api.applyEvent(candEvt('s1',[{event_id:'e1',latitude:34.2,longitude:108.9}]),1,ctx1);
+  await flush();
+  const proxy=flightProxy(h);assert(proxy);
+  const call=h.animCalls.at(-1);assert(call);
+  if(end==='cancel')api.cancel(1);
+  else if(end==='reset')h.context.window.dispatchEvent(new Event('wander:reset'));
+  else api.settle({kind:'answer'},1);
+  assert.equal(call.cancelled,true,end+': in-flight animation is cancelled');
+  assert(!h.body.children.includes(proxy),end+': proxy removed');
+  assert.equal(api.snapshot().subs.length,0,end+': subs torn down');
+  call.resolve();await flush();                     // a late finish must not revive
+  assert.equal(api.snapshot().subs.length,0);assert.equal(h.body.children.length,0);
+ }
+});
+
+test('losing the anchor mid-flight lands the visual; a later render never replays',async()=>{
+ const h=setupPreview(),api=h.api;api.begin(1);
+ api.applyEvent(candEvt('s1',[{event_id:'e1',latitude:34.2,longitude:108.9}]),1,ctx1);
+ await flush();assert.equal(h.animCalls.length,1);
+ // Off-screen/focus → anchored=false: flight cancels and the visual returns.
+ h.anchorCb.fn('s1',false);
+ assert.equal(api.snapshot().subs[0].flying,false);
+ assert(!flightProxy(h),'proxy gone on un-anchor');
+ assert.equal(anchorNode(h).children.length,1,'visual back inside its anchor');
+ // Back on screen → anchored again: the entrance must not replay.
+ h.anchorCb.fn('s1',true);
+ api.applyEvent(candEvt('s1',[{event_id:'e2',latitude:34.21,longitude:108.91}]),1);
+ await flush();
+ assert.equal(h.animCalls.length,1,'no second flight for the same sub');
+ // A viewport move during a flight lands it instantly at the true position.
+ const h2=setupPreview(),api2=h2.api;api2.begin(1);
+ api2.applyEvent(candEvt('s1',[{event_id:'e1',latitude:34.2,longitude:108.9}]),1,ctx1);
+ await flush();assert.equal(h2.animCalls.length,1);
+ h2.context.window.dispatchEvent(new Event('wander:viewport'));
+ assert.equal(api2.snapshot().subs[0].flying,false);
+ assert(!flightProxy(h2));
+ assert.equal(anchorNode(h2).children.length,1);
+});
+
+test('a shifted centroid mid-flight lands the visual inside the moved anchor',async()=>{
+ const h=setupPreview(),api=h.api;api.begin(1);
+ api.applyEvent(candEvt('s1',[{event_id:'e1',latitude:34.2,longitude:108.9}]),1,ctx1);
+ await flush();assert.equal(h.animCalls.length,1);
+ const call=h.animCalls[0],proxy=flightProxy(h);
+ assert.equal(api.snapshot().subs[0].anchorPos?.[0],108.9,'snapshot exposes the raw centroid for QA');
+ api.applyEvent(candEvt('s1',[{event_id:'e2',latitude:34.3,longitude:108.8}]),1);
+ await flush();                                    // new point → new centroid → marker moved
+ assert.equal(call.cancelled,true,'stale-target flight is cancelled');
+ assert(!h.body.children.includes(proxy));
+ assert.equal(api.snapshot().subs[0].flying,false);
+ assert.equal(anchorNode(h).children.length,1,'visual landed inside the moved anchor');
+ call.resolve();await flush();                     // a late finish must not revive
+ assert(!flightProxy(h));assert.equal(anchorNode(h).children.length,1);
+ // Same-centroid re-render never disturbs a live flight.
+ const h2=setupPreview(),api2=h2.api;api2.begin(1);
+ api2.applyEvent(candEvt('s1',[{event_id:'e1',latitude:34.2,longitude:108.9}]),1,ctx1);
+ await flush();const call2=h2.animCalls[0];
+ api2.sync(1);await flush();
+ assert.equal(call2.cancelled,false,'identical centroid keeps the flight alive');
+ assert.equal(api2.snapshot().subs[0].flying,true);
 });
 
 // ---- WanderAMap.candidates narrow renderer on the stub SDK ----

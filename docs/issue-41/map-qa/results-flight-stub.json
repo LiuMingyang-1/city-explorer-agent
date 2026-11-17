@@ -1,0 +1,182 @@
+{
+  "mode": "flight-stub",
+  "at": "2026-11-17T02:56:55.562Z",
+  "metrics": {
+    "map-layer-ready": {
+      "assert": "pass"
+    },
+    "flight-proxy-appears": {
+      "assert": "pass"
+    },
+    "flight-samples": {
+      "assert": "pass",
+      "samples": 25
+    },
+    "flight-starts-at-clone-face": {
+      "assert": "pass",
+      "startGap": 0,
+      "first": {
+        "t": 0,
+        "cx": 89,
+        "cy": 129,
+        "op": 1,
+        "tf": "matrix(0.82, 0, 0, 0.82, 89, 129)",
+        "acx": 724,
+        "acy": 548
+      },
+      "face": {
+        "cx": 89,
+        "cy": 129
+      }
+    },
+    "flight-ends-at-geo-anchor": {
+      "assert": "pass",
+      "endGap": 0.1,
+      "last": {
+        "t": 374,
+        "cx": 724,
+        "cy": 547.9,
+        "op": 1,
+        "tf": "matrix(0.999997, 0, 0, 0.999997, 723.956, 547.925)",
+        "acx": 724,
+        "acy": 548
+      },
+      "anchorEnd": {
+        "cx": 724,
+        "cy": 548
+      },
+      "returnedTo": "wander-candidate-anchor"
+    },
+    "visual-returned-to-anchor": {
+      "assert": "pass",
+      "returnedTo": "wander-candidate-anchor"
+    },
+    "flight-actually-moves": {
+      "assert": "pass",
+      "travel": 760.7
+    },
+    "flight-progresses-frames": {
+      "assert": "pass",
+      "movingFrames": 16
+    },
+    "flight-visible-throughout": {
+      "assert": "pass",
+      "invisibleFrames": 0,
+      "minOp": 1
+    },
+    "flight-duration": {
+      "assert": "pass",
+      "durMs": 374
+    },
+    "flight-proxy-gone-after-land": {
+      "assert": "pass"
+    },
+    "flight-one-shot": {
+      "assert": "pass",
+      "runs": 1
+    },
+    "no-flying-left": {
+      "assert": "pass",
+      "subs": [
+        {
+          "id": "sess_mock_child_a",
+          "title": "曲江看展方案",
+          "letter": "A",
+          "palette": "sand",
+          "status": "working",
+          "points": 2,
+          "stops": 0,
+          "retired": false,
+          "anchored": true,
+          "flying": false,
+          "anchorPos": [
+            108.9665,
+            34.2555
+          ]
+        },
+        {
+          "id": "sess_mock_child_b",
+          "title": "城南市集方案",
+          "letter": "B",
+          "palette": "clay",
+          "status": "working",
+          "points": 0,
+          "stops": 0,
+          "retired": false,
+          "anchored": false,
+          "flying": false,
+          "anchorPos": null
+        }
+      ]
+    },
+    "rerun-proxy": {
+      "assert": "pass"
+    },
+    "viewport-cancels-flight": {
+      "assert": "pass",
+      "proxies": 0
+    },
+    "viewport-lands-visual": {
+      "assert": "pass",
+      "center": {
+        "cx": 724,
+        "cy": 548
+      }
+    },
+    "rm-no-flight": {
+      "assert": "pass"
+    },
+    "rm-anchor-present": {
+      "assert": "pass",
+      "center": {
+        "cx": 724,
+        "cy": 548
+      }
+    },
+    "320-flight-appears": {
+      "assert": "pass"
+    },
+    "320-lands": {
+      "assert": "pass",
+      "center": {
+        "cx": 244,
+        "cy": 498
+      }
+    },
+    "320-no-horizontal-scroll": {
+      "assert": "pass"
+    },
+    "no-page-errors": {
+      "assert": "pass",
+      "errs": []
+    },
+    "raw-runs": {
+      "runs": [
+        {
+          "ended": 393.40000000596046,
+          "returnedTo": "wander-candidate-anchor",
+          "samples": 25,
+          "first": {
+            "t": 0,
+            "cx": 89,
+            "cy": 129,
+            "op": 1,
+            "tf": "matrix(0.82, 0, 0, 0.82, 89, 129)",
+            "acx": 724,
+            "acy": 548
+          },
+          "last": {
+            "t": 374,
+            "cx": 724,
+            "cy": 547.9,
+            "op": 1,
+            "tf": "matrix(0.999997, 0, 0, 0.999997, 723.956, 547.925)",
+            "acx": 724,
+            "acy": 548
+          }
+        }
+      ]
+    }
+  },
+  "failures": []
+}

@@ -1,0 +1,118 @@
+{
+  "mode": "flight-real-amap",
+  "at": "2026-11-17T03:00:23.605Z",
+  "metrics": {
+    "real-sdk-ready": {
+      "assert": "pass",
+      "sdk": "REAL webapi.amap.com — no stub"
+    },
+    "real-flight-appears": {
+      "assert": "pass"
+    },
+    "real-flight-samples": {
+      "assert": "pass",
+      "samples": 32
+    },
+    "real-flight-endpoint-vs-geo": {
+      "assert": "pass",
+      "endErr": 0,
+      "keyEnd": "translate(657.191px, 422.811px) scale(1)",
+      "geo": {
+        "x": 657.1908209777903,
+        "y": 422.81083912437316
+      }
+    },
+    "real-face-center-error": {
+      "assert": "pass",
+      "faceErr": 0.01,
+      "rest": {
+        "cx": 657.2,
+        "cy": 422.8
+      },
+      "geo": {
+        "x": 657.1908209777903,
+        "y": 422.81083912437316
+      }
+    },
+    "real-touchdown-jump": {
+      "assert": "pass",
+      "jump": 0.01,
+      "rest": {
+        "cx": 657.2,
+        "cy": 422.8
+      },
+      "keyEnd": "translate(657.191px, 422.811px) scale(1)"
+    },
+    "real-flight-ends-at-anchor": {
+      "assert": "pass",
+      "endGap": 29,
+      "shellGap": 29,
+      "visH": 58,
+      "note": "shellGap≈visH/2 = empty-shell artifact; true error is real-face-center-error",
+      "last": {
+        "t": 518,
+        "cx": 657.2,
+        "cy": 422.8,
+        "op": 1,
+        "acx": 657.2,
+        "acy": 393.8
+      },
+      "anchorEnd": {
+        "cx": 657.2,
+        "cy": 393.8
+      },
+      "returnedTo": "wander-candidate-anchor"
+    },
+    "real-flight-moves": {
+      "assert": "pass",
+      "travel": 639.7
+    },
+    "real-flight-visible": {
+      "assert": "pass",
+      "invisibleFrames": 0
+    },
+    "real-visual-returned": {
+      "assert": "pass",
+      "returnedTo": "wander-candidate-anchor"
+    },
+    "real-no-leftover-proxy": {
+      "assert": "pass"
+    },
+    "real-anchor-visual-consistency": {
+      "assert": "pass",
+      "anchors": 0
+    },
+    "real-post-settle-clean": {
+      "assert": "pass"
+    },
+    "real-no-page-errors": {
+      "assert": "pass",
+      "errs": []
+    },
+    "raw-runs": {
+      "runs": [
+        {
+          "ended": 536,
+          "samples": 32,
+          "first": {
+            "t": 0,
+            "cx": 89,
+            "cy": 129,
+            "op": 1,
+            "acx": 657.2,
+            "acy": 393.8
+          },
+          "last": {
+            "t": 518,
+            "cx": 657.2,
+            "cy": 422.8,
+            "op": 1,
+            "acx": 657.2,
+            "acy": 393.8
+          }
+        }
+      ]
+    }
+  },
+  "failures": []
+}

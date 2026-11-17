@@ -10,7 +10,7 @@
 // when the native map is missing or the Leaflet fallback is active nothing
 // draws and every anchor reports anchored=false so the card keeps its faces.
 (() => {
-const PER_SUB_LIMIT=32,TOTAL_LIMIT=96,STOP_LIMIT=24,HIGHLIGHT_MS=480,FADE_MS=450,FLIP_MS=60;
+const PER_SUB_LIMIT=32,TOTAL_LIMIT=96,STOP_LIMIT=24,HIGHLIGHT_MS=480,FADE_MS=450,FLIGHT_MS=560;
 let round=null,closed=true,destroyed=false,epoch=0,renderSeq=0;
 let context={clones:[],origin:null},dropped=0;
 const subs=new Map(),anchored=new Set(),timers=new Set();
@@ -36,23 +36,28 @@ function loadMascot(){
 function notifyAnchor(id,show){
  if(show===anchored.has(id))return;
  if(show)anchored.add(id);else anchored.delete(id);
+ if(!show){const sub=subs.get(id);if(sub)endFlight(sub,sub.flight);}
  if(typeof CustomEvent==='function')try{window.dispatchEvent(new CustomEvent('wander:candidate-anchor',{detail:{round,subagent_id:id,anchored:show}}));}catch{}
 }
 function ensureSub(id){
  let sub=subs.get(id);
  if(!sub){sub={id,title:'',status:'working',points:new Map(),highlight:new Set(),stopCount:0,retired:false,dim:false,
-  anchorEl:null,anchorFace:null,anchorLetterEl:null,anchorTitleEl:null,anchorMascot:null,anchorPalette:null,anchorLetter:null,anchorTitle:null,anchorPos:null,entered:false};
+  anchorEl:null,anchorVisual:null,anchorFace:null,anchorLetterEl:null,anchorTitleEl:null,anchorMascot:null,anchorPalette:null,anchorLetter:null,anchorTitle:null,anchorPos:null,entered:false,flight:null};
   subs.set(id,sub);}
  return sub;
 }
 function ensureAnchor(sub,clone){
  if(!sub.anchorEl){
   const el=document.createElement('div');el.className='wander-candidate-anchor';
+  // Inner visual wrapper owns everything the user sees; the SDK positions the
+  // outer node and may inline its own transform there, so decoration only
+  // ever touches this inner element (or a proxy carrying it).
+  const visual=document.createElement('div');visual.className='wander-candidate-visual';
   const face=document.createElement('boop-face');face.setAttribute('aria-hidden','true');
   const letter=document.createElement('span');letter.className='wander-candidate-letter';letter.hidden=true;
   const title=document.createElement('span');title.className='wander-candidate-title';title.hidden=true;
-  el.append(face,letter,title);
-  sub.anchorEl=el;sub.anchorFace=face;sub.anchorLetterEl=letter;sub.anchorTitleEl=title;
+  visual.append(face,letter,title);el.append(visual);
+  sub.anchorEl=el;sub.anchorVisual=visual;sub.anchorFace=face;sub.anchorLetterEl=letter;sub.anchorTitleEl=title;
   // The import can resolve after this round ended: only create the face while
   // the same sub record still owns this element (teardown nulls the refs).
   const held=sub,heldFace=face;
@@ -85,20 +90,72 @@ function buildSpec(){
  stats.dots=dots.length;stats.anchors=anchors.length;
  return{dots,anchors,onAnchor:notifyAnchor};
 }
+function rectCenter(el){
+ try{const r=el?.getBoundingClientRect?.();
+  if(r&&finite(r.left)&&finite(r.top)&&(r.width>0||r.height>0))return{x:r.left+(finite(r.width)?r.width/2:0),y:r.top+(finite(r.height)?r.height/2:0)};}catch{}
+ return null;
+}
+function originCenter(){
+ const o=context.origin;
+ return o&&finite(o.left)&&finite(o.top)?{x:o.left+(finite(o.width)?o.width/2:0),y:o.top+(finite(o.height)?o.height/2:0)}:null;
+}
+function startCenter(sub){
+ // Preferred origin: this clone's own card-row face in the team strip — its
+ // layout box survives the anchored visibility handoff. ctx.origin (the card
+ // main face rect) is the documented fallback when the row isn't found.
+ try{
+  const strip=document.getElementById?.('mascot-team-strip');
+  for(const row of strip?.querySelectorAll?.('[data-subagent-id]')??[])
+   if(row.getAttribute?.('data-subagent-id')===sub.id)
+    return rectCenter(row.querySelector?.('boop-face'))??rectCenter(row)??originCenter();
+ }catch{}
+ return originCenter();
+}
+// A flight ends exactly once: the WAAPI handle is cancelled, the proxy node
+// leaves the DOM, and the visual always returns to its real geo anchor — a
+// cancelled flight lands instantly rather than stranding an empty marker.
+function endFlight(sub,flight){
+ if(!flight||sub.flight!==flight)return;
+ sub.flight=null;
+ if(flight.timer){clearTimeout(flight.timer);timers.delete(flight.timer);}
+ try{flight.animation?.cancel?.();}catch{}
+ try{flight.proxy?.remove?.();}catch{}
+ if(sub.anchorEl&&sub.anchorVisual){sub.anchorVisual.remove?.();sub.anchorEl.append(sub.anchorVisual);}
+}
 function decorateEntrance(sub){
- // Purely decorative FLIP: fly the anchor node from the card face rect to its
- // already-anchored geo position. Map moves never depend on this transform.
- if(sub.entered||!sub.anchorEl)return;
+ // Decorative card→map flight: the anchor's own visual rides a fixed overlay
+ // proxy from the clone's card face to the geo point the marker is already
+ // anchored at (map host + card sit below the overlay, so the whole path is
+ // visible). The marker itself never moves — SDK positioning, geo anchoring
+ // and anchored reporting are untouched; no WAAPI/reduced-motion → the
+ // anchor simply appears in place.
+ if(sub.entered||!sub.anchorEl||sub.flight)return;
  sub.entered=true;
  if(reduced())return;
- const origin=context.origin,map=mapApi(),target=map?.point?.(sub.anchorPos);
- if(!origin||!target||!finite(origin.left)||!finite(origin.top))return;
- const dx=origin.left+(finite(origin.width)?origin.width/2:0)-target.x;
- const dy=origin.top+(finite(origin.height)?origin.height/2:0)-target.y;
- if(!Number.isFinite(dx)||!Number.isFinite(dy))return;
- sub.anchorEl.style.setProperty('--flip-x',dx+'px');sub.anchorEl.style.setProperty('--flip-y',dy+'px');
- sub.anchorEl.classList.add('flip-enter');
- later(()=>sub.anchorEl?.classList.remove('flip-enter'),FLIP_MS);
+ const visual=sub.anchorVisual,from=startCenter(sub),to=mapApi()?.point?.(sub.anchorPos);
+ if(!visual||!from||!to||!finite(to.x)||!finite(to.y))return;
+ const dx=to.x-from.x,dy=to.y-from.y,dist=Math.hypot(dx,dy);
+ if(!Number.isFinite(dist)||dist<24)return;         // coincident → just appear
+ const body=typeof document!=='undefined'?document.body:null;
+ const proxy=body?document.createElement('div'):null;
+ if(!proxy||typeof proxy.animate!=='function')return;
+ proxy.className='wander-candidate-flight';
+ proxy.setAttribute('aria-hidden','true');
+ const lift=Math.min(64,dist*.16);
+ const keys=[
+  {transform:`translate(${from.x}px,${from.y}px) scale(.82)`,offset:0},
+  {transform:`translate(${from.x+dx*.55}px,${Math.min(from.y,to.y)-lift}px) scale(.98)`,offset:.55},
+  {transform:`translate(${to.x}px,${to.y}px) scale(1)`,offset:1}];
+ proxy.style.transform=keys[0].transform;
+ visual.remove?.();proxy.append(visual);body.append(proxy);
+ const flight={proxy,visual,pos:sub.anchorPos?[sub.anchorPos[0],sub.anchorPos[1]]:null,animation:null,timer:null};
+ sub.flight=flight;
+ const finish=()=>endFlight(sub,flight);
+ try{flight.animation=proxy.animate(keys,{duration:FLIGHT_MS,easing:'cubic-bezier(.3,.7,.25,1)',fill:'forwards'});}
+ catch{finish();return;}
+ if(flight.animation?.finished?.then)flight.animation.finished.then(finish,finish);
+ else{finish();return;}
+ flight.timer=later(finish,FLIGHT_MS+240);          // failsafe vs a stalled clock
 }
 // Renders stay legal while closed so settle can paint the final dim/retract
 // frame; only stale tokens (guarded callers) or a destroyed facade block work.
@@ -122,6 +179,10 @@ async function render(){
   for(const id of[...anchored])notifyAnchor(id,false);
   return;
  }
+ // A new centroid (late-arriving candidates) repositions the marker at once;
+ // a proxy still flying to the stale point would land off-target — land the
+ // visual inside the moved anchor instead.
+ for(const sub of subs.values()){const p=sub.flight?.pos;if(p&&sub.anchorPos&&(p[0]!==sub.anchorPos[0]||p[1]!==sub.anchorPos[1]))endFlight(sub,sub.flight);}
  for(const sub of subs.values())if(!sub.entered&&sub.anchorEl&&anchored.has(sub.id))decorateEntrance(sub);
 }
 function scheduleRender(){if(renderQueued)return;renderQueued=true;Promise.resolve().then(()=>{renderQueued=false;render().catch(()=>{});});}
@@ -175,7 +236,8 @@ function adoptedIds(result){
 function teardownAll(){
  epoch++;                                        // invalidate in-flight renders
  for(const t of timers)clearTimeout(t);timers.clear();
- for(const sub of subs.values()){sub.anchorEl?.remove?.();sub.anchorEl=sub.anchorFace=sub.anchorLetterEl=sub.anchorTitleEl=sub.anchorMascot=sub.anchorPos=null;}
+ for(const sub of subs.values())endFlight(sub,sub.flight);
+ for(const sub of subs.values()){sub.anchorEl?.remove?.();sub.anchorEl=sub.anchorVisual=sub.anchorFace=sub.anchorLetterEl=sub.anchorTitleEl=sub.anchorMascot=sub.anchorPos=null;}
  subs.clear();dropped=0;
  for(const id of [...anchored])notifyAnchor(id,false);
  try{mapApi()?.clear?.();}catch{}
@@ -188,7 +250,9 @@ function guard(api,token){
  return true;
 }
 const onMapReady=()=>scheduleRender();
-const onRefresh=()=>{try{mapApi()?.refresh?.();}catch{}scheduleRender();};
+// Viewport moves/focus re-target the anchor mid-flight: the fixed proxy would
+// land on a stale point, so the visual lands instantly at the true position.
+const onRefresh=()=>{for(const sub of subs.values())if(sub.flight)endFlight(sub,sub.flight);try{mapApi()?.refresh?.();}catch{}scheduleRender();};
 // Global reset has no token: it unconditionally clears layer+timers and
 // invalidates pending renders (incl. a settle still inside its gray fade).
 // Round-scoped cancel(token) stays the strict path that can't hit a new round.
@@ -257,7 +321,7 @@ window.WanderCandidates={
  },
  snapshot(){
   return{round,closed,destroyed,
-   subs:[...subs.values()].map(s=>{const c=cloneOf(s);return{id:s.id,title:c?.title||s.title,letter:c?.letter??null,palette:c?.palette??null,status:s.status,points:s.points.size,stops:s.stopCount,retired:s.retired,anchored:anchored.has(s.id)};}),
+   subs:[...subs.values()].map(s=>{const c=cloneOf(s);return{id:s.id,title:c?.title||s.title,letter:c?.letter??null,palette:c?.palette??null,status:s.status,points:s.points.size,stops:s.stopCount,retired:s.retired,anchored:anchored.has(s.id),flying:Boolean(s.flight),anchorPos:s.anchorPos?[s.anchorPos[0],s.anchorPos[1]]:null};}),
    aggregate:[...subs.values()].reduce((n,s)=>n+(cloneOf(s)?0:s.points.size),0),
    anchored:[...anchored],dots:stats.dots,anchors:stats.anchors,dropped};
  },
