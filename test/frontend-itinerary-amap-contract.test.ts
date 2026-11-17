@@ -61,7 +61,7 @@ test('AMap adapter keeps one native instance, uses immediate resize fits, filter
  h.mapNode.clientWidth=900;h.mapNode.clientHeight=700;h.context.window.WanderItineraryMap.sync();
  assert(h.resizes()>0);assert.equal(h.fits.at(-1).immediate,true,'per-frame camera fit must not start another native animation');
  h.mapNode.clientWidth=400;h.mapNode.clientHeight=400;h.context.window.WanderItineraryMap.sync();
- assert.deepEqual(h.fits.at(-1).padding,[60,60,80,44],'AMap padding is top,bottom,left,right and follows the uneven feather depth of the focus region');
+ assert.deepEqual(h.fits.at(-1).padding,[84,60,100,100],'AMap padding is top,bottom,left,right and reserves the feather and route name bubbles');
  assert.equal(h.fits.at(-1).maxZoom,15);assert.equal(h.fits.at(-1).values.length,3,'fit includes the complete track and both stations');
  assert(business.every(layer=>!h.layers.has(layer)));
  assert.equal(h.routeLayers().filter(l=>l.options.extData?.role==='track').length,1);
@@ -78,4 +78,24 @@ test('AMap epoch cancellation rejects late palette results after routes are clea
  const pending=h.sdk.drawPlans(h.model);h.sdk.clearRoutes();
  finish(new Map(h.model.plans.map((p:any)=>[p.plan_id,{color:'#167744'}])));await pending;
  assert.equal(h.routeLayers().length,0);assert.equal(h.fits.length,0);assert.equal(h.maps(),1);
+});
+
+
+test('focused route name bubbles follow event IDs, clear on switching/reset, and do no per-frame SDK work',async()=>{
+ const h=await nativeHarness();
+ await h.context.window.WanderPlans.draw(h.model);
+ h.mapNode.clientWidth=400;h.mapNode.clientHeight=400;
+ h.publish(true,'entering',h.model);await flush();
+ h.context.window.WanderItineraryMap.sync();
+ const labels=()=>h.routeLayers().filter(l=>l.options.content?.className==='native-route-dot').flatMap(l=>l.options.content.children.map((n:any)=>n.textContent));
+ const expected=(model:any)=>model.plans.find((p:any)=>p.plan_id===model.active_plan).itinerary.stops.map((s:any)=>model.events.find((e:any)=>e.event_id===s.event_id).title);
+ assert.deepEqual(labels(),expected(h.model));
+ const counts=[h.resizes(),h.fits.length,h.created.length];
+ for(let frame=0;frame<120;frame++)h.context.window.WanderItineraryMap.sync({throttled:true});
+ assert.deepEqual([h.resizes(),h.fits.length,h.created.length],counts,'stable layout during the compositor animation must not resize, refit or rebuild markers');
+ const b={...h.model,active_plan:'plan_mock_b'};
+ h.publish(true,'detail',b);await flush();h.context.window.WanderItineraryMap.sync();
+ assert.deepEqual(labels(),expected(b));
+ h.publish(false,'leaving',b);await flush();assert.deepEqual(labels(),[]);
+ h.context.window.dispatchEvent(new Event('wander:reset'));await flush();assert.equal(h.routeLayers().length,0);
 });

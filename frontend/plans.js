@@ -1,7 +1,7 @@
 'use strict';
 // Presentational adapter for legacy itineraries and the Day 0 single/comparison samples.
 (() => {
- let currentView=null,viewCount=0,detailEpoch=0,detailTimer=null,cancelDetailSettle=null;
+ let currentView=null,viewCount=0,detailEpoch=0,detailTimer=null,cancelDetailSettle=null,mapMotion=null;
  let routeRun=0,stopRouteAnimation,stopRouteZoom;
  function stopRouteEffects(){routeRun++;stopRouteAnimation?.();stopRouteAnimation=null;stopRouteZoom?.();stopRouteZoom=null;}
  const text=(tag,className,value)=>{const node=document.createElement(tag);node.className=className;node.textContent=String(value??'');return node;};
@@ -96,7 +96,9 @@
      const lat=event.latitude,lng=event.longitude;
      if(typeof lat!=='number'||typeof lng!=='number'||!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)return;
      const point=[lat,lng];if(selected)bounds.push(point);
-     const number=text('span','',String(i+1));number.title='方案 '+(plan.label||index+1)+' · '+(i+1)+'. '+event.title;
+     const number=text('span','route-stop',String(i+1));
+     if(selected&&window.WanderItineraryFocus?.active)number.append(text('span','route-stop-name',event.title||event.venue_name||stop.event_id));
+     number.title='方案 '+(plan.label||index+1)+' · '+(i+1)+'. '+event.title;
      const dot=L.circleMarker(point,{radius:selected?10:8,color:'#ffffff',weight:2,opacity:1,fillColor:color,fillOpacity:selected?1:.72}).bindTooltip(number,{permanent:true,direction:'center',className:'route-station-number',opacity:1});
      dot.on('click',()=>{onSelect?.(plan.plan_id);window.WanderActivities?.openEvents([event],{placeName:event.venue_name,coordinateSystem:model.coordinate_system});});layers.push(dot);
      if(i===stops.length-1)return;
@@ -114,7 +116,7 @@
    const widths=()=>strokes.forEach(item=>{const style=visuals.stroke(map.getZoom?.()||11,item.selected);if(style.width===item.width)return;item.width=style.width;item.casing.setStyle({weight:style.width+style.border*2});item.colored.forEach(line=>line.setStyle({weight:style.width}));});
    map.on?.('zoom',widths);stopRouteZoom=()=>map.off?.('zoom',widths);
    if(fit&&bounds.length){const card=document.querySelector('.glass-card').getBoundingClientRect(),size=map.getSize();const frame=window.WanderMapLayout.routeFrame({width:size.x,height:size.y,card,panels:window.WanderMapLayout.visiblePanels()});map.fitBounds(L.latLngBounds(bounds),{paddingTopLeft:frame.paddingTopLeft,paddingBottomRight:frame.paddingBottomRight,maxZoom:15,animate:true});}
-   stopRouteAnimation=visuals.animate(segments);
+   if(!window.WanderItineraryFocus?.active)stopRouteAnimation=visuals.animate(segments);
    window.WanderItineraryMap?.routesReady?.();
   }
   const palette=visuals.palette(model);if(palette?.then)return palette.then(render);render(palette);
@@ -131,6 +133,21 @@
  function setCardUnavailable(value){
   const card=document.querySelector('.glass-card');if(!card)return;
   card.inert=value;card.setAttribute('aria-hidden',String(value));
+ }
+ // FLIP the shell as a compositor layer. Its SDK canvas has its final layout
+ // size throughout the motion, so WebGL buffers and the camera update once.
+ function moveMap(change,{immediate=false}={}){
+  const shell=document.getElementById?.('map-shell'),before=shell?.getBoundingClientRect?.();
+  mapMotion?.cancel();mapMotion=null;
+  change();
+  if(immediate||reduceMotion()||!before||!shell.animate)return;
+  const after=shell.getBoundingClientRect();
+  if(!after.width||!after.height)return;
+  const style=getComputedStyle(shell),duration=parseFloat(style.getPropertyValue('--itinerary-duration'))||820;
+  mapMotion=shell.animate([
+   {transform:`translate(${before.left-after.left}px,${before.top-after.top}px) scale(${before.width/after.width},${before.height/after.height})`},
+   {transform:'none'}
+  ],{duration,easing:'cubic-bezier(.22,.75,.22,1)'});
  }
  function settleFocus(epoch,callback,immediate=false){
   cancelDetailSettle?.();clearTimeout(detailTimer);
@@ -154,6 +171,7 @@
   const onEnd=event=>{if(event.target===shell&&['width','height','left','top','border-radius'].includes(event.propertyName))check();};
   cancelDetailSettle=cleanup;
   shell?.addEventListener?.('transitionend',onEnd);
+  mapMotion?.finished.then(check,()=>{});
   detailTimer=setTimeout(check,1200);
  }
  function openDetail(overlay,preview){
@@ -161,11 +179,11 @@
   const epoch=++detailEpoch;cancelDetailSettle?.();clearTimeout(detailTimer);
   overlay.hidden=false;overlay.inert=false;overlay.setAttribute('aria-hidden','false');
   preview.setAttribute('aria-expanded','true');
-  // Establish the initial style before toggling the target layout. The map
-  // controller resizes the live canvas as its shell changes; never scale it.
+  // Establish the detail's initial style before toggling its target layout.
+  // The shell is composited while the SDK renders at its destination size.
   void overlay.offsetHeight;
   document.body?.classList.add('itinerary-transition');
-  document.body?.classList.add('itinerary-focus');
+  moveMap(()=>document.body?.classList.add('itinerary-focus'));
   document.querySelector('.glass-card')?.classList.add('viewing-plan');
   publishFocus(true,'entering',currentView?.model||null);
   overlay.querySelector('.plan-back')?.focus({preventScroll:true});
@@ -185,7 +203,7 @@
   if(restoreFocus&&preview&&!preview.disabled)preview.focus({preventScroll:true});
   overlay.inert=true;overlay.setAttribute('aria-hidden','true');
   document.body?.classList.add('itinerary-transition');
-  document.body?.classList.remove('itinerary-focus');
+  moveMap(()=>document.body?.classList.remove('itinerary-focus'),{immediate:options?.animate===false});
   document.querySelector('.glass-card')?.classList.remove('viewing-plan');
   publishFocus(false,'leaving',currentView?.model||null);
   settleFocus(epoch,()=>{
@@ -242,10 +260,11 @@
    previewTitle.textContent=plan.title||plan.itinerary.summary||'查看游玩规划';
    previewFooter.textContent='方案 '+(plan.label||'A')+' · '+plan.itinerary.stops.length+' 个停留点  ↗';
    if(focusState.active)publishFocus(true,focusState.phase,model);
-   if(drawMap)draw(model,{fit,onSelect:next=>choose(next)});
+   // The focus controller owns redraws while detail is active.
+   if(drawMap&&(!focusState.active||!window.WanderItineraryMap))draw(model,{fit,onSelect:next=>choose(next)});
    if(capture)window.WanderHistory?.capture();
   }
-  preview.addEventListener('click',()=>{openDetail(overlay,preview);choose(model.active_plan,{fit:true,capture:false});scroll.scrollTo({top:0});back.focus({preventScroll:true});});
+  preview.addEventListener('click',()=>{window.WanderItineraryMap?.prepareDraw(model,{onSelect:next=>choose(next)});openDetail(overlay,preview);if(!window.WanderItineraryMap)choose(model.active_plan,{fit:true,capture:false});scroll.scrollTo({top:0});back.focus({preventScroll:true});});
   // History hydration suppresses only this initial draw; explicit clicks must
   // always restore the selected route, even when its selection hasn't changed.
   currentView={buttons,preview,model};choose(model.active_plan,{fit:true,capture:false,drawMap});

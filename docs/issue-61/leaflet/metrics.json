@@ -1,0 +1,176 @@
+{
+  "provider": "real Leaflet",
+  "metrics": {
+    "desktop labels A": {
+      "plan": "plan_mock_a",
+      "expected": [
+        "Mock 光影展",
+        "Mock 阅读分享"
+      ],
+      "labels": [
+        {
+          "name": "Mock 光影展",
+          "inside": true
+        },
+        {
+          "name": "Mock 阅读分享",
+          "inside": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "desktop bubbles in frame": {
+      "plan": "plan_mock_a",
+      "expected": [
+        "Mock 光影展",
+        "Mock 阅读分享"
+      ],
+      "labels": [
+        {
+          "name": "Mock 光影展",
+          "inside": true
+        },
+        {
+          "name": "Mock 阅读分享",
+          "inside": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "desktop stable SDK layout": {
+      "maxGap": 33.299999999999955,
+      "over50": 0,
+      "frames": 66,
+      "sizes": [
+        "835,900"
+      ],
+      "counts": {
+        "resize": 0,
+        "fit": 0,
+        "draw": 0
+      },
+      "assert": "pass"
+    },
+    "desktop labels B": {
+      "plan": "plan_mock_b",
+      "expected": [
+        "Mock 周末市集",
+        "Mock 城南小展"
+      ],
+      "labels": [
+        {
+          "name": "Mock 城南小展",
+          "inside": true
+        },
+        {
+          "name": "Mock 周末市集",
+          "inside": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "desktop closed labels": {
+      "maxGap": 33.399999999999636,
+      "over50": 0,
+      "frames": 67,
+      "counts": {
+        "resize": 0,
+        "fit": 0,
+        "draw": 0
+      },
+      "assert": "pass"
+    },
+    "desktop reversed animation settles": {
+      "assert": "pass"
+    },
+    "desktop reset clears labels": {
+      "assert": "pass"
+    },
+    "mobile labels A": {
+      "plan": "plan_mock_a",
+      "expected": [
+        "Mock 光影展",
+        "Mock 阅读分享"
+      ],
+      "labels": [
+        {
+          "name": "Mock 光影展",
+          "inside": true
+        },
+        {
+          "name": "Mock 阅读分享",
+          "inside": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "mobile bubbles in frame": {
+      "plan": "plan_mock_a",
+      "expected": [
+        "Mock 光影展",
+        "Mock 阅读分享"
+      ],
+      "labels": [
+        {
+          "name": "Mock 光影展",
+          "inside": true
+        },
+        {
+          "name": "Mock 阅读分享",
+          "inside": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "mobile stable SDK layout": {
+      "maxGap": 17.700000000000045,
+      "over50": 0,
+      "frames": 67,
+      "sizes": [
+        "218,287"
+      ],
+      "counts": {
+        "resize": 0,
+        "fit": 0,
+        "draw": 0
+      },
+      "assert": "pass"
+    },
+    "mobile labels B": {
+      "plan": "plan_mock_b",
+      "expected": [
+        "Mock 周末市集",
+        "Mock 城南小展"
+      ],
+      "labels": [
+        {
+          "name": "Mock 城南小展",
+          "inside": true
+        },
+        {
+          "name": "Mock 周末市集",
+          "inside": true
+        }
+      ],
+      "assert": "pass"
+    },
+    "mobile closed labels": {
+      "maxGap": 33.40000000000009,
+      "over50": 0,
+      "frames": 66,
+      "counts": {
+        "resize": 0,
+        "fit": 0,
+        "draw": 0
+      },
+      "assert": "pass"
+    },
+    "mobile reversed animation settles": {
+      "assert": "pass"
+    },
+    "mobile reset clears labels": {
+      "assert": "pass"
+    }
+  },
+  "failures": []
+}
