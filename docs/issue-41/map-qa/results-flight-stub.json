@@ -1,6 +1,6 @@
 {
   "mode": "flight-stub",
-  "at": "2026-11-17T02:56:55.562Z",
+  "at": "2026-11-17T03:15:23.067Z",
   "metrics": {
     "map-layer-ready": {
       "assert": "pass"
@@ -16,11 +16,11 @@
       "assert": "pass",
       "startGap": 0,
       "first": {
-        "t": 0,
+        "t": 1,
         "cx": 89,
         "cy": 129,
         "op": 1,
-        "tf": "matrix(0.82, 0, 0, 0.82, 89, 129)",
+        "tf": "matrix(0.82, 0, 0, 0.82, 89, 135.56)",
         "acx": 724,
         "acy": 548
       },
@@ -29,23 +29,57 @@
         "cy": 129
       }
     },
-    "flight-ends-at-geo-anchor": {
+    "flight-endpoint-vs-geo": {
       "assert": "pass",
-      "endGap": 0.1,
-      "last": {
-        "t": 374,
-        "cx": 724,
-        "cy": 547.9,
-        "op": 1,
-        "tf": "matrix(0.999997, 0, 0, 0.999997, 723.956, 547.925)",
-        "acx": 724,
-        "acy": 548
-      },
-      "anchorEnd": {
+      "endErr": 0,
+      "keyEnd": "translate(724px, 548px) scale(1)",
+      "geo": {
+        "x": 723.9999999999463,
+        "y": 548.0000000000246
+      }
+    },
+    "flight-visual-lands-on-geo": {
+      "assert": "pass",
+      "landErr": 0,
+      "landed": {
         "cx": 724,
         "cy": 548
       },
-      "returnedTo": "wander-candidate-anchor"
+      "geo": {
+        "x": 723.9999999999463,
+        "y": 548.0000000000246
+      }
+    },
+    "flight-face-continuity": {
+      "assert": "pass",
+      "jump": 0.1,
+      "last": {
+        "t": 403,
+        "cx": 724,
+        "cy": 539.9,
+        "op": 1,
+        "tf": "matrix(0.999997, 0, 0, 0.999997, 723.957, 547.928)",
+        "acx": 724,
+        "acy": 548
+      },
+      "landedFace": {
+        "cx": 724,
+        "cy": 540
+      },
+      "faceDy": -8
+    },
+    "flight-face-rest-offset": {
+      "assert": "pass",
+      "restOff": -8,
+      "note": "face sits ~faceDy above geo inside the anchored unit — by design",
+      "landedFace": {
+        "cx": 724,
+        "cy": 540
+      },
+      "geo": {
+        "x": 723.9999999999463,
+        "y": 548.0000000000246
+      }
     },
     "visual-returned-to-anchor": {
       "assert": "pass",
@@ -53,7 +87,7 @@
     },
     "flight-actually-moves": {
       "assert": "pass",
-      "travel": 760.7
+      "travel": 756.3
     },
     "flight-progresses-frames": {
       "assert": "pass",
@@ -66,7 +100,7 @@
     },
     "flight-duration": {
       "assert": "pass",
-      "durMs": 374
+      "durMs": 402
     },
     "flight-proxy-gone-after-land": {
       "assert": "pass"
@@ -153,24 +187,24 @@
     "raw-runs": {
       "runs": [
         {
-          "ended": 393.40000000596046,
+          "ended": 421.80000001192093,
           "returnedTo": "wander-candidate-anchor",
           "samples": 25,
           "first": {
-            "t": 0,
+            "t": 1,
             "cx": 89,
             "cy": 129,
             "op": 1,
-            "tf": "matrix(0.82, 0, 0, 0.82, 89, 129)",
+            "tf": "matrix(0.82, 0, 0, 0.82, 89, 135.56)",
             "acx": 724,
             "acy": 548
           },
           "last": {
-            "t": 374,
+            "t": 403,
             "cx": 724,
-            "cy": 547.9,
+            "cy": 539.9,
             "op": 1,
-            "tf": "matrix(0.999997, 0, 0, 0.999997, 723.956, 547.925)",
+            "tf": "matrix(0.999997, 0, 0, 0.999997, 723.957, 547.928)",
             "acx": 724,
             "acy": 548
           }

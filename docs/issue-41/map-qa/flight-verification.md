@@ -7,16 +7,19 @@
 
 ## 实测数据（真实 Chromium + CDP）
 
-**stub SDK（`flight-probe.mjs` → results-flight-stub.json）22/22 过**
-- 起点 = 分身 strip 脸心，startGap **0.0px**；终点 = geo 点，endGap **0.1px**
-- 26 帧采样全程 opacity=1，位移 760px，单发、落地后 proxy 移除、visual 归回 anchor
+**stub SDK（`flight-probe.mjs` → results-flight-stub.json）25/25 过（P3 后口径：采样 boop-face 脸心）**
+- 起飞脸心 = 分身 strip 脸心，**startGap 0.0px**；终点 keyframe vs geo **0.00px**；
+  落地 visual 单元中心 vs geo **0.0px**；face 交接跳变 **0.1px**；落地脸心在
+  geo 上方 8.0px（faceDy=−8 锚定设计）
+- 帧采样全程 opacity=1，位移 756px、16 段移动帧，单发、落地后 proxy 移除、visual 归回 anchor
 - wander:viewport 中飞即落位（proxies=0、visual 已归回）；RM 无飞行直接显示；
   320px 飞行+落点正常、无横向滚动；零页面错误
 
-**真实 webapi.amap.com（`flight-probe-real.mjs` → results-flight-real.json）14/14 过**
+**真实 webapi.amap.com（`flight-probe-real.mjs` → results-flight-real.json，P3 前那次运行）14/14 过**
 - `real-flight-endpoint-vs-geo` **0.00px**：WAAPI 终点 translate(657.191,422.811)
   = `WanderAMap.candidates.point(anchorPos)` = SDK 自身投影 geo 点
-- `real-face-center-error` **0.01px**：落地后 visual 在真实 anchor 内的中心 = geo 点
+- `real-face-center-error` **0.01px**：落地后 visual **单元**在真实 anchor 内的
+  中心 = geo 点（当时口径为单元中心，非 boop-face——见下方 P3 纠正）
 - `real-touchdown-jump` **0.01px**：动画终点与归位中心无跳变
 - 全程 opacity=1（32 帧）、无残留 proxy/animation、settle 后层干净、零页面错误
 
@@ -38,7 +41,33 @@ rect 中心 = geo.y − visH/2 = 422.8 − 29 = 393.8。探针曾拿它当落点
 - 真实探针度量重写：消除 rAF 采样/settle 竞态，终点用 WAAPI keyframe +
   归位锁存 + SDK 投影三重核对。
 
-## 生命周期边界（单测 24/24 覆盖要点）
+## review P3：face 起点补偿与测量口径纠正（bd1fff7 之后）
+
+6.1-sol 复审指出两处口径问题，已最小修复：
+
+1. **起点误差**：旧 keyframes 把 **visual 单元**（脸+字母+标题，72×~58）中心
+   放在 strip 脸心上，boop-face 实际脸心在其上方 `faceDy≈−6.5~−8px`，
+   起飞脸与 strip 脸有可见小跳。现按实测 `faceDy = face中心 − visual中心`
+   以起始 scale(.82) 反算起始 translate：`sy = from.y − s0·faceDy`。
+   终点 keyframe 不变（marker 以整个单元锚 geo，脸居上是锚定设计）。
+   不可测量时 faceDy=0 退化为旧行为。单测覆盖补偿数学与退化。
+2. **报告口径**：此前"脸中心误差 0.01px"实测的是 visual 单元中心，
+   非 boop-face。现两探针采样全部改为 `boop-face` rect 中心，并拆分指标：
+   - `*-starts-at-clone-face` / `*-face-start-gap`：起飞脸心 vs strip 脸心
+   - `*-endpoint-vs-geo`：WAAPI 终点（visual 单元中心）vs `candidates.point(anchorPos)`
+   - `*-visual-lands-on-geo`：落地 visual 中心 vs geo（marker 单元锚定精度）
+   - `*-face-continuity`：最后飞行脸心 vs 锚内落地脸心（交接跳变）
+   - `*-face-rest-offset`：落地脸心 − geo.y（设计值 ≈faceDy，非误差）
+
+**新实测（stub 重跑，25/25 过）**：face 起点误差 **0.0px**；终点 vs geo
+**0.00px**；落地 visual on geo **0.0px**；face 交接跳变 **0.1px**；
+落地脸心在 geo 上方 **8.0px**（faceDy=−8，锚定设计，非误差）。
+
+真实 SDK：沿用前轮真实高德证据（旧探针 14/14 + 复审方独立 16/16，
+实际 face 落地跳变 .043px）；flight-probe-real.mjs 已同步为 face 口径供
+复跑使用，`results-flight-real.json` 保留 P3 前那次运行，未冒称 face 口径。
+
+## 生命周期边界（单测 25/25 覆盖要点）
 
 - RM / 无 WAAPI / 缺 origin / 距离<24px → 直接显示，无 proxy。
 - cancel/reset/settle/un-anchor/viewport/focus/done 中飞 → animation cancel +

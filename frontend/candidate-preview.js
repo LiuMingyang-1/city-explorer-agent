@@ -134,7 +134,14 @@ function decorateEntrance(sub){
  if(reduced())return;
  const visual=sub.anchorVisual,from=startCenter(sub),to=mapApi()?.point?.(sub.anchorPos);
  if(!visual||!from||!to||!finite(to.x)||!finite(to.y))return;
- const dx=to.x-from.x,dy=to.y-from.y,dist=Math.hypot(dx,dy);
+ // The flight starts at a boop-face, but the flying unit is the whole visual
+ // (face+letter+title) centered on the proxy origin — the face sits ~8px
+ // above it. Compensate the start translate by the face's in-visual offset at
+ // the start scale so the visible face takes off exactly at the strip face;
+ // the end keyframe stays the unit center = geo point the marker anchors at.
+ const s0=.82,fc=rectCenter(sub.anchorFace),vc=rectCenter(visual);
+ const faceDy=fc&&vc?fc.y-vc.y:0,sx=from.x,sy=from.y-s0*faceDy;
+ const dx=to.x-sx,dy=to.y-sy,dist=Math.hypot(dx,dy);
  if(!Number.isFinite(dist)||dist<24)return;         // coincident → just appear
  const body=typeof document!=='undefined'?document.body:null;
  const proxy=body?document.createElement('div'):null;
@@ -143,8 +150,8 @@ function decorateEntrance(sub){
  proxy.setAttribute('aria-hidden','true');
  const lift=Math.min(64,dist*.16);
  const keys=[
-  {transform:`translate(${from.x}px,${from.y}px) scale(.82)`,offset:0},
-  {transform:`translate(${from.x+dx*.55}px,${Math.min(from.y,to.y)-lift}px) scale(.98)`,offset:.55},
+  {transform:`translate(${sx}px,${sy}px) scale(${s0})`,offset:0},
+  {transform:`translate(${sx+dx*.55}px,${Math.min(sy,to.y)-lift}px) scale(.98)`,offset:.55},
   {transform:`translate(${to.x}px,${to.y}px) scale(1)`,offset:1}];
  proxy.style.transform=keys[0].transform;
  visual.remove?.();proxy.append(visual);body.append(proxy);

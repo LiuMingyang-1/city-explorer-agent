@@ -84,20 +84,28 @@ await cdp('Page.addScriptToEvaluateOnNewDocument', {source: `
   window.__flightRuns = []; window.__qaErrors = [];
   addEventListener('error', e => __qaErrors.push(String(e.message || e.error)));
   addEventListener('unhandledrejection', e => __qaErrors.push('rejection: ' + String(e.reason)));
-  // Per-proxy rAF sampler: the flying visual's true rect center + opacity.
+  // Per-proxy rAF sampler: the flying boop-face's true rect center + opacity
+  // (cx/cy is the FACE center — the visual-unit center sits faceDy below it).
   window.__watchFlight = (proxy) => {
     if (proxy.__watched) return; proxy.__watched = true;
-    const run = {samples: [], t0: performance.now(), returnedTo: null};
+    const run = {samples: [], t0: performance.now(), returnedTo: null, keys: null, faceDy: null};
     const anchor = document.querySelector('.wander-candidate-anchor');
     const vis = proxy.querySelector('.wander-candidate-visual') || proxy;
+    const face = vis.querySelector?.('boop-face') ?? vis;
+    try {run.keys = proxy.getAnimations?.()[0]?.effect?.getKeyframes?.().map(k => k.transform) ?? null;} catch {}
     const tick = () => {
       if (!proxy.isConnected) {
         run.ended = performance.now() - run.t0;
         run.returnedTo = vis !== proxy ? (vis.parentElement?.className ?? null) : 'proxy-only';
+        // Face's offset inside the landed unit (geo is the unit's center).
+        if (vis.isConnected && vis.parentElement === anchor) {
+          const fr = face.getBoundingClientRect(), vr = vis.getBoundingClientRect();
+          if (fr.width && vr.width) run.faceDy = +((fr.top + fr.height / 2) - (vr.top + vr.height / 2)).toFixed(1);
+        }
         return;
       }
-      const r = vis.getBoundingClientRect();
-      const c = getComputedStyle(vis);
+      const r = face.getBoundingClientRect();
+      const c = getComputedStyle(face);
       const ar = anchor?.isConnected ? anchor.getBoundingClientRect() : null;
       run.samples.push({t: Math.round(performance.now() - run.t0),
         cx: +(r.left + r.width / 2).toFixed(1), cy: +(r.top + r.height / 2).toFixed(1),
@@ -132,6 +140,17 @@ const anchorVisualCenter = () => evaluate(`(() => {
   const r = el?.getBoundingClientRect?.();
   return r && r.width ? {cx: r.left + r.width / 2, cy: r.top + r.height / 2} : null;
 })()`);
+const anchorFaceCenter = () => evaluate(`(() => {
+  const el = document.querySelector('.wander-candidate-anchor .wander-candidate-visual boop-face');
+  const r = el?.getBoundingClientRect?.();
+  return r && r.width ? {cx: r.left + r.width / 2, cy: r.top + r.height / 2} : null;
+})()`);
+// The true geo point in viewport coords via the module's own projection —
+// the marker anchors its whole visual unit there, the face sits faceDy above.
+const geoPoint = () => evaluate(`(() => {
+  const sub = window.WanderCandidates?.snapshot?.().subs.find(s => Array.isArray(s.anchorPos));
+  return sub ? window.WanderAMap?.candidates?.point?.(sub.anchorPos) : null;
+})()`);
 const proxies = () => evaluate(`document.querySelectorAll('.wander-candidate-flight').length`);
 
 try {
@@ -149,20 +168,30 @@ try {
   // Measure immediately at touchdown while the round is still open.
   await waitFor(`!document.querySelector('.wander-candidate-flight') && document.querySelector('.wander-candidate-anchor .wander-candidate-visual boop-face')`, 15000);
   const landed = await anchorVisualCenter();
-  const runs = await evaluate(`window.__flightRuns.map(r => ({ended: r.ended ?? null, returnedTo: r.returnedTo ?? null, samples: r.samples}))`);
+  const landedFace = await anchorFaceCenter();
+  const geo = await geoPoint();
+  const runs = await evaluate(`window.__flightRuns.map(r => ({ended: r.ended ?? null, returnedTo: r.returnedTo ?? null, keys: r.keys ?? null, faceDy: r.faceDy ?? null, samples: r.samples}))`);
   const run = runs?.[0];
   const samples = run?.samples ?? [];
   expect('flight-samples', samples.length >= 6, {samples: samples.length});
   if (samples.length >= 3) {
     const first = samples[0], last = samples.at(-1);
-    // Start must sit on the clone card face; end on the anchor shell's own
-    // center that same frame (independent of later retirement).
+    // cx/cy is the boop-face center itself — not the visual unit's center.
+    // Start: the face takes off at the strip clone face. End: the unit lands
+    // centered on the geo point and the face continues at geo+faceDy with no
+    // handoff jump (all measured against real rects, never the proxy shell).
     const faceAtStart = await stripFaceCenter() ?? first;
-    const anchorEnd = last.acx != null ? {cx: last.acx, cy: last.acy} : landed;
     const startGap = dist(first, faceAtStart);
-    const endGap = anchorEnd ? dist(last, anchorEnd) : 9999;
-    expect('flight-starts-at-clone-face', startGap <= 90, {startGap: +startGap.toFixed(1), first, face: faceAtStart});
-    expect('flight-ends-at-geo-anchor', endGap <= 60, {endGap: +endGap.toFixed(1), last, anchorEnd, returnedTo: run.returnedTo});
+    expect('flight-starts-at-clone-face', startGap <= 4, {startGap: +startGap.toFixed(2), first, face: faceAtStart});
+    const keyEnd = run.keys?.length ? (run.keys.at(-1).match(/translate\(\s*([-\d.]+)px[, ]\s*([-\d.]+)px/) ?? []).slice(1).map(Number) : null;
+    const endErr = geo && keyEnd?.length === 2 && Number.isFinite(keyEnd[0]) ? Math.hypot(keyEnd[0] - geo.x, keyEnd[1] - geo.y) : 9999;
+    expect('flight-endpoint-vs-geo', endErr <= 2, {endErr: +endErr.toFixed(2), keyEnd: run.keys?.at(-1) ?? null, geo});
+    const landErr = geo && landed ? dist(landed, {cx: geo.x, cy: geo.y}) : 9999;
+    expect('flight-visual-lands-on-geo', landErr <= 2, {landErr: +landErr.toFixed(2), landed, geo});
+    const jump = landedFace ? dist(last, landedFace) : 9999;
+    expect('flight-face-continuity', jump <= 4, {jump: +jump.toFixed(2), last, landedFace, faceDy: run.faceDy});
+    const restOff = landedFace && geo ? +(landedFace.cy - geo.y).toFixed(1) : null;
+    expect('flight-face-rest-offset', restOff !== null && restOff <= 0 && restOff >= -24, {restOff, note: 'face sits ~faceDy above geo inside the anchored unit — by design', landedFace, geo});
     expect('visual-returned-to-anchor', run.returnedTo === 'wander-candidate-anchor' || run.returnedTo === 'wander-candidate-visual', {returnedTo: run.returnedTo});
     const travel = dist(first, last);
     expect('flight-actually-moves', travel > 120, {travel: +travel.toFixed(1)});

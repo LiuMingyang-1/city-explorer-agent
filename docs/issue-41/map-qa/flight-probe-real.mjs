@@ -117,17 +117,20 @@ await cdp('Page.addScriptToEvaluateOnNewDocument', {source: `
   addEventListener('unhandledrejection', e => __qaErrors.push('rejection: ' + String(e.reason)));
   window.__watchFlight = (proxy) => {
     if (proxy.__watched) return; proxy.__watched = true;
-    const run = {samples: [], t0: performance.now(), returnedTo: null, landedCenter: null, keys: null};
+    const run = {samples: [], t0: performance.now(), returnedTo: null, landedVisual: null, landedFace: null, keys: null};
     const anchor = document.querySelector('.wander-candidate-anchor');
     const vis = proxy.querySelector('.wander-candidate-visual') || proxy;
+    const face = vis.querySelector?.('boop-face') ?? vis;
     // Declared WAAPI endpoint — what the flight is actually flying to.
     try {run.keys = proxy.getAnimations?.()[0]?.effect?.getKeyframes?.().map(k => k.transform) ?? null;} catch {}
-    // Latch the visual's resting center inside its real anchor via microtask
-    // (beats any ≥450ms teardown timer; rAF alone can miss it under settle).
+    // Latch the resting centers inside the real anchor via microtask (beats
+    // any ≥450ms teardown timer; rAF alone can miss it under settle). cx/cy
+    // samples track the boop-FACE — the visual unit center sits faceDy below.
     const latch = () => {
-      if (run.landedCenter || !vis.isConnected || vis.parentElement !== anchor) return;
-      const r = vis.getBoundingClientRect();
-      if (r.width) run.landedCenter = {cx: +(r.left + r.width / 2).toFixed(1), cy: +(r.top + r.height / 2).toFixed(1)};
+      if (run.landedVisual || !vis.isConnected || vis.parentElement !== anchor) return;
+      const vr = vis.getBoundingClientRect(), fr = face.getBoundingClientRect?.();
+      if (vr.width) run.landedVisual = {cx: +(vr.left + vr.width / 2).toFixed(1), cy: +(vr.top + vr.height / 2).toFixed(1)};
+      if (fr?.width) run.landedFace = {cx: +(fr.left + fr.width / 2).toFixed(1), cy: +(fr.top + fr.height / 2).toFixed(1)};
     };
     const mo = new MutationObserver(latch);
     mo.observe(anchor ?? document.body, {childList: true, subtree: !anchor});
@@ -138,11 +141,11 @@ await cdp('Page.addScriptToEvaluateOnNewDocument', {source: `
         latch(); mo.disconnect();
         return;
       }
-      const r = vis.getBoundingClientRect();
+      const r = face.getBoundingClientRect();
       const ar = anchor?.isConnected ? anchor.getBoundingClientRect() : null;
       run.samples.push({t: Math.round(performance.now() - run.t0),
         cx: +(r.left + r.width / 2).toFixed(1), cy: +(r.top + r.height / 2).toFixed(1),
-        op: +(+getComputedStyle(vis).opacity).toFixed(2),
+        op: +(+getComputedStyle(face).opacity).toFixed(2),
         acx: ar ? +(ar.left + ar.width / 2).toFixed(1) : null,
         acy: ar ? +(ar.top + ar.height / 2).toFixed(1) : null});
       requestAnimationFrame(tick);
@@ -175,6 +178,12 @@ const geoPoint = () => evaluate(`(() => {
   return sub ? window.WanderAMap?.candidates?.point?.(sub.anchorPos) : null;
 })()`);
 const proxies = () => evaluate(`document.querySelectorAll('.wander-candidate-flight').length`);
+const stripFaceCenter = () => evaluate(`(() => {
+  const row = document.querySelector('#mascot-team-strip [data-subagent-id]');
+  const el = row?.querySelector('boop-face') || row;
+  const r = el?.getBoundingClientRect?.();
+  return r && r.width ? {cx: r.left + r.width / 2, cy: r.top + r.height / 2} : null;
+})()`);
 
 try {
   await cdp('Emulation.setDeviceMetricsOverride', {width: 1280, height: 800, deviceScaleFactor: 1, mobile: false});
@@ -188,31 +197,38 @@ try {
     if (paused) {await shot('flight-real-mid'); await evaluate(`document.querySelector('.wander-candidate-flight')?.getAnimations?.()[0]?.play()`);}
     await waitFor(`!document.querySelector('.wander-candidate-flight')`, 20000);
     const landed = await anchorVisualCenter();
-    const runs = await evaluate(`window.__flightRuns.map(r => ({ended: r.ended ?? null, returnedTo: r.returnedTo ?? null, landedCenter: r.landedCenter ?? null, keys: r.keys ?? null, samples: r.samples}))`);
+    const runs = await evaluate(`window.__flightRuns.map(r => ({ended: r.ended ?? null, returnedTo: r.returnedTo ?? null, landedVisual: r.landedVisual ?? null, landedFace: r.landedFace ?? null, keys: r.keys ?? null, samples: r.samples}))`);
     const run = runs?.[0];
     const samples = run?.samples ?? [];
     expect('real-flight-samples', samples.length >= 5, {samples: samples.length});
     if (samples.length >= 3) {
       const first = samples[0], last = samples.at(-1);
       const geo = await geoPoint();
-      // Three independent faces of landing accuracy, all race-free:
-      //  1. the WAAPI keyframe endpoint the flight declared vs the geo point
-      //  2. the visual's resting center inside the anchor (latched at return)
-      //  3. the empty shell's mid-flight center — documented artifact only:
-      //     real AMap caches 'center' at the content's measured size, so the
-      //     emptied shell reports a center ≈visH/2 above the geo point.
+      const stripFace = await stripFaceCenter();
+      // cx/cy is the boop-FACE center itself (review-P3 corrected semantics):
+      //  1. face takes off at the strip clone face
+      //  2. WAAPI endpoint = the visual unit's center = the geo point
+      //  3. the face rests faceDy above geo inside the anchored unit — by
+      //     design; continuity is the face's own last-vs-landed distance.
+      // (The emptied anchor shell's mid-flight center is a documented
+      // measurement artifact: real AMap caches 'center' at the content's
+      // measured size, so the 72×0 shell reports ≈visH/2 above geo.)
+      const startGap = stripFace ? dist(first, stripFace) : 9999;
+      expect('real-face-start-gap', startGap <= 4, {startGap: +startGap.toFixed(2), first, stripFace});
       const keyEnd = run.keys?.length ? (run.keys.at(-1).match(/translate\(\s*([-\d.]+)px[, ]\s*([-\d.]+)px/) ?? []).slice(1).map(Number) : null;
       const endErr = geo && keyEnd?.length === 2 && Number.isFinite(keyEnd[0]) ? Math.hypot(keyEnd[0] - geo.x, keyEnd[1] - geo.y) : 9999;
       expect('real-flight-endpoint-vs-geo', endErr <= 2, {endErr: +endErr.toFixed(2), keyEnd: run.keys?.at(-1) ?? null, geo});
-      const rest = run.landedCenter ?? landed;
-      const faceErr = geo && rest ? dist(rest, {cx: geo.x, cy: geo.y}) : 9999;
-      expect('real-face-center-error', faceErr <= 4, {faceErr: +faceErr.toFixed(2), rest, geo});
-      const jump = rest && keyEnd?.length === 2 && Number.isFinite(keyEnd[0]) ? Math.hypot(rest.cx - keyEnd[0], rest.cy - keyEnd[1]) : 9999;
-      expect('real-touchdown-jump', jump <= 4, {jump: +jump.toFixed(2), rest, keyEnd: run.keys?.at(-1) ?? null});
+      const restV = run.landedVisual ?? landed;
+      const landErr = geo && restV ? dist(restV, {cx: geo.x, cy: geo.y}) : 9999;
+      expect('real-visual-lands-on-geo', landErr <= 4, {landErr: +landErr.toFixed(2), restV, geo});
+      const jump = run.landedFace ? dist(last, run.landedFace) : 9999;
+      expect('real-face-continuity', jump <= 4, {jump: +jump.toFixed(2), last, landedFace: run.landedFace});
+      const restOff = run.landedFace && geo ? +(run.landedFace.cy - geo.y).toFixed(1) : null;
+      expect('real-face-rest-offset', restOff !== null && restOff <= 0 && restOff >= -24, {restOff, note: 'face sits ~faceDy above geo inside the anchored unit — by design', landedFace: run.landedFace, geo});
       const shellGap = last.acx != null && geo ? +(geo.y - last.acy).toFixed(1) : null;
       const anchorEnd = last.acx != null ? {cx: last.acx, cy: last.acy} : landed;
       const endGap = anchorEnd ? dist(last, anchorEnd) : 9999;
-      expect('real-flight-ends-at-anchor', endGap <= 80, {endGap: +endGap.toFixed(1), shellGap, visH: landed?.h ?? null, note: 'shellGap≈visH/2 = empty-shell artifact; true error is real-face-center-error', last, anchorEnd, returnedTo: run.returnedTo});
+      expect('real-flight-ends-at-anchor', endGap <= 80, {endGap: +endGap.toFixed(1), shellGap, visH: landed?.h ?? null, note: 'shellGap≈visH/2 = empty-shell artifact; true accuracy is real-visual-lands-on-geo + real-face-continuity', last, anchorEnd, returnedTo: run.returnedTo});
       expect('real-flight-moves', dist(first, last) > 120, {travel: +dist(first, last).toFixed(1)});
       const invisible = samples.filter(s => s.op < 0.7).length;
       expect('real-flight-visible', invisible === 0, {invisibleFrames: invisible});

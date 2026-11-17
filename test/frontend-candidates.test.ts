@@ -22,17 +22,25 @@ function setupPreview(){
  // WAAPI probe: every element gets a spy animate() whose finished promise
  // stays pending until the test resolves it (or real code cancels it).
  const animCalls:{keyframes:any;options:any;cancelled:boolean;resolve:()=>void}[]=[];
- const mkEl=()=>{const el=new Element();
-  (el as any).animate=(keyframes:any,options:any)=>{const h={keyframes,options,cancelled:false,resolve:()=>{}} as any;
+ // Geometry mock: the anchor's boop-face sits on top of the visual unit, so
+ // its center is above the unit center — the flight's start compensation
+ // reads exactly this difference via getBoundingClientRect.
+ const rects:{face:any,visual:any}={face:{top:0,left:0,width:42,height:42},visual:{top:0,left:0,width:72,height:58}};
+ const mkEl=(tag='div')=>{const el=new Element() as any;
+  el.tagName=String(tag).toUpperCase();
+  el.animate=(keyframes:any,options:any)=>{const h={keyframes,options,cancelled:false,resolve:()=>{}} as any;
    h.finished=new Promise<void>((r:any)=>h.resolve=r);animCalls.push(h);
    return {cancel(){h.cancelled=true},finished:h.finished,onfinish:null};};
+  el.getBoundingClientRect=function(){
+   const src=el.tagName==='BOOP-FACE'?rects.face:el.classes.has('wander-candidate-visual')?rects.visual:null;
+   return{top:src?.top??0,left:src?.left??0,width:src?.width??0,height:src?.height??0};};
   return el;};
  const body=new Element();
  let timerSeq=0;const timers=new Map<number,{cancelled:boolean}>();
  const win=Object.assign(new EventTarget(),{location:{search:''}});
  const context=vm.createContext({
   window:win,console,URL,
-  document:{createElement:()=>mkEl(),body,getElementById:()=>null,querySelector:()=>null},
+  document:{createElement:(tag:string)=>mkEl(tag),body,getElementById:()=>null,querySelector:()=>null},
   Event,Promise,queueMicrotask,
   CustomEvent:class extends Event{detail:any;constructor(t:string,i?:any){super(t);this.detail=i?.detail;}},
   matchMedia:()=>media,
@@ -54,7 +62,7 @@ function setupPreview(){
  win.addEventListener('wander:candidate-anchor',(e:any)=>anchorEvents.push(e.detail));
  vm.runInContext(previewSource,context);
  const api=context.window.WanderCandidates;
- return {context,specLog,anchorCb,anchorEvents,api,renderer,media,animCalls,body,get cleared(){return cleared}};
+ return {context,specLog,anchorCb,anchorEvents,api,renderer,media,animCalls,body,rects,get cleared(){return cleared}};
 }
 
 test('candidate facade requires round tokens and ignores stale rounds',async()=>{
@@ -313,7 +321,7 @@ test('entrance rides a fixed proxy from the card face to the geo point, then lan
  const call=h.animCalls[0];
  assert(call.options.duration>=450&&call.options.duration<=650,'flight sits in the visible beat window');
  const first=call.keyframes[0].transform,last=call.keyframes.at(-1).transform;
- assert.match(first,/^translate\(84px,84px\)/,'starts at the ctx.origin face center (40+44,40+44)');
+ assert.match(first,/^translate\(84px,90\.56px\) scale\(0\.82\)/,'visual center starts 84+6.56 so the face (offset −8 at scale .82) sits on the ctx.origin face center (84,84)');
  assert.match(last,/translate\(200px,200px\)/,'ends at the real geo point from map.point()');
  const proxy=flightProxy(h);
  assert(proxy,'proxy is mounted on document.body');
@@ -341,7 +349,21 @@ test('flight origin prefers the clone strip row over the card-face fallback',asy
  api.applyEvent(candEvt('s1',[{event_id:'e1',latitude:34.2,longitude:108.9}]),1,ctx1);
  await flush();
  assert.equal(h.animCalls.length,1);
- assert.match(h.animCalls[0].keyframes[0].transform,/^translate\(522px,322px\)/,'clone face center (500+22,300+22), not ctx.origin');
+ assert.match(h.animCalls[0].keyframes[0].transform,/^translate\(522px,328\.56px\)/,'clone face center (500+22,300+22) plus face-offset compensation, not ctx.origin');
+});
+
+test('start compensation follows the measured boop-face offset and degrades without rects',async()=>{
+ // face 40 vs visual 60 → faceDy = 20−30 = −10 → start y = 84 − .82·(−10) = 92.2
+ const h=setupPreview();h.rects.face={top:0,left:0,width:40,height:40};h.rects.visual={top:0,left:0,width:72,height:60};
+ const api=h.api;api.begin(1);
+ api.applyEvent(candEvt('s1',[{event_id:'e1',latitude:34.2,longitude:108.9}]),1,ctx1);
+ await flush();
+ assert.match(h.animCalls[0].keyframes[0].transform,/^translate\(84px,92\.2px\)/);
+ // Unmeasurable face → no compensation, visual center takes the origin.
+ const h2=setupPreview();h2.rects.face=null;const api2=h2.api;api2.begin(1);
+ api2.applyEvent(candEvt('s1',[{event_id:'e1',latitude:34.2,longitude:108.9}]),1,ctx1);
+ await flush();
+ assert.match(h2.animCalls[0].keyframes[0].transform,/^translate\(84px,84px\)/,'missing face rect → faceDy 0');
 });
 
 test('reduced-motion and missing WAAPI/origin all land the anchor directly',async()=>{
