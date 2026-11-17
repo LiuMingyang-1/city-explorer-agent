@@ -36,3 +36,15 @@ test('compact route frame can use map space below a right panel instead of a sli
  const panel={left:440,right:803,top:60,bottom:460},f=frame({width:823,height:880,card:{right:370,height:824},panels:[panel]});
  assert(f.top>=484);assert(f.left>370);assert(823-f.left-f.right>300);assert(f.top+f.bottom<880);
 });
+
+
+test('focus camera uses the reclaimed desktop map without reserving a percentage-wide left feather',()=>{
+ for(const width of [540,900,1280,1888]){
+  const f=frame({width,height:900,card:{right:560,height:844},focus:true});
+  assert.equal(f.left,100,'left inset reserves station names and the bounded 56px feather');
+  assert(f.left+f.right<width);assert(f.top+f.bottom<900);
+  assert.deepEqual(Array.from(f.amap),[f.top,f.bottom,f.left,f.right]);
+ }
+ const mobile=frame({width:218,height:287,focus:true});
+ assert.equal(mobile.left,218*.32,'small focus maps retain room for labels');
+});
