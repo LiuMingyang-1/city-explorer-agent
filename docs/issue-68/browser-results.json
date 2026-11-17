@@ -1,0 +1,44 @@
+{
+  "environment": "Edge headless 1440x900; auth/chat API fixtures; real frontend scripts",
+  "checks": [
+    "guest send blocked",
+    "draft retained before login",
+    "draft retained after login",
+    "authenticated send accepted once",
+    "logout blocks subsequent send"
+  ],
+  "requests": [
+    [
+      "map-config",
+      "GET"
+    ],
+    [
+      "events",
+      "GET"
+    ],
+    [
+      "me",
+      "GET"
+    ],
+    [
+      "login",
+      "POST"
+    ],
+    [
+      "memory",
+      "GET"
+    ],
+    [
+      "chat/stream",
+      "POST"
+    ],
+    [
+      "logout",
+      "POST"
+    ],
+    [
+      "memory",
+      "GET"
+    ]
+  ]
+}

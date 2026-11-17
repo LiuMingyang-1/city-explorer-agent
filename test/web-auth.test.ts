@@ -277,7 +277,7 @@ test("身份解析顺序：有效 chat_session 优先于 chat_uid；登录后请
   assert.equal(stack.service.userIds.at(-1), account.userId);
 });
 
-test("logout → 204 清 cookie 删会话行；之后回落匿名 chat_uid，me 回匿名", async (t) => {
+test("logout → 204 清 cookie 删会话行；之后拒绝历史访问，me 回匿名", async (t) => {
   const stack = await openStack(t);
   stack.auth.ensureAccount({ username: "admin", password: "pw" });
   const token = sessionToken(await login(stack, { username: "admin", password: "pw" }))!;
@@ -291,11 +291,12 @@ test("logout → 204 清 cookie 删会话行；之后回落匿名 chat_uid，me 
   const clear = (out.headers["set-cookie"] ?? []).find((h) => h.includes("chat_session"));
   assert.match(clear ?? "", /Max-Age=0/);
   assert.equal(stack.auth.resolveSession(token), undefined); // 行已删
-  // 登出后同一请求回落匿名身份（chat_uid 未被清）。
-  await call(stack.base, "/api/chat/history", {
+  // 登出后即使 chat_uid 未被清也不能访问历史。
+  const history = await call(stack.base, "/api/chat/history", {
     headers: { Cookie: `chat_uid=${anonUid}; chat_session=${token}` },
   });
-  assert.equal(stack.service.userIds.at(-1), anonUid);
+  assert.equal(history.status,401);
+  assert.equal(stack.service.userIds.length,0);
   const me = await call(stack.base, "/api/me", { headers: sessionCookie(token) });
   assert.deepEqual(me.json(), { authenticated: false });
   // 幂等：未登录再登出仍 204。
@@ -438,14 +439,15 @@ test("过期 token：resolveSession 判无效并惰性清理，/api/me 回匿名
   const count = db.prepare("SELECT COUNT(*) AS n FROM auth_sessions").get() as { n: number };
   assert.equal(count.n, 0); // 行已惰性清理
   db.close();
-  // 过期 token 的其它请求回落匿名身份而非报错。
-  await call(stack.base, "/api/chat/history", {
+  // 过期 token 无法通过匿名 cookie 继续访问账号历史。
+  const history = await call(stack.base, "/api/chat/history", {
     headers: { Cookie: `chat_uid=${"f".repeat(32)}; chat_session=${token}` },
   });
-  assert.equal(stack.service.userIds.at(-1), "f".repeat(32));
+  assert.equal(history.status,401);
+  assert.equal(stack.service.userIds.length,0);
 });
 
-test("未配置 auth 的装配：/api/login → 503，/api/me → 匿名，/api/logout 幂等 204，其余路由不变", async (t) => {
+test("未配置 auth 的装配：/api/login → 503，/api/me → 匿名，/api/logout 幂等 204，私有接口拒绝匿名", async (t) => {
   const service = fakeService();
   const server = createServer(createChatHandler(service, { onError: () => {} }));
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -463,10 +465,12 @@ test("未配置 auth 的装配：/api/login → 503，/api/me → 匿名，/api/
   assert.equal(out.status, 204);
   assert.match((out.headers["set-cookie"] ?? []).find((h) => h.includes("chat_session")) ?? "", /Max-Age=0/);
   assert.deepEqual((await call(base, "/api/me")).json(), { authenticated: false });
-  // 匿名路由行为不变：history 照常签发 chat_uid。
+  // 未配置认证时仍拒绝聊天、历史和偏好访问。
+  assert.equal((await call(base,"/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:"test"})})).status,401);
+  assert.equal((await call(base,"/api/memory",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({content:"test"})})).status,401);
   const history = await call(base, "/api/chat/history");
-  assert.equal(history.status, 200);
-  assert.match(history.headers["set-cookie"]?.[0] ?? "", /chat_uid=[0-9a-f]{32}/);
+  assert.equal(history.status, 401);
+  assert.equal(history.headers["set-cookie"],undefined);
 });
 
 test("方法与路由：GET /api/login → 405 + Allow；/api/loginx → 404", async (t) => {
@@ -494,4 +498,36 @@ test("重复登录替换会话：带旧 cookie 再登录删旧行，独立会话
   const third = sessionToken(await login(stack, { username: "admin", password: "pw" }))!;
   assert.notEqual(stack.auth.resolveSession(second), undefined);
   assert.notEqual(stack.auth.resolveSession(third), undefined);
+});
+
+test('guest, forged, expired and logged-out sessions cannot chat or access private memory/history',async(t)=>{
+ let now=new Date('2026-11-17T00:00:00Z');
+ const stack=await openStack(t,{now:()=>now});
+ const account=stack.auth.ensureAccount({username:'guard',password:'pw'});
+ const {token}=stack.auth.createSession(account.userId);
+ const anonymous=`chat_uid=${account.userId}`;
+ const writes:string[]=[];
+ stack.service.putMemory=async()=>{writes.push('put');return {content:'ok',updated_at:null};};
+ stack.service.deleteMemory=async()=>{writes.push('delete');};
+ const check=async(cookie?:string)=>{
+  for(const path of ['/api/chat','/api/chat/stream']){
+   const r=await postJson(stack,path,{message:'安排出游'},cookie?{Cookie:cookie}:{});
+   assert.equal(r.status,401);assert.match(String(r.headers['content-type']),/application\/json/);
+   assert.equal(r.headers['set-cookie'],undefined);
+  }
+  for(const [path,method] of [['/api/memory','GET'],['/api/memory','PUT'],['/api/memory','DELETE'],['/api/chat/history','GET']]){
+   const r=await call(stack.base,path!,{method,headers:{'Content-Type':'application/json',...(cookie?{Cookie:cookie}:{})},...(method==='PUT'?{body:JSON.stringify({content:'private'})}:{})});
+   assert.equal(r.status,401);
+  }
+ };
+ await check();await check(anonymous);await check(anonymous+'; chat_session='+ 'f'.repeat(64));
+ assert.equal(stack.service.userIds.length,0);assert.equal(writes.length,0);
+ for(const path of ['/api/chat','/api/chat/stream'])assert.equal((await postJson(stack,path,{message:'安排出游'},sessionCookie(token))).status,200);
+ assert(stack.service.userIds.every(id=>id===account.userId));
+ now=new Date(now.getTime()+SESSION_TTL_MS+1);const count=stack.service.userIds.length;
+ await check(anonymous+'; chat_session='+token);assert.equal(stack.service.userIds.length,count);
+ const fresh=stack.auth.createSession(account.userId).token;
+ await call(stack.base,'/api/logout',{method:'POST',headers:sessionCookie(fresh)});
+ await check(anonymous+'; chat_session='+fresh);
+ assert.equal((await call(stack.base,'/api/events')).status,200);
 });

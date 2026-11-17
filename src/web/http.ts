@@ -10,7 +10,7 @@
  * - POST /api/chat/stream  → text/event-stream（入参与 /api/chat 相同；
  *   meta → progress* → result|error 事件序列，15s `: ping` 心跳）
  * - GET  /api/events[?date=…|from=…&to=…][&bbox=…][&limit=…] → {events: EventView[]}
- * - GET  /api/memory       → {content, updated_at}（无记录 content 空串、updated_at null）
+ * - GET  /api/memory       → {content, updated_at}（仅登录账号；无记录 content 空串、updated_at null）
  * - PUT  /api/memory       → {content, updated_at}（严格 {content} 入参，覆盖式更新）
  * - DELETE /api/memory     → 204（清除该 cookie 用户的记忆，幂等）
  * - POST /api/login        → {user:{id,username,display_name}}（严格
@@ -24,7 +24,8 @@
  *   409（stream 同转 error 事件）；其他路径 404，方法不符 405 + Allow，
  *   非 2xx 一律 {error:string}
  *
- * 身份解析顺序：有效 chat_session token → 登录账号 userId；否则 chat_uid
+ * 聊天、历史及偏好要求有效 chat_session，否则 401；公开活动浏览的身份解析：
+ * 有效 chat_session token → 登录账号 userId；否则 chat_uid
  * 匿名 cookie（现状逻辑不变）。安全边界见 identity.ts 顶部注释：两类
  * cookie 都是 bearer 凭证；POST 校验 Origin 同源（或显式白名单），
  * 错误只回通用文案不泄内部细节。
@@ -90,7 +91,7 @@ export interface WebChatOptions {
   sseHeartbeatMs?: number;
   /**
    * 可选登录存储（./auth.ts 的 createAuthStore）。缺省时 /api/login 回
-   * 503，/api/logout 幂等清 cookie，/api/me 恒 authenticated:false，其余接口不变。
+   * 503，/api/logout 幂等清 cookie，/api/me 恒 authenticated:false；聊天及偏好接口拒绝未登录请求。
    */
   auth?: AuthStore;
   /** 登录会话 cookie 加 Secure（https 部署）；默认不加（本地 http）。 */
@@ -208,7 +209,9 @@ export function createChatHandler(
     } catch {
       return fail(req, res, 400, "bad request");
     }
-    const userId = ensureUser(req, res);
+    const account = resolveSessionUser(req);
+    if (account === undefined) return fail(req, res, 401, "login required");
+    const userId = account.userId;
     try {
       const data = await service.history(userId, sessionId);
       if (!isChatHistory(data)) throw new Error("service.history returned invalid shape");
@@ -239,7 +242,9 @@ export function createChatHandler(
       if ("error" in parsed) return fail(req, res, 400, parsed.error);
       // body 读完前客户端已走（读中断/断连）：不再给 service 派活。
       if (res.destroyed || controller.signal.aborted) return;
-      const userId = ensureUser(req, res);
+      const account = resolveSessionUser(req);
+      if (account === undefined) return fail(req, res, 401, "login required");
+      const userId = account.userId;
       const result = await service.send(userId, parsed.message, {
         signal: controller.signal,
         location: parsed.location,
@@ -283,7 +288,9 @@ export function createChatHandler(
       const parsed = parseChatSend(body, MAX_MESSAGE_CHARS);
       if ("error" in parsed) return fail(req, res, 400, parsed.error);
       if (res.destroyed || controller.signal.aborted) return;
-      const userId = ensureUser(req, res);
+      const account = resolveSessionUser(req);
+      if (account === undefined) return fail(req, res, 401, "login required");
+      const userId = account.userId;
       res.writeHead(200, {
         "Content-Type": "text/event-stream; charset=utf-8",
         "Cache-Control": "no-store",
@@ -375,6 +382,7 @@ export function createChatHandler(
     if (req.method !== "GET" && !isSameOriginRequest(req, allowedOrigins)) {
       return fail(req, res, 403, "origin not allowed");
     }
+    if (resolveSessionUser(req) === undefined) return fail(req, res, 401, "login required");
     if (req.method === "GET") return getMemory(req, res);
     if (req.method === "PUT") return putMemory(req, res);
     return deleteMemory(req, res);

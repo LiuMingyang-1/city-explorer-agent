@@ -257,7 +257,7 @@ test('a save during the login window never reaches the wire; the new doc loads o
   assert.ok(w.calls.every(c => !(c.body ?? '').includes('窗口期旧草稿'))); // stale draft never sent
 });
 
-test('a failed login resumes the suspended draft so a retry still writes under the old identity', async () => {
+test('a failed guest login retains the preference draft but cannot persist it', async () => {
   const h = setup({auth: true});
   const w = wire(h), prefs = w.prefs;
   h.requests[0]!.finish({authenticated: false});
@@ -273,9 +273,7 @@ test('a failed login resumes the suspended draft so a retry still writes under t
   assert.equal(h.$('preferences-content').value, '窗口期旧草稿');
   assert.equal(h.$('preferences-save').disabled, false);
   await prefs.save();
-  const put = w.calls.at(-1)!;
-  assert.equal(put.method, 'PUT');
-  assert.deepEqual(JSON.parse(put.body!), {content: '窗口期旧草稿'});
+  assert.equal(w.calls.filter(c=>c.method==='PUT').length,0);
 });
 
 test('a save during the logout window is suspended the same way', async () => {
@@ -298,4 +296,42 @@ test('a save during the logout window is suspended the same way', async () => {
   await logout; await ticks();
   assert.equal(h.$('preferences-content').value, '访客偏好');
   assert.ok(w.calls.every(c => !(c.body ?? '').includes('未同步的账号草稿')));
+});
+
+test('chat gates initialization and guests, preserves drafts through login, and blocks logout',async()=>{
+ const h=setup({api:true,auth:true});
+ h.$('message-input').value='周末看展';h.run("attachEventChip({eventId:'place-1',title:'展览',kind:'add'})");
+ const initial=h.requests.length;
+ await h.context.window.sendMessage('周末看展');
+ assert.equal(h.requests.length,initial);assert.equal(h.$('auth-panel').hidden,false);
+ assert.equal(h.$('message-input').value,'周末看展');assert.equal(h.state.messages.length,0);
+ h.requests[0]!.finish({authenticated:false});await ticks();
+ await h.context.window.sendMessage('快捷提问');assert.equal(h.requests.length,initial);
+ stubAuth(h,{alice:{id:'acc-a',display_name:'Alice'}});
+ await submit(h,'alice','pw');
+ assert.equal(h.$('message-input').value,'周末看展');assert.equal(h.run('state.eventChip.eventId'),'place-1');
+ const sent:any[]=[];h.context.window.WanderTransport.request=async(body:any)=>{sent.push(body);return {kind:'answer',text:'好的',session_id:'s'};};
+ await h.context.window.sendMessage('周末看展');assert.equal(sent.length,1);
+ await h.run('($("auth-logout").listeners.get("click"))()');
+ await h.context.window.sendMessage('退出后');assert.equal(sent.length,1);
+});
+
+test('401 expires frontend identity and restores the submitted text and place draft',async()=>{
+ const h=setup({api:true,auth:true});
+ h.requests[0]!.finish({authenticated:true,user:{id:'a',username:'alice'}});await ticks();
+ h.run("attachEventChip({eventId:'place-1',title:'展览',kind:'add'})");
+ h.context.window.WanderTransport.request=async()=>{throw Object.assign(new Error('login required'),{status:401});};
+ await h.context.window.sendMessage('请安排');
+ assert.equal(h.$('message-input').value,'请安排');assert.equal(h.run('state.eventChip.eventId'),'place-1');
+ assert.equal(h.context.window.WanderAuth.requireLogin(),false);assert.equal(h.state.busy,false);
+});
+
+test('failed identity refresh and direct retry delivery cannot bypass login',async()=>{
+ const h=setup({api:true,auth:true});
+ h.requests[0]!.finish({authenticated:true,user:{id:'a',username:'alice'}});await ticks();
+ let sent=0;h.context.window.WanderTransport.request=async()=>{sent++;return {kind:'answer',text:'ok',session_id:'s'};};
+ h.context.fetch=async()=>{throw new TypeError('offline');};
+ await h.context.window.WanderAuth.refresh();
+ await h.run("deliver('重试请求',null)");
+ assert.equal(sent,0);assert.equal(h.$('auth-panel').hidden,false);
 });
