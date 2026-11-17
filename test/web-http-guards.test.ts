@@ -8,7 +8,7 @@ import { createServer, request as httpRequest } from "node:http";
 import type { IncomingHttpHeaders, Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { test } from "node:test";
-import { createChatHandler } from "../src/web/http.ts";
+import { createChatHandler } from "./authenticated-handler-fixture.ts";
 import type { WebChatOptions } from "../src/web/http.ts";
 import type { ChatLocation, ChatResult, ChatService } from "../src/web/types.ts";
 

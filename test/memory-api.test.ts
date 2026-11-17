@@ -12,7 +12,7 @@ import type { EventRepository } from "../src/data/repository.ts";
 import { createSqliteEventRepository } from "../src/data/sqlite.ts";
 import type { SessionRepository } from "../src/session/repository.ts";
 import { createSqliteSessionRepository } from "../src/session/sqlite.ts";
-import { createChatHandler } from "../src/web/http.ts";
+import { createChatHandler } from "./authenticated-handler-fixture.ts";
 import { createChatService, type ManagedChatService } from "../src/web/service.ts";
 import { CONFIG } from "./e2e-fixture.ts";
 import { call, cookieUserId, withCookie, type Reply } from "./web-e2e-fixture.ts";

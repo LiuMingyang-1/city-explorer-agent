@@ -1,9 +1,8 @@
 'use strict';
-// Optional login: anonymous stays fully functional; signing in merges the
-// anonymous cookie identity into the account server-side (see /api/login).
+// Browsing is public; chat and persisted preferences require a verified account.
 (() => {
  const openBtn=$('auth-open'),panel=$('auth-panel'),form=$('auth-form'),signedIn=$('auth-signed-in'),statusEl=$('auth-status');
- let me={authenticated:false},meEpoch=0,busy=false,returnFocus;
+ let me={authenticated:false},meEpoch=0,settled=false,busy=false,returnFocus;
  function displayName(){const user=me&&me.user;return String(user&&(user.display_name||user.username)||'');}
  function render(){
   const authed=me&&me.authenticated===true&&me.user,name=authed?displayName():'';
@@ -32,18 +31,26 @@
  // Local history is bucketed per identity (see history.js): accounts use
  // 'u-<userId>', the anonymous identity is 'guest'.
  function bucket(){return me.authenticated===true&&me.user&&typeof me.user.id==='string'&&me.user.id!==''?'u-'+me.user.id:'guest';}
- function applyIdentity(){window.WanderHistory?.setIdentity?.(bucket());}
+ function applyIdentity(){
+  const draft=$('message-input').value,chip=state.eventChip;
+  window.WanderHistory?.setIdentity?.(bucket());$('message-input').value=draft;
+  if(chip&&typeof attachEventChip==='function')attachEventChip(chip);
+  if(typeof updateSendButton==='function')updateSendButton();
+ }
  // New cookie identity ⇒ history swaps to the new bucket (old snapshots stay
  // under the old one); the preferences doc is force-reloaded so a stale draft
  // can never be saved into the new identity's user_memory.
- function switchIdentity(){applyIdentity();window.WanderPreferences?.load?.(true);}
+ function switchIdentity(){
+  applyIdentity();
+  window.WanderPreferences?.load?.(true);
+ }
  async function refresh(){
-  const epoch=++meEpoch;
+  const epoch=++meEpoch;settled=false;me={authenticated:false};
   try{const r=await api('/api/me',{method:'GET'});if(epoch!==meEpoch)return;if(r.status===200&&r.data&&typeof r.data.authenticated==='boolean')me=r.data;}catch{}
   // Any settled reply resolves the identity — failure falls back to guest so
   // pending-bucket writes are never stranded.
   if(epoch!==meEpoch)return;
-  applyIdentity();render();
+  settled=true;applyIdentity();render();
  }
  function open(){returnFocus=document.activeElement;panel.hidden=false;render();(form.hidden?$('auth-logout'):$('auth-username-input')).focus({preventScroll:true});}
  // Outside dismissal drops focus instead of yanking it back to the button;
@@ -60,23 +67,23 @@
   window.WanderPreferences?.suspend?.();
   try{
    const r=await api('/api/login',{method:'POST',body:JSON.stringify({username,password})});
-   if(r.status===200&&r.data&&r.data.user){me={authenticated:true,user:r.data.user};$('auth-password-input').value='';render();close();switchIdentity();}
+   if(r.status===200&&r.data&&r.data.user){settled=true;me={authenticated:true,user:r.data.user};$('auth-password-input').value='';render();close();switchIdentity();}
    else{
-    window.WanderPreferences?.resume?.();
+    settled=true;window.WanderPreferences?.resume?.();
     if(r.status===401)status('用户名或密码错误');
     else if(r.status===429)status('尝试次数过多，请稍后再试');
     else status('登录失败，请稍后重试');
    }
-  }catch{window.WanderPreferences?.resume?.();status('无法连接服务器，请稍后重试');}
+  }catch{settled=true;window.WanderPreferences?.resume?.();status('无法连接服务器，请稍后重试');}
   finally{busy=false;render();}
  });
  $('auth-logout').addEventListener('click',async()=>{
-  if(busy)return;busy=true;meEpoch++;status('');render();
+  if(busy)return;busy=true;meEpoch++;settled=false;me={authenticated:false};status('');render();
   window.WanderPreferences?.suspend?.();
   try{
    const r=await api('/api/logout',{method:'POST'});
    if(r.status!==204){window.WanderPreferences?.resume?.();status('退出失败，请稍后重试');return;}
-   me={authenticated:false};render();close();switchIdentity();
+   settled=true;me={authenticated:false};render();close();switchIdentity();
   }catch{window.WanderPreferences?.resume?.();status('无法确认退出结果，请重试');}
   finally{busy=false;render();}
  });
@@ -92,5 +99,11 @@
   if(panel.hidden||target===openBtn||panel.contains?.(target)||openBtn.contains?.(target))return;
   close(false);
  });
+ function requireLogin(){
+  if(settled&&!busy&&me.authenticated===true&&me.user)return true;
+  open();status(!settled?'正在确认登录状态，请稍后重试':'请先登录后再发送对话或保存偏好');return false;
+ }
+ function expire(){const wasAuthed=me.authenticated===true;meEpoch++;settled=true;me={authenticated:false};if(wasAuthed)switchIdentity();render();open();status('登录已过期，请重新登录');}
+ window.WanderAuth={requireLogin,refresh,expire};
  refresh();
 })();
