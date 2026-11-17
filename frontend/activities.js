@@ -183,6 +183,7 @@
   clearTimeout(viewportTimer);viewportTimer=setTimeout(()=>load({viewport:true}),250);
  }
  window.addEventListener('wander:itinerary-focus',event=>{renderMap();if(event.detail?.phase==='explore')viewportChanged();});
+ window.addEventListener('wander:map-changing',()=>{renderEpoch++;feedEpoch++;feedRequest?.abort();clearTimeout(viewportTimer);lastViewportKey=null;leafletLayer=null;});
  window.addEventListener('wander:map-ready',()=>{renderMap();viewportChanged();});
  window.addEventListener('wander:viewport',viewportChanged);
  window.addEventListener('wander:reset',()=>{close();planEvents=[];refresh();});

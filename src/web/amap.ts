@@ -29,7 +29,7 @@ export async function handleAMap(
       enabled: true, jsKey: env.AMAP_JS_KEY, serviceHost: '/_AMapService',
       style: /^amap:\/\/styles\/[\w-]+$/.test(env.AMAP_STYLE ?? '') ? env.AMAP_STYLE : 'amap://styles/fresh',
       backendCoordinateSystem: env.AMAP_BACKEND_COORDINATE_SYSTEM === 'WGS84' ? 'WGS84' : 'GCJ02',
-    } : { enabled: false, backendCoordinateSystem: env.AMAP_BACKEND_COORDINATE_SYSTEM === 'WGS84' ? 'WGS84' : 'GCJ02' });
+    } : { enabled: false, reason: env.AMAP_JS_KEY ? 'missing-security-config' : 'missing-js-key', backendCoordinateSystem: env.AMAP_BACKEND_COORDINATE_SYSTEM === 'WGS84' ? 'WGS84' : 'GCJ02' });
   }
   if (!enabled) return json({ error: 'Map configuration unavailable' }, 503);
   for (const name of ['Origin', 'Referer']) {

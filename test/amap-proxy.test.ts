@@ -7,8 +7,10 @@ const request=(path:string,init?:RequestInit)=>new Request('https://city.example
 test('map config exposes only the JS identifier and stays disabled without credentials',async()=>{
  const response=await handleAMap(request('/api/map-config'),env);const raw=await response!.text();
  assert(raw.includes('test-js-key'));assert(!raw.includes(env.AMAP_SECURITY_JSCODE));assert.equal(JSON.parse(raw).style,'amap://styles/fresh');
- const disabled=await handleAMap(request('/api/map-config'),{});assert.deepEqual(await disabled!.json(),{enabled:false,backendCoordinateSystem:'GCJ02'});
+ const disabled=await handleAMap(request('/api/map-config'),{});assert.deepEqual(await disabled!.json(),{enabled:false,reason:'missing-js-key',backendCoordinateSystem:'GCJ02'});
  assert.equal(await handleAMap(request('/api/chat'),env),null);
+ assert.equal(response!.headers.get('Cache-Control'),'no-store');
+ const partial=await handleAMap(request('/api/map-config'),{AMAP_JS_KEY:'test-js-key'});assert.equal((await partial!.json() as {reason:string}).reason,'missing-security-config');
 });
 
 test('proxy forwards only approved AMap paths and replaces caller-provided credentials',async()=>{
