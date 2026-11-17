@@ -1,0 +1,216 @@
+{
+  "mode": "flight-stub",
+  "at": "2026-11-17T03:15:23.067Z",
+  "metrics": {
+    "map-layer-ready": {
+      "assert": "pass"
+    },
+    "flight-proxy-appears": {
+      "assert": "pass"
+    },
+    "flight-samples": {
+      "assert": "pass",
+      "samples": 25
+    },
+    "flight-starts-at-clone-face": {
+      "assert": "pass",
+      "startGap": 0,
+      "first": {
+        "t": 1,
+        "cx": 89,
+        "cy": 129,
+        "op": 1,
+        "tf": "matrix(0.82, 0, 0, 0.82, 89, 135.56)",
+        "acx": 724,
+        "acy": 548
+      },
+      "face": {
+        "cx": 89,
+        "cy": 129
+      }
+    },
+    "flight-endpoint-vs-geo": {
+      "assert": "pass",
+      "endErr": 0,
+      "keyEnd": "translate(724px, 548px) scale(1)",
+      "geo": {
+        "x": 723.9999999999463,
+        "y": 548.0000000000246
+      }
+    },
+    "flight-visual-lands-on-geo": {
+      "assert": "pass",
+      "landErr": 0,
+      "landed": {
+        "cx": 724,
+        "cy": 548
+      },
+      "geo": {
+        "x": 723.9999999999463,
+        "y": 548.0000000000246
+      }
+    },
+    "flight-face-continuity": {
+      "assert": "pass",
+      "jump": 0.1,
+      "last": {
+        "t": 403,
+        "cx": 724,
+        "cy": 539.9,
+        "op": 1,
+        "tf": "matrix(0.999997, 0, 0, 0.999997, 723.957, 547.928)",
+        "acx": 724,
+        "acy": 548
+      },
+      "landedFace": {
+        "cx": 724,
+        "cy": 540
+      },
+      "faceDy": -8
+    },
+    "flight-face-rest-offset": {
+      "assert": "pass",
+      "restOff": -8,
+      "note": "face sits ~faceDy above geo inside the anchored unit — by design",
+      "landedFace": {
+        "cx": 724,
+        "cy": 540
+      },
+      "geo": {
+        "x": 723.9999999999463,
+        "y": 548.0000000000246
+      }
+    },
+    "visual-returned-to-anchor": {
+      "assert": "pass",
+      "returnedTo": "wander-candidate-anchor"
+    },
+    "flight-actually-moves": {
+      "assert": "pass",
+      "travel": 756.3
+    },
+    "flight-progresses-frames": {
+      "assert": "pass",
+      "movingFrames": 16
+    },
+    "flight-visible-throughout": {
+      "assert": "pass",
+      "invisibleFrames": 0,
+      "minOp": 1
+    },
+    "flight-duration": {
+      "assert": "pass",
+      "durMs": 402
+    },
+    "flight-proxy-gone-after-land": {
+      "assert": "pass"
+    },
+    "flight-one-shot": {
+      "assert": "pass",
+      "runs": 1
+    },
+    "no-flying-left": {
+      "assert": "pass",
+      "subs": [
+        {
+          "id": "sess_mock_child_a",
+          "title": "曲江看展方案",
+          "letter": "A",
+          "palette": "sand",
+          "status": "working",
+          "points": 2,
+          "stops": 0,
+          "retired": false,
+          "anchored": true,
+          "flying": false,
+          "anchorPos": [
+            108.9665,
+            34.2555
+          ]
+        },
+        {
+          "id": "sess_mock_child_b",
+          "title": "城南市集方案",
+          "letter": "B",
+          "palette": "clay",
+          "status": "working",
+          "points": 0,
+          "stops": 0,
+          "retired": false,
+          "anchored": false,
+          "flying": false,
+          "anchorPos": null
+        }
+      ]
+    },
+    "rerun-proxy": {
+      "assert": "pass"
+    },
+    "viewport-cancels-flight": {
+      "assert": "pass",
+      "proxies": 0
+    },
+    "viewport-lands-visual": {
+      "assert": "pass",
+      "center": {
+        "cx": 724,
+        "cy": 548
+      }
+    },
+    "rm-no-flight": {
+      "assert": "pass"
+    },
+    "rm-anchor-present": {
+      "assert": "pass",
+      "center": {
+        "cx": 724,
+        "cy": 548
+      }
+    },
+    "320-flight-appears": {
+      "assert": "pass"
+    },
+    "320-lands": {
+      "assert": "pass",
+      "center": {
+        "cx": 244,
+        "cy": 498
+      }
+    },
+    "320-no-horizontal-scroll": {
+      "assert": "pass"
+    },
+    "no-page-errors": {
+      "assert": "pass",
+      "errs": []
+    },
+    "raw-runs": {
+      "runs": [
+        {
+          "ended": 421.80000001192093,
+          "returnedTo": "wander-candidate-anchor",
+          "samples": 25,
+          "first": {
+            "t": 1,
+            "cx": 89,
+            "cy": 129,
+            "op": 1,
+            "tf": "matrix(0.82, 0, 0, 0.82, 89, 135.56)",
+            "acx": 724,
+            "acy": 548
+          },
+          "last": {
+            "t": 403,
+            "cx": 724,
+            "cy": 539.9,
+            "op": 1,
+            "tf": "matrix(0.999997, 0, 0, 0.999997, 723.957, 547.928)",
+            "acx": 724,
+            "acy": 548
+          }
+        }
+      ]
+    }
+  },
+  "failures": []
+}

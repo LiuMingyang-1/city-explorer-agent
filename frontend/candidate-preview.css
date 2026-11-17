@@ -1,7 +1,8 @@
 /* Map candidate layer — issue #41 (I41-D). Styles for WanderCandidates markers
    only; every rule is scoped under .wander-candidate-* so route/activity/scene
    layers are untouched. Durations track module timers: highlight ≤480ms,
-   settle fade ≤450ms. Reduced-motion removes all animation. */
+   settle fade ≤450ms, entrance flight ≤560ms. Reduced-motion removes all
+   animation (the flight simply never starts — see decorateEntrance). */
 
 .wander-candidate-dot {
   width: 10px; height: 10px; border-radius: 999px;
@@ -27,12 +28,17 @@
 }
 
 /* 分身地图锚点：真实 boop-face + 派发序字母 chip + 任务 title。
-   帽色由 wander-mascot 实例 palette 呈现，data-palette 仅作容器标记。 */
+   帽色由 wander-mascot 实例 palette 呈现，data-palette 仅作容器标记。
+   外层 .wander-candidate-anchor 由地图 SDK 定位（可内联自身 transform）；
+   视觉全部收进内层 .wander-candidate-visual，装饰动画只碰内层或其飞行代理。 */
 .wander-candidate-anchor {
   position: relative; display: grid; justify-items: center;
   width: 72px; pointer-events: none;
 }
-.wander-candidate-anchor boop-face {
+.wander-candidate-visual {
+  position: relative; display: grid; justify-items: center; width: 72px;
+}
+.wander-candidate-visual > boop-face {
   display: block; width: 42px; height: 42px;
   filter: drop-shadow(0 2px 4px #29392e55);
 }
@@ -52,15 +58,22 @@
   pointer-events: none;
 }
 
-/* 入场 FLIP：从卡片主脸 rect 装饰性飞向真实锚点，仅入场一帧窗口。
-   transform 只作用在 marker 内容节点，地理锚定不变，move/resize 不漂移。 */
-.wander-candidate-anchor.flip-enter {
-  transform: translate(var(--flip-x, 0px), var(--flip-y, 0px)) scale(.55);
-  opacity: 0;
-  transition: transform .45s cubic-bezier(.2,.7,.3,1), opacity .45s ease;
+/* 入场飞行代理（≤560ms，WAAPI 驱动）：fixed overlay 承载锚点真实视觉
+   .wander-candidate-visual 从卡片分身脸飞到已落位的地理锚点。代理悬于卡片
+   与地图层之上使路径全程可见；落地/取消时代理移除、视觉归回 marker 内层。
+   纯装饰——地理锚定与 anchored 上报不经过它，move/resize 不漂移。 */
+.wander-candidate-flight {
+  position: fixed; left: 0; top: 0; z-index: 1400;
+  pointer-events: none; will-change: transform;
+  /* The inner visual centers on the box origin, so scaling must pivot there
+     too — with the default 50% origin the flying face would sit a few px
+     off the keyframed translate for every scaled frame. */
+  transform-origin: 0 0;
+}
+.wander-candidate-flight > .wander-candidate-visual {
+  transform: translate(-50%, -50%);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .wander-candidate-dot.highlight { animation: none; }
-  .wander-candidate-anchor.flip-enter { transition: none; transform: none; opacity: 1; }
 }
